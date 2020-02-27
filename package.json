@@ -1,0 +1,53 @@
+{
+  "name": "tony-lang",
+  "version": "0.1.0",
+  "description": "The Tony programming language",
+  "main": "lib/index.js",
+  "scripts": {
+    "build": "babel src --out-dir lib --extensions .ts",
+    "start": "yarn link && nodemon --watch src --exec 'yarn build' -e ts",
+    "eslint": "eslint src --ext .ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "engines": {
+    "node": ">= 8.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "ssh://git@github.com/tony-lang/tony.git"
+  },
+  "keywords": [
+    "language"
+  ],
+  "author": "Jonas Hübotter",
+  "license": "LGPL-3.0",
+  "bugs": {
+    "url": "https://github.com/tony-lang/tony/issues"
+  },
+  "homepage": "https://github.com/tony-lang/tony#readme",
+  "dependencies": {
+    "@babel/cli": "^7.8.4",
+    "@babel/core": "^7.8.4",
+    "@babel/preset-env": "^7.8.4",
+    "commander": "^4.1.1",
+    "core-js": "^3.6.4",
+    "inquirer": "^7.0.4",
+    "mkdirp": "^0.5.1",
+    "outdent": "^0.7.0",
+    "tree-sitter": "^0.16.0",
+    "tree-sitter-tony": "file:.yalc/tree-sitter-tony"
+  },
+  "bin": {
+    "tony": "lib/index.js"
+  },
+  "devDependencies": {
+    "@babel/preset-typescript": "^7.8.3",
+    "@types/inquirer": "^6.5.0",
+    "@types/mkdirp": "^0.5.2",
+    "@typescript-eslint/eslint-plugin": "^2.21.0",
+    "@typescript-eslint/parser": "^2.21.0",
+    "eslint": "^6.8.0",
+    "nodemon": "^2.0.2",
+    "typescript": "^3.8.2"
+  }
+}

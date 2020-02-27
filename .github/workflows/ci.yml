@@ -1,0 +1,33 @@
+name: CI
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node:
+          - '8.x'
+          - '9.x'
+          - '10.x'
+          - '11.x'
+          - '12.x'
+          - '13.x'
+
+    name: Node ${{ matrix.node }}
+    steps:
+    - uses: actions/checkout@master
+    - uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node }}
+    - name: Install dependencies
+      run: yarn install
+    - name: Build
+      run: yarn build
+    - name: ESLint
+      run: yarn eslint
+    - name: TypeScript
+      run: yarn tsc
+    # - name: Tests
+    #   run: yarn test
