@@ -4,11 +4,13 @@ on: [push]
 
 jobs:
   build:
+
     runs-on: ubuntu-latest
     strategy:
       matrix:
         node:
           - '8.x'
+          - '9.x'
           - '10.x'
           - '11.x'
           - '12.x'
@@ -20,13 +22,11 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node }}
-    - name: Install dependencies
+    - name: Install Tree-sitter
+      run: yarn global add tree-sitter-cli
+    - name: Generate parser
+      run: yarn generate
+    - name: Test rebuild
       run: yarn install
-    - name: Build
-      run: yarn build
-    - name: ESLint
-      run: yarn eslint
-    - name: TypeScript
-      run: yarn tsc
-    # - name: Tests
-    #   run: yarn test
+    - name: Test parser
+      run: yarn test

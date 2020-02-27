@@ -1,0 +1,38 @@
+name: Prebuild
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+          # - macOS-latest
+
+    steps:
+    - uses: actions/checkout@master
+    - uses: actions/setup-node@v1
+      with:
+        node-version: 12
+    - name: Install Tree-sitter
+      run: yarn global add tree-sitter-cli
+    - name: Generate parser
+      run: yarn generate
+    - name: Install dependencies
+      run: yarn install --dev
+
+    - name: Build binaries and upload to GitHub (Linux/macOS)
+      if: runner.os == 'Linux' || runner.os == 'macOS'
+      run: yarn prebuild --all -u $PREBUILD_TOKEN
+      env:
+        PREBUILD_TOKEN: ${{ secrets.PREBUILD_TOKEN }}
+    - name: Build binaries and upload to GitHub (Windows)
+      if: runner.os == 'Windows'
+      run: yarn prebuild --all -u ${env:PREBUILD_TOKEN}
+      env:
+        PREBUILD_TOKEN: ${{ secrets.PREBUILD_TOKEN }}
