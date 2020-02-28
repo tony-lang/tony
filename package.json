@@ -27,8 +27,8 @@
   "homepage": "https://github.com/tony-lang/tony#readme",
   "dependencies": {
     "@babel/cli": "^7.8.4",
-    "@babel/core": "^7.8.4",
-    "@babel/preset-env": "^7.8.4",
+    "@babel/core": "^7.8.6",
+    "@babel/preset-env": "^7.8.6",
     "commander": "^4.1.1",
     "core-js": "^3.6.4",
     "inquirer": "^7.0.4",
