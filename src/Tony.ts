@@ -25,11 +25,11 @@ export default class Tony {
   run = (
     project: string,
     args: string[],
-    { outFile, outDir }: { outFile: string; outDir: string }
+    { outFile, outDir, retainOutDir }: { outFile: string; outDir: string; retainOutDir: boolean }
   ): void => {
     if (project === undefined) project = getWorkingDirectoryName()
 
-    compile(this, project, outFile || getOutputFileName(project), outDir)
+    compile(this, project, outFile || getOutputFileName(project), outDir, retainOutDir)
       .then((outputPath: string) => {
         exec(this, outputPath, args)
       })
@@ -37,11 +37,11 @@ export default class Tony {
 
   compile = (
     project: string,
-    { outFile, outDir }: { outFile: string; outDir: string }
+    { outFile, outDir, retainOutDir }: { outFile: string; outDir: string; retainOutDir: boolean }
   ): void => {
     if (project === undefined) project = getWorkingDirectoryName()
 
-    compile(this, project, outFile || getOutputFileName(project), outDir)
+    compile(this, project, outFile || getOutputFileName(project), outDir, retainOutDir)
       .then((outputPath: string) => {
         console.log('Compilation was successful! Your built project can be ' +
                     `found here: ${outputPath}`)

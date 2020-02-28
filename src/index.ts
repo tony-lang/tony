@@ -22,15 +22,17 @@ commander
 commander
   .command('run [project] [args...]')
   .description('Run a project')
-  .option('-o, --out-file <path>', 'directory for build files')
-  .option('--out-dir <path>', 'directory for build files', 'tmp')
+  .option('-o, --out-file <path>', 'output file')
+  .option('--out-dir <path>', 'location for build files', 'tmp')
+  .option('--retain-out-dir', 'retain temporarily generated build files', false)
   .action(tony.run)
 
 commander
   .command('compile [project]')
   .description('Compile a project to JavaScript')
-  .option('-o, --out-file <path>', 'location for build files')
+  .option('-o, --out-file <path>', 'output file')
   .option('--out-dir <path>', 'location for build files', 'tmp')
+  .option('--retain-out-dir', 'retain temporarily generated build files', false)
   .action(tony.compile)
 
 commander

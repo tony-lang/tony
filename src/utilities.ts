@@ -11,15 +11,11 @@ export const readFile = (filePath: string): Promise<string> => {
 }
 
 export const writeFile = (filePath: string, data = ''): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    mkdirp(path.dirname(filePath), error => {
-      if (!error) {
-        fs.writeFile(filePath, data, error => {
-          !error ? resolve() : reject(error)
-        })
-      } else {
-        reject(error)
-      }
+  return mkdirp(path.dirname(filePath)).then(() => {
+    return new Promise((resolve, reject) => {
+      fs.writeFile(filePath, data, error => {
+        !error ? resolve() : reject(error)
+      })
     })
   })
 }

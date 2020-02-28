@@ -17,7 +17,8 @@ export const compile = (
   tony: Tony,
   project: string,
   outFile: string,
-  outDir: string
+  outDir: string,
+  retainOutDir: boolean
 ): Promise<string> => {
   if (tony.debug) console.log('Compiling...')
 
@@ -25,7 +26,7 @@ export const compile = (
   const outputPath = path.join(process.cwd(), outDir)
 
   return readFile(file).then((sourceCode: string) => {
-    if (tony.debug) console.log(`\nParsing ${file}...\n`)
+    if (tony.debug) console.log(`Parsing ${file}...`)
     const tree = parser.parse(sourceCode.toString())
     if (tree.rootNode.hasError()) {
       console.log(`Error while parsing ${file}...`)
@@ -42,7 +43,7 @@ export const compile = (
     )
   }).then(() => {
     babelCompile(tony, outFile, outDir)
-    cleanup(outDir, [getOutputPathForFile(outputPath, file)])
+    if (!retainOutDir) cleanup(outDir, [getOutputPathForFile(outputPath, file)])
     return outFile
   })
 }
@@ -50,11 +51,13 @@ export const compile = (
 const babelCompile = (tony: Tony, outFile: string, outDir: string): void => {
   if (tony.debug) console.log('Compiling with Babel...')
 
-  childProcess.spawnSync(
+  const p = childProcess.spawnSync(
     'yarn',
     ['babel', outDir, '-o', outFile],
     { stdio: tony.debug ? 'inherit' : null }
   )
+
+  if (p.status != 0) process.exit(p.status)
 }
 
 const cleanup = (outDir: string, files: string[]): void => {

@@ -76,7 +76,6 @@ module.exports = grammar({
       $.infix_application,
       $.pipeline,
       alias($._simple_return, $.return),
-      $.pass,
       $.map,
       $.tuple,
       $.list,
@@ -93,14 +92,14 @@ module.exports = grammar({
     ),
 
     application: $ => prec(PREC.APPLICATION, seq(
-      field('expression', $._simple_expression),
+      $._simple_expression,
       '(',
-      optional(field('arguments', $.arguments)),
+      field('arguments', $.arguments),
       ')'
     )),
     prefix_application: $ => prec.right(PREC.PREFIX, seq(
-      field('left', choice($.identifier, $._simple_abstraction)),
-      field('right', $._simple_expression)
+      $.identifier,
+      field('argument', $._simple_expression)
     )),
     infix_application: $ => choice(
       prec.left(PREC.NOT, seq(field('left', $._simple_expression), field('operator', '!'), field('right', $._simple_expression))),
@@ -143,7 +142,6 @@ module.exports = grammar({
     )),
 
     _simple_return: $ => prec.right(seq('return', optional($._simple_expression))),
-    pass: $ => 'pass',
 
     map: $ => seq(
       '{',
