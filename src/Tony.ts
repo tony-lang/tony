@@ -25,27 +25,37 @@ export default class Tony {
   run = (
     project: string,
     args: string[],
-    { outFile, outDir, retainOutDir }: { outFile: string; outDir: string; retainOutDir: boolean }
+    { outFile, outDir, retainOutDir }: {
+      outFile: string;
+      outDir: string;
+      retainOutDir: boolean;
+    }
   ): void => {
     if (project === undefined) project = getWorkingDirectoryName()
 
-    compile(this, project, outFile || getOutputFileName(project), outDir, retainOutDir)
-      .then((outputPath: string) => {
-        exec(this, outputPath, args)
-      })
+    compile(
+      this, project, outFile || getOutputFileName(project), outDir, retainOutDir
+    ).then((outputPath: string) => {
+      exec(this, outputPath, args)
+    })
   }
 
   compile = (
     project: string,
-    { outFile, outDir, retainOutDir }: { outFile: string; outDir: string; retainOutDir: boolean }
+    { outFile, outDir, retainOutDir }: {
+      outFile: string;
+      outDir: string;
+      retainOutDir: boolean;
+    }
   ): void => {
     if (project === undefined) project = getWorkingDirectoryName()
 
-    compile(this, project, outFile || getOutputFileName(project), outDir, retainOutDir)
-      .then((outputPath: string) => {
-        console.log('Compilation was successful! Your built project can be ' +
-                    `found here: ${outputPath}`)
-      })
+    compile(
+      this, project, outFile || getOutputFileName(project), outDir, retainOutDir
+    ).then((outputPath: string) => {
+      console.log('Compilation was successful! Your built project can be ' +
+                  `found here: ${outputPath}`)
+    })
   }
 
   exec = (
