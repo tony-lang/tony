@@ -10,7 +10,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "engines": {
-    "node": "^8.0 || >=10.0"
+    "node": ">=10.0"
   },
   "repository": {
     "type": "git",
@@ -32,7 +32,7 @@
     "commander": "^4.1.1",
     "core-js": "^3.6.4",
     "inquirer": "^7.0.4",
-    "mkdirp": "^0.5.1",
+    "mkdirp": "^1.0.3",
     "outdent": "^0.7.0",
     "tree-sitter": "^0.16.0",
     "tree-sitter-tony": "file:.yalc/tree-sitter-tony"
@@ -43,7 +43,7 @@
   "devDependencies": {
     "@babel/preset-typescript": "^7.8.3",
     "@types/inquirer": "^6.5.0",
-    "@types/mkdirp": "^0.5.2",
+    "@types/mkdirp": "^1.0.0",
     "@typescript-eslint/eslint-plugin": "^2.21.0",
     "@typescript-eslint/parser": "^2.21.0",
     "eslint": "^6.8.0",

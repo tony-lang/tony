@@ -328,10 +328,6 @@
           },
           {
             "type": "SYMBOL",
-            "name": "pass"
-          },
-          {
-            "type": "SYMBOL",
             "name": "map"
           },
           {
@@ -402,32 +398,20 @@
         "type": "SEQ",
         "members": [
           {
-            "type": "FIELD",
-            "name": "expression",
-            "content": {
-              "type": "SYMBOL",
-              "name": "_simple_expression"
-            }
+            "type": "SYMBOL",
+            "name": "_simple_expression"
           },
           {
             "type": "STRING",
             "value": "("
           },
           {
-            "type": "CHOICE",
-            "members": [
-              {
-                "type": "FIELD",
-                "name": "arguments",
-                "content": {
-                  "type": "SYMBOL",
-                  "name": "arguments"
-                }
-              },
-              {
-                "type": "BLANK"
-              }
-            ]
+            "type": "FIELD",
+            "name": "arguments",
+            "content": {
+              "type": "SYMBOL",
+              "name": "arguments"
+            }
           },
           {
             "type": "STRING",
@@ -443,25 +427,12 @@
         "type": "SEQ",
         "members": [
           {
-            "type": "FIELD",
-            "name": "left",
-            "content": {
-              "type": "CHOICE",
-              "members": [
-                {
-                  "type": "SYMBOL",
-                  "name": "identifier"
-                },
-                {
-                  "type": "SYMBOL",
-                  "name": "_simple_abstraction"
-                }
-              ]
-            }
+            "type": "SYMBOL",
+            "name": "identifier"
           },
           {
             "type": "FIELD",
-            "name": "right",
+            "name": "argument",
             "content": {
               "type": "SYMBOL",
               "name": "_simple_expression"
@@ -1229,10 +1200,6 @@
           }
         ]
       }
-    },
-    "pass": {
-      "type": "STRING",
-      "value": "pass"
     },
     "map": {
       "type": "SEQ",
