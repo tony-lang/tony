@@ -1,6 +1,6 @@
 import childProcess from 'child_process'
-import fs from 'fs'
 import path from 'path'
+import rimraf from 'rimraf'
 import Parser from 'tree-sitter'
 
 import Tony from './Tony'
@@ -10,20 +10,49 @@ import {
   readFile,
   writeFile,
   getProjectFileName,
-  getOutputPathForFile
+  getOutputPathForFile,
+  copyFile
 } from './utilities'
+import { FILE_EXTENSION } from './constants'
 
-export const compile = (
+export async function compile(
   tony: Tony,
   project: string,
+  mode: string,
   outFile: string,
   outDir: string,
   retainOutDir: boolean
-): Promise<string> => {
+): Promise<string> {
   if (tony.debug) console.log('Compiling...')
 
-  const file = path.join(process.cwd(), getProjectFileName(project))
-  const outputPath = path.join(process.cwd(), outDir)
+  const entryFilePath = path.join(process.cwd(), getProjectFileName(project))
+  const files = [entryFilePath]
+  const compiledFiles: string[] = []
+  const outputDirPath = path.join(process.cwd(), outDir)
+  const outputFilePath = path.join(process.cwd(), outFile)
+  const codeGenerator = new GenerateCode(outputDirPath, files)
+
+  while (files.length > 0) {
+    const file = files.pop()
+    if (compiledFiles.includes(file)) continue
+
+    await compileFile(tony, codeGenerator, file, outputDirPath)
+    compiledFiles.push(file)
+  }
+
+  babelCompile(tony, outputFilePath, outputDirPath, entryFilePath, mode)
+  if (!retainOutDir) await cleanup(tony, outputDirPath)
+  return outputFilePath
+}
+
+const compileFile = (
+  tony: Tony,
+  codeGenerator: GenerateCode,
+  file: string,
+  outputDirPath: string
+): Promise<void> => {
+  if (!file.endsWith(FILE_EXTENSION))
+    return copyFile(file, getOutputPathForFile(outputDirPath, file))
 
   return readFile(file).then((sourceCode: string) => {
     if (tony.debug) console.log(`Parsing ${file}...`)
@@ -37,33 +66,42 @@ export const compile = (
 
     return tree.rootNode
   }).then((node: Parser.SyntaxNode) => {
+    codeGenerator.file = file
     return writeFile(
-      getOutputPathForFile(outputPath, file),
-      new GenerateCode().generate(node)
+      getOutputPathForFile(outputDirPath, file),
+      codeGenerator.generate(node)
     )
-  }).then(() => {
-    babelCompile(tony, outFile, outDir)
-    if (!retainOutDir)
-      cleanup(tony, outDir, [getOutputPathForFile(outputPath, file)])
-    return outFile
   })
 }
 
-const babelCompile = (tony: Tony, outFile: string, outDir: string): void => {
+const babelCompile = (
+  tony: Tony,
+  outputFilePath: string,
+  outputDirPath: string,
+  entryFilePath: string,
+  mode: string
+): void => {
   if (tony.debug) console.log('Compiling with Babel...')
 
   const p = childProcess.spawnSync(
     'yarn',
-    ['babel', outDir, '-o', outFile],
+    [
+      'webpack-cli',
+      getOutputPathForFile(outputDirPath, entryFilePath),
+      '-o', outputFilePath,
+      '--mode', mode
+    ],
     { stdio: tony.debug ? 'inherit' : null }
   )
 
   if (p.status != 0) process.exit(p.status)
 }
 
-const cleanup = (tony: Tony, outDir: string, files: string[]): void => {
+const cleanup = (
+  tony: Tony,
+  outputDirPath: string
+): Promise<void> => {
   if (tony.debug) console.log('Cleaning up temporary files...')
 
-  files.forEach(file => fs.unlinkSync(file))
-  if (fs.readdirSync(outDir).length == 0) fs.rmdirSync(outDir)
+  return new Promise(resolve => rimraf(outputDirPath, () => resolve()))
 }

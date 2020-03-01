@@ -34,8 +34,10 @@
     "inquirer": "^7.0.5",
     "mkdirp": "^1.0.3",
     "outdent": "^0.7.0",
+    "rimraf": "^3.0.2",
     "tree-sitter": "^0.16.0",
-    "tree-sitter-tony": "file:.yalc/tree-sitter-tony"
+    "tree-sitter-tony": "file:.yalc/tree-sitter-tony",
+    "webpack": "^4.41.6"
   },
   "bin": {
     "tony": "lib/index.js"
@@ -44,10 +46,12 @@
     "@babel/preset-typescript": "^7.8.3",
     "@types/inquirer": "^6.5.0",
     "@types/mkdirp": "^1.0.0",
+    "@types/rimraf": "^2.0.3",
     "@typescript-eslint/eslint-plugin": "^2.21.0",
     "@typescript-eslint/parser": "^2.21.0",
     "eslint": "^6.8.0",
     "nodemon": "^2.0.2",
-    "typescript": "^3.8.3"
+    "typescript": "^3.8.3",
+    "webpack-cli": "^3.3.11"
   }
 }
