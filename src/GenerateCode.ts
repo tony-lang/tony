@@ -92,10 +92,10 @@ export default class GenerateCode {
   }
 
   generateAssignment = (node: Parser.SyntaxNode): string => {
-    const name = this.generate(node.namedChild(0))
-    const value = this.generate(node.namedChild(1))
+    const left = this.generate(node.namedChild(0))
+    const right = this.generate(node.namedChild(1))
 
-    return `const ${name}=${value};${name}`
+    return `const ${left}=${right}`
   }
 
   generateBlock = (node: Parser.SyntaxNode): string => {

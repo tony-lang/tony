@@ -16,7 +16,8 @@ const PREC = Object.freeze({
   INLINE_EXPRESSION: 14,
   PARAMETER: 14,
   APPLICATION: 15,
-  PIPELINE: 16
+  PIPELINE: 16,
+  DESTRUCTURING_PATTERN: 17
 });
 
 module.exports = grammar({
@@ -57,8 +58,15 @@ module.exports = grammar({
       optional(seq('=', field('value', $._simple_expression)))
     )),
     parameters: $ => commaSep1($.parameter),
+
     argument: $ => field('value', $._expression),
     arguments: $ => commaSep1($.argument),
+
+    _destructuring_pattern: $ => prec(PREC.DESTRUCTURING_PATTERN, choice(
+      $.map,
+      $.tuple,
+      $.list
+    )),
 
     _compound_abstraction: $ => seq(
       field('parameters', $.parameters),
@@ -67,9 +75,9 @@ module.exports = grammar({
     ),
 
     _compound_assignment: $ => seq(
-      field('name', $.identifier),
+      field('left', choice($.identifier, $._destructuring_pattern)),
       ':=',
-      field('value', $._compound_expression)
+      field('right', $._compound_expression)
     ),
 
     _compound_return: $ => seq(
@@ -152,9 +160,9 @@ module.exports = grammar({
     )),
 
     _simple_assignment: $ => seq(
-      field('name', $.identifier),
+      field('left', choice($.identifier, $._destructuring_pattern)),
       ':=',
-      field('value', $._simple_expression)
+      field('right', $._simple_expression)
     ),
 
     _simple_return: $ => prec.right(seq(
@@ -166,6 +174,7 @@ module.exports = grammar({
       '{',
       commaSep(optional(choice(
         $.expression_pair,
+        alias($.identifier, $.shorthand_pair_identifier),
         $.spread
       ))),
       '}'

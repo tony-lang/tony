@@ -240,6 +240,27 @@
         }
       ]
     },
+    "_destructuring_pattern": {
+      "type": "PREC",
+      "value": 17,
+      "content": {
+        "type": "CHOICE",
+        "members": [
+          {
+            "type": "SYMBOL",
+            "name": "map"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "tuple"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "list"
+          }
+        ]
+      }
+    },
     "_compound_abstraction": {
       "type": "SEQ",
       "members": [
@@ -270,10 +291,19 @@
       "members": [
         {
           "type": "FIELD",
-          "name": "name",
+          "name": "left",
           "content": {
-            "type": "SYMBOL",
-            "name": "identifier"
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "identifier"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "_destructuring_pattern"
+              }
+            ]
           }
         },
         {
@@ -282,7 +312,7 @@
         },
         {
           "type": "FIELD",
-          "name": "value",
+          "name": "right",
           "content": {
             "type": "SYMBOL",
             "name": "_compound_expression"
@@ -1223,10 +1253,19 @@
       "members": [
         {
           "type": "FIELD",
-          "name": "name",
+          "name": "left",
           "content": {
-            "type": "SYMBOL",
-            "name": "identifier"
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "identifier"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "_destructuring_pattern"
+              }
+            ]
           }
         },
         {
@@ -1235,7 +1274,7 @@
         },
         {
           "type": "FIELD",
-          "name": "value",
+          "name": "right",
           "content": {
             "type": "SYMBOL",
             "name": "_simple_expression"
@@ -1296,6 +1335,15 @@
                           "name": "expression_pair"
                         },
                         {
+                          "type": "ALIAS",
+                          "content": {
+                            "type": "SYMBOL",
+                            "name": "identifier"
+                          },
+                          "named": true,
+                          "value": "shorthand_pair_identifier"
+                        },
+                        {
                           "type": "SYMBOL",
                           "name": "spread"
                         }
@@ -1324,6 +1372,15 @@
                               {
                                 "type": "SYMBOL",
                                 "name": "expression_pair"
+                              },
+                              {
+                                "type": "ALIAS",
+                                "content": {
+                                  "type": "SYMBOL",
+                                  "name": "identifier"
+                                },
+                                "named": true,
+                                "value": "shorthand_pair_identifier"
                               },
                               {
                                 "type": "SYMBOL",
