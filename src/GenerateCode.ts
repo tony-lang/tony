@@ -1,6 +1,10 @@
 import Parser from 'tree-sitter'
 
+const KEYWORD_IDENTIFIERS = Object.freeze(['eval'])
+
 export default class GenerateCode {
+  identifiers: string[] = [];
+
   generate = (node: Parser.SyntaxNode): string => {
     switch (node.type) {
     case 'abstraction':
@@ -118,7 +122,7 @@ export default class GenerateCode {
   }
 
   generateIdentifier = (node: Parser.SyntaxNode): string => {
-    return node.text
+    return this.getIdentifier(node.text)
   }
 
   generateInfixApplication = (node: Parser.SyntaxNode): string => {
@@ -152,7 +156,7 @@ export default class GenerateCode {
 
   generateParameter = (node: Parser.SyntaxNode): string => {
     const name = this.generate(node.namedChild(0))
-    if (!nodeHasChild(node, '=')) return name
+    if (!GenerateCode.nodeHasChild(node, '=')) return name
 
     const value = this.generate(node.namedChild(1))
     return `${name}=${value}`
@@ -223,8 +227,18 @@ export default class GenerateCode {
 
     return `[${elements}]`
   }
-}
 
-const nodeHasChild = (node: Parser.SyntaxNode, type: string): boolean => {
-  return node.children.map(child => child.type).includes(type)
+  private getIdentifier = (identifier: string): string => {
+    if (KEYWORD_IDENTIFIERS.includes(identifier)) return identifier
+
+    const index = this.identifiers.indexOf(identifier)
+    if (index != -1) return `i${index}`
+
+    const length = this.identifiers.push(identifier)
+    return `i${length - 1}`
+  }
+
+  static nodeHasChild = (node: Parser.SyntaxNode, type: string): boolean => {
+    return node.children.map(child => child.type).includes(type)
+  }
 }
