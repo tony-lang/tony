@@ -3588,7 +3588,7 @@ touch@^3.1.0:
     nopt "~1.0.10"
 
 "tree-sitter-tony@file:.yalc/tree-sitter-tony":
-  version "0.1.0-efea42f6"
+  version "0.1.0-f0904d4f"
   dependencies:
     nan "^2.14.0"
     prebuild-install "^5.3.3"
