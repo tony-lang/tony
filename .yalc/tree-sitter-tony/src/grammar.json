@@ -96,8 +96,22 @@
       ]
     },
     "_compound_statement": {
-      "type": "SYMBOL",
-      "name": "_compound_expression"
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "ALIAS",
+          "content": {
+            "type": "SYMBOL",
+            "name": "_compound_export"
+          },
+          "named": true,
+          "value": "export"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "_compound_expression"
+        }
+      ]
     },
     "_simple_statement": {
       "type": "CHOICE",
@@ -107,8 +121,39 @@
           "name": "import"
         },
         {
+          "type": "ALIAS",
+          "content": {
+            "type": "SYMBOL",
+            "name": "_simple_export"
+          },
+          "named": true,
+          "value": "export"
+        },
+        {
           "type": "SYMBOL",
           "name": "_simple_expression"
+        }
+      ]
+    },
+    "_compound_export": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "export"
+        },
+        {
+          "type": "FIELD",
+          "name": "declaration",
+          "content": {
+            "type": "ALIAS",
+            "content": {
+              "type": "SYMBOL",
+              "name": "_compound_assignment"
+            },
+            "named": true,
+            "value": "assignment"
+          }
         }
       ]
     },
@@ -218,6 +263,28 @@
           "content": {
             "type": "SYMBOL",
             "name": "identifier"
+          }
+        }
+      ]
+    },
+    "_simple_export": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "export"
+        },
+        {
+          "type": "FIELD",
+          "name": "declaration",
+          "content": {
+            "type": "ALIAS",
+            "content": {
+              "type": "SYMBOL",
+              "name": "_simple_assignment"
+            },
+            "named": true,
+            "value": "assignment"
           }
         }
       ]
