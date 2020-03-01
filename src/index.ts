@@ -22,7 +22,12 @@ commander
 commander
   .command('run [project] [args...]')
   .description('Run a project')
-  .option('-m, --mode <mode>', 'enable production optimizations or development hints\n[choices: "development", "production", "none"]', 'production')
+  .option(
+    '-m, --mode <mode>',
+    'enable production optimizations or development hints\n' +
+      '[choices: "development", "production", "none"]',
+    'production'
+  )
   .option('-o, --out-file <path>', 'output file')
   .option('--out-dir <path>', 'location for build files', '.tony')
   .option('--retain-out-dir', 'retain temporarily generated build files', false)
@@ -31,7 +36,12 @@ commander
 commander
   .command('compile [project]')
   .description('Compile a project to JavaScript')
-  .option('-m, --mode <mode>', 'enable production optimizations or development hints', 'production')
+  .option(
+    '-m, --mode <mode>',
+    'enable production optimizations or development hints\n' +
+      '[choices: "development", "production", "none"]',
+    'production'
+  )
   .option('-o, --out-file <path>', 'output file')
   .option('--out-dir <path>', 'location for build files', '.tony')
   .option('--retain-out-dir', 'retain temporarily generated build files', false)

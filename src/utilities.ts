@@ -34,11 +34,17 @@ export const getWorkingDirectoryName = (): string => {
 }
 
 export const getProjectFileName = (project: string): string => {
-  return project.endsWith(FILE_EXTENSION) ? project : `${project}${FILE_EXTENSION}`
+  if (project.endsWith(FILE_EXTENSION))
+    return project
+  else
+    return `${project}${FILE_EXTENSION}`
 }
 
 export const getProjectName = (project: string): string => {
-  return project.endsWith(FILE_EXTENSION) ? project.replace(FILE_EXTENSION, '') : project
+  if (project.endsWith(FILE_EXTENSION))
+    return project.replace(FILE_EXTENSION, '')
+  else
+    return project
 }
 
 export const getOutputFileName = (project: string): string => {
