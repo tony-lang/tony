@@ -457,6 +457,22 @@
     "fields": {}
   },
   {
+    "type": "export",
+    "named": true,
+    "fields": {
+      "declaration": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "assignment",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "expression_pair",
     "named": true,
     "fields": {
@@ -1483,6 +1499,10 @@
           "named": true
         },
         {
+          "type": "export",
+          "named": true
+        },
+        {
           "type": "hash_bang_line",
           "named": true
         },
@@ -2092,6 +2112,10 @@
   {
     "type": "escape_sequence",
     "named": true
+  },
+  {
+    "type": "export",
+    "named": false
   },
   {
     "type": "false",

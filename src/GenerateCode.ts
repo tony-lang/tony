@@ -39,6 +39,8 @@ export default class GenerateCode {
       return this.generateBoolean(node)
     case 'comment':
       return this.generateComment(node)
+    case 'export':
+      return this.generateExport(node)
     case 'expression_pair':
       return this.generateExpressionPair(node)
     case 'identifier':
@@ -134,6 +136,12 @@ export default class GenerateCode {
 
   generateComment = (node: Parser.SyntaxNode): string => {
     return ''
+  }
+
+  generateExport = (node: Parser.SyntaxNode): string => {
+    const declaration = this.generate(node.namedChild(0))
+
+    return `export ${declaration}`
   }
 
   generateExpressionPair = (node: Parser.SyntaxNode): string => {

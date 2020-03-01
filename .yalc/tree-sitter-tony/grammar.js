@@ -45,10 +45,19 @@ module.exports = grammar({
       seq($._simple_statement, $._newline, optional($._statement_seq)),
       seq($._compound_statement, $._statement_seq)
     ),
-    _compound_statement: $ => $._compound_expression,
+    _compound_statement: $ => choice(
+      alias($._compound_export, $.export),
+      $._compound_expression
+    ),
     _simple_statement: $ => choice(
       $.import,
+      alias($._simple_export, $.export),
       $._simple_expression
+    ),
+
+    _compound_export: $ => seq(
+      'export',
+      field('declaration', alias($._compound_assignment, $.assignment))
     ),
 
     import: $ => seq(
@@ -66,6 +75,11 @@ module.exports = grammar({
       field('left', $.identifier),
       '=>',
       field('right', $.identifier)
+    ),
+
+    _simple_export: $ => seq(
+      'export',
+      field('declaration', alias($._simple_assignment, $.assignment))
     ),
 
     _expression: $ => choice($._simple_expression, $._compound_expression),

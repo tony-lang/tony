@@ -2,7 +2,7 @@
   "version": "v1",
   "packages": {
     "tree-sitter-tony": {
-      "signature": "dc1cdac88eb0836959af00f2395c6e1e",
+      "signature": "6fe22217894aed2138efb6b7b44daea1",
       "file": true
     }
   }
