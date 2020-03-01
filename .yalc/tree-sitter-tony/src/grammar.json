@@ -517,27 +517,49 @@
       }
     },
     "parameters": {
-      "type": "SEQ",
+      "type": "CHOICE",
       "members": [
         {
           "type": "SYMBOL",
           "name": "parameter"
         },
         {
-          "type": "REPEAT",
-          "content": {
-            "type": "SEQ",
-            "members": [
-              {
-                "type": "STRING",
-                "value": ","
-              },
-              {
-                "type": "SYMBOL",
-                "name": "parameter"
-              }
-            ]
-          }
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "STRING",
+              "value": "("
+            },
+            {
+              "type": "SEQ",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "parameter"
+                },
+                {
+                  "type": "REPEAT",
+                  "content": {
+                    "type": "SEQ",
+                    "members": [
+                      {
+                        "type": "STRING",
+                        "value": ","
+                      },
+                      {
+                        "type": "SYMBOL",
+                        "name": "parameter"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "type": "STRING",
+              "value": ")"
+            }
+          ]
         }
       ]
     },
@@ -792,8 +814,13 @@
                 "type": "FIELD",
                 "name": "abstraction",
                 "content": {
-                  "type": "STRING",
-                  "value": "!"
+                  "type": "ALIAS",
+                  "content": {
+                    "type": "STRING",
+                    "value": "!"
+                  },
+                  "named": true,
+                  "value": "infix_application_operator"
                 }
               },
               {
@@ -825,8 +852,13 @@
                 "type": "FIELD",
                 "name": "abstraction",
                 "content": {
-                  "type": "STRING",
-                  "value": "^"
+                  "type": "ALIAS",
+                  "content": {
+                    "type": "STRING",
+                    "value": "^"
+                  },
+                  "named": true,
+                  "value": "infix_application_operator"
                 }
               },
               {
@@ -858,8 +890,13 @@
                 "type": "FIELD",
                 "name": "abstraction",
                 "content": {
-                  "type": "STRING",
-                  "value": "*"
+                  "type": "ALIAS",
+                  "content": {
+                    "type": "STRING",
+                    "value": "*"
+                  },
+                  "named": true,
+                  "value": "infix_application_operator"
                 }
               },
               {
@@ -891,8 +928,13 @@
                 "type": "FIELD",
                 "name": "abstraction",
                 "content": {
-                  "type": "STRING",
-                  "value": "/"
+                  "type": "ALIAS",
+                  "content": {
+                    "type": "STRING",
+                    "value": "/"
+                  },
+                  "named": true,
+                  "value": "infix_application_operator"
                 }
               },
               {
@@ -924,8 +966,13 @@
                 "type": "FIELD",
                 "name": "abstraction",
                 "content": {
-                  "type": "STRING",
-                  "value": "%"
+                  "type": "ALIAS",
+                  "content": {
+                    "type": "STRING",
+                    "value": "%"
+                  },
+                  "named": true,
+                  "value": "infix_application_operator"
                 }
               },
               {
@@ -957,8 +1004,13 @@
                 "type": "FIELD",
                 "name": "abstraction",
                 "content": {
-                  "type": "STRING",
-                  "value": "+"
+                  "type": "ALIAS",
+                  "content": {
+                    "type": "STRING",
+                    "value": "+"
+                  },
+                  "named": true,
+                  "value": "infix_application_operator"
                 }
               },
               {
@@ -990,8 +1042,13 @@
                 "type": "FIELD",
                 "name": "abstraction",
                 "content": {
-                  "type": "STRING",
-                  "value": "-"
+                  "type": "ALIAS",
+                  "content": {
+                    "type": "STRING",
+                    "value": "-"
+                  },
+                  "named": true,
+                  "value": "infix_application_operator"
                 }
               },
               {
@@ -1023,8 +1080,13 @@
                 "type": "FIELD",
                 "name": "abstraction",
                 "content": {
-                  "type": "STRING",
-                  "value": "<"
+                  "type": "ALIAS",
+                  "content": {
+                    "type": "STRING",
+                    "value": "<"
+                  },
+                  "named": true,
+                  "value": "infix_application_operator"
                 }
               },
               {
@@ -1056,8 +1118,13 @@
                 "type": "FIELD",
                 "name": "abstraction",
                 "content": {
-                  "type": "STRING",
-                  "value": "<="
+                  "type": "ALIAS",
+                  "content": {
+                    "type": "STRING",
+                    "value": "<="
+                  },
+                  "named": true,
+                  "value": "infix_application_operator"
                 }
               },
               {
@@ -1089,8 +1156,13 @@
                 "type": "FIELD",
                 "name": "abstraction",
                 "content": {
-                  "type": "STRING",
-                  "value": ">"
+                  "type": "ALIAS",
+                  "content": {
+                    "type": "STRING",
+                    "value": ">"
+                  },
+                  "named": true,
+                  "value": "infix_application_operator"
                 }
               },
               {
@@ -1122,8 +1194,13 @@
                 "type": "FIELD",
                 "name": "abstraction",
                 "content": {
-                  "type": "STRING",
-                  "value": ">="
+                  "type": "ALIAS",
+                  "content": {
+                    "type": "STRING",
+                    "value": ">="
+                  },
+                  "named": true,
+                  "value": "infix_application_operator"
                 }
               },
               {
@@ -1155,8 +1232,13 @@
                 "type": "FIELD",
                 "name": "abstraction",
                 "content": {
-                  "type": "STRING",
-                  "value": "=="
+                  "type": "ALIAS",
+                  "content": {
+                    "type": "STRING",
+                    "value": "=="
+                  },
+                  "named": true,
+                  "value": "infix_application_operator"
                 }
               },
               {
@@ -1188,8 +1270,13 @@
                 "type": "FIELD",
                 "name": "abstraction",
                 "content": {
-                  "type": "STRING",
-                  "value": "!="
+                  "type": "ALIAS",
+                  "content": {
+                    "type": "STRING",
+                    "value": "!="
+                  },
+                  "named": true,
+                  "value": "infix_application_operator"
                 }
               },
               {
@@ -1221,8 +1308,13 @@
                 "type": "FIELD",
                 "name": "abstraction",
                 "content": {
-                  "type": "STRING",
-                  "value": "==="
+                  "type": "ALIAS",
+                  "content": {
+                    "type": "STRING",
+                    "value": "==="
+                  },
+                  "named": true,
+                  "value": "infix_application_operator"
                 }
               },
               {
@@ -1254,8 +1346,13 @@
                 "type": "FIELD",
                 "name": "abstraction",
                 "content": {
-                  "type": "STRING",
-                  "value": "!=="
+                  "type": "ALIAS",
+                  "content": {
+                    "type": "STRING",
+                    "value": "!=="
+                  },
+                  "named": true,
+                  "value": "infix_application_operator"
                 }
               },
               {
@@ -1287,8 +1384,13 @@
                 "type": "FIELD",
                 "name": "abstraction",
                 "content": {
-                  "type": "STRING",
-                  "value": "&&"
+                  "type": "ALIAS",
+                  "content": {
+                    "type": "STRING",
+                    "value": "&&"
+                  },
+                  "named": true,
+                  "value": "infix_application_operator"
                 }
               },
               {
@@ -1320,8 +1422,13 @@
                 "type": "FIELD",
                 "name": "abstraction",
                 "content": {
-                  "type": "STRING",
-                  "value": "||"
+                  "type": "ALIAS",
+                  "content": {
+                    "type": "STRING",
+                    "value": "||"
+                  },
+                  "named": true,
+                  "value": "infix_application_operator"
                 }
               },
               {
@@ -1353,8 +1460,13 @@
                 "type": "FIELD",
                 "name": "abstraction",
                 "content": {
-                  "type": "STRING",
-                  "value": "==>"
+                  "type": "ALIAS",
+                  "content": {
+                    "type": "STRING",
+                    "value": "==>"
+                  },
+                  "named": true,
+                  "value": "infix_application_operator"
                 }
               },
               {
@@ -1386,8 +1498,13 @@
                 "type": "FIELD",
                 "name": "abstraction",
                 "content": {
-                  "type": "STRING",
-                  "value": "<=>"
+                  "type": "ALIAS",
+                  "content": {
+                    "type": "STRING",
+                    "value": "<=>"
+                  },
+                  "named": true,
+                  "value": "infix_application_operator"
                 }
               },
               {
@@ -1419,8 +1536,13 @@
                 "type": "FIELD",
                 "name": "abstraction",
                 "content": {
-                  "type": "SYMBOL",
-                  "name": "_operator"
+                  "type": "ALIAS",
+                  "content": {
+                    "type": "SYMBOL",
+                    "name": "_operator"
+                  },
+                  "named": true,
+                  "value": "infix_application_operator"
                 }
               },
               {
@@ -1456,8 +1578,13 @@
                 "type": "FIELD",
                 "name": "abstraction",
                 "content": {
-                  "type": "SYMBOL",
-                  "name": "_identifier_without_operators"
+                  "type": "ALIAS",
+                  "content": {
+                    "type": "SYMBOL",
+                    "name": "_identifier_without_operators"
+                  },
+                  "named": true,
+                  "value": "infix_application_operator"
                 }
               },
               {
@@ -1808,7 +1935,7 @@
         },
         {
           "type": "STRING",
-          "value": "=>"
+          "value": "->"
         },
         {
           "type": "FIELD",

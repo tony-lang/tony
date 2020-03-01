@@ -115,7 +115,14 @@ module.exports = grammar({
       field('name', $.identifier),
       optional(seq('=', field('value', $._simple_expression)))
     )),
-    parameters: $ => commaSep1($.parameter),
+    parameters: $ => choice(
+      $.parameter,
+      seq(
+        '(',
+        commaSep1($.parameter),
+        ')'
+      )
+    ),
 
     argument: $ => field('value', $._expression),
     arguments: $ => commaSep1($.argument),
@@ -162,34 +169,34 @@ module.exports = grammar({
       field('argument', $._simple_expression)
     )),
     infix_application: $ => choice(
-      prec.left(PREC.NOT, seq(field('left', $._simple_expression), field('abstraction', '!'), field('right', $._simple_expression))),
-      prec.left(PREC.EXPONENTIATION, seq(field('left', $._simple_expression), field('abstraction', '^'), field('right', $._simple_expression))),
-      prec.left(PREC.PRODUCT, seq(field('left', $._simple_expression), field('abstraction', '*'), field('right', $._simple_expression))),
-      prec.left(PREC.PRODUCT, seq(field('left', $._simple_expression), field('abstraction', '/'), field('right', $._simple_expression))),
-      prec.left(PREC.PRODUCT, seq(field('left', $._simple_expression), field('abstraction', '%'), field('right', $._simple_expression))),
-      prec.left(PREC.SUM, seq(field('left', $._simple_expression), field('abstraction', '+'), field('right', $._simple_expression))),
-      prec.left(PREC.SUM, seq(field('left', $._simple_expression), field('abstraction', '-'), field('right', $._simple_expression))),
-      prec.left(PREC.ORDER, seq(field('left', $._simple_expression), field('abstraction', '<'), field('right', $._simple_expression))),
-      prec.left(PREC.ORDER, seq(field('left', $._simple_expression), field('abstraction', '<='), field('right', $._simple_expression))),
-      prec.left(PREC.ORDER, seq(field('left', $._simple_expression), field('abstraction', '>'), field('right', $._simple_expression))),
-      prec.left(PREC.ORDER, seq(field('left', $._simple_expression), field('abstraction', '>='), field('right', $._simple_expression))),
-      prec.left(PREC.EQUALITY, seq(field('left', $._simple_expression), field('abstraction', '=='), field('right', $._simple_expression))),
-      prec.left(PREC.EQUALITY, seq(field('left', $._simple_expression), field('abstraction', '!='), field('right', $._simple_expression))),
-      prec.left(PREC.EQUALITY, seq(field('left', $._simple_expression), field('abstraction', '==='), field('right', $._simple_expression))),
-      prec.left(PREC.EQUALITY, seq(field('left', $._simple_expression), field('abstraction', '!=='), field('right', $._simple_expression))),
-      prec.left(PREC.AND, seq(field('left', $._simple_expression), field('abstraction', '&&'), field('right', $._simple_expression))),
-      prec.left(PREC.OR, seq(field('left', $._simple_expression), field('abstraction', '||'), field('right', $._simple_expression))),
-      prec.left(PREC.IMPLICATION, seq(field('left', $._simple_expression), field('abstraction', '==>'), field('right', $._simple_expression))),
-      prec.left(PREC.BICONDITIONAL, seq(field('left', $._simple_expression), field('abstraction', '<=>'), field('right', $._simple_expression))),
+      prec.left(PREC.NOT, seq(field('left', $._simple_expression), field('abstraction', alias('!', $.infix_application_operator)), field('right', $._simple_expression))),
+      prec.left(PREC.EXPONENTIATION, seq(field('left', $._simple_expression), field('abstraction', alias('^', $.infix_application_operator)), field('right', $._simple_expression))),
+      prec.left(PREC.PRODUCT, seq(field('left', $._simple_expression), field('abstraction', alias('*', $.infix_application_operator)), field('right', $._simple_expression))),
+      prec.left(PREC.PRODUCT, seq(field('left', $._simple_expression), field('abstraction', alias('/', $.infix_application_operator)), field('right', $._simple_expression))),
+      prec.left(PREC.PRODUCT, seq(field('left', $._simple_expression), field('abstraction', alias('%', $.infix_application_operator)), field('right', $._simple_expression))),
+      prec.left(PREC.SUM, seq(field('left', $._simple_expression), field('abstraction', alias('+', $.infix_application_operator)), field('right', $._simple_expression))),
+      prec.left(PREC.SUM, seq(field('left', $._simple_expression), field('abstraction', alias('-', $.infix_application_operator)), field('right', $._simple_expression))),
+      prec.left(PREC.ORDER, seq(field('left', $._simple_expression), field('abstraction', alias('<', $.infix_application_operator)), field('right', $._simple_expression))),
+      prec.left(PREC.ORDER, seq(field('left', $._simple_expression), field('abstraction', alias('<=', $.infix_application_operator)), field('right', $._simple_expression))),
+      prec.left(PREC.ORDER, seq(field('left', $._simple_expression), field('abstraction', alias('>', $.infix_application_operator)), field('right', $._simple_expression))),
+      prec.left(PREC.ORDER, seq(field('left', $._simple_expression), field('abstraction', alias('>=', $.infix_application_operator)), field('right', $._simple_expression))),
+      prec.left(PREC.EQUALITY, seq(field('left', $._simple_expression), field('abstraction', alias('==', $.infix_application_operator)), field('right', $._simple_expression))),
+      prec.left(PREC.EQUALITY, seq(field('left', $._simple_expression), field('abstraction', alias('!=', $.infix_application_operator)), field('right', $._simple_expression))),
+      prec.left(PREC.EQUALITY, seq(field('left', $._simple_expression), field('abstraction', alias('===', $.infix_application_operator)), field('right', $._simple_expression))),
+      prec.left(PREC.EQUALITY, seq(field('left', $._simple_expression), field('abstraction', alias('!==', $.infix_application_operator)), field('right', $._simple_expression))),
+      prec.left(PREC.AND, seq(field('left', $._simple_expression), field('abstraction', alias('&&', $.infix_application_operator)), field('right', $._simple_expression))),
+      prec.left(PREC.OR, seq(field('left', $._simple_expression), field('abstraction', alias('||', $.infix_application_operator)), field('right', $._simple_expression))),
+      prec.left(PREC.IMPLICATION, seq(field('left', $._simple_expression), field('abstraction', alias('==>', $.infix_application_operator)), field('right', $._simple_expression))),
+      prec.left(PREC.BICONDITIONAL, seq(field('left', $._simple_expression), field('abstraction', alias('<=>', $.infix_application_operator)), field('right', $._simple_expression))),
       prec.left(PREC.OPERATOR_INFIX, seq(
         field('left', $._simple_expression),
-        field('abstraction', $._operator),
+        field('abstraction', alias($._operator, $.infix_application_operator)),
         field('right', $._simple_expression))
       ),
       prec.left(PREC.NAMED_INFIX, seq(
         field('left', $._simple_expression),
         '`',
-        field('abstraction', $._identifier_without_operators),
+        field('abstraction', alias($._identifier_without_operators, $.infix_application_operator)),
         '`',
         field('right', $._simple_expression))
       )
@@ -240,7 +247,7 @@ module.exports = grammar({
     ),
     expression_pair: $ => seq(
       field('left', $._expression),
-      '=>',
+      '->',
       field('right', $._expression)
     ),
     spread: $ => seq(
