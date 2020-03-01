@@ -31,7 +31,7 @@
     "@babel/preset-env": "^7.8.6",
     "commander": "^4.1.1",
     "core-js": "^3.6.4",
-    "inquirer": "^7.0.4",
+    "inquirer": "^7.0.5",
     "mkdirp": "^1.0.3",
     "outdent": "^0.7.0",
     "tree-sitter": "^0.16.0",
