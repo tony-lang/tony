@@ -5,7 +5,8 @@ import { getOutputPathForFile } from './utilities'
 import {
   FILE_EXTENSION,
   TARGET_FILE_EXTENSION,
-  KEYWORD_IDENTIFIERS
+  KEYWORD_IDENTIFIERS,
+  DEFAULT_IMPORTS
 } from './constants'
 
 export default class GenerateCode {
@@ -88,7 +89,7 @@ export default class GenerateCode {
     const parameters = this.generate(node.namedChild(0))
     const body = this.generate(node.namedChild(1))
 
-    return `((${parameters})=>${body})`
+    return `stdlib.curry((${parameters})=>${body})`
   }
 
   generateApplication = (node: Parser.SyntaxNode): string => {
@@ -234,14 +235,14 @@ export default class GenerateCode {
       .map(expression => this.generate(expression))
       .join(';')
 
-    return expressions
+    return `${DEFAULT_IMPORTS};${expressions}`
   }
 
   generateRange = (node: Parser.SyntaxNode): string => {
     const start = this.generate(node.namedChild(0))
     const end = this.generate(node.namedChild(1))
 
-    return `...Array(${end}-${start}).keys().map(i => i+${start})`
+    return `stdlib.range(${start},${end})`
   }
 
   generateRegex = (node: Parser.SyntaxNode): string => {
