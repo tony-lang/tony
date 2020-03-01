@@ -12,9 +12,9 @@ import {
 export default class GenerateCode {
   file: string
   private files: string[]
-  private identifiers: string[] = []
+  // private identifiers: string[] = []
   private outputPath: string
-  private standardizeApartIdentifiers = true
+  // private standardizeApartIdentifiers = true
 
   constructor(outputPath: string, files: string[]) {
     this.outputPath = outputPath
@@ -53,6 +53,8 @@ export default class GenerateCode {
       return this.generateImportClauseIdentifierPair(node)
     case 'infix_application':
       return this.generateInfixApplication(node)
+    case 'infix_application_operator':
+      return this.generateInfixApplicationOperator(node)
     case 'list':
       return this.generateList(node)
     case 'map':
@@ -75,6 +77,8 @@ export default class GenerateCode {
       return this.generateRegex(node)
     case 'return':
       return this.generateReturn(node)
+    case 'shorthand_pair_identifier':
+      return this.generateShorthandPairIdentifier(node)
     case 'spread':
       return this.generateSpread(node)
     case 'string':
@@ -148,7 +152,7 @@ export default class GenerateCode {
     const left = this.generate(node.namedChild(0))
     const right = this.generate(node.namedChild(1))
 
-    return `${left}:${right}`
+    return `[${left}]:${right}`
   }
 
   generateIdentifier = (node: Parser.SyntaxNode): string => {
@@ -171,21 +175,26 @@ export default class GenerateCode {
   }
 
   generateImportClauseIdentifierPair = (node: Parser.SyntaxNode): string => {
-    this.standardizeApartIdentifiers = false
+    // this.standardizeApartIdentifiers = false
     const left = this.generate(node.namedChild(0))
-    this.standardizeApartIdentifiers = true
+    // this.standardizeApartIdentifiers = true
     const right = this.generate(node.namedChild(1))
 
     return `${left} as ${right}`
   }
 
   generateInfixApplication = (node: Parser.SyntaxNode): string => {
-    const abstraction =
-      node.child(1).text === '`' ? node.child(2).text : node.child(1).text
+    const abstraction = this.generate(
+      node.child(1).text === '`' ? node.child(2) : node.child(1)
+    )
     const left = this.generate(node.namedChild(0))
     const right = this.generate(node.namedChild(1))
 
     return `${abstraction}(${left}, ${right})`
+  }
+
+  generateInfixApplicationOperator = (node: Parser.SyntaxNode): string => {
+    return this.getIdentifier(node.text)
   }
 
   generateList = (node: Parser.SyntaxNode): string => {
@@ -264,6 +273,10 @@ export default class GenerateCode {
     return `return ${value}`
   }
 
+  generateShorthandPairIdentifier = (node: Parser.SyntaxNode): string => {
+    return this.getIdentifier(node.text)
+  }
+
   generateSpread = (node: Parser.SyntaxNode): string => {
     const expression = this.generate(node.namedChild(0))
 
@@ -283,14 +296,16 @@ export default class GenerateCode {
   }
 
   private getIdentifier = (identifier: string): string => {
-    if (!this.standardizeApartIdentifiers) return identifier
-    if (KEYWORD_IDENTIFIERS.includes(identifier)) return identifier
+    return identifier
 
-    const index = this.identifiers.indexOf(identifier)
-    if (index != -1) return `i${index}`
+    // if (!this.standardizeApartIdentifiers) return identifier
+    // if (KEYWORD_IDENTIFIERS.includes(identifier)) return identifier
 
-    const length = this.identifiers.push(identifier)
-    return `i${length - 1}`
+    // const index = this.identifiers.indexOf(identifier)
+    // if (index != -1) return `i${index}`
+
+    // const length = this.identifiers.push(identifier)
+    // return `i${length - 1}`
   }
 
   private getImportSource = (source: string): string => {
