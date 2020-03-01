@@ -11,6 +11,8 @@ export default class GenerateCode {
       return this.generateArgument(node)
     case 'arguments':
       return this.generateArguments(node)
+    case 'assignment':
+      return this.generateAssignment(node)
     case 'block':
       return this.generateBlock(node)
     case 'boolean':
@@ -83,6 +85,13 @@ export default class GenerateCode {
       .join(',')
 
     return args
+  }
+
+  generateAssignment = (node: Parser.SyntaxNode): string => {
+    const name = this.generate(node.namedChild(0))
+    const value = this.generate(node.namedChild(1))
+
+    return `const ${name}=${value};${name}`
   }
 
   generateBlock = (node: Parser.SyntaxNode): string => {

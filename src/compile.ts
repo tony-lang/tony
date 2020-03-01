@@ -43,7 +43,8 @@ export const compile = (
     )
   }).then(() => {
     babelCompile(tony, outFile, outDir)
-    if (!retainOutDir) cleanup(outDir, [getOutputPathForFile(outputPath, file)])
+    if (!retainOutDir)
+      cleanup(tony, outDir, [getOutputPathForFile(outputPath, file)])
     return outFile
   })
 }
@@ -60,7 +61,9 @@ const babelCompile = (tony: Tony, outFile: string, outDir: string): void => {
   if (p.status != 0) process.exit(p.status)
 }
 
-const cleanup = (outDir: string, files: string[]): void => {
+const cleanup = (tony: Tony, outDir: string, files: string[]): void => {
+  if (tony.debug) console.log('Cleaning up temporary files...')
+
   files.forEach(file => fs.unlinkSync(file))
   if (fs.readdirSync(outDir).length == 0) fs.rmdirSync(outDir)
 }
