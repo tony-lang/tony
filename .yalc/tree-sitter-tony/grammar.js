@@ -36,7 +36,37 @@ module.exports = grammar({
   conflicts: $ => [[$.parameter, $._simple_expression]],
 
   rules: {
-    program: $ => seq(optional($.hash_bang_line), optional($._expression_seq)),
+    program: $ => seq(optional($.hash_bang_line), optional($._statement_seq)),
+    hash_bang_line: $ => /#!.*/,
+
+    _statement: $ => choice($._simple_statement, $._compound_statement),
+    _statement_seq: $ => choice(
+      $._statement,
+      seq($._simple_statement, $._newline, optional($._statement_seq)),
+      seq($._compound_statement, $._statement_seq)
+    ),
+    _compound_statement: $ => $._compound_expression,
+    _simple_statement: $ => choice(
+      $.import,
+      $._simple_expression
+    ),
+
+    import: $ => seq(
+      'import',
+      field('clause', $.import_clause),
+      'from',
+      field('source', $.string)
+    ),
+    import_clause: $ => seq(
+      '{',
+      commaSep1(choice($.identifier, $.import_clause_identifier_pair)),
+      '}'
+    ),
+    import_clause_identifier_pair: $ => seq(
+      field('left', $.identifier),
+      '=>',
+      field('right', $.identifier)
+    ),
 
     _expression: $ => choice($._simple_expression, $._compound_expression),
     _expression_seq: $ => choice(
@@ -44,12 +74,26 @@ module.exports = grammar({
       seq($._simple_expression, $._newline, optional($._expression_seq)),
       seq($._compound_expression, $._expression_seq)
     ),
-
     _compound_expression: $ => choice(
       alias($._compound_abstraction, $.abstraction),
       alias($._compound_assignment, $.assignment),
       alias($._compound_return, $.return)
     ),
+    _simple_expression: $ => prec(PREC.INLINE_EXPRESSION, choice(
+      $._group,
+      alias($._simple_abstraction, $.abstraction),
+      $.application,
+      $.prefix_application,
+      $.infix_application,
+      $.pipeline,
+      alias($._simple_assignment, $.assignment),
+      alias($._simple_return, $.return),
+      $.map,
+      $.tuple,
+      $.list,
+      $.identifier,
+      $._literal
+    )),
 
     block: $ => seq($._indent, $._expression_seq, $._dedent),
 
@@ -84,22 +128,6 @@ module.exports = grammar({
       'return',
       field('value', $._compound_expression)
     ),
-
-    _simple_expression: $ => prec(PREC.INLINE_EXPRESSION, choice(
-      $._group,
-      alias($._simple_abstraction, $.abstraction),
-      $.application,
-      $.prefix_application,
-      $.infix_application,
-      $.pipeline,
-      alias($._simple_assignment, $.assignment),
-      alias($._simple_return, $.return),
-      $.map,
-      $.tuple,
-      $.list,
-      $._literal,
-      $.identifier
-    )),
 
     _group: $ => seq('(', $._simple_expression, ')'),
 
@@ -211,14 +239,17 @@ module.exports = grammar({
       field('right', $._expression)
     ),
 
+    _identifier_without_operators: $ => /_?[a-z][a-z0-9_]*\??/,
+    _operator: $ => /(==|[!@#$%^&*|<>~*\\\-+/]+)=*>?/,
+    identifier: $ => choice($._operator, $._identifier_without_operators, '/'),
+
     _literal: $ => choice(
+      $.boolean,
       $.number,
       $.string,
-      prec(PREC.REGEX, $.regex),
-      $.boolean
+      prec(PREC.REGEX, $.regex)
     ),
 
-    hash_bang_line: $ => /#!.*/,
     boolean: $ => choice('false', 'true'),
 
     _decimal: $ => {
@@ -237,11 +268,6 @@ module.exports = grammar({
       seq(repeat1(/_?[0-9]+/))
     )),
     number: $ => choice($._decimal, $._integer),
-
-    type: $ => /_?[A-Z0-9][a-zA-Z0-9]*/,
-    _identifier_without_operators: $ => /_?[a-z][a-z0-9_]*\??/,
-    _operator: $ => /(==|[!@#$%^&*|<>~*\\\-+/]+)=*>?/,
-    identifier: $ => choice($._operator, $._identifier_without_operators, '/'),
 
     string: $ => seq(
       $._string_start,
@@ -278,7 +304,6 @@ module.exports = grammar({
       ), seq('\\', /./), /[^/\\\[\n]/))
     ),
     regex_flags: $ => token.immediate(/[a-z]+/),
-
 
     comment: $ => token(seq('#', /.*/))
   }

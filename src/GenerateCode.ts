@@ -1,9 +1,24 @@
+import path from 'path'
 import Parser from 'tree-sitter'
 
-const KEYWORD_IDENTIFIERS = Object.freeze(['eval'])
+import { getOutputPathForFile } from './utilities'
+import {
+  FILE_EXTENSION,
+  TARGET_FILE_EXTENSION,
+  KEYWORD_IDENTIFIERS
+} from './constants'
 
 export default class GenerateCode {
-  identifiers: string[] = [];
+  file: string
+  private files: string[]
+  private identifiers: string[] = []
+  private outputPath: string
+  private standardizeApartIdentifiers = true
+
+  constructor(outputPath: string, files: string[]) {
+    this.outputPath = outputPath
+    this.files = files
+  }
 
   generate = (node: Parser.SyntaxNode): string => {
     switch (node.type) {
@@ -27,6 +42,12 @@ export default class GenerateCode {
       return this.generateExpressionPair(node)
     case 'identifier':
       return this.generateIdentifier(node)
+    case 'import':
+      return this.generateImport(node)
+    case 'import_clause':
+      return this.generateImportClause(node)
+    case 'import_clause_identifier_pair':
+      return this.generateImportClauseIdentifierPair(node)
     case 'infix_application':
       return this.generateInfixApplication(node)
     case 'list':
@@ -115,14 +136,38 @@ export default class GenerateCode {
   }
 
   generateExpressionPair = (node: Parser.SyntaxNode): string => {
-    const key = this.generate(node.namedChild(0))
-    const value = this.generate(node.namedChild(1))
+    const left = this.generate(node.namedChild(0))
+    const right = this.generate(node.namedChild(1))
 
-    return `${key}:${value}`
+    return `${left}:${right}`
   }
 
   generateIdentifier = (node: Parser.SyntaxNode): string => {
     return this.getIdentifier(node.text)
+  }
+
+  generateImport = (node: Parser.SyntaxNode): string => {
+    const clause = this.generate(node.namedChild(0))
+    const source = this.generate(node.namedChild(1)).slice(1, -1)
+
+    return `import ${clause} from '${this.getImportSource(source)}'`
+  }
+
+  generateImportClause = (node: Parser.SyntaxNode): string => {
+    const elements = node.namedChildren
+      .map(element => this.generate(element))
+      .join(',')
+
+    return `{${elements}}`
+  }
+
+  generateImportClauseIdentifierPair = (node: Parser.SyntaxNode): string => {
+    this.standardizeApartIdentifiers = false
+    const left = this.generate(node.namedChild(0))
+    this.standardizeApartIdentifiers = true
+    const right = this.generate(node.namedChild(1))
+
+    return `${left} as ${right}`
   }
 
   generateInfixApplication = (node: Parser.SyntaxNode): string => {
@@ -229,6 +274,7 @@ export default class GenerateCode {
   }
 
   private getIdentifier = (identifier: string): string => {
+    if (!this.standardizeApartIdentifiers) return identifier
     if (KEYWORD_IDENTIFIERS.includes(identifier)) return identifier
 
     const index = this.identifiers.indexOf(identifier)
@@ -236,6 +282,19 @@ export default class GenerateCode {
 
     const length = this.identifiers.push(identifier)
     return `i${length - 1}`
+  }
+
+  private getImportSource = (source: string): string => {
+    const pathToSource = path.join(this.file, '..', source)
+    if (!source.endsWith(FILE_EXTENSION)) return pathToSource
+
+    const pathToCompiledSource = path.join(
+      getOutputPathForFile(this.outputPath, this.file),
+      '..',
+      source.replace(FILE_EXTENSION, TARGET_FILE_EXTENSION)
+    )
+    this.files.push(pathToSource)
+    return pathToCompiledSource
   }
 
   static nodeHasChild = (node: Parser.SyntaxNode, type: string): boolean => {

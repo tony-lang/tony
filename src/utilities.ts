@@ -2,6 +2,8 @@ import fs from 'fs'
 import mkdirp from 'mkdirp'
 import path from 'path'
 
+import { FILE_EXTENSION, TARGET_FILE_EXTENSION } from './constants'
+
 export const readFile = (filePath: string): Promise<string> => {
   return new Promise((resolve, reject) => {
     fs.readFile(filePath, 'utf8', (error, data) => {
@@ -32,47 +34,25 @@ export const getWorkingDirectoryName = (): string => {
 }
 
 export const getProjectFileName = (project: string): string => {
-  return project.endsWith('.tn') ? project : `${project}.tn`
+  return project.endsWith(FILE_EXTENSION) ? project : `${project}${FILE_EXTENSION}`
 }
 
 export const getProjectName = (project: string): string => {
-  return project.endsWith('.tn') ? project.replace('.tn', '') : project
+  return project.endsWith(FILE_EXTENSION) ? project.replace(FILE_EXTENSION, '') : project
 }
 
 export const getOutputFileName = (project: string): string => {
-  return `${getProjectName(project)}.js`
+  return `${getProjectName(project)}${TARGET_FILE_EXTENSION}`
 }
 
 export const getOutputPathForFile = (
   outputPath: string,
   file: string
 ): string => {
-  const filePath =
-    file.replace(process.cwd(), '').replace(__dirname, '').replace('.tn', '.js')
+  const filePath = file
+    .replace(process.cwd(), '')
+    .replace(__dirname, '')
+    .replace(FILE_EXTENSION, TARGET_FILE_EXTENSION)
 
-  return `${outputPath}${filePath}`
-}
-
-export const getRelativePathToOutDir = (
-  outputPath: string,
-  fileOutputPath: string
-): string => {
-  const dirDepth = fileOutputPath.replace(outputPath, '').split('/').length - 2
-
-  return '.' + '/..'.repeat(dirDepth)
-}
-
-export const getRelativeOutputPathForFile = (
-  outputPath: string,
-  fileOutputPath: string
-): string => {
-  const filePath = fileOutputPath.replace(outputPath, '')
-
-  return getRelativePathToOutDir(outputPath, fileOutputPath) + filePath
-}
-
-export const range = (start: number, end: number): number[] => {
-  if (end < start) return []
-
-  return Array.from({length: (end + 1 - start)}, (v, k) => k + start)
+  return path.join(outputPath, filePath)
 }
