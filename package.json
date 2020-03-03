@@ -33,7 +33,7 @@
     "rimraf": "^3.0.2",
     "tree-sitter": "^0.16.0",
     "tree-sitter-tony": "file:.yalc/tree-sitter-tony",
-    "webpack": "^4.41.6",
+    "webpack": "^4.42.0",
     "webpack-cli": "^3.3.11"
   },
   "bin": {
