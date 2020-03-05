@@ -27,7 +27,7 @@
   "homepage": "https://github.com/tony-lang/tony#readme",
   "dependencies": {
     "commander": "^4.1.1",
-    "inquirer": "^7.0.5",
+    "inquirer": "^7.0.6",
     "mkdirp": "^1.0.3",
     "outdent": "^0.7.0",
     "rimraf": "^3.0.2",
