@@ -98,7 +98,8 @@ export default class GenerateCode {
       .map(element => this.generate(element))
       .join('')
 
-    return `stdlib.curry((...args)=>stdlib.match(args)${body}.else((...args)=>{throw('Pattern matching non-exhaustive!')}))`
+    return `stdlib.curry((...args)=>stdlib.match(args)${body}.else((...args)` +
+           '=>{throw(\'Pattern matching non-exhaustive!\')}))'
   }
 
   generateAbstractionBranch = (node: Parser.SyntaxNode): string => {
@@ -244,16 +245,16 @@ export default class GenerateCode {
     const parameters = rawParameters
       .map(parameter => {
         switch (parameter[0]) {
-          case 'L': return '_'
-          default: return parameter
+        case 'L': return '_'
+        default: return parameter
         }
       })
       .join(',')
     const pattern = rawParameters
       .map((parameter, i) => {
         switch (parameter[0]) {
-          case 'L': return parameter.substring(1)
-          default: return `args[${i}]`
+        case 'L': return parameter.substring(1)
+        default: return `args[${i}]`
         }
       })
       .join(',')
