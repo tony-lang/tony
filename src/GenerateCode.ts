@@ -25,6 +25,8 @@ export default class GenerateCode {
     switch (node.type) {
     case 'abstraction':
       return this.generateAbstraction(node)
+    case 'abstraction_branch':
+      return this.generateAbstractionBranch(node)
     case 'application':
       return this.generateApplication(node)
     case 'argument':
@@ -92,10 +94,19 @@ export default class GenerateCode {
   }
 
   generateAbstraction = (node: Parser.SyntaxNode): string => {
+    const body = node.namedChildren
+      .map(element => this.generate(element))
+      .join('')
+
+    return `stdlib.curry((...args)=>stdlib.match(args)${body}.else((...args)` +
+           '=>{throw(\'Pattern matching non-exhaustive!\')}))'
+  }
+
+  generateAbstractionBranch = (node: Parser.SyntaxNode): string => {
     const parameters = this.generate(node.namedChild(0))
     const body = this.generate(node.namedChild(1))
 
-    return `stdlib.curry((${parameters})=>${body})`
+    return `.case(${parameters}=>${body})`
   }
 
   generateApplication = (node: Parser.SyntaxNode): string => {
@@ -218,6 +229,9 @@ export default class GenerateCode {
   }
 
   generateParameter = (node: Parser.SyntaxNode): string => {
+    if (!GenerateCode.nodeHasChild(node, 'identifier'))
+      return `L${this.generate(node.namedChild(0))}`
+
     const name = this.generate(node.namedChild(0))
     if (!GenerateCode.nodeHasChild(node, '=')) return name
 
@@ -226,11 +240,26 @@ export default class GenerateCode {
   }
 
   generateParameters = (node: Parser.SyntaxNode): string => {
-    const parameters = node.namedChildren
+    const rawParameters = node.namedChildren
       .map(parameter => this.generate(parameter))
+    const parameters = rawParameters
+      .map(parameter => {
+        switch (parameter[0]) {
+        case 'L': return '_'
+        default: return parameter
+        }
+      })
+      .join(',')
+    const pattern = rawParameters
+      .map((parameter, i) => {
+        switch (parameter[0]) {
+        case 'L': return parameter.substring(1)
+        default: return `args[${i}]`
+        }
+      })
       .join(',')
 
-    return parameters
+    return `[${pattern}],(${parameters})`
   }
 
   generatePipeline = (node: Parser.SyntaxNode): string => {
