@@ -1,1 +1,0 @@
-import * as stdlib from '/mnt/c/code/tony-lang/tony/lib/stdlib';import {a as a} from '/mnt/c/code/tony-lang/tony/a.js';const print=eval('console.log');const a=1;print({a,b})
