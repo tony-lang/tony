@@ -265,6 +265,10 @@
           },
           {
             "type": "SYMBOL",
+            "name": "list_comprehension"
+          },
+          {
+            "type": "SYMBOL",
             "name": "identifier"
           },
           {
@@ -1512,6 +1516,48 @@
         ]
       }
     },
+    "expression_pair": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "FIELD",
+          "name": "left",
+          "content": {
+            "type": "SYMBOL",
+            "name": "_expression"
+          }
+        },
+        {
+          "type": "STRING",
+          "value": "->"
+        },
+        {
+          "type": "FIELD",
+          "name": "right",
+          "content": {
+            "type": "SYMBOL",
+            "name": "_expression"
+          }
+        }
+      ]
+    },
+    "spread": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "..."
+        },
+        {
+          "type": "FIELD",
+          "name": "value",
+          "content": {
+            "type": "SYMBOL",
+            "name": "_expression"
+          }
+        }
+      ]
+    },
     "map": {
       "type": "SEQ",
       "members": [
@@ -1730,12 +1776,16 @@
         }
       ]
     },
-    "expression_pair": {
+    "list_comprehension": {
       "type": "SEQ",
       "members": [
         {
+          "type": "STRING",
+          "value": "["
+        },
+        {
           "type": "FIELD",
-          "name": "left",
+          "name": "body",
           "content": {
             "type": "SYMBOL",
             "name": "_expression"
@@ -1743,24 +1793,61 @@
         },
         {
           "type": "STRING",
-          "value": "->"
+          "value": "|"
         },
         {
           "type": "FIELD",
-          "name": "right",
+          "name": "generators",
           "content": {
             "type": "SYMBOL",
-            "name": "_expression"
+            "name": "generators"
+          }
+        },
+        {
+          "type": "STRING",
+          "value": "]"
+        }
+      ]
+    },
+    "generators": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "SYMBOL",
+          "name": "generator"
+        },
+        {
+          "type": "REPEAT",
+          "content": {
+            "type": "SEQ",
+            "members": [
+              {
+                "type": "STRING",
+                "value": ","
+              },
+              {
+                "type": "SYMBOL",
+                "name": "generator"
+              }
+            ]
           }
         }
       ]
     },
-    "spread": {
+    "generator": {
       "type": "SEQ",
       "members": [
         {
+          "type": "FIELD",
+          "name": "name",
+          "content": {
+            "type": "SYMBOL",
+            "name": "identifier"
+          }
+        },
+        {
           "type": "STRING",
-          "value": "..."
+          "value": "in"
         },
         {
           "type": "FIELD",
@@ -1769,6 +1856,35 @@
             "type": "SYMBOL",
             "name": "_expression"
           }
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "FIELD",
+              "name": "condition",
+              "content": {
+                "type": "SYMBOL",
+                "name": "generator_condition"
+              }
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        }
+      ]
+    },
+    "generator_condition": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "if"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "_expression"
         }
       ]
     },
@@ -1777,8 +1893,17 @@
       "value": "[a-z_][a-z0-9_]*\\??"
     },
     "_operator": {
-      "type": "PATTERN",
-      "value": "(==|[!@#$%^&*|<>~*\\\\\\-+/.]+)=*>?"
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "PATTERN",
+          "value": "(==|[!@#$%^&*|<>~*\\\\\\-+/.]+)=*>?"
+        },
+        {
+          "type": "STRING",
+          "value": "/"
+        }
+      ]
     },
     "identifier": {
       "type": "CHOICE",
@@ -1790,10 +1915,6 @@
         {
           "type": "SYMBOL",
           "name": "_identifier_without_operators"
-        },
-        {
-          "type": "STRING",
-          "value": "/"
         }
       ]
     },
@@ -2226,6 +2347,9 @@
     [
       "parameter",
       "_expression"
+    ],
+    [
+      "infix_application"
     ]
   ],
   "externals": [
