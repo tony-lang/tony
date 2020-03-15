@@ -253,7 +253,8 @@ export default class GenerateCode {
     const generators = this.generate(node.namedChild(1))
     const generatorCount = this.stack.pop()
 
-    return `${generators}${body}${')'.repeat(generatorCount)}.flat(${generatorCount - 1}).filter(e=>e!==null)`
+    return `${generators}${body}${')'.repeat(generatorCount)}` +
+           `.flat(${generatorCount - 1}).filter(e=>e!==null)`
   }
 
   generateMap = (node: Parser.SyntaxNode): string => {
