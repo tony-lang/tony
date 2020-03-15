@@ -347,7 +347,13 @@ export default class GenerateCode {
   }
 
   generateString = (node: Parser.SyntaxNode): string => {
-    return node.text
+    const content = node.text
+      .slice(1, -1)
+      .replace(/(?<!\\){/g, '${')
+      .replace(/`/g, '\\`')
+      .replace(/(?<!\\)(\\\\)+(?!\\)(?=`)/g, s => s.substring(1))
+
+    return `\`${content}\``
   }
 
   generateTuple = (node: Parser.SyntaxNode): string => {
