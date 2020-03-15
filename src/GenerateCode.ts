@@ -14,6 +14,7 @@ export default class GenerateCode {
   private files: string[]
   // private identifiers: string[] = []
   private outputPath: string
+  private stack: any[] = []
   // private standardizeApartIdentifiers = true
 
   constructor(outputPath: string, files: string[]) {
@@ -45,6 +46,12 @@ export default class GenerateCode {
       return this.generateExport(node)
     case 'expression_pair':
       return this.generateExpressionPair(node)
+    case 'generator':
+      return this.generateGenerator(node)
+    case 'generator_condition':
+      return this.generateGeneratorCondition(node)
+    case 'generators':
+      return this.generateGenerators(node)
     case 'identifier':
       return this.generateIdentifier(node)
     case 'import':
@@ -59,6 +66,8 @@ export default class GenerateCode {
       return this.generateInfixApplicationOperator(node)
     case 'list':
       return this.generateList(node)
+    case 'list_comprehension':
+      return this.generateListComprehension(node)
     case 'map':
       return this.generateMap(node)
     case 'number':
@@ -164,6 +173,31 @@ export default class GenerateCode {
     return `[${left}]:${right}`
   }
 
+  generateGenerator = (node: Parser.SyntaxNode): string => {
+    const name = this.generate(node.namedChild(0))
+    const value = this.generate(node.namedChild(1))
+    if (!GenerateCode.nodeHasChild(node, 'generator_condition'))
+      return `${value}.map((${name})=>`
+
+    const condition = this.generate(node.namedChild(2))
+    return `${value}.map((${name})=>!${condition} ? null : `
+  }
+
+  generateGeneratorCondition = (node: Parser.SyntaxNode): string => {
+    const expression = this.generate(node.namedChild(0))
+
+    return expression
+  }
+
+  generateGenerators = (node: Parser.SyntaxNode): string => {
+    const generators = node.namedChildren
+      .map(generator => this.generate(generator))
+      .join('')
+
+    this.stack.push(node.namedChildCount)
+    return generators
+  }
+
   generateIdentifier = (node: Parser.SyntaxNode): string => {
     return this.getIdentifier(node.text)
   }
@@ -212,6 +246,14 @@ export default class GenerateCode {
       .join(',')
 
     return `[${elements}]`
+  }
+
+  generateListComprehension = (node: Parser.SyntaxNode): string => {
+    const body = this.generate(node.namedChild(0))
+    const generators = this.generate(node.namedChild(1))
+    const generatorCount = this.stack.pop()
+
+    return `${generators}${body}${')'.repeat(generatorCount)}.flat(${generatorCount - 1}).filter(e=>e!==null)`
   }
 
   generateMap = (node: Parser.SyntaxNode): string => {

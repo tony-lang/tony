@@ -33,7 +33,7 @@ module.exports = grammar({
   ],
   extras: $ => [$.comment, /\s+/],
   word: $ => $._identifier_without_operators,
-  conflicts: $ => [[$.parameter, $._expression]],
+  conflicts: $ => [[$.parameter, $._expression], [$.infix_application]],
 
   rules: {
     program: $ => seq(optional($.hash_bang_line), optional($._statement_seq)),
@@ -83,6 +83,7 @@ module.exports = grammar({
       $.map,
       $.tuple,
       $.list,
+      $.list_comprehension,
       $.identifier,
       $._literal
     )),
@@ -186,6 +187,15 @@ module.exports = grammar({
       optional(field('value', $._expression))
     )),
 
+    expression_pair: $ => seq(
+      field('left', $._expression),
+      '->',
+      field('right', $._expression)
+    ),
+    spread: $ => seq(
+      '...',
+      field('value', $._expression)
+    ),
     map: $ => seq(
       '{',
       commaSep(optional(choice(
@@ -211,19 +221,26 @@ module.exports = grammar({
       )),
       ']'
     ),
-    expression_pair: $ => seq(
-      field('left', $._expression),
-      '->',
-      field('right', $._expression)
+
+    list_comprehension: $ => seq(
+      '[',
+      field('body', $._expression),
+      '|',
+      field('generators', $.generators),
+      ']'
     ),
-    spread: $ => seq(
-      '...',
-      field('value', $._expression)
+    generators: $ => commaSep1($.generator),
+    generator: $ => seq(
+      field('name', $.identifier),
+      'in',
+      field('value', $._expression),
+      optional(field('condition', $.generator_condition))
     ),
+    generator_condition: $ => seq('if', $._expression),
 
     _identifier_without_operators: $ => /[a-z_][a-z0-9_]*\??/,
-    _operator: $ => /(==|[!@#$%^&*|<>~*\\\-+/.]+)=*>?/,
-    identifier: $ => choice($._operator, $._identifier_without_operators, '/'),
+    _operator: $ => choice(/(==|[!@#$%^&*|<>~*\\\-+/.]+)=*>?/, '/'),
+    identifier: $ => choice($._operator, $._identifier_without_operators),
 
     _literal: $ => choice(
       $.boolean,
