@@ -102,17 +102,16 @@ export default class GenerateCode {
   generateAbstraction = (node: Parser.SyntaxNode): string => {
     const body = node.namedChildren
       .map(element => this.generate(element))
-      .join('')
+      .join('NOT IMPLEMENTED YET')
 
-    return `stdlib.curry((...args)=>stdlib.match(args)${body}.else((...args)` +
-           '=>{throw(\'Pattern matching non-exhaustive!\')}))'
+    return `stdlib.curry(${body})`
   }
 
   generateAbstractionBranch = (node: Parser.SyntaxNode): string => {
     const parameters = this.generate(node.namedChild(0))
     const body = this.generate(node.namedChild(1))
 
-    return `.case(${parameters}=>${body})`
+    return `(${parameters})=>${body}`
   }
 
   generateApplication = (node: Parser.SyntaxNode): string => {
@@ -123,8 +122,9 @@ export default class GenerateCode {
   }
 
   generateArgument = (node: Parser.SyntaxNode): string => {
-    const expression = this.generate(node.namedChild(0))
+    if (node.namedChildCount == 0) return 'null'
 
+    const expression = this.generate(node.namedChild(0))
     return expression
   }
 
@@ -265,9 +265,6 @@ export default class GenerateCode {
   }
 
   generateParameter = (node: Parser.SyntaxNode): string => {
-    if (!GenerateCode.nodeHasChild(node, 'identifier'))
-      return `L${this.generate(node.namedChild(0))}`
-
     const name = this.generate(node.namedChild(0))
     if (!GenerateCode.nodeHasChild(node, '=')) return name
 
@@ -276,26 +273,11 @@ export default class GenerateCode {
   }
 
   generateParameters = (node: Parser.SyntaxNode): string => {
-    const rawParameters = node.namedChildren
+    const parameters = node.namedChildren
       .map(parameter => this.generate(parameter))
-    const parameters = rawParameters
-      .map(parameter => {
-        switch (parameter[0]) {
-        case 'L': return '_'
-        default: return parameter
-        }
-      })
-      .join(',')
-    const pattern = rawParameters
-      .map((parameter, i) => {
-        switch (parameter[0]) {
-        case 'L': return parameter.substring(1)
-        default: return `args[${i}]`
-        }
-      })
       .join(',')
 
-    return `[${pattern}],(${parameters})`
+    return parameters
   }
 
   generatePipeline = (node: Parser.SyntaxNode): string => {

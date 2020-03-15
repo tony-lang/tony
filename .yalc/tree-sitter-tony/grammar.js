@@ -108,7 +108,7 @@ module.exports = grammar({
       ')'
     ),
 
-    argument: $ => field('value', $._expression),
+    argument: $ => choice('?', field('value', $._expression)),
     arguments: $ => commaSep1($.argument),
 
     _destructuring_pattern: $ => prec(PREC.DESTRUCTURING_PATTERN, choice(
