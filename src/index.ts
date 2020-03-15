@@ -10,9 +10,6 @@ const tony = new Tony()
 commander
   .version(`Tony ${VERSION}`, '-v, --version')
   .option('-d, --debug', 'enable debug mode', false)
-  .arguments('[projects...]')
-  .description('Start a read-eval-print loop')
-  .action(tony.repl)
 
 commander
   .command('init [project]')
@@ -58,7 +55,11 @@ commander
   .action(tony.parse)
 
 commander
+  .command('shell [projects...]', { isDefault: true })
+  .description('Start a shell session')
+  .action(tony.repl)
+
+commander
   .parse(process.argv)
 
 if (commander.debug) tony.enableDebugMode()
-if (commander.args.length === 0) tony.repl()
