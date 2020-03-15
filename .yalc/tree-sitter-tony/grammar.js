@@ -207,8 +207,7 @@ module.exports = grammar({
       '[',
       commaSep(choice(
         $._expression,
-        $.spread,
-        $.range
+        $.spread
       )),
       ']'
     ),
@@ -221,14 +220,9 @@ module.exports = grammar({
       '...',
       field('value', $._expression)
     ),
-    range: $ => seq(
-      field('left', $._expression),
-      '..',
-      field('right', $._expression)
-    ),
 
-    _identifier_without_operators: $ => /_?[a-z][a-z0-9_]*\??/,
-    _operator: $ => /(==|[!@#$%^&*|<>~*\\\-+/]+)=*>?/,
+    _identifier_without_operators: $ => /[a-z_][a-z0-9_]*\??/,
+    _operator: $ => /(==|[!@#$%^&*|<>~*\\\-+/.]+)=*>?/,
     identifier: $ => choice($._operator, $._identifier_without_operators, '/'),
 
     _literal: $ => choice(
