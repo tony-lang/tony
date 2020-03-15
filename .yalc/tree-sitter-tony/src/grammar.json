@@ -1689,10 +1689,6 @@
                     {
                       "type": "SYMBOL",
                       "name": "spread"
-                    },
-                    {
-                      "type": "SYMBOL",
-                      "name": "range"
                     }
                   ]
                 },
@@ -1715,10 +1711,6 @@
                           {
                             "type": "SYMBOL",
                             "name": "spread"
-                          },
-                          {
-                            "type": "SYMBOL",
-                            "name": "range"
                           }
                         ]
                       }
@@ -1780,38 +1772,13 @@
         }
       ]
     },
-    "range": {
-      "type": "SEQ",
-      "members": [
-        {
-          "type": "FIELD",
-          "name": "left",
-          "content": {
-            "type": "SYMBOL",
-            "name": "_expression"
-          }
-        },
-        {
-          "type": "STRING",
-          "value": ".."
-        },
-        {
-          "type": "FIELD",
-          "name": "right",
-          "content": {
-            "type": "SYMBOL",
-            "name": "_expression"
-          }
-        }
-      ]
-    },
     "_identifier_without_operators": {
       "type": "PATTERN",
-      "value": "_?[a-z][a-z0-9_]*\\??"
+      "value": "[a-z_][a-z0-9_]*\\??"
     },
     "_operator": {
       "type": "PATTERN",
-      "value": "(==|[!@#$%^&*|<>~*\\\\\\-+/]+)=*>?"
+      "value": "(==|[!@#$%^&*|<>~*\\\\\\-+/.]+)=*>?"
     },
     "identifier": {
       "type": "CHOICE",

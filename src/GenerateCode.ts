@@ -73,8 +73,6 @@ export default class GenerateCode {
       return this.generatePrefixApplication(node)
     case 'program':
       return this.generateProgram(node)
-    case 'range':
-      return this.generateRange(node)
     case 'regex':
       return this.generateRegex(node)
     case 'return':
@@ -282,13 +280,6 @@ export default class GenerateCode {
       .join(';')
 
     return `${DEFAULT_IMPORTS};${expressions}`
-  }
-
-  generateRange = (node: Parser.SyntaxNode): string => {
-    const start = this.generate(node.namedChild(0))
-    const end = this.generate(node.namedChild(1))
-
-    return `stdlib.range(${start},${end})`
   }
 
   generateRegex = (node: Parser.SyntaxNode): string => {
