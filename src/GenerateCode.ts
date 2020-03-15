@@ -224,11 +224,9 @@ export default class GenerateCode {
   }
 
   generateInfixApplication = (node: Parser.SyntaxNode): string => {
-    const abstraction = this.generate(
-      node.child(1).text === '`' ? node.child(2) : node.child(1)
-    )
+    const abstraction = this.generate(node.namedChild(1))
     const left = this.generate(node.namedChild(0))
-    const right = this.generate(node.namedChild(1))
+    const right = this.generate(node.namedChild(2))
 
     return `${abstraction}(${left}, ${right})`
   }

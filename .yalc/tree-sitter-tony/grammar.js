@@ -187,15 +187,6 @@ module.exports = grammar({
       optional(field('value', $._expression))
     )),
 
-    expression_pair: $ => seq(
-      field('left', $._expression),
-      '->',
-      field('right', $._expression)
-    ),
-    spread: $ => seq(
-      '...',
-      field('value', $._expression)
-    ),
     map: $ => seq(
       '{',
       commaSep(optional(choice(
@@ -221,6 +212,15 @@ module.exports = grammar({
       )),
       ']'
     ),
+    expression_pair: $ => seq(
+      field('left', $._expression),
+      '->',
+      field('right', $._expression)
+    ),
+    spread: $ => seq(
+      '...',
+      field('value', $._expression)
+    ),
 
     list_comprehension: $ => seq(
       '[',
@@ -239,7 +239,7 @@ module.exports = grammar({
     generator_condition: $ => seq('if', $._expression),
 
     _identifier_without_operators: $ => /[a-z_][a-z0-9_]*\??/,
-    _operator: $ => choice(/(==|[!@#$%^&*|<>~*\\\-+/.]+)=*>?/, '/'),
+    _operator: $ => choice(/(==|[!@$%^&*|<>~*\\\-+/.]+)=*>?/, '/'),
     identifier: $ => choice($._operator, $._identifier_without_operators),
 
     _literal: $ => choice(
