@@ -5,17 +5,16 @@ import { getOutputPathForFile } from './utilities'
 import {
   FILE_EXTENSION,
   TARGET_FILE_EXTENSION,
-  KEYWORD_IDENTIFIERS,
+  OPERATOR_REGEX,
   DEFAULT_IMPORTS
 } from './constants'
 
 export default class GenerateCode {
   file: string
   private files: string[]
-  // private identifiers: string[] = []
+  private identifiers: string[] = []
   private outputPath: string
   private stack: any[] = []
-  // private standardizeApartIdentifiers = true
 
   constructor(outputPath: string, files: string[]) {
     this.outputPath = outputPath
@@ -218,9 +217,7 @@ export default class GenerateCode {
   }
 
   generateImportClauseIdentifierPair = (node: Parser.SyntaxNode): string => {
-    // this.standardizeApartIdentifiers = false
     const left = this.generate(node.namedChild(0))
-    // this.standardizeApartIdentifiers = true
     const right = this.generate(node.namedChild(1))
 
     return `${left} as ${right}`
@@ -349,9 +346,9 @@ export default class GenerateCode {
   generateString = (node: Parser.SyntaxNode): string => {
     const content = node.text
       .slice(1, -1)
-      .replace(/(?<!\\){/g, '${')
-      .replace(/`/g, '\\`')
-      .replace(/(?<!\\)(\\\\)+(?!\\)(?=`)/g, s => s.substring(1))
+      .replace(/(?<!\\){/, '${')
+      .replace(/`/, '\\`')
+      .replace(/(?<!\\)(\\\\)+(?!\\)(?=`)/, s => s.substring(1))
 
     return `\`${content}\``
   }
@@ -365,16 +362,13 @@ export default class GenerateCode {
   }
 
   private getIdentifier = (identifier: string): string => {
-    return identifier
+    if (!OPERATOR_REGEX.test(identifier)) return identifier
 
-    // if (!this.standardizeApartIdentifiers) return identifier
-    // if (KEYWORD_IDENTIFIERS.includes(identifier)) return identifier
+    const index = this.identifiers.indexOf(identifier)
+    if (index != -1) return `i${index}`
 
-    // const index = this.identifiers.indexOf(identifier)
-    // if (index != -1) return `i${index}`
-
-    // const length = this.identifiers.push(identifier)
-    // return `i${length - 1}`
+    const length = this.identifiers.push(identifier)
+    return `i${length - 1}`
   }
 
   private getImportSource = (source: string): string => {
