@@ -68,7 +68,7 @@ module.exports = grammar({
 
     export: $ => seq(
       'export',
-      field('declaration', $.assignment)
+      field('declaration', $.declaration)
     ),
 
     _expression: $ => prec.left(PREC.EXPRESSION, choice(
@@ -78,6 +78,7 @@ module.exports = grammar({
       $.prefix_application,
       $.infix_application,
       $.pipeline,
+      $.declaration,
       $.assignment,
       $.return,
       $.map,
@@ -176,9 +177,16 @@ module.exports = grammar({
       field('right', $._expression)
     )),
 
-    assignment: $ => seq(
+    declaration: $ => seq(
+      optional(field('mutable', 'mutable')),
       field('left', choice($.identifier, $._destructuring_pattern)),
       ':=',
+      field('right', $._expression)
+    ),
+
+    assignment: $ => seq(
+      field('left', $.identifier),
+      '=',
       field('right', $._expression)
     ),
 
