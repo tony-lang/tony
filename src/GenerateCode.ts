@@ -41,6 +41,8 @@ export default class GenerateCode {
       return this.generateBoolean(node)
     case 'comment':
       return this.generateComment(node)
+    case 'declaration':
+      return this.generateDeclaration(node)
     case 'export':
       return this.generateExport(node)
     case 'expression_pair':
@@ -140,7 +142,7 @@ export default class GenerateCode {
     const left = this.generate(node.namedChild(0))
     const right = this.generate(node.namedChild(1))
 
-    return `const ${left}=${right}`
+    return `${left}=${right}`
   }
 
   generateBlock = (node: Parser.SyntaxNode): string => {
@@ -157,6 +159,14 @@ export default class GenerateCode {
 
   generateComment = (node: Parser.SyntaxNode): string => {
     return ''
+  }
+
+  generateDeclaration = (node: Parser.SyntaxNode): string => {
+    const isMutable = node.child(0).text === 'mutable'
+    const left = this.generate(node.namedChild(0))
+    const right = this.generate(node.namedChild(1))
+
+    return `${isMutable ? 'let': 'const'} ${left}=${right}`
   }
 
   generateExport = (node: Parser.SyntaxNode): string => {
