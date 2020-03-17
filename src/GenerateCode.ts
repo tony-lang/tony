@@ -9,7 +9,7 @@ import {
   DEFAULT_IMPORTS,
   TRANSFORM_PLACEHOLDER_ARGUMENT,
   TRANSFORM_IDENTIFIER_PATTERN,
-  TRANSFORM_REST,
+  TRANSFORM_REST_PATTERN,
   INTERNAL_IDENTIFIER_PREFIX
 } from './constants'
 
@@ -101,8 +101,10 @@ export default class GenerateCode {
       return this.generateProgram(node)
     case 'regex':
       return this.generateRegex(node)
-    case 'rest':
-      return this.generateRest(node)
+    case 'rest_parameter':
+      return this.generateRestParameter(node)
+    case 'rest_pattern':
+      return this.generateRestPattern(node)
     case 'return':
       return this.generateReturn(node)
     case 'shorthand_pair_identifier':
@@ -288,9 +290,11 @@ export default class GenerateCode {
   }
 
   generateListPattern = (node: Parser.SyntaxNode): string => {
-    this.restMode = RestMode.InList
     const elements = node.namedChildren
-      .map(element => this.generate(element))
+      .map(element => {
+        this.restMode = RestMode.InList
+        return this.generate(element)
+      })
       .join(',')
 
     return `[${elements}]`
@@ -305,9 +309,11 @@ export default class GenerateCode {
   }
 
   generateMapPattern = (node: Parser.SyntaxNode): string => {
-    this.restMode = RestMode.InMap
     const elements = node.namedChildren
-      .map(element => this.generate(element))
+      .map(element => {
+        this.restMode = RestMode.InMap
+        return this.generate(element)
+      })
       .join(',')
 
     return `{${elements}}`
@@ -331,7 +337,10 @@ export default class GenerateCode {
 
   generateParameters = (node: Parser.SyntaxNode): string => {
     const parameters = node.namedChildren
-      .map(parameter => this.generate(parameter))
+      .map(parameter => {
+        this.restMode = RestMode.InList
+        return this.generate(parameter)
+      })
       .join(',')
 
     return `[${parameters}]`
@@ -370,13 +379,22 @@ export default class GenerateCode {
     return node.text
   }
 
-  generateRest = (node: Parser.SyntaxNode): string => {
+  generateRestParameter = (node: Parser.SyntaxNode): string => {
     const name = this.generate(node.namedChild(0)).slice(1, -1)
 
     if (this.restMode === RestMode.InList)
       return `"#${name}"`
     else if (this.restMode === RestMode.InMap)
-      return `"['${TRANSFORM_REST}']":"${name}"`
+      return `"['${TRANSFORM_REST_PATTERN}']":"${name}"`
+  }
+
+  generateRestPattern = (node: Parser.SyntaxNode): string => {
+    const name = this.generate(node.namedChild(0)).slice(1, -1)
+
+    if (this.restMode === RestMode.InList)
+      return `"#${name}"`
+    else if (this.restMode === RestMode.InMap)
+      return `"['${TRANSFORM_REST_PATTERN}']":"${name}"`
   }
 
   generateReturn = (node: Parser.SyntaxNode): string => {
@@ -426,9 +444,11 @@ export default class GenerateCode {
   }
 
   generateTuplePattern = (node: Parser.SyntaxNode): string => {
-    this.restMode = RestMode.InList
     const elements = node.namedChildren
-      .map(element => this.generate(element))
+      .map(element => {
+        this.restMode = RestMode.InList
+        return this.generate(element)
+      })
       .join(',')
 
     return `[${elements}]`
@@ -461,7 +481,7 @@ export default class GenerateCode {
     const obj = JSON.parse(pattern)
     const rec = (obj: any): [string, string[]] => {
       if (typeof obj === 'string' && obj.startsWith('##')) // rest
-        return [`"${TRANSFORM_REST}"`, [obj.substring(2)]]
+        return [`"${TRANSFORM_REST_PATTERN}"`, [obj.substring(2)]]
       else if (typeof obj === 'string' && obj.startsWith('#')) // identifier
         return [`"${TRANSFORM_IDENTIFIER_PATTERN}"`, [obj.substring(1)]]
       else if (typeof obj !== 'object') // literal
