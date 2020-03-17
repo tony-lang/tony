@@ -10,6 +10,7 @@ export const DEFAULT_IMPORTS =
   Object.freeze(`import * as stdlib from '${STDLIB_PATH}'`)
 
 export const INTERNAL_IDENTIFIER_PREFIX = 'tony_internal_'
+export const INTERNAL_TEMP_TOKEN = '#TONY_INTERNAL_TEMP'
 
 export const TRANSFORM_PLACEHOLDER_ARGUMENT =
   '#internal/TRANSFORM_PLACEHOLDER_ARGUMENT'

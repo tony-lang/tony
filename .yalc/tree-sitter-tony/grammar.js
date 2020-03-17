@@ -14,7 +14,6 @@ const PREC = Object.freeze({
   NOT: 12,
   PREFIX: 13,
   EXPRESSION: 14,
-  PARAMETER: 14,
   PATTERN: 14,
   APPLICATION: 15,
   PIPELINE: 16,
@@ -35,14 +34,12 @@ module.exports = grammar({
   word: $ => $._identifier_without_operators,
   conflicts: $ => [
     [$.infix_application],
-    [$.parameter, $._expression],
-    [$.parameter, $._pattern],
-    [$._expression, $._pattern],
-    [$.parameter, $._expression, $._pattern],
+    [$._expression, $.pattern],
     [$._literal, $._literal_pattern],
     [$.string, $.string_pattern],
     [$.map, $.map_pattern],
-    [$.pattern_pair, $._literal]
+    [$.pattern_pair, $._literal],
+    [$.shorthand_pair_identifier_pattern, $.map]
   ],
 
   rules: {
@@ -104,88 +101,82 @@ module.exports = grammar({
 
     block: $ => seq($._indent, $._expression_seq, $._dedent),
 
-    parameter: $ => prec(PREC.PARAMETER, choice(
-      field('value', $._literal),
+    pattern: $ => prec(PREC.PATTERN, choice(
       field('pattern', $._destructuring_pattern),
+      field('value', $._literal_pattern),
       seq(
-        field('name', $.identifier),
+        field('name', alias($.identifier, $.identifier_pattern)),
         optional(seq('=', field('value', $._expression)))
       )
     )),
-    parameters: $ => seq(
-      '(',
-      choice(
-        seq(
-          commaSep1($.parameter),
-          optional(seq(',', $.rest_parameter))
-        ),
-        $.rest_parameter
-      ),
-      ')'
-    ),
-    rest_parameter: $ => seq(
-      '...',
-      field('name', alias($.identifier, $.identifier_pattern)),
-      optional(seq('=', field('value', $._expression)))
-    ),
 
-    argument: $ => choice('?', field('value', $._expression)),
-    arguments: $ => commaSep1($.argument),
-
-    _pattern: $ => prec(PREC.PATTERN, choice(
-      $._destructuring_pattern,
-      $._literal_pattern,
-      alias($.identifier, $.identifier_pattern)
-    )),
     _destructuring_pattern: $ => prec(PREC.PATTERN, choice(
       $.map_pattern,
       $.tuple_pattern,
       $.list_pattern
     )),
+    map_pattern: $ => prec(PREC.PATTERN, seq(
+      '{',
+      commaSep1(choice($.pattern_pair, $.shorthand_pair_identifier_pattern)),
+      optional(seq(',', $.rest)),
+      '}'
+    )),
+    tuple_pattern: $ => prec(PREC.PATTERN, choice(
+      seq('(', $.pattern, ',', $.rest, ')'),
+      seq(
+        '(',
+        commaSep2($.pattern),
+        optional(seq(',', $.rest)),
+        ')'
+      )
+    )),
+    list_pattern: $ => prec(PREC.PATTERN, seq(
+      '[',
+      commaSep1($.pattern),
+      optional(seq(',', $.rest)),
+      ']'
+    )),
+    pattern_pair: $ => seq(
+      field('left', $.string_pattern),
+      '->',
+      field('right', $.pattern)
+    ),
+    shorthand_pair_identifier_pattern: $ => seq(
+      field('name', alias($.identifier, $.identifier_pattern)),
+      optional(seq('=', field('value', $._expression)))
+    ),
+    rest: $ => seq(
+      '...',
+      field('name', alias($.identifier, $.identifier_pattern)),
+      optional(seq('=', field('value', $._expression)))
+    ),
+
     _literal_pattern: $ => choice(
       $.boolean,
       $.number,
       $.string_pattern,
       prec(PREC.REGEX, $.regex)
     ),
-    map_pattern: $ => prec(PREC.PATTERN, seq(
-      '{',
-      commaSep1(choice(
-        $.pattern_pair,
-        alias($.identifier, $.shorthand_pair_identifier_pattern)
-      )),
-      optional(seq(',', $.rest_pattern)),
-      '}'
-    )),
-    tuple_pattern: $ => prec(PREC.PATTERN, choice(
-      seq('(', $._pattern, ',', $.rest_pattern, ')'),
-      seq(
-        '(',
-        commaSep2($._pattern),
-        optional(seq(',', $.rest_pattern)),
-        ')'
-      )
-    )),
-    list_pattern: $ => prec(PREC.PATTERN, seq(
-      '[',
-      commaSep1($._pattern),
-      optional(seq(',', $.rest_pattern)),
-      ']'
-    )),
-    pattern_pair: $ => seq(
-      field('left', $.string_pattern),
-      '->',
-      field('right', $._pattern)
-    ),
-    rest_pattern: $ => seq(
-      '...',
-      field('name', alias($.identifier, $.identifier_pattern))
-    ),
     string_pattern: $ => seq(
       $._string_start,
       repeat(choice($.escape_sequence, $._string_content)),
       $._string_end
     ),
+
+    parameters: $ => seq(
+      '(',
+      choice(
+        seq(
+          commaSep1($.pattern),
+          optional(seq(',', $.rest)),
+        ),
+        $.rest
+      ),
+      ')'
+    ),
+
+    argument: $ => choice('?', field('value', $._expression)),
+    arguments: $ => commaSep1($.argument),
 
     _group: $ => seq('(', $._expression, ')'),
 
