@@ -66,6 +66,7 @@ const compileFile = (
 
     return tree.rootNode
   }).then((node: Parser.SyntaxNode) => {
+    if (tony.debug) console.log(`Compiling ${file}...`)
     codeGenerator.file = file
     return writeFile(
       getOutputPathForFile(outputDirPath, file),
@@ -81,7 +82,7 @@ const babelCompile = (
   entryFilePath: string,
   mode: string
 ): void => {
-  if (tony.debug) console.log('Compiling with Babel...')
+  if (tony.debug) console.log('Compiling with Webpack...')
 
   const p = childProcess.spawnSync(
     'yarn',

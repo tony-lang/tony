@@ -20,6 +20,24 @@ export const curry = (fn: any, ...cache: any[]) => (...args: any[]): any => {
     fn(...actualArgs) : curry(fn, ...newArgs)
 }
 
+export const resolveAbstractionBranch = (
+  args: any,
+  branches: [string, (match: any[]) => any][]
+): any => {
+  let match
+
+  for (const [pattern, branch] of branches) {
+    try {
+      match = patternMatch(pattern, args)
+      return branch(match)
+    } catch {
+      // branch pattern does not match arguments, try next branch
+    }
+  }
+
+  throw 'Non-exhaustive patterns'
+}
+
 export const patternMatch = (pattern: any, value: any): any[] => {
   if (pattern === TRANSFORM_IDENTIFIER_PATTERN)
     return [value]

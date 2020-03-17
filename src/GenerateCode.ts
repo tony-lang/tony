@@ -9,7 +9,8 @@ import {
   DEFAULT_IMPORTS,
   TRANSFORM_PLACEHOLDER_ARGUMENT,
   TRANSFORM_IDENTIFIER_PATTERN,
-  TRANSFORM_REST
+  TRANSFORM_REST,
+  INTERNAL_IDENTIFIER_PREFIX
 } from './constants'
 
 enum RestMode {
@@ -125,18 +126,21 @@ export default class GenerateCode {
   }
 
   generateAbstraction = (node: Parser.SyntaxNode): string => {
-    const body = node.namedChildren
+    const branches = node.namedChildren
       .map(element => this.generate(element))
-      .join('NOT IMPLEMENTED YET')
+      .join(',')
 
-    return `stdlib.curry(${body})`
+    return 'stdlib.curry((...args)=>' +
+           `stdlib.resolveAbstractionBranch(args,[${branches}]))`
   }
 
   generateAbstractionBranch = (node: Parser.SyntaxNode): string => {
     const parameters = this.generate(node.namedChild(0))
     const body = this.generate(node.namedChild(1))
+    const [pattern, identifiers] = GenerateCode.resolvePattern(parameters)
 
-    return `(${parameters})=>${body}`
+    return `[${pattern},(match)=>{const [${identifiers.join(',')}]=match;` +
+           `return ${body}}]`
   }
 
   generateApplication = (node: Parser.SyntaxNode): string => {
@@ -259,7 +263,7 @@ export default class GenerateCode {
     const left = this.generate(node.namedChild(0))
     const right = this.generate(node.namedChild(2))
 
-    return `${abstraction}(${left}, ${right})`
+    return `${abstraction}(${left},${right})`
   }
 
   generateInfixApplicationOperator = (node: Parser.SyntaxNode): string => {
@@ -314,11 +318,15 @@ export default class GenerateCode {
   }
 
   generateParameter = (node: Parser.SyntaxNode): string => {
-    const name = this.generate(node.namedChild(0))
-    if (!GenerateCode.nodeHasChild(node, '=')) return name
+    if (node.namedChild(0).type === 'identifier') {
+      const name = this.generate(node.namedChild(0))
 
-    const value = this.generate(node.namedChild(1))
-    return `${name}=${value}`
+      return `"#${name}"`
+    } else {
+      const pattern = this.generate(node.namedChild(0))
+
+      return pattern
+    }
   }
 
   generateParameters = (node: Parser.SyntaxNode): string => {
@@ -326,7 +334,7 @@ export default class GenerateCode {
       .map(parameter => this.generate(parameter))
       .join(',')
 
-    return parameters
+    return `[${parameters}]`
   }
 
   generatePatternPair = (node: Parser.SyntaxNode): string => {
@@ -398,7 +406,7 @@ export default class GenerateCode {
 
   generateString = (node: Parser.SyntaxNode): string => {
     const content =
-      GenerateCode.getStringContent(node.text).replace(/(?<!\\){/, '${')
+      GenerateCode.getStringContent(node.text).replace(/(?<!\\){/g, '${')
 
     return `\`${content}\``
   }
@@ -430,10 +438,10 @@ export default class GenerateCode {
     if (!OPERATOR_REGEX.test(identifier)) return identifier
 
     const index = this.identifiers.indexOf(identifier)
-    if (index != -1) return `i${index}`
+    if (index != -1) return `${INTERNAL_IDENTIFIER_PREFIX}${index}`
 
     const length = this.identifiers.push(identifier)
-    return `i${length - 1}`
+    return `${INTERNAL_IDENTIFIER_PREFIX}${length - 1}`
   }
 
   private getImportSource = (source: string): string => {
@@ -450,8 +458,6 @@ export default class GenerateCode {
   }
 
   private static resolvePattern = (pattern: string): [string, string[]] => {
-    console.log(`Resolving pattern '${pattern}'...`)
-
     const obj = JSON.parse(pattern)
     const rec = (obj: any): [string, string[]] => {
       if (typeof obj === 'string' && obj.startsWith('##')) // rest
@@ -493,11 +499,11 @@ export default class GenerateCode {
   private static getStringContent = (text: string, qt = '`'): string => {
     // removes on escape when there are an even number of escapes before a qt
     // inside a string
-    const regex = new RegExp(`(?<!\\\\)(\\\\\\\\)+(?!\\\\)(?=${qt})`)
+    const regex = new RegExp(`(?<!\\\\)(\\\\\\\\)+(?!\\\\)(?=${qt})`, 'g')
 
     return text
       .slice(1, -1)
-      .replace(qt, `\\${qt}`)
+      .replace(new RegExp(qt, 'g'), `\\${qt}`)
       .replace(regex, s => s.substring(1))
   }
 
