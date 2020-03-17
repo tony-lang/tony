@@ -310,19 +310,19 @@
         "required": true,
         "types": [
           {
-            "type": "identifier",
+            "type": "identifier_pattern",
             "named": true
           },
           {
-            "type": "list",
+            "type": "list_pattern",
             "named": true
           },
           {
-            "type": "map",
+            "type": "map_pattern",
             "named": true
           },
           {
-            "type": "tuple",
+            "type": "tuple_pattern",
             "named": true
           }
         ]
@@ -786,6 +786,11 @@
   },
   {
     "type": "identifier",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "identifier_pattern",
     "named": true,
     "fields": {}
   },
@@ -1295,6 +1300,53 @@
     }
   },
   {
+    "type": "list_pattern",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "boolean",
+          "named": true
+        },
+        {
+          "type": "identifier_pattern",
+          "named": true
+        },
+        {
+          "type": "list_pattern",
+          "named": true
+        },
+        {
+          "type": "map_pattern",
+          "named": true
+        },
+        {
+          "type": "number",
+          "named": true
+        },
+        {
+          "type": "regex",
+          "named": true
+        },
+        {
+          "type": "rest",
+          "named": true
+        },
+        {
+          "type": "string_pattern",
+          "named": true
+        },
+        {
+          "type": "tuple_pattern",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "map",
     "named": true,
     "fields": {},
@@ -1312,6 +1364,29 @@
         },
         {
           "type": "spread",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "map_pattern",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "pattern_pair",
+          "named": true
+        },
+        {
+          "type": "rest",
+          "named": true
+        },
+        {
+          "type": "shorthand_pair_identifier_pattern",
           "named": true
         }
       ]
@@ -1341,15 +1416,15 @@
         "required": false,
         "types": [
           {
-            "type": "list",
+            "type": "list_pattern",
             "named": true
           },
           {
-            "type": "map",
+            "type": "map_pattern",
             "named": true
           },
           {
-            "type": "tuple",
+            "type": "tuple_pattern",
             "named": true
           }
         ]
@@ -1447,6 +1522,60 @@
           "named": true
         }
       ]
+    }
+  },
+  {
+    "type": "pattern_pair",
+    "named": true,
+    "fields": {
+      "left": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "string_pattern",
+            "named": true
+          }
+        ]
+      },
+      "right": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "boolean",
+            "named": true
+          },
+          {
+            "type": "identifier_pattern",
+            "named": true
+          },
+          {
+            "type": "list_pattern",
+            "named": true
+          },
+          {
+            "type": "map_pattern",
+            "named": true
+          },
+          {
+            "type": "number",
+            "named": true
+          },
+          {
+            "type": "regex",
+            "named": true
+          },
+          {
+            "type": "string_pattern",
+            "named": true
+          },
+          {
+            "type": "tuple_pattern",
+            "named": true
+          }
+        ]
+      }
     }
   },
   {
@@ -1812,6 +1941,22 @@
     }
   },
   {
+    "type": "rest",
+    "named": true,
+    "fields": {
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "identifier_pattern",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "return",
     "named": true,
     "fields": {
@@ -1897,6 +2042,11 @@
   },
   {
     "type": "shorthand_pair_identifier",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "shorthand_pair_identifier_pattern",
     "named": true,
     "fields": {}
   },
@@ -2004,6 +2154,21 @@
     }
   },
   {
+    "type": "string_pattern",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "escape_sequence",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "tuple",
     "named": true,
     "fields": {},
@@ -2077,6 +2242,53 @@
         },
         {
           "type": "tuple",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "tuple_pattern",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "boolean",
+          "named": true
+        },
+        {
+          "type": "identifier_pattern",
+          "named": true
+        },
+        {
+          "type": "list_pattern",
+          "named": true
+        },
+        {
+          "type": "map_pattern",
+          "named": true
+        },
+        {
+          "type": "number",
+          "named": true
+        },
+        {
+          "type": "regex",
+          "named": true
+        },
+        {
+          "type": "rest",
+          "named": true
+        },
+        {
+          "type": "string_pattern",
+          "named": true
+        },
+        {
+          "type": "tuple_pattern",
           "named": true
         }
       ]
