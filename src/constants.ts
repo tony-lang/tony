@@ -9,6 +9,8 @@ const STDLIB_PATH = path.join(__dirname, 'stdlib')
 export const DEFAULT_IMPORTS =
   Object.freeze(`import * as stdlib from '${STDLIB_PATH}'`)
 
-export const TRANSFORM_PLACEHOLDER_ARGUMENT = '#internal/TRANSFORM_PLACEHOLDER_ARGUMENT'
-export const TRANSFORM_IDENTIFIER_PATTERN = '#internal/TRANSFORM_IDENTIFIER_PATTERN'
+export const TRANSFORM_PLACEHOLDER_ARGUMENT =
+  '#internal/TRANSFORM_PLACEHOLDER_ARGUMENT'
+export const TRANSFORM_IDENTIFIER_PATTERN =
+  '#internal/TRANSFORM_IDENTIFIER_PATTERN'
 export const TRANSFORM_REST = '#internal/TRANSFORM_REST'

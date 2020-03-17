@@ -34,17 +34,20 @@ export const patternMatch = (pattern: any, value: any): any[] => {
 
       return result.concat(patternMatch(element, value[i]))
     }, [])
-  else if (typeof pattern === 'object' && !Array.isArray(pattern) && typeof value === 'object' && !Array.isArray(value))
-    return Object.entries(pattern).slice(0).reduce((result, [key, element], i, arr) => {
-      if (key === TRANSFORM_REST) {
-        arr.splice(i - 1)
-        return result.concat([value])
-      }
+  else if (typeof pattern === 'object' && !Array.isArray(pattern) &&
+           typeof value === 'object' && !Array.isArray(value))
+    return Object.entries(pattern)
+      .slice(0)
+      .reduce((result, [key, element], i, arr) => {
+        if (key === TRANSFORM_REST) {
+          arr.splice(i - 1)
+          return result.concat([value])
+        }
 
-      const newResult = result.concat(patternMatch(element, value[key]))
-      delete value[key]
-      return newResult
-    }, [])
+        const newResult = result.concat(patternMatch(element, value[key]))
+        delete value[key]
+        return newResult
+      }, [])
   else
     throw 'Pattern does not match'
 }

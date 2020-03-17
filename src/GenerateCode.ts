@@ -166,7 +166,8 @@ export default class GenerateCode {
     const right = this.generate(node.namedChild(1))
     const [pattern, identifiers] = GenerateCode.resolvePattern(left)
 
-    return `const [${identifiers.join(',')}]=stdlib.patternMatch(${pattern},${right})`
+    return `const [${identifiers.join(',')}]=` +
+           `stdlib.patternMatch(${pattern},${right})`
   }
 
   generateBlock = (node: Parser.SyntaxNode): string => {
@@ -381,7 +382,9 @@ export default class GenerateCode {
     return this.getIdentifier(node.text)
   }
 
-  generateShorthandPairIdentifierPattern = (node: Parser.SyntaxNode): string => {
+  generateShorthandPairIdentifierPattern = (
+    node: Parser.SyntaxNode
+  ): string => {
     const name = this.getIdentifier(node.text)
 
     return `"${name}":"#${name}"`
@@ -487,8 +490,9 @@ export default class GenerateCode {
     return rec(obj)
   }
 
-  private static getStringContent = (text: string, qt = '`') : string => {
-    // removes on escape when there are an even number of escapes before a qt inside a string
+  private static getStringContent = (text: string, qt = '`'): string => {
+    // removes on escape when there are an even number of escapes before a qt
+    // inside a string
     const regex = new RegExp(`(?<!\\\\)(\\\\\\\\)+(?!\\\\)(?=${qt})`)
 
     return text
@@ -497,7 +501,9 @@ export default class GenerateCode {
       .replace(regex, s => s.substring(1))
   }
 
-  private static nodeHasChild = (node: Parser.SyntaxNode, type: string): boolean => {
+  private static nodeHasChild = (
+    node: Parser.SyntaxNode, type: string
+  ): boolean => {
     return node.children.map(child => child.type).includes(type)
   }
 }
