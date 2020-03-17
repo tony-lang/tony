@@ -6,14 +6,23 @@ import {
   FILE_EXTENSION,
   TARGET_FILE_EXTENSION,
   OPERATOR_REGEX,
-  DEFAULT_IMPORTS
+  DEFAULT_IMPORTS,
+  TRANSFORM_PLACEHOLDER_ARGUMENT,
+  TRANSFORM_IDENTIFIER_PATTERN,
+  TRANSFORM_REST
 } from './constants'
+
+enum RestMode {
+  InList,
+  InMap
+}
 
 export default class GenerateCode {
   file: string
   private files: string[]
   private identifiers: string[] = []
   private outputPath: string
+  private restMode: RestMode
   private stack: any[] = []
 
   constructor(outputPath: string, files: string[]) {
@@ -53,6 +62,8 @@ export default class GenerateCode {
       return this.generateGenerators(node)
     case 'identifier':
       return this.generateIdentifier(node)
+    case 'identifier_pattern':
+      return this.generateIdentifierPattern(node)
     case 'import':
       return this.generateImport(node)
     case 'import_clause':
@@ -67,14 +78,20 @@ export default class GenerateCode {
       return this.generateList(node)
     case 'list_comprehension':
       return this.generateListComprehension(node)
+    case 'list_pattern':
+      return this.generateListPattern(node)
     case 'map':
       return this.generateMap(node)
+    case 'map_pattern':
+      return this.generateMapPattern(node)
     case 'number':
       return this.generateNumber(node)
     case 'parameter':
       return this.generateParameter(node)
     case 'parameters':
       return this.generateParameters(node)
+    case 'pattern_pair':
+      return this.generatePatternPair(node)
     case 'pipeline':
       return this.generatePipeline(node)
     case 'prefix_application':
@@ -83,16 +100,24 @@ export default class GenerateCode {
       return this.generateProgram(node)
     case 'regex':
       return this.generateRegex(node)
+    case 'rest':
+      return this.generateRest(node)
     case 'return':
       return this.generateReturn(node)
     case 'shorthand_pair_identifier':
       return this.generateShorthandPairIdentifier(node)
+    case 'shorthand_pair_identifier_pattern':
+      return this.generateShorthandPairIdentifierPattern(node)
     case 'spread':
       return this.generateSpread(node)
     case 'string':
       return this.generateString(node)
+    case 'string_pattern':
+      return this.generateStringPattern(node)
     case 'tuple':
       return this.generateTuple(node)
+    case 'tuple_pattern':
+      return this.generateTuplePattern(node)
     default:
       console.log(`Could not find generator for AST node '${node.type}'.`)
       process.exit(1)
@@ -122,7 +147,7 @@ export default class GenerateCode {
   }
 
   generateArgument = (node: Parser.SyntaxNode): string => {
-    if (node.namedChildCount == 0) return 'null'
+    if (node.namedChildCount == 0) return `"${TRANSFORM_PLACEHOLDER_ARGUMENT}"`
 
     const expression = this.generate(node.namedChild(0))
     return expression
@@ -139,8 +164,9 @@ export default class GenerateCode {
   generateAssignment = (node: Parser.SyntaxNode): string => {
     const left = this.generate(node.namedChild(0))
     const right = this.generate(node.namedChild(1))
+    const [pattern, identifiers] = GenerateCode.resolvePattern(left)
 
-    return `const ${left}=${right}`
+    return `const [${identifiers.join(',')}]=stdlib.patternMatch(${pattern},${right})`
   }
 
   generateBlock = (node: Parser.SyntaxNode): string => {
@@ -201,6 +227,10 @@ export default class GenerateCode {
     return this.getIdentifier(node.text)
   }
 
+  generateIdentifierPattern = (node: Parser.SyntaxNode): string => {
+    return `"#${this.getIdentifier(node.text)}"`
+  }
+
   generateImport = (node: Parser.SyntaxNode): string => {
     const clause = this.generate(node.namedChild(0))
     const source = this.generate(node.namedChild(1)).slice(1, -1)
@@ -252,7 +282,25 @@ export default class GenerateCode {
            `.flat(${generatorCount - 1}).filter(e=>e!==null)`
   }
 
+  generateListPattern = (node: Parser.SyntaxNode): string => {
+    this.restMode = RestMode.InList
+    const elements = node.namedChildren
+      .map(element => this.generate(element))
+      .join(',')
+
+    return `[${elements}]`
+  }
+
   generateMap = (node: Parser.SyntaxNode): string => {
+    const elements = node.namedChildren
+      .map(element => this.generate(element))
+      .join(',')
+
+    return `{${elements}}`
+  }
+
+  generateMapPattern = (node: Parser.SyntaxNode): string => {
+    this.restMode = RestMode.InMap
     const elements = node.namedChildren
       .map(element => this.generate(element))
       .join(',')
@@ -278,6 +326,13 @@ export default class GenerateCode {
       .join(',')
 
     return parameters
+  }
+
+  generatePatternPair = (node: Parser.SyntaxNode): string => {
+    const left = this.generate(node.namedChild(0))
+    const right = this.generate(node.namedChild(1))
+
+    return `"${left.slice(1, -1)}":${right}`
   }
 
   generatePipeline = (node: Parser.SyntaxNode): string => {
@@ -306,6 +361,15 @@ export default class GenerateCode {
     return node.text
   }
 
+  generateRest = (node: Parser.SyntaxNode): string => {
+    const name = this.generate(node.namedChild(0)).slice(1, -1)
+
+    if (this.restMode === RestMode.InList)
+      return `"#${name}"`
+    else if (this.restMode === RestMode.InMap)
+      return `"['${TRANSFORM_REST}']":"${name}"`
+  }
+
   generateReturn = (node: Parser.SyntaxNode): string => {
     if (node.namedChildCount == 0) return 'return'
 
@@ -317,6 +381,12 @@ export default class GenerateCode {
     return this.getIdentifier(node.text)
   }
 
+  generateShorthandPairIdentifierPattern = (node: Parser.SyntaxNode): string => {
+    const name = this.getIdentifier(node.text)
+
+    return `"${name}":"#${name}"`
+  }
+
   generateSpread = (node: Parser.SyntaxNode): string => {
     const expression = this.generate(node.namedChild(0))
 
@@ -324,16 +394,28 @@ export default class GenerateCode {
   }
 
   generateString = (node: Parser.SyntaxNode): string => {
-    const content = node.text
-      .slice(1, -1)
-      .replace(/(?<!\\){/, '${')
-      .replace(/`/, '\\`')
-      .replace(/(?<!\\)(\\\\)+(?!\\)(?=`)/, s => s.substring(1))
+    const content =
+      GenerateCode.getStringContent(node.text).replace(/(?<!\\){/, '${')
 
     return `\`${content}\``
   }
 
+  generateStringPattern = (node: Parser.SyntaxNode): string => {
+    const content = GenerateCode.getStringContent(node.text, '"')
+
+    return `"${content}"`
+  }
+
   generateTuple = (node: Parser.SyntaxNode): string => {
+    const elements = node.namedChildren
+      .map(element => this.generate(element))
+      .join(',')
+
+    return `[${elements}]`
+  }
+
+  generateTuplePattern = (node: Parser.SyntaxNode): string => {
+    this.restMode = RestMode.InList
     const elements = node.namedChildren
       .map(element => this.generate(element))
       .join(',')
@@ -364,7 +446,58 @@ export default class GenerateCode {
     return pathToCompiledSource
   }
 
-  static nodeHasChild = (node: Parser.SyntaxNode, type: string): boolean => {
+  private static resolvePattern = (pattern: string): [string, string[]] => {
+    console.log(`Resolving pattern '${pattern}'...`)
+
+    const obj = JSON.parse(pattern)
+    const rec = (obj: any): [string, string[]] => {
+      if (typeof obj === 'string' && obj.startsWith('##')) // rest
+        return [`"${TRANSFORM_REST}"`, [obj.substring(2)]]
+      else if (typeof obj === 'string' && obj.startsWith('#')) // identifier
+        return [`"${TRANSFORM_IDENTIFIER_PATTERN}"`, [obj.substring(1)]]
+      else if (typeof obj !== 'object') // literal
+        return [typeof obj === 'string' ? `'${obj}'` : `${obj}`, []]
+      else if (Array.isArray(obj)) { // array
+        const [patterns, identifiers] = obj
+          .reduce(([patterns, identifiers], element) => {
+            const [newPattern, newIdentifiers] = rec(element)
+
+            return [
+              patterns.concat(newPattern),
+              identifiers.concat(newIdentifiers)
+            ]
+          }, [[], []])
+
+        return [`[${patterns.join(',')}]`, identifiers]
+      } else { // object
+        const [patterns, identifiers] = Object.entries(obj)
+          .reduce(([patterns, identifiers], [key, value]) => {
+            const [newPattern, newIdentifiers] = rec(value)
+
+            return [
+              patterns.concat(`${key}:${newPattern}`),
+              identifiers.concat(newIdentifiers)
+            ]
+          }, [[], []])
+
+        return [`{${patterns.join(',')}}`, identifiers]
+      }
+    }
+
+    return rec(obj)
+  }
+
+  private static getStringContent = (text: string, qt = '`') : string => {
+    // removes on escape when there are an even number of escapes before a qt inside a string
+    const regex = new RegExp(`(?<!\\\\)(\\\\\\\\)+(?!\\\\)(?=${qt})`)
+
+    return text
+      .slice(1, -1)
+      .replace(qt, `\\${qt}`)
+      .replace(regex, s => s.substring(1))
+  }
+
+  private static nodeHasChild = (node: Parser.SyntaxNode, type: string): boolean => {
     return node.children.map(child => child.type).includes(type)
   }
 }

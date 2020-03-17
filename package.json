@@ -27,6 +27,7 @@
   "homepage": "https://github.com/tony-lang/tony#readme",
   "dependencies": {
     "commander": "^5.0.0",
+    "deep-equal": "^2.0.1",
     "inquirer": "^7.1.0",
     "mkdirp": "^1.0.3",
     "outdent": "^0.7.0",
@@ -44,6 +45,7 @@
     "@babel/core": "^7.8.7",
     "@babel/preset-env": "^7.8.7",
     "@babel/preset-typescript": "^7.8.3",
+    "@types/deep-equal": "^1.0.1",
     "@types/inquirer": "^6.5.0",
     "@types/mkdirp": "^1.0.0",
     "@types/rimraf": "^2.0.3",

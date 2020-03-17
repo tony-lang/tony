@@ -15,9 +15,9 @@ const PREC = Object.freeze({
   PREFIX: 13,
   EXPRESSION: 14,
   PARAMETER: 14,
+  PATTERN: 14,
   APPLICATION: 15,
   PIPELINE: 16,
-  DESTRUCTURING_PATTERN: 17
 });
 
 module.exports = grammar({
@@ -33,7 +33,17 @@ module.exports = grammar({
   ],
   extras: $ => [$.comment, /\s+/],
   word: $ => $._identifier_without_operators,
-  conflicts: $ => [[$.parameter, $._expression], [$.infix_application]],
+  conflicts: $ => [
+    [$.infix_application],
+    [$.parameter, $._expression],
+    [$.parameter, $._pattern],
+    [$._expression, $._pattern],
+    [$.parameter, $._expression, $._pattern],
+    [$._literal, $._literal_pattern],
+    [$.string, $.string_pattern],
+    [$.map, $.map_pattern],
+    [$.pattern_pair, $._literal]
+  ],
 
   rules: {
     program: $ => seq(optional($.hash_bang_line), optional($._statement_seq)),
@@ -111,11 +121,70 @@ module.exports = grammar({
     argument: $ => choice('?', field('value', $._expression)),
     arguments: $ => commaSep1($.argument),
 
-    _destructuring_pattern: $ => prec(PREC.DESTRUCTURING_PATTERN, choice(
-      $.map,
-      $.tuple,
-      $.list
+    _pattern: $ => prec(PREC.PATTERN, choice(
+      $._destructuring_pattern,
+      $._literal_pattern,
+      alias($.identifier, $.identifier_pattern)
     )),
+    _destructuring_pattern: $ => prec(PREC.PATTERN, choice(
+      $.map_pattern,
+      $.tuple_pattern,
+      $.list_pattern
+    )),
+    _literal_pattern: $ => choice(
+      $.boolean,
+      $.number,
+      $.string_pattern,
+      prec(PREC.REGEX, $.regex)
+    ),
+    map_pattern: $ => prec(PREC.PATTERN, seq(
+      // '{',
+      // commaSep1(choice(
+      //   $.pattern_pair,
+      //   alias($.identifier, $.shorthand_pair_identifier)
+      // )),
+      // optional($.rest),
+      // '}'
+      '{',
+      commaSep1(choice(
+        $.pattern_pair,
+        alias($.identifier, $.shorthand_pair_identifier_pattern),
+        $.rest
+      )),
+      '}'
+    )),
+    tuple_pattern: $ => prec(PREC.PATTERN, choice(
+      // seq('(', $._pattern, $.rest, ')'),
+      // seq(
+      //   '(',
+      //   commaSep2($._pattern),
+      //   optional($.rest),
+      //   ')'
+      // )
+      seq('(', $._pattern, $.rest, ')'),
+      seq('(', commaSep2(choice($._pattern, $.rest)), ')')
+    )),
+    list_pattern: $ => prec(PREC.PATTERN, seq(
+      // '[',
+      //   commaSep1($._pattern),
+      //   optional($.rest),
+      // ']'
+      '[', commaSep1(choice($._pattern, $.rest)), ']'
+    )),
+    pattern_pair: $ => seq(
+      field('left', $.string_pattern),
+      '->',
+      field('right', $._pattern)
+    ),
+    rest: $ => seq(
+      '...',
+      field('name', alias($.identifier, $.identifier_pattern))
+    ),
+    string_pattern: $ => seq(
+      $._string_start,
+      repeat(choice($.escape_sequence, $._string_content)),
+      $._string_end
+    ),
 
     _group: $ => seq('(', $._expression, ')'),
 
@@ -177,7 +246,10 @@ module.exports = grammar({
     )),
 
     assignment: $ => seq(
-      field('left', choice($.identifier, $._destructuring_pattern)),
+      field('left', choice(
+        alias($.identifier, $.identifier_pattern),
+        $._destructuring_pattern
+      )),
       ':=',
       field('right', $._expression)
     ),
@@ -189,38 +261,21 @@ module.exports = grammar({
 
     map: $ => seq(
       '{',
-      commaSep(optional(choice(
+      commaSep(choice(
         $.expression_pair,
         alias($.identifier, $.shorthand_pair_identifier),
         $.spread
-      ))),
+      )),
       '}'
     ),
-    tuple: $ => seq(
-      '(',
-      commaSep2(choice(
-        $._expression,
-        $.spread
-      )),
-      ')'
-    ),
-    list: $ => seq(
-      '[',
-      commaSep(choice(
-        $._expression,
-        $.spread
-      )),
-      ']'
-    ),
+    tuple: $ => seq('(', commaSep2(choice($._expression, $.spread)), ')'),
+    list: $ => seq('[', commaSep(choice($._expression, $.spread)), ']'),
     expression_pair: $ => seq(
       field('left', $._expression),
       '->',
       field('right', $._expression)
     ),
-    spread: $ => seq(
-      '...',
-      field('value', $._expression)
-    ),
+    spread: $ => seq('...', field('value', $._expression)),
 
     list_comprehension: $ => seq(
       '[',
