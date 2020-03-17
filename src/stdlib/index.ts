@@ -31,9 +31,9 @@ export const resolveAbstractionBranch = (
       match = patternMatch(pattern, args)
     } catch {
       // branch pattern does not match arguments, try next branch
-    } finally {
-      if (match) return branch(match)
     }
+
+    if (match) return branch(match)
   }
 
   throw 'Non-exhaustive patterns'
