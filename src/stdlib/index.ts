@@ -2,7 +2,7 @@ import deepEqual from 'deep-equal'
 
 import {
   TRANSFORM_PLACEHOLDER_ARGUMENT,
-  TRANSFORM_REST,
+  TRANSFORM_REST_PATTERN,
   TRANSFORM_IDENTIFIER_PATTERN
 } from '../constants'
 
@@ -29,9 +29,10 @@ export const resolveAbstractionBranch = (
   for (const [pattern, branch] of branches) {
     try {
       match = patternMatch(pattern, args)
-      return branch(match)
     } catch {
       // branch pattern does not match arguments, try next branch
+    } finally {
+      if (match) return branch(match)
     }
   }
 
@@ -45,7 +46,7 @@ export const patternMatch = (pattern: any, value: any): any[] => {
     return []
   else if (Array.isArray(pattern) && Array.isArray(value))
     return pattern.slice(0).reduce((result, element, i, arr) => {
-      if (element === TRANSFORM_REST) {
+      if (element === TRANSFORM_REST_PATTERN) {
         arr.splice(i - 1)
         return result.concat([value.slice(i)])
       }
@@ -57,7 +58,7 @@ export const patternMatch = (pattern: any, value: any): any[] => {
     return Object.entries(pattern)
       .slice(0)
       .reduce((result, [key, element], i, arr) => {
-        if (key === TRANSFORM_REST) {
+        if (key === TRANSFORM_REST_PATTERN) {
           arr.splice(i - 1)
           return result.concat([value])
         }

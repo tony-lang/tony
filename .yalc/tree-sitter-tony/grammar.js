@@ -114,8 +114,19 @@ module.exports = grammar({
     )),
     parameters: $ => seq(
       '(',
-      commaSep1($.parameter),
+      choice(
+        seq(
+          commaSep1($.parameter),
+          optional(seq(',', $.rest_parameter))
+        ),
+        $.rest_parameter
+      ),
       ')'
+    ),
+    rest_parameter: $ => seq(
+      '...',
+      field('name', alias($.identifier, $.identifier_pattern)),
+      optional(seq('=', field('value', $._expression)))
     ),
 
     argument: $ => choice('?', field('value', $._expression)),
@@ -138,45 +149,35 @@ module.exports = grammar({
       prec(PREC.REGEX, $.regex)
     ),
     map_pattern: $ => prec(PREC.PATTERN, seq(
-      // '{',
-      // commaSep1(choice(
-      //   $.pattern_pair,
-      //   alias($.identifier, $.shorthand_pair_identifier)
-      // )),
-      // optional($.rest),
-      // '}'
       '{',
       commaSep1(choice(
         $.pattern_pair,
-        alias($.identifier, $.shorthand_pair_identifier_pattern),
-        $.rest
+        alias($.identifier, $.shorthand_pair_identifier_pattern)
       )),
+      optional(seq(',', $.rest_pattern)),
       '}'
     )),
     tuple_pattern: $ => prec(PREC.PATTERN, choice(
-      // seq('(', $._pattern, $.rest, ')'),
-      // seq(
-      //   '(',
-      //   commaSep2($._pattern),
-      //   optional($.rest),
-      //   ')'
-      // )
-      seq('(', $._pattern, $.rest, ')'),
-      seq('(', commaSep2(choice($._pattern, $.rest)), ')')
+      seq('(', $._pattern, ',', $.rest_pattern, ')'),
+      seq(
+        '(',
+        commaSep2($._pattern),
+        optional(seq(',', $.rest_pattern)),
+        ')'
+      )
     )),
     list_pattern: $ => prec(PREC.PATTERN, seq(
-      // '[',
-      //   commaSep1($._pattern),
-      //   optional($.rest),
-      // ']'
-      '[', commaSep1(choice($._pattern, $.rest)), ']'
+      '[',
+      commaSep1($._pattern),
+      optional(seq(',', $.rest_pattern)),
+      ']'
     )),
     pattern_pair: $ => seq(
       field('left', $.string_pattern),
       '->',
       field('right', $._pattern)
     ),
-    rest: $ => seq(
+    rest_pattern: $ => seq(
       '...',
       field('name', alias($.identifier, $.identifier_pattern))
     ),
