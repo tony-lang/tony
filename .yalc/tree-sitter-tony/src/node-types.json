@@ -47,10 +47,6 @@
             "named": true
           },
           {
-            "type": "declaration",
-            "named": true
-          },
-          {
             "type": "identifier",
             "named": true
           },
@@ -142,10 +138,6 @@
           },
           {
             "type": "boolean",
-            "named": true
-          },
-          {
-            "type": "declaration",
             "named": true
           },
           {
@@ -243,10 +235,6 @@
             "named": true
           },
           {
-            "type": "declaration",
-            "named": true
-          },
-          {
             "type": "identifier",
             "named": true
           },
@@ -324,6 +312,18 @@
           {
             "type": "identifier",
             "named": true
+          },
+          {
+            "type": "list",
+            "named": true
+          },
+          {
+            "type": "map",
+            "named": true
+          },
+          {
+            "type": "tuple",
+            "named": true
           }
         ]
       },
@@ -353,10 +353,6 @@
           },
           {
             "type": "boolean",
-            "named": true
-          },
-          {
-            "type": "declaration",
             "named": true
           },
           {
@@ -417,126 +413,6 @@
     "fields": {}
   },
   {
-    "type": "declaration",
-    "named": true,
-    "fields": {
-      "left": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "identifier",
-            "named": true
-          },
-          {
-            "type": "list",
-            "named": true
-          },
-          {
-            "type": "map",
-            "named": true
-          },
-          {
-            "type": "tuple",
-            "named": true
-          }
-        ]
-      },
-      "mutable": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "mutable",
-            "named": false
-          }
-        ]
-      },
-      "right": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "(",
-            "named": false
-          },
-          {
-            "type": ")",
-            "named": false
-          },
-          {
-            "type": "abstraction",
-            "named": true
-          },
-          {
-            "type": "application",
-            "named": true
-          },
-          {
-            "type": "assignment",
-            "named": true
-          },
-          {
-            "type": "boolean",
-            "named": true
-          },
-          {
-            "type": "declaration",
-            "named": true
-          },
-          {
-            "type": "identifier",
-            "named": true
-          },
-          {
-            "type": "infix_application",
-            "named": true
-          },
-          {
-            "type": "list",
-            "named": true
-          },
-          {
-            "type": "list_comprehension",
-            "named": true
-          },
-          {
-            "type": "map",
-            "named": true
-          },
-          {
-            "type": "number",
-            "named": true
-          },
-          {
-            "type": "pipeline",
-            "named": true
-          },
-          {
-            "type": "prefix_application",
-            "named": true
-          },
-          {
-            "type": "regex",
-            "named": true
-          },
-          {
-            "type": "return",
-            "named": true
-          },
-          {
-            "type": "string",
-            "named": true
-          },
-          {
-            "type": "tuple",
-            "named": true
-          }
-        ]
-      }
-    }
-  },
-  {
     "type": "export",
     "named": true,
     "fields": {
@@ -545,7 +421,7 @@
         "required": true,
         "types": [
           {
-            "type": "declaration",
+            "type": "assignment",
             "named": true
           }
         ]
@@ -585,10 +461,6 @@
             "named": true
           },
           {
-            "type": "declaration",
-            "named": true
-          },
-          {
             "type": "identifier",
             "named": true
           },
@@ -664,10 +536,6 @@
           },
           {
             "type": "boolean",
-            "named": true
-          },
-          {
-            "type": "declaration",
             "named": true
           },
           {
@@ -775,10 +643,6 @@
             "named": true
           },
           {
-            "type": "declaration",
-            "named": true
-          },
-          {
             "type": "identifier",
             "named": true
           },
@@ -852,10 +716,6 @@
         },
         {
           "type": "boolean",
-          "named": true
-        },
-        {
-          "type": "declaration",
           "named": true
         },
         {
@@ -1043,10 +903,6 @@
             "named": true
           },
           {
-            "type": "declaration",
-            "named": true
-          },
-          {
             "type": "identifier",
             "named": true
           },
@@ -1122,10 +978,6 @@
           },
           {
             "type": "boolean",
-            "named": true
-          },
-          {
-            "type": "declaration",
             "named": true
           },
           {
@@ -1218,10 +1070,6 @@
             "named": true
           },
           {
-            "type": "declaration",
-            "named": true
-          },
-          {
             "type": "identifier",
             "named": true
           },
@@ -1295,10 +1143,6 @@
         },
         {
           "type": "boolean",
-          "named": true
-        },
-        {
-          "type": "declaration",
           "named": true
         },
         {
@@ -1386,10 +1230,6 @@
           },
           {
             "type": "boolean",
-            "named": true
-          },
-          {
-            "type": "declaration",
             "named": true
           },
           {
@@ -1543,10 +1383,6 @@
             "named": true
           },
           {
-            "type": "declaration",
-            "named": true
-          },
-          {
             "type": "identifier",
             "named": true
           },
@@ -1646,10 +1482,6 @@
             "named": true
           },
           {
-            "type": "declaration",
-            "named": true
-          },
-          {
             "type": "identifier",
             "named": true
           },
@@ -1725,10 +1557,6 @@
           },
           {
             "type": "boolean",
-            "named": true
-          },
-          {
-            "type": "declaration",
             "named": true
           },
           {
@@ -1826,10 +1654,6 @@
             "named": true
           },
           {
-            "type": "declaration",
-            "named": true
-          },
-          {
             "type": "identifier",
             "named": true
           },
@@ -1903,10 +1727,6 @@
         },
         {
           "type": "boolean",
-          "named": true
-        },
-        {
-          "type": "declaration",
           "named": true
         },
         {
@@ -2024,10 +1844,6 @@
             "named": true
           },
           {
-            "type": "declaration",
-            "named": true
-          },
-          {
             "type": "identifier",
             "named": true
           },
@@ -2114,10 +1930,6 @@
           },
           {
             "type": "boolean",
-            "named": true
-          },
-          {
-            "type": "declaration",
             "named": true
           },
           {
@@ -2213,10 +2025,6 @@
         },
         {
           "type": "boolean",
-          "named": true
-        },
-        {
-          "type": "declaration",
           "named": true
         },
         {
@@ -2360,10 +2168,6 @@
   },
   {
     "type": "in",
-    "named": false
-  },
-  {
-    "type": "mutable",
     "named": false
   },
   {
