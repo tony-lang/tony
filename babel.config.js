@@ -4,12 +4,15 @@ const presets = [
     '@babel/env',
     {
       targets: {
-        node: '8',
+        node: '10',
       },
       useBuiltIns: 'usage',
       corejs: 3,
     },
   ],
 ]
+const plugins = [
+  '@babel/plugin-proposal-class-properties'
+]
 
-module.exports = { presets }
+module.exports = { presets, plugins }
