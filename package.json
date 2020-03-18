@@ -30,7 +30,7 @@
     "deep-equal": "^2.0.1",
     "inquirer": "^7.1.0",
     "mkdirp": "^1.0.3",
-    "outdent": "^0.7.0",
+    "outdent": "^0.7.1",
     "rimraf": "^3.0.2",
     "tree-sitter": "^0.16.0",
     "tree-sitter-tony": "file:.yalc/tree-sitter-tony",
