@@ -202,7 +202,8 @@ export class GenerateCode {
   generateElseIfClause = (node: Parser.SyntaxNode): string => {
     const condition = this.generate(node.namedChild(0))
     const consequence = this.generate(node.namedChild(1))
-    if (node.namedChildCount == 2) return `else if(${condition}){return ${consequence}}`
+
+    return `else if(${condition}){return ${consequence}}`
   }
 
   generateElseIfClauses = (node: Parser.SyntaxNode): string => {
@@ -262,7 +263,8 @@ export class GenerateCode {
   generateIf = (node: Parser.SyntaxNode): string => {
     const condition = this.generate(node.namedChild(0))
     const consequence = this.generate(node.namedChild(1))
-    if (node.namedChildCount == 2) return `(()=>{if(${condition}){return ${consequence}}})()`
+    if (node.namedChildCount == 2)
+      return `(()=>{if(${condition}){return ${consequence}}})()`
 
     if (node.namedChild(node.namedChildCount - 1).type === 'else_if_clauses') {
       const clauses = this.generate(node.namedChild(2))
@@ -271,12 +273,14 @@ export class GenerateCode {
     } else if (node.namedChildCount == 3) {
       const alternative = this.generate(node.namedChild(2))
 
-      return `(()=>{if(${condition}){return ${consequence}}else{return ${alternative}}})()`
+      return `(()=>{if(${condition}){return ${consequence}}` +
+             `else{return ${alternative}}})()`
     } else if (node.namedChildCount == 4) {
       const clauses = this.generate(node.namedChild(2))
       const alternative = this.generate(node.namedChild(3))
 
-      return `(()=>{if(${condition}){return ${consequence}}${clauses}else{return ${alternative}}})()`
+      return `(()=>{if(${condition}){return ${consequence}}${clauses}` +
+             `else{return ${alternative}}})()`
     }
   }
 
