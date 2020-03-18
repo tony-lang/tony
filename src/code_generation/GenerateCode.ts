@@ -49,6 +49,10 @@ export class GenerateCode {
       return this.generateBoolean(node)
     case 'comment':
       return this.generateComment(node)
+    case 'else_if_clause':
+      return this.generateElseIfClause(node)
+    case 'else_if_clauses':
+      return this.generateElseIfClauses(node)
     case 'export':
       return this.generateExport(node)
     case 'expression_pair':
@@ -63,6 +67,8 @@ export class GenerateCode {
       return this.generateIdentifier(node)
     case 'identifier_pattern':
       return this.generateIdentifierPattern(node)
+    case 'if':
+      return this.generateIf(node)
     case 'import':
       return this.generateImport(node)
     case 'import_clause':
@@ -180,9 +186,9 @@ export class GenerateCode {
   generateBlock = (node: Parser.SyntaxNode): string => {
     const expressions = node.namedChildren
       .map(expression => this.generate(expression))
-      .join(';')
+    const returnValue = expressions.pop()
 
-    return expressions
+    return `(()=>{${expressions.join(';')};return ${returnValue}})()`
   }
 
   generateBoolean = (node: Parser.SyntaxNode): string => {
@@ -191,6 +197,21 @@ export class GenerateCode {
 
   generateComment = (node: Parser.SyntaxNode): string => {
     return ''
+  }
+
+  generateElseIfClause = (node: Parser.SyntaxNode): string => {
+    const condition = this.generate(node.namedChild(0))
+    const consequence = this.generate(node.namedChild(1))
+
+    return `else if(${condition}){return ${consequence}}`
+  }
+
+  generateElseIfClauses = (node: Parser.SyntaxNode): string => {
+    const clauses = node.namedChildren
+      .map(clause => this.generate(clause))
+      .join('')
+
+    return clauses
   }
 
   generateExport = (node: Parser.SyntaxNode): string => {
@@ -237,6 +258,30 @@ export class GenerateCode {
 
   generateIdentifierPattern = (node: Parser.SyntaxNode): string => {
     return `"${INTERNAL_TEMP_TOKEN}${this.getIdentifier(node.text)}"`
+  }
+
+  generateIf = (node: Parser.SyntaxNode): string => {
+    const condition = this.generate(node.namedChild(0))
+    const consequence = this.generate(node.namedChild(1))
+    if (node.namedChildCount == 2)
+      return `(()=>{if(${condition}){return ${consequence}}})()`
+
+    if (node.namedChild(node.namedChildCount - 1).type === 'else_if_clauses') {
+      const clauses = this.generate(node.namedChild(2))
+
+      return `(()=>{if(${condition}){return ${consequence}}${clauses}})()`
+    } else if (node.namedChildCount == 3) {
+      const alternative = this.generate(node.namedChild(2))
+
+      return `(()=>{if(${condition}){return ${consequence}}` +
+             `else{return ${alternative}}})()`
+    } else if (node.namedChildCount == 4) {
+      const clauses = this.generate(node.namedChild(2))
+      const alternative = this.generate(node.namedChild(3))
+
+      return `(()=>{if(${condition}){return ${consequence}}${clauses}` +
+             `else{return ${alternative}}})()`
+    }
   }
 
   generateImport = (node: Parser.SyntaxNode): string => {
