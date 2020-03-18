@@ -5,8 +5,8 @@ export class Curry {
     const newArgs = Curry.addNewArgs(cache, args)
     const actualArgs = Curry.getActualArgs(newArgs)
 
-    return actualArgs.length >= fn.length ?
-      fn(...actualArgs) : Curry.perform(fn, ...newArgs)
+    const result = fn(...actualArgs)
+    return result === null ? Curry.perform(fn, ...newArgs) : result
   }
 
   private static getActualArgs = (args: any[]): any[] =>

@@ -1312,7 +1312,7 @@
           "named": true
         },
         {
-          "type": "rest",
+          "type": "rest_list",
           "named": true
         }
       ]
@@ -1354,7 +1354,7 @@
           "named": true
         },
         {
-          "type": "rest",
+          "type": "rest_map",
           "named": true
         },
         {
@@ -1382,7 +1382,7 @@
           "named": true
         },
         {
-          "type": "rest",
+          "type": "rest_list",
           "named": true
         }
       ]
@@ -1893,7 +1893,7 @@
     }
   },
   {
-    "type": "rest",
+    "type": "rest_list",
     "named": true,
     "fields": {
       "name": {
@@ -1905,81 +1905,19 @@
             "named": true
           }
         ]
-      },
-      "value": {
+      }
+    }
+  },
+  {
+    "type": "rest_map",
+    "named": true,
+    "fields": {
+      "name": {
         "multiple": false,
-        "required": false,
+        "required": true,
         "types": [
           {
-            "type": "(",
-            "named": false
-          },
-          {
-            "type": ")",
-            "named": false
-          },
-          {
-            "type": "abstraction",
-            "named": true
-          },
-          {
-            "type": "application",
-            "named": true
-          },
-          {
-            "type": "assignment",
-            "named": true
-          },
-          {
-            "type": "boolean",
-            "named": true
-          },
-          {
-            "type": "identifier",
-            "named": true
-          },
-          {
-            "type": "infix_application",
-            "named": true
-          },
-          {
-            "type": "list",
-            "named": true
-          },
-          {
-            "type": "list_comprehension",
-            "named": true
-          },
-          {
-            "type": "map",
-            "named": true
-          },
-          {
-            "type": "number",
-            "named": true
-          },
-          {
-            "type": "pipeline",
-            "named": true
-          },
-          {
-            "type": "prefix_application",
-            "named": true
-          },
-          {
-            "type": "regex",
-            "named": true
-          },
-          {
-            "type": "return",
-            "named": true
-          },
-          {
-            "type": "string",
-            "named": true
-          },
-          {
-            "type": "tuple",
+            "type": "identifier_pattern",
             "named": true
           }
         ]
@@ -2379,7 +2317,7 @@
           "named": true
         },
         {
-          "type": "rest",
+          "type": "rest_list",
           "named": true
         }
       ]

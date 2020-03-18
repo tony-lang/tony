@@ -1,23 +1,32 @@
-import { PatternMatch } from './PatternMatch'
+import {
+  PatternMatch,
+  PatternNotMatching,
+  PatternPartiallyMatching
+} from './PatternMatch'
+
+export class NonExhaustivePatterns extends Error {}
 
 export class ResolveAbstractionBranch {
   static perform = (
     args: any,
-    branches: [string, (match: any[]) => any][]
+    branches: [string, any[], (match: any[]) => any][]
   ): any => {
     let match
 
-    for (const [pattern, branch] of branches) {
+    for (const [pattern, defaults, branch] of branches) {
       try {
-        match = PatternMatch.perform(pattern, args)
-      } catch {
+        match = new PatternMatch({ defaults, isStrict: true })
+          .perform(pattern, args)
+      } catch (error) {
         // branch pattern does not match arguments, try next branch
-        continue
+        if (error instanceof PatternNotMatching) continue
+        else if (error instanceof PatternPartiallyMatching) match = null
       }
 
-      return branch(match)
+      // in the case of partial application, return null
+      return match === null ? null : branch(match)
     }
 
-    throw 'Non-exhaustive patterns'
+    throw new NonExhaustivePatterns('Non-exhaustive patterns')
   }
 }

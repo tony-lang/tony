@@ -118,22 +118,22 @@ module.exports = grammar({
     map_pattern: $ => prec(PREC.PATTERN, seq(
       '{',
       commaSep1(choice($.pattern_pair, $.shorthand_pair_identifier_pattern)),
-      optional(seq(',', $.rest)),
+      optional(seq(',', alias($.rest, $.rest_map))),
       '}'
     )),
     tuple_pattern: $ => prec(PREC.PATTERN, choice(
-      seq('(', $.pattern, ',', $.rest, ')'),
+      seq('(', $.pattern, ',', alias($.rest, $.rest_list), ')'),
       seq(
         '(',
         commaSep2($.pattern),
-        optional(seq(',', $.rest)),
+        optional(seq(',', alias($.rest, $.rest_list))),
         ')'
       )
     )),
     list_pattern: $ => prec(PREC.PATTERN, seq(
       '[',
       commaSep1($.pattern),
-      optional(seq(',', $.rest)),
+      optional(seq(',', alias($.rest, $.rest_list))),
       ']'
     )),
     pattern_pair: $ => seq(
@@ -147,8 +147,7 @@ module.exports = grammar({
     ),
     rest: $ => seq(
       '...',
-      field('name', alias($.identifier, $.identifier_pattern)),
-      optional(seq('=', field('value', $._expression)))
+      field('name', alias($.identifier, $.identifier_pattern))
     ),
 
     _literal_pattern: $ => choice(
@@ -168,9 +167,9 @@ module.exports = grammar({
       choice(
         seq(
           commaSep1($.pattern),
-          optional(seq(',', $.rest)),
+          optional(seq(',', alias($.rest, $.rest_list))),
         ),
-        $.rest
+        alias($.rest, $.rest_list)
       ),
       ')'
     ),

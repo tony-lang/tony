@@ -13,20 +13,15 @@ import {
   INTERNAL_TEMP_TOKEN
 } from '../constants'
 
+import { CollectDefaultValues } from './CollectDefaultValues'
 import { ParseStringContent } from './ParseStringContent'
 import { ResolvePattern } from './ResolvePattern'
-
-enum RestMode {
-  InList,
-  InMap
-}
 
 export class GenerateCode {
   file: string
   private files: string[]
   private identifiers: string[] = []
   private outputPath: string
-  private restMode: RestMode
   private stack: any[] = []
 
   constructor(outputPath: string, files: string[]) {
@@ -104,8 +99,10 @@ export class GenerateCode {
       return this.generateProgram(node)
     case 'regex':
       return this.generateRegex(node)
-    case 'rest':
-      return this.generateRest(node)
+    case 'rest_list':
+      return this.generateRestList(node)
+    case 'rest_map':
+      return this.generateRestMap(node)
     case 'return':
       return this.generateReturn(node)
     case 'shorthand_pair_identifier':
@@ -141,9 +138,10 @@ export class GenerateCode {
     const parameters = this.generate(node.namedChild(0))
     const body = this.generate(node.namedChild(1))
     const [pattern, identifiers] = ResolvePattern.perform(parameters)
+    const defaults = new CollectDefaultValues(this).perform(node.namedChild(0))
 
-    return `[${pattern},(match)=>{const [${identifiers.join(',')}]=match;` +
-           `return ${body}}]`
+    return `[${pattern},${defaults},(match)=>{` +
+           `const [${identifiers.join(',')}]=match;return ${body}}]`
   }
 
   generateApplication = (node: Parser.SyntaxNode): string => {
@@ -172,9 +170,11 @@ export class GenerateCode {
     const left = this.generate(node.namedChild(0))
     const right = this.generate(node.namedChild(1))
     const [pattern, identifiers] = ResolvePattern.perform(left)
+    const defaults = new CollectDefaultValues(this).perform(node.namedChild(0))
 
     return `const [${identifiers.join(',')}]=` +
-           `stdlib.PatternMatch.perform(${pattern},${right})`
+           `new stdlib.PatternMatch({defaults:${defaults}})` +
+           `.perform(${pattern},${right})`
   }
 
   generateBlock = (node: Parser.SyntaxNode): string => {
@@ -292,10 +292,7 @@ export class GenerateCode {
 
   generateListPattern = (node: Parser.SyntaxNode): string => {
     const elements = node.namedChildren
-      .map(element => {
-        this.restMode = RestMode.InList
-        return this.generate(element)
-      })
+      .map(element => this.generate(element))
       .join(',')
 
     return `[${elements}]`
@@ -311,10 +308,7 @@ export class GenerateCode {
 
   generateMapPattern = (node: Parser.SyntaxNode): string => {
     const elements = node.namedChildren
-      .map(element => {
-        this.restMode = RestMode.InMap
-        return this.generate(element)
-      })
+      .map(element => this.generate(element))
       .join(',')
 
     return `{${elements}}`
@@ -326,19 +320,14 @@ export class GenerateCode {
 
   generateParameters = (node: Parser.SyntaxNode): string => {
     const parameters = node.namedChildren
-      .map(parameter => {
-        this.restMode = RestMode.InList
-        return this.generate(parameter)
-      })
+      .map(parameter => this.generate(parameter))
       .join(',')
 
     return `[${parameters}]`
   }
 
   generatePattern = (node: Parser.SyntaxNode): string => {
-    if (node.namedChildCount == 1) return this.generate(node.namedChild(0))
-
-    throw 'handle default value'
+    return this.generate(node.namedChild(0))
   }
 
   generatePatternPair = (node: Parser.SyntaxNode): string => {
@@ -374,16 +363,16 @@ export class GenerateCode {
     return node.text
   }
 
-  generateRest = (node: Parser.SyntaxNode): string => {
+  generateRestList = (node: Parser.SyntaxNode): string => {
     const name = this.generate(node.namedChild(0)).slice(1, -1)
 
-    if (node.namedChildCount == 1)
-      if (this.restMode === RestMode.InList)
-        return `"${INTERNAL_TEMP_TOKEN}${name}"`
-      else if (this.restMode === RestMode.InMap)
-        return `"['${TRANSFORM_REST_PATTERN}']":"${name}"`
+    return `"${INTERNAL_TEMP_TOKEN}${name}"`
+  }
 
-    throw 'handle default value'
+  generateRestMap = (node: Parser.SyntaxNode): string => {
+    const name = this.generate(node.namedChild(0)).slice(1, -1)
+
+    return `"['${TRANSFORM_REST_PATTERN}']":"${name}"`
   }
 
   generateReturn = (node: Parser.SyntaxNode): string => {
@@ -402,10 +391,7 @@ export class GenerateCode {
   ): string => {
     const identifierPattern = this.generate(node.namedChild(0))
 
-    if (node.namedChildCount == 1)
-      return `"${identifierPattern.substring(1)}":"${identifierPattern}"`
-
-    throw 'handle default value'
+    return `"${identifierPattern.substring(1)}":"${identifierPattern}"`
   }
 
   generateSpread = (node: Parser.SyntaxNode): string => {
@@ -437,10 +423,7 @@ export class GenerateCode {
 
   generateTuplePattern = (node: Parser.SyntaxNode): string => {
     const elements = node.namedChildren
-      .map(element => {
-        this.restMode = RestMode.InList
-        return this.generate(element)
-      })
+      .map(element => this.generate(element))
       .join(',')
 
     return `[${elements}]`
