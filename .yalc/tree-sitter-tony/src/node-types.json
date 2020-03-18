@@ -43,11 +43,19 @@
             "named": true
           },
           {
+            "type": "block",
+            "named": true
+          },
+          {
             "type": "boolean",
             "named": true
           },
           {
             "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "if",
             "named": true
           },
           {
@@ -145,6 +153,10 @@
             "named": true
           },
           {
+            "type": "if",
+            "named": true
+          },
+          {
             "type": "infix_application",
             "named": true
           },
@@ -236,6 +248,10 @@
           },
           {
             "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "if",
             "named": true
           },
           {
@@ -360,6 +376,10 @@
             "named": true
           },
           {
+            "type": "if",
+            "named": true
+          },
+          {
             "type": "infix_application",
             "named": true
           },
@@ -408,9 +428,201 @@
     }
   },
   {
+    "type": "block",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "abstraction",
+          "named": true
+        },
+        {
+          "type": "application",
+          "named": true
+        },
+        {
+          "type": "assignment",
+          "named": true
+        },
+        {
+          "type": "boolean",
+          "named": true
+        },
+        {
+          "type": "identifier",
+          "named": true
+        },
+        {
+          "type": "if",
+          "named": true
+        },
+        {
+          "type": "infix_application",
+          "named": true
+        },
+        {
+          "type": "list",
+          "named": true
+        },
+        {
+          "type": "list_comprehension",
+          "named": true
+        },
+        {
+          "type": "map",
+          "named": true
+        },
+        {
+          "type": "number",
+          "named": true
+        },
+        {
+          "type": "pipeline",
+          "named": true
+        },
+        {
+          "type": "prefix_application",
+          "named": true
+        },
+        {
+          "type": "regex",
+          "named": true
+        },
+        {
+          "type": "return",
+          "named": true
+        },
+        {
+          "type": "string",
+          "named": true
+        },
+        {
+          "type": "tuple",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "boolean",
     "named": true,
     "fields": {}
+  },
+  {
+    "type": "else_if_clause",
+    "named": true,
+    "fields": {
+      "condition": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "(",
+            "named": false
+          },
+          {
+            "type": ")",
+            "named": false
+          },
+          {
+            "type": "abstraction",
+            "named": true
+          },
+          {
+            "type": "application",
+            "named": true
+          },
+          {
+            "type": "assignment",
+            "named": true
+          },
+          {
+            "type": "boolean",
+            "named": true
+          },
+          {
+            "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "if",
+            "named": true
+          },
+          {
+            "type": "infix_application",
+            "named": true
+          },
+          {
+            "type": "list",
+            "named": true
+          },
+          {
+            "type": "list_comprehension",
+            "named": true
+          },
+          {
+            "type": "map",
+            "named": true
+          },
+          {
+            "type": "number",
+            "named": true
+          },
+          {
+            "type": "pipeline",
+            "named": true
+          },
+          {
+            "type": "prefix_application",
+            "named": true
+          },
+          {
+            "type": "regex",
+            "named": true
+          },
+          {
+            "type": "return",
+            "named": true
+          },
+          {
+            "type": "string",
+            "named": true
+          },
+          {
+            "type": "tuple",
+            "named": true
+          }
+        ]
+      },
+      "consequence": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "block",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "else_if_clauses",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "else_if_clause",
+          "named": true
+        }
+      ]
+    }
   },
   {
     "type": "export",
@@ -462,6 +674,10 @@
           },
           {
             "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "if",
             "named": true
           },
           {
@@ -540,6 +756,10 @@
           },
           {
             "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "if",
             "named": true
           },
           {
@@ -647,6 +867,10 @@
             "named": true
           },
           {
+            "type": "if",
+            "named": true
+          },
+          {
             "type": "infix_application",
             "named": true
           },
@@ -723,6 +947,10 @@
           "named": true
         },
         {
+          "type": "if",
+          "named": true
+        },
+        {
           "type": "infix_application",
           "named": true
         },
@@ -793,6 +1021,276 @@
     "type": "identifier_pattern",
     "named": true,
     "fields": {}
+  },
+  {
+    "type": "if",
+    "named": true,
+    "fields": {
+      "alternative": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "(",
+            "named": false
+          },
+          {
+            "type": ")",
+            "named": false
+          },
+          {
+            "type": "abstraction",
+            "named": true
+          },
+          {
+            "type": "application",
+            "named": true
+          },
+          {
+            "type": "assignment",
+            "named": true
+          },
+          {
+            "type": "block",
+            "named": true
+          },
+          {
+            "type": "boolean",
+            "named": true
+          },
+          {
+            "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "if",
+            "named": true
+          },
+          {
+            "type": "infix_application",
+            "named": true
+          },
+          {
+            "type": "list",
+            "named": true
+          },
+          {
+            "type": "list_comprehension",
+            "named": true
+          },
+          {
+            "type": "map",
+            "named": true
+          },
+          {
+            "type": "number",
+            "named": true
+          },
+          {
+            "type": "pipeline",
+            "named": true
+          },
+          {
+            "type": "prefix_application",
+            "named": true
+          },
+          {
+            "type": "regex",
+            "named": true
+          },
+          {
+            "type": "return",
+            "named": true
+          },
+          {
+            "type": "string",
+            "named": true
+          },
+          {
+            "type": "tuple",
+            "named": true
+          }
+        ]
+      },
+      "alternatives": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "else_if_clauses",
+            "named": true
+          }
+        ]
+      },
+      "condition": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "(",
+            "named": false
+          },
+          {
+            "type": ")",
+            "named": false
+          },
+          {
+            "type": "abstraction",
+            "named": true
+          },
+          {
+            "type": "application",
+            "named": true
+          },
+          {
+            "type": "assignment",
+            "named": true
+          },
+          {
+            "type": "boolean",
+            "named": true
+          },
+          {
+            "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "if",
+            "named": true
+          },
+          {
+            "type": "infix_application",
+            "named": true
+          },
+          {
+            "type": "list",
+            "named": true
+          },
+          {
+            "type": "list_comprehension",
+            "named": true
+          },
+          {
+            "type": "map",
+            "named": true
+          },
+          {
+            "type": "number",
+            "named": true
+          },
+          {
+            "type": "pipeline",
+            "named": true
+          },
+          {
+            "type": "prefix_application",
+            "named": true
+          },
+          {
+            "type": "regex",
+            "named": true
+          },
+          {
+            "type": "return",
+            "named": true
+          },
+          {
+            "type": "string",
+            "named": true
+          },
+          {
+            "type": "tuple",
+            "named": true
+          }
+        ]
+      },
+      "consequence": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "(",
+            "named": false
+          },
+          {
+            "type": ")",
+            "named": false
+          },
+          {
+            "type": "abstraction",
+            "named": true
+          },
+          {
+            "type": "application",
+            "named": true
+          },
+          {
+            "type": "assignment",
+            "named": true
+          },
+          {
+            "type": "block",
+            "named": true
+          },
+          {
+            "type": "boolean",
+            "named": true
+          },
+          {
+            "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "if",
+            "named": true
+          },
+          {
+            "type": "infix_application",
+            "named": true
+          },
+          {
+            "type": "list",
+            "named": true
+          },
+          {
+            "type": "list_comprehension",
+            "named": true
+          },
+          {
+            "type": "map",
+            "named": true
+          },
+          {
+            "type": "number",
+            "named": true
+          },
+          {
+            "type": "pipeline",
+            "named": true
+          },
+          {
+            "type": "prefix_application",
+            "named": true
+          },
+          {
+            "type": "regex",
+            "named": true
+          },
+          {
+            "type": "return",
+            "named": true
+          },
+          {
+            "type": "string",
+            "named": true
+          },
+          {
+            "type": "tuple",
+            "named": true
+          }
+        ]
+      }
+    }
   },
   {
     "type": "import",
@@ -912,6 +1410,10 @@
             "named": true
           },
           {
+            "type": "if",
+            "named": true
+          },
+          {
             "type": "infix_application",
             "named": true
           },
@@ -987,6 +1489,10 @@
           },
           {
             "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "if",
             "named": true
           },
           {
@@ -1079,6 +1585,10 @@
             "named": true
           },
           {
+            "type": "if",
+            "named": true
+          },
+          {
             "type": "infix_application",
             "named": true
           },
@@ -1152,6 +1662,10 @@
         },
         {
           "type": "identifier",
+          "named": true
+        },
+        {
+          "type": "if",
           "named": true
         },
         {
@@ -1239,6 +1753,10 @@
           },
           {
             "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "if",
             "named": true
           },
           {
@@ -1453,6 +1971,10 @@
             "named": true
           },
           {
+            "type": "if",
+            "named": true
+          },
+          {
             "type": "infix_application",
             "named": true
           },
@@ -1567,6 +2089,10 @@
             "named": true
           },
           {
+            "type": "if",
+            "named": true
+          },
+          {
             "type": "infix_application",
             "named": true
           },
@@ -1642,6 +2168,10 @@
           },
           {
             "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "if",
             "named": true
           },
           {
@@ -1739,6 +2269,10 @@
             "named": true
           },
           {
+            "type": "if",
+            "named": true
+          },
+          {
             "type": "infix_application",
             "named": true
           },
@@ -1820,6 +2354,10 @@
         },
         {
           "type": "identifier",
+          "named": true
+        },
+        {
+          "type": "if",
           "named": true
         },
         {
@@ -1961,6 +2499,10 @@
             "named": true
           },
           {
+            "type": "if",
+            "named": true
+          },
+          {
             "type": "infix_application",
             "named": true
           },
@@ -2060,6 +2602,10 @@
             "named": true
           },
           {
+            "type": "if",
+            "named": true
+          },
+          {
             "type": "infix_application",
             "named": true
           },
@@ -2141,6 +2687,10 @@
           },
           {
             "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "if",
             "named": true
           },
           {
@@ -2251,6 +2801,10 @@
         },
         {
           "type": "identifier",
+          "named": true
+        },
+        {
+          "type": "if",
           "named": true
         },
         {
@@ -2380,6 +2934,14 @@
     "named": false
   },
   {
+    "type": "else",
+    "named": false
+  },
+  {
+    "type": "else if",
+    "named": false
+  },
+  {
     "type": "escape_sequence",
     "named": true
   },
@@ -2421,6 +2983,10 @@
   },
   {
     "type": "return",
+    "named": false
+  },
+  {
+    "type": "then",
     "named": false
   },
   {
