@@ -1,9 +1,0 @@
-{
-  "version": "v1",
-  "packages": {
-    "tree-sitter-tony": {
-      "signature": "1ad24358aa0e481953dd4368abdfd74a",
-      "file": true
-    }
-  }
-}
