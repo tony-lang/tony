@@ -14,19 +14,25 @@ import {
 } from '../constants'
 
 import { CollectDefaultValues } from './CollectDefaultValues'
+import { GetScope } from './GetScope'
 import { ParseStringContent } from './ParseStringContent'
 import { ResolvePattern } from './ResolvePattern'
+import { TransformIdentifier } from './TransformIdentifier'
 
 export class GenerateCode {
+  private declarationBlock = false
   file: string
   private files: string[]
-  private identifiers: string[] = []
+  private getScope: GetScope
   private outputPath: string
   private stack: any[] = []
+  private transformIdentifier = new TransformIdentifier
 
   constructor(outputPath: string, files: string[]) {
     this.outputPath = outputPath
     this.files = files
+
+    this.getScope = new GetScope(this.transformIdentifier)
   }
 
   generate = (node: Parser.SyntaxNode): string => {
@@ -35,6 +41,8 @@ export class GenerateCode {
       return this.generateAbstraction(node)
     case 'abstraction_branch':
       return this.generateAbstractionBranch(node)
+    case 'access':
+      return this.generateAccess(node)
     case 'application':
       return this.generateApplication(node)
     case 'argument':
@@ -93,6 +101,8 @@ export class GenerateCode {
       return this.generateMap(node)
     case 'map_pattern':
       return this.generateMapPattern(node)
+    case 'module':
+      return this.generateModule(node)
     case 'number':
       return this.generateNumber(node)
     case 'parameters':
@@ -115,6 +125,8 @@ export class GenerateCode {
       return this.generateRestMap(node)
     case 'return':
       return this.generateReturn(node)
+    case 'shorthand_access_identifier':
+      return this.generateShorthandAccessIdentifier(node)
     case 'shorthand_pair_identifier':
       return this.generateShorthandPairIdentifier(node)
     case 'shorthand_pair_identifier_pattern':
@@ -158,6 +170,13 @@ export class GenerateCode {
            `const [${identifiers.join(',')}]=match;return ${body}}]`
   }
 
+  generateAccess = (node: Parser.SyntaxNode): string => {
+    const left = this.generate(node.namedChild(0))
+    const right = this.generate(node.namedChild(1))
+
+    return `${left}[${right}]`
+  }
+
   generateApplication = (node: Parser.SyntaxNode): string => {
     const abstraction = this.generate(node.namedChild(0))
     const args = this.generate(node.namedChild(1))
@@ -186,17 +205,22 @@ export class GenerateCode {
     const [pattern, identifiers] = ResolvePattern.perform(left)
     const defaults = new CollectDefaultValues(this).perform(node.namedChild(0))
 
-    return `const [${identifiers.join(',')}]=` +
+    return `(()=>{const match=` +
            `new stdlib.PatternMatch({defaults:${defaults}})` +
-           `.perform(${pattern},${right})`
+           `.perform(${pattern},${right});[${identifiers.join(',')}]=match;return match})()`
   }
 
   generateBlock = (node: Parser.SyntaxNode): string => {
+    const isDeclaration = this.declarationBlock
+    if (isDeclaration)
+      this.declarationBlock = false
+
     const expressions = node.namedChildren
       .map(expression => this.generate(expression))
-    const returnValue = expressions.pop()
+    const declarations = this.getScope.perform(node).join(',')
+    const returnValue = isDeclaration ? `{${declarations}}` : expressions.pop()
 
-    return `(()=>{${expressions.join(';')};return ${returnValue}})()`
+    return `(()=>{${declarations ? 'let ' : ''}${declarations};${expressions.join(';')};return ${returnValue}})()`
   }
 
   generateBoolean = (node: Parser.SyntaxNode): string => {
@@ -280,11 +304,13 @@ export class GenerateCode {
   }
 
   generateIdentifier = (node: Parser.SyntaxNode): string => {
-    return this.getIdentifier(node.text)
+    return this.transformIdentifier.perform(node.text)
   }
 
   generateIdentifierPattern = (node: Parser.SyntaxNode): string => {
-    return `"${INTERNAL_TEMP_TOKEN}${this.getIdentifier(node.text)}"`
+    const name = this.transformIdentifier.perform(node.text)
+
+    return `"${INTERNAL_TEMP_TOKEN}${name}"`
   }
 
   generateIf = (node: Parser.SyntaxNode): string => {
@@ -342,7 +368,7 @@ export class GenerateCode {
   }
 
   generateInfixApplicationOperator = (node: Parser.SyntaxNode): string => {
-    return this.getIdentifier(node.text)
+    return this.transformIdentifier.perform(node.text)
   }
 
   generateList = (node: Parser.SyntaxNode): string => {
@@ -386,6 +412,14 @@ export class GenerateCode {
     return `{${elements}}`
   }
 
+  generateModule = (node: Parser.SyntaxNode): string => {
+    const name = this.generate(node.namedChild(0))
+    this.declarationBlock = true
+    const body = this.generate(node.namedChild(1))
+
+    return `(()=>{${name}=${body};return ${name}})()`
+  }
+
   generateNumber = (node: Parser.SyntaxNode): string => {
     return node.text
   }
@@ -427,8 +461,9 @@ export class GenerateCode {
     const expressions = node.namedChildren
       .map(expression => this.generate(expression))
       .join(';')
+    const declarations = this.getScope.perform(node).join(',')
 
-    return `${DEFAULT_IMPORTS};${expressions}`
+    return `${DEFAULT_IMPORTS};${declarations ? 'let ' : ''}${declarations};${expressions}`
   }
 
   generateRegex = (node: Parser.SyntaxNode): string => {
@@ -454,8 +489,14 @@ export class GenerateCode {
     return `return ${value}`
   }
 
+  generateShorthandAccessIdentifier = (node: Parser.SyntaxNode): string => {
+    const name = this.transformIdentifier.perform(node.text)
+
+    return `'${name}'`
+  }
+
   generateShorthandPairIdentifier = (node: Parser.SyntaxNode): string => {
-    return this.getIdentifier(node.text)
+    return this.transformIdentifier.perform(node.text)
   }
 
   generateShorthandPairIdentifierPattern = (
@@ -463,7 +504,7 @@ export class GenerateCode {
   ): string => {
     const identifierPattern = this.generate(node.namedChild(0))
 
-    return `"${identifierPattern.substring(1)}":"${identifierPattern}"`
+    return `"${identifierPattern.substring(INTERNAL_TEMP_TOKEN.length + 1)}:${identifierPattern}`
   }
 
   generateSpread = (node: Parser.SyntaxNode): string => {
@@ -514,16 +555,6 @@ export class GenerateCode {
       .join(';')
 
     return clauses
-  }
-
-  private getIdentifier = (identifier: string): string => {
-    if (!OPERATOR_REGEX.test(identifier)) return identifier
-
-    const index = this.identifiers.indexOf(identifier)
-    if (index != -1) return `${INTERNAL_IDENTIFIER_PREFIX}${index}`
-
-    const length = this.identifiers.push(identifier)
-    return `${INTERNAL_IDENTIFIER_PREFIX}${length - 1}`
   }
 
   private getImportSource = (source: string): string => {
