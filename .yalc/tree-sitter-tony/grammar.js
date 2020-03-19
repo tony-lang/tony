@@ -17,6 +17,7 @@ const PREC = Object.freeze({
   PATTERN: 14,
   APPLICATION: 15,
   PIPELINE: 16,
+  ACCESS: 17
 });
 
 module.exports = grammar({
@@ -98,6 +99,7 @@ module.exports = grammar({
       $.prefix_application,
       $.infix_application,
       $.pipeline,
+      $.access,
       alias($.simple_assignment, $.assignment),
       $.return,
       alias($.simple_if, $.if),
@@ -112,11 +114,12 @@ module.exports = grammar({
       alias($.compound_abstraction, $.abstraction),
       alias($.compound_assignment, $.assignment),
       alias($.compound_if, $.if),
-      alias($.compound_case, $.case)
+      $.case,
+      $.module
     ),
 
     block: $ => choice(
-      seq(optional('then'), $._simple_expression, $._newline),
+      seq($._simple_expression, $._newline),
       seq($._newline, $._indent, repeat1($._expression), $._dedent)
     ),
 
@@ -265,6 +268,15 @@ module.exports = grammar({
       field('right', $._simple_expression)
     )),
 
+    access: $ => prec.left(PREC.ACCESS, seq(
+      field('left', $._simple_expression),
+      '->',
+      choice(
+        seq('[', field('right', $._simple_expression), ']'),
+        field('right', alias($.identifier, $.shorthand_access_identifier))
+      )
+    )),
+
     simple_assignment: $ => seq(
       field('left', choice(
         alias($.identifier, $.identifier_pattern),
@@ -304,6 +316,7 @@ module.exports = grammar({
     compound_if: $ => prec.right(seq(
       'if',
       field('condition', $._simple_expression),
+      optional('then'),
       field('consequence', $.block),
       field('alternatives', alias(repeat($.else_if_clause), $.else_if_clauses)),
       optional(seq('else', field('alternative', $.block)))
@@ -311,10 +324,11 @@ module.exports = grammar({
     else_if_clause: $ => seq(
       'else if',
       field('condition', $._simple_expression),
+      optional('then'),
       field('consequence', $.block)
     ),
 
-    compound_case: $ => seq(
+    case: $ => seq(
       'case',
       field('value', $._simple_expression),
       field('branches', alias(repeat1($.when_clause), $.when_clauses)),
@@ -323,9 +337,17 @@ module.exports = grammar({
     when_clause: $ => seq(
       'when',
       field('values', $.expression_list),
+      optional('then'),
       field('consequence', $.block)
     ),
     expression_list: $ => commaSep1($._simple_expression),
+
+    module: $ => seq(
+      'module',
+      field('name', $.identifier),
+      optional('where'),
+      field('body', $.block)
+    ),
 
     map: $ => seq(
       '{',

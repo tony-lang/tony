@@ -35,6 +35,10 @@
             "named": true
           },
           {
+            "type": "access",
+            "named": true
+          },
+          {
             "type": "application",
             "named": true
           },
@@ -117,6 +121,188 @@
     }
   },
   {
+    "type": "access",
+    "named": true,
+    "fields": {
+      "left": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "(",
+            "named": false
+          },
+          {
+            "type": ")",
+            "named": false
+          },
+          {
+            "type": "abstraction",
+            "named": true
+          },
+          {
+            "type": "access",
+            "named": true
+          },
+          {
+            "type": "application",
+            "named": true
+          },
+          {
+            "type": "assignment",
+            "named": true
+          },
+          {
+            "type": "boolean",
+            "named": true
+          },
+          {
+            "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "if",
+            "named": true
+          },
+          {
+            "type": "infix_application",
+            "named": true
+          },
+          {
+            "type": "list",
+            "named": true
+          },
+          {
+            "type": "list_comprehension",
+            "named": true
+          },
+          {
+            "type": "map",
+            "named": true
+          },
+          {
+            "type": "number",
+            "named": true
+          },
+          {
+            "type": "pipeline",
+            "named": true
+          },
+          {
+            "type": "prefix_application",
+            "named": true
+          },
+          {
+            "type": "regex",
+            "named": true
+          },
+          {
+            "type": "return",
+            "named": true
+          },
+          {
+            "type": "string",
+            "named": true
+          },
+          {
+            "type": "tuple",
+            "named": true
+          }
+        ]
+      },
+      "right": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "(",
+            "named": false
+          },
+          {
+            "type": ")",
+            "named": false
+          },
+          {
+            "type": "abstraction",
+            "named": true
+          },
+          {
+            "type": "access",
+            "named": true
+          },
+          {
+            "type": "application",
+            "named": true
+          },
+          {
+            "type": "assignment",
+            "named": true
+          },
+          {
+            "type": "boolean",
+            "named": true
+          },
+          {
+            "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "if",
+            "named": true
+          },
+          {
+            "type": "infix_application",
+            "named": true
+          },
+          {
+            "type": "list",
+            "named": true
+          },
+          {
+            "type": "list_comprehension",
+            "named": true
+          },
+          {
+            "type": "map",
+            "named": true
+          },
+          {
+            "type": "number",
+            "named": true
+          },
+          {
+            "type": "pipeline",
+            "named": true
+          },
+          {
+            "type": "prefix_application",
+            "named": true
+          },
+          {
+            "type": "regex",
+            "named": true
+          },
+          {
+            "type": "return",
+            "named": true
+          },
+          {
+            "type": "shorthand_access_identifier",
+            "named": true
+          },
+          {
+            "type": "string",
+            "named": true
+          },
+          {
+            "type": "tuple",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "application",
     "named": true,
     "fields": {
@@ -134,6 +320,10 @@
           },
           {
             "type": "abstraction",
+            "named": true
+          },
+          {
+            "type": "access",
             "named": true
           },
           {
@@ -232,6 +422,10 @@
           },
           {
             "type": "abstraction",
+            "named": true
+          },
+          {
+            "type": "access",
             "named": true
           },
           {
@@ -360,6 +554,10 @@
             "named": true
           },
           {
+            "type": "access",
+            "named": true
+          },
+          {
             "type": "application",
             "named": true
           },
@@ -397,6 +595,10 @@
           },
           {
             "type": "map",
+            "named": true
+          },
+          {
+            "type": "module",
             "named": true
           },
           {
@@ -444,6 +646,10 @@
           "named": true
         },
         {
+          "type": "access",
+          "named": true
+        },
+        {
           "type": "application",
           "named": true
         },
@@ -481,6 +687,10 @@
         },
         {
           "type": "map",
+          "named": true
+        },
+        {
+          "type": "module",
           "named": true
         },
         {
@@ -557,6 +767,10 @@
           },
           {
             "type": "abstraction",
+            "named": true
+          },
+          {
+            "type": "access",
             "named": true
           },
           {
@@ -645,6 +859,10 @@
           },
           {
             "type": "abstraction",
+            "named": true
+          },
+          {
+            "type": "access",
             "named": true
           },
           {
@@ -769,6 +987,10 @@
           "named": true
         },
         {
+          "type": "access",
+          "named": true
+        },
+        {
           "type": "application",
           "named": true
         },
@@ -856,6 +1078,10 @@
             "named": true
           },
           {
+            "type": "access",
+            "named": true
+          },
+          {
             "type": "application",
             "named": true
           },
@@ -935,6 +1161,10 @@
           },
           {
             "type": "abstraction",
+            "named": true
+          },
+          {
+            "type": "access",
             "named": true
           },
           {
@@ -1046,6 +1276,10 @@
             "named": true
           },
           {
+            "type": "access",
+            "named": true
+          },
+          {
             "type": "application",
             "named": true
           },
@@ -1123,6 +1357,10 @@
       "types": [
         {
           "type": "abstraction",
+          "named": true
+        },
+        {
+          "type": "access",
           "named": true
         },
         {
@@ -1238,6 +1476,10 @@
             "named": true
           },
           {
+            "type": "access",
+            "named": true
+          },
+          {
             "type": "application",
             "named": true
           },
@@ -1334,6 +1576,10 @@
             "named": true
           },
           {
+            "type": "access",
+            "named": true
+          },
+          {
             "type": "application",
             "named": true
           },
@@ -1413,6 +1659,10 @@
           },
           {
             "type": "abstraction",
+            "named": true
+          },
+          {
+            "type": "access",
             "named": true
           },
           {
@@ -1589,6 +1839,10 @@
             "named": true
           },
           {
+            "type": "access",
+            "named": true
+          },
+          {
             "type": "application",
             "named": true
           },
@@ -1668,6 +1922,10 @@
           },
           {
             "type": "abstraction",
+            "named": true
+          },
+          {
+            "type": "access",
             "named": true
           },
           {
@@ -1764,6 +2022,10 @@
             "named": true
           },
           {
+            "type": "access",
+            "named": true
+          },
+          {
             "type": "application",
             "named": true
           },
@@ -1841,6 +2103,10 @@
       "types": [
         {
           "type": "abstraction",
+          "named": true
+        },
+        {
+          "type": "access",
           "named": true
         },
         {
@@ -1932,6 +2198,10 @@
           },
           {
             "type": "abstraction",
+            "named": true
+          },
+          {
+            "type": "access",
             "named": true
           },
           {
@@ -2078,6 +2348,32 @@
     }
   },
   {
+    "type": "module",
+    "named": true,
+    "fields": {
+      "body": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "block",
+            "named": true
+          }
+        ]
+      },
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "number",
     "named": true,
     "fields": {}
@@ -2147,6 +2443,10 @@
           },
           {
             "type": "abstraction",
+            "named": true
+          },
+          {
+            "type": "access",
             "named": true
           },
           {
@@ -2268,6 +2568,10 @@
             "named": true
           },
           {
+            "type": "access",
+            "named": true
+          },
+          {
             "type": "application",
             "named": true
           },
@@ -2347,6 +2651,10 @@
           },
           {
             "type": "abstraction",
+            "named": true
+          },
+          {
+            "type": "access",
             "named": true
           },
           {
@@ -2448,6 +2756,10 @@
             "named": true
           },
           {
+            "type": "access",
+            "named": true
+          },
+          {
             "type": "application",
             "named": true
           },
@@ -2528,6 +2840,10 @@
           "named": true
         },
         {
+          "type": "access",
+          "named": true
+        },
+        {
           "type": "application",
           "named": true
         },
@@ -2577,6 +2893,10 @@
         },
         {
           "type": "map",
+          "named": true
+        },
+        {
+          "type": "module",
           "named": true
         },
         {
@@ -2682,6 +3002,10 @@
             "named": true
           },
           {
+            "type": "access",
+            "named": true
+          },
+          {
             "type": "application",
             "named": true
           },
@@ -2750,6 +3074,11 @@
     }
   },
   {
+    "type": "shorthand_access_identifier",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "shorthand_pair_identifier",
     "named": true,
     "fields": {}
@@ -2782,6 +3111,10 @@
           },
           {
             "type": "abstraction",
+            "named": true
+          },
+          {
+            "type": "access",
             "named": true
           },
           {
@@ -2870,6 +3203,10 @@
           },
           {
             "type": "abstraction",
+            "named": true
+          },
+          {
+            "type": "access",
             "named": true
           },
           {
@@ -2984,6 +3321,10 @@
       "types": [
         {
           "type": "abstraction",
+          "named": true
+        },
+        {
+          "type": "access",
           "named": true
         },
         {
@@ -3218,6 +3559,10 @@
     "named": false
   },
   {
+    "type": "module",
+    "named": false
+  },
+  {
     "type": "regex_flags",
     "named": true
   },
@@ -3239,6 +3584,10 @@
   },
   {
     "type": "when",
+    "named": false
+  },
+  {
+    "type": "where",
     "named": false
   },
   {

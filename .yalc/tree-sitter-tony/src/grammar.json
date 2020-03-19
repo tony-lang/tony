@@ -312,6 +312,10 @@
             "name": "pipeline"
           },
           {
+            "type": "SYMBOL",
+            "name": "access"
+          },
+          {
             "type": "ALIAS",
             "content": {
               "type": "SYMBOL",
@@ -391,13 +395,12 @@
           "value": "if"
         },
         {
-          "type": "ALIAS",
-          "content": {
-            "type": "SYMBOL",
-            "name": "compound_case"
-          },
-          "named": true,
-          "value": "case"
+          "type": "SYMBOL",
+          "name": "case"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "module"
         }
       ]
     },
@@ -407,18 +410,6 @@
         {
           "type": "SEQ",
           "members": [
-            {
-              "type": "CHOICE",
-              "members": [
-                {
-                  "type": "STRING",
-                  "value": "then"
-                },
-                {
-                  "type": "BLANK"
-                }
-              ]
-            },
             {
               "type": "SYMBOL",
               "name": "_simple_expression"
@@ -2102,6 +2093,66 @@
         ]
       }
     },
+    "access": {
+      "type": "PREC_LEFT",
+      "value": 17,
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "FIELD",
+            "name": "left",
+            "content": {
+              "type": "SYMBOL",
+              "name": "_simple_expression"
+            }
+          },
+          {
+            "type": "STRING",
+            "value": "->"
+          },
+          {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SEQ",
+                "members": [
+                  {
+                    "type": "STRING",
+                    "value": "["
+                  },
+                  {
+                    "type": "FIELD",
+                    "name": "right",
+                    "content": {
+                      "type": "SYMBOL",
+                      "name": "_simple_expression"
+                    }
+                  },
+                  {
+                    "type": "STRING",
+                    "value": "]"
+                  }
+                ]
+              },
+              {
+                "type": "FIELD",
+                "name": "right",
+                "content": {
+                  "type": "ALIAS",
+                  "content": {
+                    "type": "SYMBOL",
+                    "name": "identifier"
+                  },
+                  "named": true,
+                  "value": "shorthand_access_identifier"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
     "simple_assignment": {
       "type": "SEQ",
       "members": [
@@ -2304,6 +2355,18 @@
             }
           },
           {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "STRING",
+                "value": "then"
+              },
+              {
+                "type": "BLANK"
+              }
+            ]
+          },
+          {
             "type": "FIELD",
             "name": "consequence",
             "content": {
@@ -2371,6 +2434,18 @@
           }
         },
         {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "STRING",
+              "value": "then"
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        },
+        {
           "type": "FIELD",
           "name": "consequence",
           "content": {
@@ -2380,7 +2455,7 @@
         }
       ]
     },
-    "compound_case": {
+    "case": {
       "type": "SEQ",
       "members": [
         {
@@ -2454,6 +2529,18 @@
           }
         },
         {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "STRING",
+              "value": "then"
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        },
+        {
           "type": "FIELD",
           "name": "consequence",
           "content": {
@@ -2484,6 +2571,43 @@
                 "name": "_simple_expression"
               }
             ]
+          }
+        }
+      ]
+    },
+    "module": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "module"
+        },
+        {
+          "type": "FIELD",
+          "name": "name",
+          "content": {
+            "type": "SYMBOL",
+            "name": "identifier"
+          }
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "STRING",
+              "value": "where"
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        },
+        {
+          "type": "FIELD",
+          "name": "body",
+          "content": {
+            "type": "SYMBOL",
+            "name": "block"
           }
         }
       ]
