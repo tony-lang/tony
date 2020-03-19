@@ -1,37 +1,32 @@
-import path from 'path'
 import Parser from 'tree-sitter'
 
-import { getOutputPathForFile } from '../utilities'
 import {
-  FILE_EXTENSION,
-  TARGET_FILE_EXTENSION,
-  OPERATOR_REGEX,
   DEFAULT_IMPORTS,
   TRANSFORM_PLACEHOLDER_ARGUMENT,
   TRANSFORM_REST_PATTERN,
-  INTERNAL_IDENTIFIER_PREFIX,
   INTERNAL_TEMP_TOKEN
 } from '../constants'
 
 import { CollectDefaultValues } from './CollectDefaultValues'
+import { GetImportSource } from './GetImportSource'
 import { GetScope } from './GetScope'
 import { ParseStringContent } from './ParseStringContent'
 import { ResolvePattern } from './ResolvePattern'
 import { TransformIdentifier } from './TransformIdentifier'
 
 export class GenerateCode {
-  private declarationBlock = false
   file: string
-  private files: string[]
-  private getScope: GetScope
-  private outputPath: string
+
+  private declarationBlock = false
   private stack: any[] = []
-  private transformIdentifier = new TransformIdentifier
+
+  private getImportSource: GetImportSource
+  private getScope: GetScope
+  private transformIdentifier: TransformIdentifier
 
   constructor(outputPath: string, files: string[]) {
-    this.outputPath = outputPath
-    this.files = files
-
+    this.transformIdentifier = new TransformIdentifier
+    this.getImportSource = new GetImportSource(this.file, outputPath, files)
     this.getScope = new GetScope(this.transformIdentifier)
   }
 
@@ -342,7 +337,7 @@ export class GenerateCode {
     const clause = this.generate(node.namedChild(0))
     const source = this.generate(node.namedChild(1)).slice(1, -1)
 
-    return `import ${clause} from '${this.getImportSource(source)}'`
+    return `import ${clause} from '${this.getImportSource.perform(source)}'`
   }
 
   generateImportClause = (node: Parser.SyntaxNode): string => {
@@ -558,19 +553,6 @@ export class GenerateCode {
       .join(';')
 
     return clauses
-  }
-
-  private getImportSource = (source: string): string => {
-    const pathToSource = path.join(this.file, '..', source)
-    if (!source.endsWith(FILE_EXTENSION)) return pathToSource
-
-    const pathToCompiledSource = path.join(
-      getOutputPathForFile(this.outputPath, this.file),
-      '..',
-      source.replace(FILE_EXTENSION, TARGET_FILE_EXTENSION)
-    )
-    this.files.push(pathToSource)
-    return pathToCompiledSource
   }
 
   private static nodeHasChild = (
