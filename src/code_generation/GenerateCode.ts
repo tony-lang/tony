@@ -205,9 +205,9 @@ export class GenerateCode {
     const [pattern, identifiers] = ResolvePattern.perform(left)
     const defaults = new CollectDefaultValues(this).perform(node.namedChild(0))
 
-    return `(()=>{const match=` +
-           `new stdlib.PatternMatch({defaults:${defaults}})` +
-           `.perform(${pattern},${right});[${identifiers.join(',')}]=match;return match})()`
+    return `(()=>{const match=new stdlib.PatternMatch({defaults:${defaults}})` +
+           `.perform(${pattern},${right});[${identifiers.join(',')}]=match;` +
+           'return match})()'
   }
 
   generateBlock = (node: Parser.SyntaxNode): string => {
@@ -220,7 +220,8 @@ export class GenerateCode {
     const declarations = this.getScope.perform(node).join(',')
     const returnValue = isDeclaration ? `{${declarations}}` : expressions.pop()
 
-    return `(()=>{${declarations ? 'let ' : ''}${declarations};${expressions.join(';')};return ${returnValue}})()`
+    return `(()=>{${declarations ? 'let ' : ''}${declarations};` +
+           `${expressions.join(';')};return ${returnValue}})()`
   }
 
   generateBoolean = (node: Parser.SyntaxNode): string => {
@@ -463,7 +464,8 @@ export class GenerateCode {
       .join(';')
     const declarations = this.getScope.perform(node).join(',')
 
-    return `${DEFAULT_IMPORTS};${declarations ? 'let ' : ''}${declarations};${expressions}`
+    return `${DEFAULT_IMPORTS};${declarations ? 'let ' : ''}${declarations}` +
+           `;${expressions}`
   }
 
   generateRegex = (node: Parser.SyntaxNode): string => {
@@ -504,7 +506,8 @@ export class GenerateCode {
   ): string => {
     const identifierPattern = this.generate(node.namedChild(0))
 
-    return `"${identifierPattern.substring(INTERNAL_TEMP_TOKEN.length + 1)}:${identifierPattern}`
+    return `"${identifierPattern.substring(INTERNAL_TEMP_TOKEN.length + 1)}` +
+           `:${identifierPattern}`
   }
 
   generateSpread = (node: Parser.SyntaxNode): string => {
