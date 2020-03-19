@@ -112,10 +112,11 @@ module.exports = grammar({
       alias($.compound_abstraction, $.abstraction),
       alias($.compound_assignment, $.assignment),
       alias($.compound_if, $.if),
+      alias($.compound_case, $.case)
     ),
 
     block: $ => choice(
-      seq($._simple_expression, $._newline),
+      seq(optional('then'), $._simple_expression, $._newline),
       seq($._newline, $._indent, repeat1($._expression), $._dedent)
     ),
 
@@ -205,13 +206,8 @@ module.exports = grammar({
       '=>',
       field('body', $._simple_expression)
     )),
-    compound_abstraction: $ => prec.left(choice(
-      alias($.compound_abstraction_branch, $.abstraction_branch),
-      seq(
-        $._indent,
-        repeat1(alias($.compound_abstraction_branch, $.abstraction_branch)),
-        $._dedent
-      )
+    compound_abstraction: $ => prec.left(repeat1(
+      alias($.compound_abstraction_branch, $.abstraction_branch)
     )),
     compound_abstraction_branch: $ => prec.left(seq(
       field('parameters', $.parameters),
@@ -283,7 +279,14 @@ module.exports = grammar({
         $._destructuring_pattern
       )),
       ':=',
-      field('right', $._compound_expression)
+      choice(
+        field('right', $._compound_expression),
+        seq(
+          $._indent,
+          field('right', $._compound_expression),
+          $._dedent
+        )
+      )
     ),
 
     return: $ => prec.right(seq(
@@ -301,7 +304,6 @@ module.exports = grammar({
     compound_if: $ => prec.right(seq(
       'if',
       field('condition', $._simple_expression),
-      'then',
       field('consequence', $.block),
       field('alternatives', alias(repeat($.else_if_clause), $.else_if_clauses)),
       optional(seq('else', field('alternative', $.block)))
@@ -309,9 +311,21 @@ module.exports = grammar({
     else_if_clause: $ => seq(
       'else if',
       field('condition', $._simple_expression),
-      'then',
       field('consequence', $.block)
     ),
+
+    compound_case: $ => seq(
+      'case',
+      field('value', $._simple_expression),
+      field('branches', alias(repeat1($.when_clause), $.when_clauses)),
+      optional(seq('else', field('default', $.block)))
+    ),
+    when_clause: $ => seq(
+      'when',
+      field('values', $.expression_list),
+      field('consequence', $.block)
+    ),
+    expression_list: $ => commaSep1($._simple_expression),
 
     map: $ => seq(
       '{',

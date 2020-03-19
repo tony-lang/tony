@@ -47,6 +47,8 @@ export class GenerateCode {
       return this.generateBlock(node)
     case 'boolean':
       return this.generateBoolean(node)
+    case 'case':
+      return this.generateCase(node)
     case 'comment':
       return this.generateComment(node)
     case 'else_if_clause':
@@ -55,6 +57,8 @@ export class GenerateCode {
       return this.generateElseIfClauses(node)
     case 'export':
       return this.generateExport(node)
+    case 'expression_list':
+      return this.generateExpressionList(node)
     case 'expression_pair':
       return this.generateExpressionPair(node)
     case 'generator':
@@ -125,6 +129,10 @@ export class GenerateCode {
       return this.generateTuple(node)
     case 'tuple_pattern':
       return this.generateTuplePattern(node)
+    case 'when_clause':
+      return this.generateWhenClause(node)
+    case 'when_clauses':
+      return this.generateWhenClauses(node)
     default:
       console.log(`Could not find generator for AST node '${node.type}'.`)
       process.exit(1)
@@ -195,6 +203,17 @@ export class GenerateCode {
     return node.text
   }
 
+  generateCase = (node: Parser.SyntaxNode): string => {
+    const value = this.generate(node.namedChild(0))
+    const branches = this.generate(node.namedChild(1))
+    if (node.namedChildCount == 2)
+      return `(()=>{switch(${value}){${branches}}})()`
+
+    const defaultValue = this.generate(node.namedChild(2))
+    return `(()=>{switch(${value}){${branches};` +
+           `default:return ${defaultValue}}})()`
+  }
+
   generateComment = (node: Parser.SyntaxNode): string => {
     return ''
   }
@@ -218,6 +237,14 @@ export class GenerateCode {
     const declaration = this.generate(node.namedChild(0))
 
     return `export ${declaration}`
+  }
+
+  generateExpressionList = (node: Parser.SyntaxNode): string => {
+    const expressions = node.namedChildren
+      .map(expression => `case ${this.generate(expression)}:`)
+      .join('')
+
+    return expressions
   }
 
   generateExpressionPair = (node: Parser.SyntaxNode): string => {
@@ -472,6 +499,21 @@ export class GenerateCode {
       .join(',')
 
     return `[${elements}]`
+  }
+
+  generateWhenClause = (node: Parser.SyntaxNode): string => {
+    const values = this.generate(node.namedChild(0))
+    const consequence = this.generate(node.namedChild(1))
+
+    return `${values}return ${consequence}`
+  }
+
+  generateWhenClauses = (node: Parser.SyntaxNode): string => {
+    const clauses = node.namedChildren
+      .map(clause => this.generate(clause))
+      .join(';')
+
+    return clauses
   }
 
   private getIdentifier = (identifier: string): string => {
