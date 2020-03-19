@@ -210,7 +210,8 @@ export class GenerateCode {
       return `(()=>{switch(${value}){${branches}}})()`
 
     const defaultValue = this.generate(node.namedChild(2))
-    return `(()=>{switch(${value}){${branches};default:return ${defaultValue}}})()`
+    return `(()=>{switch(${value}){${branches};` +
+           `default:return ${defaultValue}}})()`
   }
 
   generateComment = (node: Parser.SyntaxNode): string => {
