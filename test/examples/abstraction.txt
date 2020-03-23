@@ -75,14 +75,13 @@ print(fib(0), fib(1), fib(2), fib(3), fib(4), fib(5))
 quicksort
 ==================
 
-# quicksort :=
-#   ([]) => []
-#   ([pivot, ...rest]) =>
-#     l := quicksort([n | n in rest if n <= pivot])
-#     r := quicksort([n | n in rest if n > pivot])
-#     l + [pivot] + r
-# print(quicksort([5, 7, 2, 0, 4, 3]))
-print([0, 2, 3, 4, 5, 7])
+quicksort :=
+  ([]) => []
+  ([pivot, ...rest]) =>
+    l := quicksort([n | n in rest if n <= pivot])
+    r := quicksort([n | n in rest if n > pivot])
+    l + [pivot] + r
+print(quicksort([5, 7, 2, 0, 4, 3]))
 
 ---
 

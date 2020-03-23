@@ -28,7 +28,7 @@ print([x + 1 | x in [1, 2, 3] if x < 3])
 multi dimension
 ==================
 
-print([x + y | x in [1, 2, 3], y in [4, 5] if (x + y) % 2 == 0])
+print([x + y | x in [1, 2, 3], y in [4, 5] if x + y % 2 == 0])
 
 ---
 

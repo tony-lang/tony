@@ -4,8 +4,7 @@ print := eval('console.log')
 inline
 ==================
 
-# print(if true then 'hello')
-print('hello')
+print(if true then 'hello')
 print(if true then 'hello' else 'world')
 
 ---
