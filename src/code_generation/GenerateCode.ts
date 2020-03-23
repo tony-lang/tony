@@ -61,8 +61,6 @@ export class GenerateCode {
       return this.generateElseIfClauses(node)
     case 'export':
       return this.generateExport(node)
-    case 'expression_list':
-      return this.generateExpressionList(node)
     case 'expression_pair':
       return this.generateExpressionPair(node)
     case 'generator':
@@ -105,6 +103,8 @@ export class GenerateCode {
       return this.generateParameters(node)
     case 'pattern':
       return this.generatePattern(node)
+    case 'pattern_list':
+      return this.generatePatternList(node)
     case 'pattern_pair':
       return this.generatePatternPair(node)
     case 'pipeline':
@@ -230,11 +230,11 @@ export class GenerateCode {
     const value = this.generate(node.namedChild(0))
     const branches = this.generate(node.namedChild(1))
     if (node.namedChildCount == 2)
-      return `(()=>{switch(${value}){${branches}}})()`
+      return `stdlib.ResolveAbstractionBranch.perform(${value},[${branches}])`
 
     const defaultValue = this.generate(node.namedChild(2))
-    return `(()=>{switch(${value}){${branches};` +
-           `default:return ${defaultValue}}})()`
+    return `stdlib.ResolveAbstractionBranch.perform(${value},[${branches}],` +
+           `()=>${defaultValue})`
   }
 
   generateComment = (node: Parser.SyntaxNode): string => {
@@ -260,14 +260,6 @@ export class GenerateCode {
     const declaration = this.generate(node.namedChild(0))
 
     return `export ${declaration}`
-  }
-
-  generateExpressionList = (node: Parser.SyntaxNode): string => {
-    const expressions = node.namedChildren
-      .map(expression => `case ${this.generate(expression)}:`)
-      .join('')
-
-    return expressions
   }
 
   generateExpressionPair = (node: Parser.SyntaxNode): string => {
@@ -434,6 +426,14 @@ export class GenerateCode {
     return this.generate(node.namedChild(0))
   }
 
+  generatePatternList = (node: Parser.SyntaxNode): string => {
+    const patterns = node.namedChildren
+      .map(pattern => this.generate(pattern))
+      .join(';')
+
+    return patterns
+  }
+
   generatePatternPair = (node: Parser.SyntaxNode): string => {
     const left = this.generate(node.namedChild(0))
     const right = this.generate(node.namedChild(1))
@@ -543,16 +543,22 @@ export class GenerateCode {
   }
 
   generateWhenClause = (node: Parser.SyntaxNode): string => {
-    const values = this.generate(node.namedChild(0))
-    const consequence = this.generate(node.namedChild(1))
+    const patterns = this.generate(node.namedChild(0)).split(';')
+      .map(pattern => ResolvePattern.perform(pattern))
+    const body = this.generate(node.namedChild(1))
+    const defaults = node.namedChild(0).namedChildren
+      .map(pattern => new CollectDefaultValues(this).perform(pattern))
 
-    return `${values}return ${consequence}`
+    return patterns.map(([pattern, identifiers], i) => {
+      return `[${pattern},${defaults[i]},(match)=>{` +
+             `const [${identifiers.join(',')}]=match;return ${body}}]`
+    }).join(',')
   }
 
   generateWhenClauses = (node: Parser.SyntaxNode): string => {
     const clauses = node.namedChildren
       .map(clause => this.generate(clause))
-      .join(';')
+      .join(',')
 
     return clauses
   }
