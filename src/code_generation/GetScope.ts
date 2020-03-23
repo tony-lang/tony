@@ -23,8 +23,6 @@ export class GetScope {
       return []
     else if (node.type === 'identifier_pattern')
       return [this.transformIdentifier.perform(node.text)]
-    else if (node.type === 'module')
-      return [this.transformIdentifier.perform(node.namedChild(0).text)]
     else
       return node.namedChildren
         .map(child => this.rec(child))

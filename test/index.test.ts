@@ -38,8 +38,8 @@ const parseExampleFile = (name: string, fileContent: string): ExampleSet => {
   return { name, beforeSource: beforeSource.trim(), examples }
 }
 
-const runExample = (source: string): string => {
-  const sourcePath = path.join(__dirname, 'tmp.tn')
+const runExample = (fileName: string, source: string): string => {
+  const sourcePath = path.join(__dirname, 'examples', fileName)
 
   fs.writeFileSync(sourcePath, source)
 
@@ -52,8 +52,12 @@ const exampleSets = parseExamples(EXAMPLES_DIR_PATH)
 
 exampleSets.forEach(({ name: fileName, beforeSource, examples }) => {
   examples.forEach(({ name, source, expectedOutput }) => {
-    test(`${fileName}/${name}`, t => {
-      const output = runExample(`${beforeSource}\n${source}`).trim()
+    const [testCase, outputFileName] = name.split('@')
+    test(`${fileName}/${testCase}`, t => {
+      const output = runExample(
+        outputFileName || 'tmp.tn',
+        `${beforeSource}\n${source}`
+      ).trim()
 
       if (expectedOutput.startsWith(ERROR_PREFIX) &&
           output.includes(expectedOutput.substring(ERROR_PREFIX.length)))
