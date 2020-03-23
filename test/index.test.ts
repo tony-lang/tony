@@ -39,7 +39,7 @@ const parseExampleFile = (name: string, fileContent: string): ExampleSet => {
 }
 
 const runExample = (source: string): string => {
-  const sourcePath = path.join(__dirname, `tmp.tn`)
+  const sourcePath = path.join(__dirname, 'tmp.tn')
 
   fs.writeFileSync(sourcePath, source)
 

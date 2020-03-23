@@ -30,13 +30,17 @@ export class PatternMatch {
       throw new PatternNotMatching('Pattern does not match')
   }
 
-  private patternMatchIdentifier = (value: any, partialMatching: boolean): any[] => {
+  private patternMatchIdentifier = (
+    value: any, partialMatching: boolean
+  ): any[] => {
     const defaultValue = this.defaults.shift()
 
     if (value === undefined)
       if (defaultValue === undefined)
         if (partialMatching)
-          throw new PatternPartiallyMatching('Pattern does only partially match')
+          throw new PatternPartiallyMatching(
+            'Pattern does only partially match'
+          )
         else
           throw new PatternNotMatching('Pattern does not match')
       else
@@ -75,7 +79,8 @@ export class PatternMatch {
     value === undefined && this.isOmittable(pattern)
 
   private isOmittable = (pattern: any): boolean => {
-    const identifierPatternsCount = PatternMatch.identifierPatternsCount(pattern)
+    const identifierPatternsCount =
+      PatternMatch.identifierPatternsCount(pattern)
 
     return this.defaults.length >= identifierPatternsCount &&
            this.defaults
