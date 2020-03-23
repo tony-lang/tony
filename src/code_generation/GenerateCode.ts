@@ -203,9 +203,9 @@ export class GenerateCode {
     const [pattern, identifiers] = ResolvePattern.perform(left)
     const defaults = new CollectDefaultValues(this).perform(node.namedChild(0))
 
-    return `(()=>{const match=new stdlib.PatternMatch({defaults:${defaults},overmatching:true})` +
-           `.perform(${pattern},${right});[${identifiers.join(',')}]=match;` +
-           'return match})()'
+    return `(()=>{const match=new stdlib.PatternMatch({defaults:${defaults},` +
+           `overmatching:true}).perform(${pattern},${right});` +
+           `[${identifiers.join(',')}]=match;return match})()`
   }
 
   generateBlock = (node: Parser.SyntaxNode): string => {
@@ -225,7 +225,7 @@ export class GenerateCode {
       isDeclaration ? `{${returnedDeclarations}}` : expressions.pop()
 
     return `(()=>{${combinedDeclarations};` +
-          `${expressions.join(';')};return ${returnValue}})()`
+           `${expressions.join(';')};return ${returnValue}})()`
   }
 
   generateBoolean = (node: Parser.SyntaxNode): string => {
