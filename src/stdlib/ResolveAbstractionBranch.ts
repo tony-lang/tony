@@ -9,7 +9,8 @@ export class NonExhaustivePatterns extends Error {}
 export class ResolveAbstractionBranch {
   static perform = (
     args: any,
-    branches: [string, any[], (match: any[]) => any][]
+    branches: [string, any[], (match: any[]) => any][],
+    alternativeBranch: () => any = null
   ): any => {
     let match
 
@@ -26,6 +27,9 @@ export class ResolveAbstractionBranch {
       // in the case of partial application, return null
       return match === null ? null : branch(match)
     }
+
+    if (alternativeBranch !== null)
+      return alternativeBranch()
 
     throw new NonExhaustivePatterns('Non-exhaustive patterns')
   }
