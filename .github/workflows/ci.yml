@@ -25,5 +25,9 @@ jobs:
       run: yarn eslint
     - name: TypeScript
       run: yarn tsc
+    - name: Link
+      run: |
+        yarn link
+        tony -v
     - name: Tests
       run: yarn test
