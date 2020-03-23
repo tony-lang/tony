@@ -27,6 +27,7 @@
   "homepage": "https://github.com/tony-lang/tony#readme",
   "dependencies": {
     "commander": "^5.0.0",
+    "core-js": "^3.6.4",
     "deep-equal": "^2.0.1",
     "inquirer": "^7.1.0",
     "mkdirp": "^1.0.3",
@@ -53,7 +54,6 @@
     "@typescript-eslint/eslint-plugin": "^2.24.0",
     "@typescript-eslint/parser": "^2.24.0",
     "ava": "^3.5.0",
-    "core-js": "^3.6.4",
     "eslint": "^6.8.0",
     "nodemon": "^2.0.2",
     "typescript": "^3.8.3"
