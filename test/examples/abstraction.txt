@@ -1,0 +1,89 @@
+print := eval('console.log')
++ := (a, b) => eval('{a} + {b}')
+- := (a, b) => eval('{a} - {b}')
+++ := (a, b) => eval('[{a}].concat([{b}])')
+<= := (a, b) => eval('{a} <= {b}')
+> := (a, b) => eval('{a} > {b}')
+
+==================
+abstraction
+==================
+
+a1 := (a) => print(a)
+a1(0)
+
+a3 := (a) =>
+  b := (c) =>
+    c
+  b(a)
+print(a3(0))
+
+---
+
+0
+0
+
+==================
+pattern matching
+==================
+
+a2 := (a, b, 1, {c = 1}, ...d) => print(a, b, c, d)
+a2(0, 1, 1)
+a2(0, 1, 1, {'c' -> 2}, 3, 4, 5)
+
+---
+
+0 1 1 []
+0 1 2 [ 3, 4, 5 ]
+
+==================
+erroneous pattern matching
+==================
+
+a2 := (a, b, 1, {c}, ...d) => print(a, b, c, d)
+a2(0, 1, 1, {})
+
+---
+
+ERROR: Non-exhaustive patterns
+
+==================
+abstraction branches
+==================
+
+fn := (0) => 1, (x) => x
+print(fn(0), fn(1))
+
+---
+
+1 1
+
+==================
+fibonacci
+==================
+
+fib :=
+  (0) => 0
+  (1) => 1
+  (n) => fib(n - 1) + fib(n - 2)
+print(fib(0), fib(1), fib(2), fib(3), fib(4), fib(5))
+
+---
+
+0 1 1 2 3 5
+
+==================
+quicksort
+==================
+
+quicksort :=
+  ([]) => []
+  ([pivot, ...rest]) =>
+    l := quicksort([n | n in rest if n <= pivot])
+    r := quicksort([n | n in rest if n > pivot])
+    l ++ [pivot] ++ r
+print(quicksort([5, 7, 2, 0, 4, 3]))
+
+---
+
+[ 0, 2, 3, 4, 5, 7 ]

@@ -9,7 +9,7 @@ import { GenerateCode } from './code_generation'
 import {
   readFile,
   writeFile,
-  getProjectFileName,
+  getEntryFilePath,
   getOutputPathForFile,
   copyFile
 } from './utilities'
@@ -25,7 +25,7 @@ export async function compile(
 ): Promise<string> {
   if (tony.debug) console.log('Compiling...')
 
-  const entryFilePath = path.join(process.cwd(), getProjectFileName(project))
+  const entryFilePath = getEntryFilePath(project)
   const files = [entryFilePath]
   const compiledFiles: string[] = []
   const outputDirPath = path.join(process.cwd(), outDir)
@@ -40,7 +40,7 @@ export async function compile(
     compiledFiles.push(file)
   }
 
-  babelCompile(tony, outputFilePath, outputDirPath, entryFilePath, mode)
+  webpackCompile(tony, outputFilePath, outputDirPath, entryFilePath, mode)
   if (!retainOutDir) await cleanup(tony, outputDirPath)
   return outputFilePath
 }
@@ -75,7 +75,7 @@ const compileFile = (
   })
 }
 
-const babelCompile = (
+const webpackCompile = (
   tony: Tony,
   outputFilePath: string,
   outputDirPath: string,
@@ -95,7 +95,15 @@ const babelCompile = (
     { stdio: tony.debug ? 'inherit' : null }
   )
 
-  if (p.status != 0) process.exit(p.status)
+  if (p.status != 0) {
+    console.log(p.stdout.toString())
+    console.log(
+      `Oh noes! Tony wasn't able to compile ${entryFilePath}.\nPlease report ` +
+      'the file you tried to compile as well as the printed output at ' +
+      'https://github.com/tony-lang/tony/issues'
+    )
+    process.exit(p.status)
+  }
 }
 
 const cleanup = (

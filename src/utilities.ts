@@ -33,7 +33,7 @@ export const getWorkingDirectoryName = (): string => {
   return path.basename(process.cwd())
 }
 
-export const getProjectFileName = (project: string): string => {
+const getProjectFileName = (project: string): string => {
   if (project.endsWith(FILE_EXTENSION))
     return project
   else
@@ -61,4 +61,11 @@ export const getOutputPathForFile = (
     .replace(FILE_EXTENSION, TARGET_FILE_EXTENSION)
 
   return path.join(outputPath, filePath)
+}
+
+export const getEntryFilePath = (project: string): string => {
+  const file = getProjectFileName(project)
+  if (fs.existsSync(file)) return file
+
+  return path.join(process.cwd(), file)
 }
