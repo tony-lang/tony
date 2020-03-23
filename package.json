@@ -7,7 +7,7 @@
     "build": "babel src --out-dir lib --extensions .ts",
     "start": "yarn link && nodemon --watch src --exec 'yarn build' -e ts",
     "eslint": "eslint src test --ext .ts",
-    "test": "babel test --out-dir lib --extensions .ts && ava",
+    "test": "babel test --out-dir lib --extensions .ts && ava --timeout=2m",
     "tony": "lib/index.js"
   },
   "engines": {
