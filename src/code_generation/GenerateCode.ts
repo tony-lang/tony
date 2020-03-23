@@ -4,7 +4,8 @@ import {
   DEFAULT_IMPORTS,
   TRANSFORM_PLACEHOLDER_ARGUMENT,
   TRANSFORM_REST_PATTERN,
-  INTERNAL_TEMP_TOKEN
+  INTERNAL_TEMP_TOKEN,
+  PRIVATE_ACCESS_PREFIX
 } from '../constants'
 
 import { CollectDefaultValues } from './CollectDefaultValues'
@@ -212,7 +213,9 @@ export class GenerateCode {
 
     const expressions = node.namedChildren
       .map(expression => this.generate(expression))
-    const declarations = this.getScope.perform(node).join(',')
+    const declarations = this.getScope.perform(node)
+      .filter(identifier => !identifier.startsWith(PRIVATE_ACCESS_PREFIX))
+      .join(',')
     const returnValue = isDeclaration ? `{${declarations}}` : expressions.pop()
 
     return `(()=>{${declarations ? 'let ' : ''}${declarations};` +

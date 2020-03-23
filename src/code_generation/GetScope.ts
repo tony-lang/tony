@@ -1,4 +1,5 @@
 import Parser from 'tree-sitter'
+
 import { TransformIdentifier } from './TransformIdentifier'
 
 export class GetScope {
