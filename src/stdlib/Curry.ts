@@ -10,7 +10,7 @@ export class Curry {
   }
 
   private static getActualArgs = (args: any[]): any[] =>
-    args.filter(arg => arg !== null)
+    args.filter(arg => arg !== TRANSFORM_PLACEHOLDER_ARGUMENT)
 
   private static addNewArgs = (args: any[], newArgs: any[]): any[] => args
     .map(arg => arg === TRANSFORM_PLACEHOLDER_ARGUMENT ? newArgs.pop() : arg)

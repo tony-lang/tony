@@ -1,0 +1,53 @@
+print := eval('console.log')
++ := (a, b) => eval('{a} + {b}')
+- := (a) => eval('-{a}')
+
+==================
+application
+==================
+
+print(((a, b) => (a, b))(1, 2))
+print(((a, b = 1) => (a, b))(1))
+print('hello world')
+
+---
+
+[ 1, 2 ]
+[ 1, 1 ]
+hello world
+
+==================
+infix application
+==================
+
+print(1 + 1)
+
+add := +
+print(1 `add` 1)
+
+---
+
+2
+2
+
+==================
+prefix application
+==================
+
+print(1 + -1)
+
+---
+
+0
+
+==================
+partial application
+==================
+
+print(((a, b) => (a, b))(1)(2))
+print(((a, b) => (a, b))(?, 1)(2))
+
+---
+
+[ 1, 2 ]
+[ 2, 1 ]

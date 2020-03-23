@@ -85,6 +85,8 @@ export class GenerateCode {
       return this.generateInfixApplication(node)
     case 'infix_application_operator':
       return this.generateInfixApplicationOperator(node)
+    case 'interpolation':
+      return this.generateInterpolation(node)
     case 'list':
       return this.generateList(node)
     case 'list_comprehension':
@@ -201,9 +203,9 @@ export class GenerateCode {
     const [pattern, identifiers] = ResolvePattern.perform(left)
     const defaults = new CollectDefaultValues(this).perform(node.namedChild(0))
 
-    return `(()=>{const match=new stdlib.PatternMatch({defaults:${defaults}})` +
-           `.perform(${pattern},${right});[${identifiers.join(',')}]=match;` +
-           'return match})()'
+    return `(()=>{const match=new stdlib.PatternMatch({defaults:${defaults},` +
+           `overmatching:true}).perform(${pattern},${right});` +
+           `[${identifiers.join(',')}]=match;return match})()`
   }
 
   generateBlock = (node: Parser.SyntaxNode): string => {
@@ -214,11 +216,15 @@ export class GenerateCode {
     const expressions = node.namedChildren
       .map(expression => this.generate(expression))
     const declarations = this.getScope.perform(node)
+    const combinedDeclarations =
+      declarations ? `let ${declarations.join(',')}` : ''
+    const returnedDeclarations = declarations
       .filter(identifier => !identifier.startsWith(PRIVATE_ACCESS_PREFIX))
       .join(',')
-    const returnValue = isDeclaration ? `{${declarations}}` : expressions.pop()
+    const returnValue =
+      isDeclaration ? `{${returnedDeclarations}}` : expressions.pop()
 
-    return `(()=>{${declarations ? 'let ' : ''}${declarations};` +
+    return `(()=>{${combinedDeclarations};` +
            `${expressions.join(';')};return ${returnValue}})()`
   }
 
@@ -234,7 +240,7 @@ export class GenerateCode {
 
     const defaultValue = this.generate(node.namedChild(2))
     return `stdlib.ResolveAbstractionBranch.perform(${value},[${branches}],` +
-           `()=>${defaultValue})`
+           `()=>${defaultValue},false)`
   }
 
   generateComment = (node: Parser.SyntaxNode): string => {
@@ -360,6 +366,10 @@ export class GenerateCode {
 
   generateInfixApplicationOperator = (node: Parser.SyntaxNode): string => {
     return this.transformIdentifier.perform(node.text)
+  }
+
+  generateInterpolation = (node: Parser.SyntaxNode): string => {
+    return this.generate(node.namedChild(0))
   }
 
   generateList = (node: Parser.SyntaxNode): string => {
@@ -514,8 +524,12 @@ export class GenerateCode {
   }
 
   generateString = (node: Parser.SyntaxNode): string => {
-    const content =
-      ParseStringContent.perform(node.text).replace(/(?<!\\){/g, '${')
+    const interpolations = node.namedChildren
+      .filter(child => child.type === 'interpolation')
+      .map(child => this.generate(child))
+    const content = ParseStringContent.perform(node.text)
+      .replace(/(?<!\\){/g, '${')
+      .replace(/(?<=\${).+?(?=})/g, () => interpolations.shift())
 
     return `\`${content}\``
   }

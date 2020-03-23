@@ -58,8 +58,7 @@ exampleSets.forEach(({ name: fileName, beforeSource, examples }) => {
       if (expectedOutput.startsWith(ERROR_PREFIX) &&
           output.includes(expectedOutput.substring(ERROR_PREFIX.length)))
         t.pass(name)
-      else if (expectedOutput === output) t.pass()
-      else t.fail(`Expected:\n${expectedOutput}\n\nGot:\n${output}`)
+      else t.is(output, expectedOutput)
     })
   })
 })

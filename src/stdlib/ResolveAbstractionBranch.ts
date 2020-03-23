@@ -10,13 +10,15 @@ export class ResolveAbstractionBranch {
   static perform = (
     args: any,
     branches: [string, any[], (match: any[]) => any][],
-    alternativeBranch: () => any = null
+    alternativeBranch: () => any = null,
+    partialMatching = true
   ): any => {
     let match
 
     for (const [pattern, defaults, branch] of branches) {
       try {
-        match = new PatternMatch({ defaults }).perform(pattern, args, true)
+        match =
+          new PatternMatch({ defaults, partialMatching }).perform(pattern, args)
       } catch (error) {
         // branch pattern does not match arguments, try next branch
         if (error instanceof PatternNotMatching) continue

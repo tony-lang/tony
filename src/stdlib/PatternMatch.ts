@@ -10,34 +10,42 @@ export class PatternPartiallyMatching extends Error {}
 
 export class PatternMatch {
   private defaults: any[] = []
+  private partialMatching = false // allows fewer arguments than pattern demands
+  private overmatching = false // allows more arguments than pattern demands
 
-  constructor({ defaults }: { defaults?: any[] }) {
+  constructor(
+    { defaults, partialMatching, overmatching }: {
+      defaults?: any[];
+      partialMatching?: boolean;
+      overmatching?: boolean;
+    }
+  ) {
     if (defaults) this.defaults = defaults
+    if (partialMatching) this.partialMatching = partialMatching
+    if (overmatching) this.overmatching = overmatching
   }
 
-  perform = (pattern: any, value: any, partialMatching = false): any[] => {
+  perform = (pattern: any, value: any, depth = 0): any[] => {
     if (PatternMatch.matchesIdentifier(pattern))
-      return this.patternMatchIdentifier(value, partialMatching)
+      return this.patternMatchIdentifier(value, depth)
     else if (PatternMatch.matchesLiteral(pattern, value))
       return []
     else if (PatternMatch.matchesArray(pattern, value))
-      return this.patternMatchArray(pattern, value)
+      return this.patternMatchArray(pattern, value, depth)
     else if (PatternMatch.matchesObject(pattern, value))
-      return this.patternMatchObject(pattern, value)
+      return this.patternMatchObject(pattern, value, depth)
     else if (this.omitsPattern(pattern, value))
       return this.patternMatchOmittedPattern(pattern)
     else
       throw new PatternNotMatching('Pattern does not match')
   }
 
-  private patternMatchIdentifier = (
-    value: any, partialMatching: boolean
-  ): any[] => {
+  private patternMatchIdentifier = (value: any, depth: number): any[] => {
     const defaultValue = this.defaults.shift()
 
     if (value === undefined)
       if (defaultValue === undefined)
-        if (partialMatching)
+        if (this.partialMatching && depth == 1)
           throw new PatternPartiallyMatching(
             'Pattern does only partially match'
           )
@@ -49,20 +57,33 @@ export class PatternMatch {
       return [value]
   }
 
-  private patternMatchArray = (patterns: any[], arr: any[]): any[][] => {
+  private patternMatchArray = (
+    patterns: any[],
+    arr: any[],
+    depth: number
+  ): any[][] => {
+    if (!this.overmatching && PatternMatch.isOvermatchingArray(patterns, arr))
+      throw new PatternNotMatching('Pattern does not match')
+
     return patterns.slice(0).reduce((acc, pattern, i, tmp) => {
       if (pattern === TRANSFORM_REST_PATTERN) {
         tmp.splice(i - 1)
         return acc.concat([arr.slice(i)])
       }
 
-      return acc.concat(this.perform(pattern, arr[i]))
+      return acc.concat(this.perform(pattern, arr[i], depth + 1))
     }, [])
   }
 
-  private patternMatchObject = (patterns: any, obj: any): any[] => {
-    const tmpObj = {...obj}
+  private patternMatchObject = (
+    patterns: any,
+    obj: any,
+    depth: number
+  ): any[] => {
+    if (!this.overmatching && PatternMatch.isOvermatchingObject(patterns, obj))
+      throw new PatternNotMatching('Pattern does not match')
 
+    const tmpObj = {...obj}
     return Object.entries(patterns)
       .reduce((acc, [key, pattern], i, tmp) => {
         if (key === TRANSFORM_REST_PATTERN) {
@@ -71,7 +92,7 @@ export class PatternMatch {
         }
 
         delete tmpObj[key]
-        return acc.concat(this.perform(pattern, obj[key]))
+        return acc.concat(this.perform(pattern, obj[key], depth + 1))
       }, [])
   }
 
@@ -118,4 +139,11 @@ export class PatternMatch {
     else
       return 0
   }
+
+  private static isOvermatchingArray = (patterns: any[], arr: any[]): boolean =>
+    !patterns.includes(TRANSFORM_REST_PATTERN) && patterns.length < arr.length
+
+  private static isOvermatchingObject = (patterns: any, obj: any): boolean =>
+    !Object.keys(patterns).includes(TRANSFORM_REST_PATTERN) &&
+    Object.entries(patterns).length < Object.entries(obj).length
 }
