@@ -409,11 +409,10 @@ export class GenerateCode {
   }
 
   generateModule = (node: Parser.SyntaxNode): string => {
-    const name = this.generate(node.namedChild(0))
     this.declarationBlock = true
-    const body = this.generate(node.namedChild(1))
+    const body = this.generate(node.namedChild(0))
 
-    return `(()=>{${name}=${body};return ${name}})()`
+    return body
   }
 
   generateNumber = (node: Parser.SyntaxNode): string => {
