@@ -26,4 +26,4 @@ jobs:
     - name: TypeScript
       run: yarn tsc
     - name: Tests
-      run: yarn test
+      run: sudo yarn test
