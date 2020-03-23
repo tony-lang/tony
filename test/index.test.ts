@@ -43,7 +43,10 @@ const runExample = (source: string): string => {
 
   fs.writeFileSync(sourcePath, source)
 
-  const result = childProcess.spawnSync('yarn', ['run', '--silent', 'tony', 'run', sourcePath])
+  const result = childProcess.spawnSync(
+    'yarn',
+    ['run', '--silent', 'tony', 'run', sourcePath]
+  )
   return result.stdout.toString() || result.stderr.toString()
 }
 
