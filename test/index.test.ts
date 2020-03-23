@@ -54,7 +54,10 @@ exampleSets.forEach(({ name: fileName, beforeSource, examples }) => {
   examples.forEach(({ name, source, expectedOutput }) => {
     const [testCase, outputFileName] = name.split('@')
     test(`${fileName}/${testCase}`, t => {
-      const output = runExample(outputFileName || 'tmp.tn', `${beforeSource}\n${source}`).trim()
+      const output = runExample(
+        outputFileName || 'tmp.tn',
+        `${beforeSource}\n${source}`
+      ).trim()
 
       if (expectedOutput.startsWith(ERROR_PREFIX) &&
           output.includes(expectedOutput.substring(ERROR_PREFIX.length)))

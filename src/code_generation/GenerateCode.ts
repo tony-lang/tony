@@ -477,7 +477,8 @@ export class GenerateCode {
     const combinedExports =
       exports.length > 0 ? `export {${exports.join(',')}}` : ''
 
-    return `${DEFAULT_IMPORTS};${combinedDeclarations};${expressions};${combinedExports}`
+    return `${DEFAULT_IMPORTS};${combinedDeclarations};${expressions};` +
+           `${combinedExports}`
   }
 
   generateRegex = (node: Parser.SyntaxNode): string => {
