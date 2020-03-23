@@ -16,8 +16,7 @@ export class ResolveAbstractionBranch {
 
     for (const [pattern, defaults, branch] of branches) {
       try {
-        match = new PatternMatch({ defaults, isStrict: true })
-          .perform(pattern, args)
+        match = new PatternMatch({ defaults }).perform(pattern, args, true)
       } catch (error) {
         // branch pattern does not match arguments, try next branch
         if (error instanceof PatternNotMatching) continue

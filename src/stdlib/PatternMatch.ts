@@ -10,18 +10,14 @@ export class PatternPartiallyMatching extends Error {}
 
 export class PatternMatch {
   private defaults: any[] = []
-  private isStrict = false
 
-  constructor(
-    { defaults, isStrict }: { defaults?: any[]; isStrict?: boolean }
-  ) {
+  constructor({ defaults }: { defaults?: any[] }) {
     if (defaults) this.defaults = defaults
-    if (isStrict) this.isStrict = isStrict
   }
 
-  perform = (pattern: any, value: any): any[] => {
+  perform = (pattern: any, value: any, partialMatching = false): any[] => {
     if (PatternMatch.matchesIdentifier(pattern))
-      return this.patternMatchIdentifier(value)
+      return this.patternMatchIdentifier(value, partialMatching)
     else if (PatternMatch.matchesLiteral(pattern, value))
       return []
     else if (PatternMatch.matchesArray(pattern, value))
@@ -34,12 +30,15 @@ export class PatternMatch {
       throw new PatternNotMatching('Pattern does not match')
   }
 
-  private patternMatchIdentifier = (value: any): any[] => {
+  private patternMatchIdentifier = (value: any, partialMatching: boolean): any[] => {
     const defaultValue = this.defaults.shift()
 
     if (value === undefined)
-      if (this.isStrict && defaultValue === undefined)
-        throw new PatternPartiallyMatching('Pattern does only partially match')
+      if (defaultValue === undefined)
+        if (partialMatching)
+          throw new PatternPartiallyMatching('Pattern does only partially match')
+        else
+          throw new PatternNotMatching('Pattern does not match')
       else
         return [value || defaultValue]
     else
