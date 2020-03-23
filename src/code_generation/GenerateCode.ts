@@ -9,6 +9,7 @@ import {
 } from '../constants'
 
 import { CollectDefaultValues } from './CollectDefaultValues'
+import { GetExports } from './GetExports'
 import { GetImportSource } from './GetImportSource'
 import { GetScope } from './GetScope'
 import { ParseStringContent } from './ParseStringContent'
@@ -16,18 +17,18 @@ import { ResolvePattern } from './ResolvePattern'
 import { TransformIdentifier } from './TransformIdentifier'
 
 export class GenerateCode {
-  file: string
-
   private declarationBlock = false
   private stack: any[] = []
 
-  private getImportSource: GetImportSource
+  private getExports: GetExports
+  getImportSource: GetImportSource
   private getScope: GetScope
   private transformIdentifier: TransformIdentifier
 
   constructor(outputPath: string, files: string[]) {
     this.transformIdentifier = new TransformIdentifier
-    this.getImportSource = new GetImportSource(this.file, outputPath, files)
+    this.getImportSource = new GetImportSource(outputPath, files)
+    this.getExports = new GetExports(this.transformIdentifier)
     this.getScope = new GetScope(this.transformIdentifier)
   }
 
@@ -265,7 +266,7 @@ export class GenerateCode {
   generateExport = (node: Parser.SyntaxNode): string => {
     const declaration = this.generate(node.namedChild(0))
 
-    return `export ${declaration}`
+    return declaration
   }
 
   generateExpressionPair = (node: Parser.SyntaxNode): string => {
@@ -469,10 +470,14 @@ export class GenerateCode {
     const expressions = node.namedChildren
       .map(expression => this.generate(expression))
       .join(';')
-    const declarations = this.getScope.perform(node).join(',')
+    const declarations = this.getScope.perform(node)
+    const combinedDeclarations =
+      declarations.length > 0 ? `let ${declarations.join(',')}` : ''
+    const exports = this.getExports.perform(node)
+    const combinedExports =
+      exports.length > 0 ? `export {${exports.join(',')}}` : ''
 
-    return `${DEFAULT_IMPORTS};${declarations ? 'let ' : ''}${declarations}` +
-           `;${expressions}`
+    return `${DEFAULT_IMPORTS};${combinedDeclarations};${expressions};${combinedExports}`
   }
 
   generateRegex = (node: Parser.SyntaxNode): string => {

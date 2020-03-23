@@ -67,7 +67,7 @@ const compileFile = (
     return tree.rootNode
   }).then((node: Parser.SyntaxNode) => {
     if (tony.debug) console.log(`Compiling ${file}...`)
-    codeGenerator.file = file
+    codeGenerator.getImportSource.file = file
     return writeFile(
       getOutputPathForFile(outputDirPath, file),
       codeGenerator.generate(node)
