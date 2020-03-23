@@ -85,9 +85,8 @@ const webpackCompile = (
   if (tony.debug) console.log('Compiling with Webpack...')
 
   const p = childProcess.spawnSync(
-    'yarn',
+    path.join(__dirname, '..', 'node_modules', '.bin', 'webpack-cli'),
     [
-      'webpack-cli',
       getOutputPathForFile(outputDirPath, entryFilePath),
       '-o', outputFilePath,
       '--mode', mode
