@@ -43,8 +43,9 @@ const runExample = (source: string): string => {
 
   fs.writeFileSync(sourcePath, source)
 
-  const result = childProcess.spawnSync('tony', ['run', sourcePath])
-  return result.stdout.toString() || result.stderr.toString()
+  const result = childProcess.spawnSync('yarn', ['tony', 'run', sourcePath])
+  return result.stdout.toString().split('\n').slice(1).join('\n') ||
+         result.stderr.toString()
 }
 
 const exampleSets = parseExamples(EXAMPLES_DIR_PATH)
