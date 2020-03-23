@@ -28,6 +28,8 @@ export class PatternMatch {
       return this.patternMatchArray(pattern, value)
     else if (PatternMatch.matchesObject(pattern, value))
       return this.patternMatchObject(pattern, value)
+    else if (this.omitsPattern(pattern, value))
+      return this.patternMatchOmittedPattern(pattern)
     else
       throw new PatternNotMatching('Pattern does not match')
   }
@@ -35,10 +37,13 @@ export class PatternMatch {
   private patternMatchIdentifier = (value: any): any[] => {
     const defaultValue = this.defaults.shift()
 
-    if (this.isStrict && value === undefined && defaultValue === undefined)
-      throw new PatternPartiallyMatching('Pattern does only partially match')
-
-    return [value || defaultValue]
+    if (value === undefined)
+      if (this.isStrict && defaultValue === undefined)
+        throw new PatternPartiallyMatching('Pattern does only partially match')
+      else
+        return [value || defaultValue]
+    else
+      return [value]
   }
 
   private patternMatchArray = (patterns: any[], arr: any[]): any[][] => {
@@ -67,6 +72,21 @@ export class PatternMatch {
       }, [])
   }
 
+  private omitsPattern = (pattern: any, value: any): boolean =>
+    value === undefined && this.isOmittable(pattern)
+
+  private isOmittable = (pattern: any): boolean => {
+    const identifierPatternsCount = PatternMatch.identifierPatternsCount(pattern)
+
+    return this.defaults.length >= identifierPatternsCount &&
+           this.defaults
+             .slice(identifierPatternsCount - 1)
+             .every(defaultValue => defaultValue !== undefined)
+  }
+
+  private patternMatchOmittedPattern = (pattern: any): any[] =>
+    this.defaults.splice(0, PatternMatch.identifierPatternsCount(pattern))
+
   private static matchesIdentifier = (pattern: any): boolean =>
     pattern === TRANSFORM_IDENTIFIER_PATTERN
 
@@ -79,4 +99,19 @@ export class PatternMatch {
   private static matchesObject = (pattern: any, value: any): boolean =>
     typeof pattern === 'object' && !Array.isArray(pattern) &&
     typeof value === 'object' && !Array.isArray(value)
+
+  private static identifierPatternsCount = (pattern: any): number => {
+    if (pattern === TRANSFORM_IDENTIFIER_PATTERN)
+      return 1
+    else if (Array.isArray(pattern))
+      return pattern.reduce((acc, value) => {
+        return acc + PatternMatch.identifierPatternsCount(value)
+      }, 0)
+    else if (typeof pattern === 'object')
+      return Object.entries(pattern).reduce((acc, [_, value]) => {
+        return acc + PatternMatch.identifierPatternsCount(value)
+      }, 0)
+    else
+      return 0
+  }
 }

@@ -55,12 +55,12 @@ const exampleSets = parseExamples(EXAMPLES_DIR_PATH)
 exampleSets.forEach(({ name: fileName, beforeSource, examples }) => {
   examples.forEach(({ name, source, expectedOutput }) => {
     test(`${fileName}/${name}`, t => {
-      const output = runExample(name, `${beforeSource};${source}`)
+      const output = runExample(name, `${beforeSource}\n${source}`).trim()
 
       if (expectedOutput.startsWith(ERROR_PREFIX) &&
           output.includes(expectedOutput.substring(ERROR_PREFIX.length)))
         t.pass(name)
-      else if (expectedOutput == output) t.pass()
+      else if (expectedOutput === output) t.pass()
       else t.fail(`Expected:\n${expectedOutput}\n\nGot:\n${output}`)
     })
   })

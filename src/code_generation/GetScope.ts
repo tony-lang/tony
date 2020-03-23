@@ -11,9 +11,11 @@ export class GetScope {
 
   perform = (node: Parser.SyntaxNode): string[] => {
     // this to not immediately return when given a block
-    return node.namedChildren
+    const identifiers = node.namedChildren
       .map(child => this.rec(child))
       .reduce((acc, value) => acc.concat(value), [])
+
+    return [...new Set(identifiers)]
   }
 
   rec = (node: Parser.SyntaxNode): string[] => {
