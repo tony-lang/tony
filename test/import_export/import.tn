@@ -1,0 +1,3 @@
+import { p } from './export.tn'
+
+p('hello world')

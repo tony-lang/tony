@@ -1,0 +1,3 @@
+import { print -> puts } from '../../import_export/external_import.js'
+
+puts('hello world')

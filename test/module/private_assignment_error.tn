@@ -1,0 +1,5 @@
+m := module
+  _internal := (x) => x
+  fn := (x) => _internal(x)
+
+m->_internal(0)

@@ -1,0 +1,14 @@
+[a, 1, b] := [0, 1, 2, 3]
+print(a, b)
+
+(c, ...d) := (86, 'Tony', 'Hoare')
+print(c, d)
+
+{ 'z' -> [e], f, 'y' -> [z = 1], ...g } := { 'z' -> [0, 1, 2, 3], 'f' -> 'hello world' }
+print(e, f, g, z)
+
+[(1, h), i] := [(1, 'hello'), (2, 'Tony')]
+print(h, i)
+
+[j, 1, k = 200] := [0, 1]
+print(j, k)

@@ -1,46 +1,50 @@
 import test from 'ava'
 import fs from 'fs'
+import mkdirp from 'mkdirp'
 import path from 'path'
 import childProcess from 'child_process'
 
-const ERROR_PREFIX = Object.freeze('ERROR: ')
-const EXAMPLES_DIR_PATH =
-  Object.freeze(path.join(__dirname, '..', 'test', 'examples'))
-
 type Example = { name: string; source: string; expectedOutput: string }
-type ExampleSet = { name: string; beforeSource: string; examples: Example[] }
 
-const parseExamples = (dir: string): ExampleSet[] => {
-  return fs.readdirSync(dir)
-    .map(file => [file, fs.readFileSync(path.join(dir, file)).toString()])
-    .map(([file, fileContent]) => parseExampleFile(file, fileContent))
-}
+const ERROR_PREFIX = Object.freeze('ERROR: ')
+const TEST_DIR_PATH = Object.freeze(path.join(__dirname, '..', 'test'))
+const TEST_OUT_DIR_PATH = Object.freeze(path.join(__dirname, 'tmp'))
+const STDLIB = fs.readFileSync(path.join(TEST_DIR_PATH, 'stdlib.tn'))
 
-const parseExampleFile = (name: string, fileContent: string): ExampleSet => {
-  const [beforeSource, ...rawExamples] = fileContent.split('==================')
-  const examples = rawExamples
-    .map(example => example.split('---'))
-    .reduce((acc, value, i) => {
-      if (i % 2 == 0) {
-        return [...acc, value]
-      } else {
-        const prev = acc.pop()
-        return [...acc, prev.concat(value)]
+const findExamples = (): Example[] => {
+  const examples = fs.readdirSync(TEST_DIR_PATH)
+    .filter(file => fs.statSync(path.join(TEST_DIR_PATH, file)).isDirectory())
+    .map(directory => {
+      return fs.readdirSync(path.join(TEST_DIR_PATH, directory))
+        .map(file => path.join(directory, file))
+    })
+    .reduce((acc, files) => acc.concat(files), [])
+    .map(file => [
+      file,
+      fs.readFileSync(path.join(TEST_DIR_PATH, file)).toString()
+    ])
+    .reduce((acc, [file, content]) => {
+      const [name, ext] = file.split('.')
+      if (!['tn', 'txt'].includes(ext)) return acc
+
+      acc[name] = {
+        name,
+        [ext === 'tn' ? 'source' : 'expectedOutput']: content,
+        ...acc[name]
       }
-    }, [[]])
-    .slice(1)
-    .map(([name, source, expectedOutput]) => ({
-      name: name.trim(),
-      source: source.trim(),
-      expectedOutput: expectedOutput.trim()
-    }))
+      return acc
+    }, {})
 
-  return { name, beforeSource: beforeSource.trim(), examples }
+  return Object.values(examples)
 }
 
-const runExample = (fileName: string, source: string): string => {
-  const sourcePath = path.join(__dirname, 'examples', fileName)
+const runExample = async (
+  outputFile: string,
+  source: string
+): Promise<string> => {
+  const sourcePath = path.join(TEST_OUT_DIR_PATH, outputFile)
 
+  await mkdirp(path.dirname(sourcePath))
   fs.writeFileSync(sourcePath, source)
 
   const result =
@@ -48,21 +52,17 @@ const runExample = (fileName: string, source: string): string => {
   return result.stdout.toString() || result.stderr.toString()
 }
 
-const exampleSets = parseExamples(EXAMPLES_DIR_PATH)
-
-exampleSets.forEach(({ name: fileName, beforeSource, examples }) => {
+const runTests = async (examples: Example[]): Promise<void> => {
   examples.forEach(({ name, source, expectedOutput }) => {
-    const [testCase, outputFileName] = name.split('@')
-    test(`${fileName}/${testCase}`, t => {
-      const output = runExample(
-        outputFileName || 'tmp.tn',
-        `${beforeSource}\n${source}`
-      ).trim()
+    test(name, async t => {
+      const output = await runExample(`${name}.tn`, `${STDLIB}\n${source}`)
 
       if (expectedOutput.startsWith(ERROR_PREFIX) &&
           output.includes(expectedOutput.substring(ERROR_PREFIX.length)))
         t.pass(name)
-      else t.is(output, expectedOutput)
+      else t.is(expectedOutput.trim(), output.trim())
     })
   })
-})
+}
+
+runTests(findExamples())

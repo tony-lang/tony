@@ -1,0 +1,10 @@
+a :=
+  if false then 'hello'
+  else if false
+    'world'
+  else 'oh'
+print(a)
+
+b := if false
+  0
+print(b)
