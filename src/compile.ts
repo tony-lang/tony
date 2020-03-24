@@ -5,6 +5,7 @@ import Parser from 'tree-sitter'
 
 import Tony from './Tony'
 import parser from './parser'
+import { Analyze } from './analyzer'
 import { GenerateCode } from './code_generation'
 import {
   readFile,
@@ -15,14 +16,14 @@ import {
 } from './utilities'
 import { FILE_EXTENSION } from './constants'
 
-export async function compile(
+export const compile = async (
   tony: Tony,
   project: string,
   mode: string,
   outFile: string,
   outDir: string,
   retainOutDir: boolean
-): Promise<string> {
+): Promise<string> => {
   if (tony.debug) console.log('Compiling...')
 
   const entryFilePath = getEntryFilePath(project)
@@ -40,8 +41,8 @@ export async function compile(
     compiledFiles.push(file)
   }
 
-  webpackCompile(tony, outputFilePath, outputDirPath, entryFilePath, mode)
-  if (!retainOutDir) await cleanup(tony, outputDirPath)
+  // webpackCompile(tony, outputFilePath, outputDirPath, entryFilePath, mode)
+  // if (!retainOutDir) await cleanup(tony, outputDirPath)
   return outputFilePath
 }
 
@@ -66,12 +67,17 @@ const compileFile = (
 
     return tree.rootNode
   }).then((node: Parser.SyntaxNode) => {
-    if (tony.debug) console.log(`Compiling ${file}...`)
-    codeGenerator.getImportSource.file = file
-    return writeFile(
-      getOutputPathForFile(outputDirPath, file),
-      codeGenerator.generate(node)
-    )
+    if (tony.debug) console.log(`Analyzing ${file}...`)
+    const analyzer = new Analyze(file, outputDirPath)
+    console.dir(analyzer.perform(node), { depth: null })
+    process.exit(0)
+
+    // if (tony.debug) console.log(`Compiling ${file}...`)
+    // codeGenerator.getImportSource.file = file
+    // return writeFile(
+    //   getOutputPathForFile(outputDirPath, file),
+    //   codeGenerator.generate(node)
+    // )
   })
 }
 

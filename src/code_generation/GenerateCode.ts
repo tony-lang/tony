@@ -7,10 +7,10 @@ import {
   INTERNAL_TEMP_TOKEN,
   PRIVATE_ACCESS_PREFIX
 } from '../constants'
+import { GetImportSource } from '../analyzer/GetImportSource'
 
 import { CollectDefaultValues } from './CollectDefaultValues'
 import { GetExports } from './GetExports'
-import { GetImportSource } from './GetImportSource'
 import { GetScope } from './GetScope'
 import { ParseStringContent } from './ParseStringContent'
 import { ResolvePattern } from './ResolvePattern'
