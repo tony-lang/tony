@@ -25,6 +25,7 @@ const findExamples = (): Example[] => {
     ])
     .reduce((acc, [file, content]) => {
       const [name, ext] = file.split('.')
+      if (!['tn', 'txt'].includes(ext)) return acc
 
       acc[name] = {
         name,
@@ -37,7 +38,10 @@ const findExamples = (): Example[] => {
   return Object.values(examples)
 }
 
-async function runExample(outputFile: string, source: string): Promise<string> {
+const runExample = async (
+  outputFile: string,
+  source: string
+): Promise<string> => {
   const sourcePath = path.join(TEST_OUT_DIR_PATH, outputFile)
 
   await mkdirp(path.dirname(sourcePath))
@@ -48,17 +52,17 @@ async function runExample(outputFile: string, source: string): Promise<string> {
   return result.stdout.toString() || result.stderr.toString()
 }
 
-async function runTests(): Promise<void> {
-  findExamples().forEach(({ name, source, expectedOutput }) => {
+const runTests = async (examples: Example[]): Promise<void> => {
+  examples.forEach(({ name, source, expectedOutput }) => {
     test(name, async t => {
       const output = await runExample(`${name}.tn`, `${STDLIB}\n${source}`)
 
       if (expectedOutput.startsWith(ERROR_PREFIX) &&
           output.includes(expectedOutput.substring(ERROR_PREFIX.length)))
         t.pass(name)
-      else t.is(output.trim(), expectedOutput.trim())
+      else t.is(expectedOutput.trim(), output.trim())
     })
   })
 }
 
-runTests()
+runTests(findExamples())

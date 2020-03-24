@@ -14,16 +14,16 @@ export class GetImportSource {
   }
 
   perform = (source: string): string => {
-    const dir = this.file.split('/').slice(0, -1).join('/')
+    const dir = this.file.substring(0, this.file.lastIndexOf('/'))
     const pathToSource = path.join(dir, source)
-    if (!source.endsWith(FILE_EXTENSION)) return pathToSource
+    this.files.push(pathToSource)
+    if (!source.endsWith(FILE_EXTENSION)) return source
 
     const pathToCompiledSource = path.join(
       getOutputPathForFile(this.outputPath, this.file),
       '..',
       source.replace(FILE_EXTENSION, TARGET_FILE_EXTENSION)
     )
-    this.files.push(pathToSource)
     return pathToCompiledSource
   }
 }
