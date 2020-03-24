@@ -19,11 +19,18 @@ const findExamples = (): Example[] => {
         .map(file => path.join(directory, file))
     })
     .reduce((acc, files) => acc.concat(files), [])
-    .map(file => [file, fs.readFileSync(path.join(TEST_DIR_PATH, file)).toString()])
+    .map(file => [
+      file,
+      fs.readFileSync(path.join(TEST_DIR_PATH, file)).toString()
+    ])
     .reduce((acc, [file, content]) => {
       const [name, ext] = file.split('.')
 
-      acc[name] = { name, [ext === 'tn' ? 'source' : 'expectedOutput']: content, ...acc[name] }
+      acc[name] = {
+        name,
+        [ext === 'tn' ? 'source' : 'expectedOutput']: content,
+        ...acc[name]
+      }
       return acc
     }, {})
 
