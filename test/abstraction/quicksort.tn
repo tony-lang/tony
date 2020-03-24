@@ -1,0 +1,7 @@
+quicksort :=
+  ([]) => []
+  ([pivot, ...rest]) =>
+    l := quicksort([n | n in rest if n <= pivot])
+    r := quicksort([n | n in rest if n > pivot])
+    l ++ [pivot] ++ r
+print(quicksort([5, 7, 2, 0, 4, 3]))

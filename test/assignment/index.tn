@@ -1,0 +1,5 @@
+abstraction := (x) =>
+  y := x
+  print(y)
+
+abstraction(0)

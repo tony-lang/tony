@@ -1,0 +1,16 @@
+print := eval('console.log')
+
++ := (a) => eval('+{a}'), (a, b) => eval('{a} + {b}')
+- := (a) => eval('-{a}'), (a, b) => eval('{a} - {b}')
+% := (a, b) => eval('{a} % {b}')
+* := (a, b) => eval('{a} * {b}')
+# / := (a, b) => eval('{a} / {b}')
+
+++ := (a, b) => eval('[{a}].concat([{b}])')
+
+<= := (a, b) => eval('{a} <= {b}')
+< := (a, b) => eval('{a} < {b}')
+>= := (a, b) => eval('{a} >= {b}')
+> := (a, b) => eval('{a} > {b}')
+
+== := (a, b) => eval('{a} == {b}')

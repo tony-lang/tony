@@ -1,0 +1,3 @@
+import { print -> puts } from './export.tn'
+
+puts('hello world')

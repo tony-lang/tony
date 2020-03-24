@@ -1,0 +1,4 @@
+print(1 + 1)
+
+add := +
+print(1 `add` 1)

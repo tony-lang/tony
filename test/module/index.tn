@@ -1,0 +1,3 @@
+io := module
+  print := (str) => eval('console.log')('-> {str} <-')
+io->print('hello world')

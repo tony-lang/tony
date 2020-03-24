@@ -1,0 +1,6 @@
+'hello world'.print
+
+print(99 . +1)
+
+inc := +1
+print(99.inc)

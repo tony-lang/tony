@@ -1,0 +1,1 @@
+export print := eval('console.log')
