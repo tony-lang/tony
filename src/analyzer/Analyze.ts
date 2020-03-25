@@ -6,10 +6,11 @@ import { GetImport } from './GetImport'
 import { SymbolTable, Scope } from './SymbolTable'
 import {
   TypeConstructor,
+  constructGenericType,
   NUMBER_TYPE,
   STRING_TYPE,
   TUPLE_TYPE,
-  constructGenericType
+  VOID_TYPE
 } from './types'
 
 export class Analyze {
@@ -84,6 +85,7 @@ export class Analyze {
     const abstractionType = this.generate(node.namedChild(0))
     const argTypes = this.generate(node.namedChild(1))
 
+    if (abstractionType[0] === VOID_TYPE) abstractionType.pop()
     if (abstractionType.length <= argTypes.length)
       this.errorHandler.throw('Too many arguments applied to abstraction', node)
     argTypes.forEach((argType, i) => {
