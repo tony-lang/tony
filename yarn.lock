@@ -6437,10 +6437,10 @@ touch@^3.1.0:
   dependencies:
     nopt "~1.0.10"
 
-tree-sitter-tony@0.2.0-alpha:
-  version "0.2.0-alpha"
-  resolved "https://registry.yarnpkg.com/tree-sitter-tony/-/tree-sitter-tony-0.2.0-alpha.tgz#d704dd5eeea4e59b97a7e9638af9f23739cc5ad6"
-  integrity sha512-Ljyb4nb4z0QF2peppYrXJj3YA7u34zXpwK6UNbq36a/StN1A3aSSu/Ng7XkdFjuZnMF4kLTbx/xTjLbUfMtPEg==
+tree-sitter-tony@0.2.0-alpha.1:
+  version "0.2.0-alpha.1"
+  resolved "https://registry.yarnpkg.com/tree-sitter-tony/-/tree-sitter-tony-0.2.0-alpha.1.tgz#627679dccbcf53b8f6ce317a3c185d4916e6274b"
+  integrity sha512-/KFITSdCK7ydINVERUw2GMBUCEndmg9mIFaO//WE0KEGRku/fNqYdcf+NmRfX4ZuupQdwccZ6R3l+o0+fO+wrQ==
   dependencies:
     nan "^2.14.0"
     prebuild-install "^5.3.3"

@@ -7,7 +7,7 @@ export const TARGET_FILE_EXTENSION = Object.freeze('.js')
 export const PRIVATE_ACCESS_PREFIX = Object.freeze('_')
 
 // parser
-export const OPERATOR_REGEX = Object.freeze(/(==|[!@$%^&*|<>~*\\\-+/.]+)=*>?/)
+export const OPERATOR_REGEX = Object.freeze(/[!@$%^&*|<>~*\\\-+.=]+/)
 export const NODE_TYPES_WITH_DEFAULT_VALUES = Object.freeze(
   ['pattern', 'shorthand_pair_identifier_pattern']
 )
