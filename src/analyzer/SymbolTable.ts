@@ -1,22 +1,20 @@
 import Parser from 'tree-sitter'
 
-import { PatternMatchType } from './PatternMatchType'
-import { ParseType } from './ParseType'
 import { TypeConstructor, BASIC_TYPES } from './types'
 
 export class Scope {
   private _bindings: Binding[] = []
   private _parentScope: Scope
-  private _scopes = new Map<Parser.SyntaxNode, Scope>()
+  private _scopes: Scope[] = []
 
   constructor(parentScope: Scope) {
     this._parentScope = parentScope
   }
 
-  createScope = (node: Parser.SyntaxNode): Scope => {
+  createScope = (): Scope => {
     const scope = new Scope(this)
 
-    this._scopes.set(node, scope)
+    this._scopes.push(scope)
     return scope
   }
 
@@ -30,18 +28,8 @@ export class Scope {
     return this._parentScope.resolveBinding(name)
   }
 
-  addBindings = (bindings: Binding[]): void => {
-    this._bindings = [...bindings, ...this._bindings]
-  }
-
-  buildBindings = (
-    patternNode: Parser.SyntaxNode,
-    typeNode: Parser.SyntaxNode,
-    isExported = false
-  ): Binding[] => {
-    const type = ParseType.perform(typeNode)
-
-    return new PatternMatchType(isExported).perform(patternNode, type)
+  addBinding = (binding: Binding): void => {
+    this._bindings = [binding, ...this._bindings]
   }
 
   protected get bindings(): Binding[] {
