@@ -60,8 +60,9 @@ export class SymbolTable extends Scope {
     super(null)
   }
 
-  getExports = (): Binding[] =>
-    this.bindings.filter(binding => binding.isExported)
+  get exports(): Binding[] {
+    return this.bindings.filter(binding => binding.isExported)
+  }
 
   // addImport = (importNode: Parser.SyntaxNode): void => {
   //   // TODO: resolve import, bindings and add to scope
