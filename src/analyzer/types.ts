@@ -3,6 +3,8 @@ export type AtomicType = Type | GenericType | TypeConstructor
 export type Type = string
 export type GenericType = { base: Type; args: TypeConstructor[] }
 
+export const VOID_TYPE = Object.freeze('Void')
+
 export const NUMBER_TYPE = Object.freeze('Number')
 export const STRING_TYPE = Object.freeze('String')
 
@@ -11,6 +13,7 @@ export const TUPLE_TYPE = Object.freeze('Tuple')
 export const MAP_TYPE = Object.freeze('Map')
 
 export const BASIC_TYPES = Object.freeze([
+  VOID_TYPE,
   NUMBER_TYPE,
   STRING_TYPE,
   LIST_TYPE,
