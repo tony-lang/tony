@@ -1,7 +1,7 @@
 import { TypeConstructor } from './TypeConstructor'
 import { TypeInterface } from './TypeInterface'
 
-export class ModuleType implements TypeInterface {
+export class ObjectType implements TypeInterface {
   private _propertyTypes: Map<string, TypeConstructor>
 
   constructor(propertyTypes: Map<string, TypeConstructor>) {
@@ -12,12 +12,12 @@ export class ModuleType implements TypeInterface {
     return this._propertyTypes
   }
 
-  concat = (moduleType: ModuleType): ModuleType => new ModuleType(
-    new Map([...this.propertyTypes, ...moduleType.propertyTypes])
+  concat = (objectType: ObjectType): ObjectType => new ObjectType(
+    new Map([...this.propertyTypes, ...objectType.propertyTypes])
   )
 
   matches = (pattern: TypeInterface): boolean => {
-    if (!(pattern instanceof ModuleType)) return false
+    if (!(pattern instanceof ObjectType)) return false
 
     return Array.from(pattern.propertyTypes.entries())
       .every(([property, propertyType]) => {

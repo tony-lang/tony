@@ -2,20 +2,25 @@ import { Type } from './Type'
 import { BasicType } from './BasicType'
 import { ListType } from './ListType'
 import { MapType } from './MapType'
-import { ModuleType } from './ModuleType'
+import { ObjectType } from './ObjectType'
+import { RestListType } from './RestListType'
 import { TupleType } from './TupleType'
 import { TypeInterface } from './TypeInterface'
 import { VOID_TYPE } from '.'
 
-export type AtomicType = Type | BasicType | ListType | MapType | ModuleType |
-                         TupleType | TypeConstructor
+export type AtomicType = Type | BasicType | ListType | MapType | ObjectType |
+                         RestListType | TupleType | TypeConstructor
 
 export class TypeConstructor implements TypeInterface {
   private _types: AtomicType[]
   private _isOptional: boolean
 
   constructor(types: AtomicType[], isOptional = false) {
+    // if (types.length == 1 && types[0] instanceof TypeConstructor)
+    //   this._types = types[0].types
+    // else
     this._types = types
+
     this._isOptional = isOptional
   }
 
@@ -35,11 +40,19 @@ export class TypeConstructor implements TypeInterface {
     return this._types.length
   }
 
-  concat = (typeConstructor: TypeConstructor): TypeConstructor =>
-    new TypeConstructor(this._types.concat(typeConstructor._types))
+  concat = (typeConstructor: TypeConstructor): TypeConstructor => {
+    if (typeConstructor.length == 1)
+      return new TypeConstructor(this._types.concat(typeConstructor))
+    else
+      return new TypeConstructor(this._types.concat(typeConstructor._types))
+  }
 
   apply = (appliedArgs: number[]): TypeConstructor =>
-    new TypeConstructor(this._types.filter((_, i) => !appliedArgs.includes(i)))
+    new TypeConstructor(this._types.filter((type, i) => {
+      if (type instanceof RestListType) return true
+
+      return !appliedArgs.includes(i)
+    }))
 
   pop = (): AtomicType => this._types.pop()
 
@@ -53,11 +66,24 @@ export class TypeConstructor implements TypeInterface {
   }
 
   isValid = (): boolean => {
-    if (this._types.includes(VOID_TYPE))
-      return this._types.length == 2 && !this._types[1].matches(VOID_TYPE)
+    const voidTypes = this._types.filter(type => type.matches(VOID_TYPE))
+    if (voidTypes.length > 0)
+      return this._types.length == 2 && voidTypes.length == 1 &&
+             this._types.indexOf(voidTypes[0]) == 0
+
+    const restListTypes =
+      this._types.filter(type => type instanceof RestListType)
+    if (restListTypes.length > 0)
+      return this._types.length > 1 && restListTypes.length == 1 &&
+             this._types.indexOf(restListTypes[0]) == this._types.length - 2
 
     return this._types.every(type => type.isValid())
   }
 
-  toString = (): string => this._types.map(type => type.toString()).join(' -> ')
+  toString = (): string => {
+    const str = this._types.map(type => type.toString()).join(' -> ')
+
+    if (this.length > 1) return `(${str})`
+    else return str
+  }
 }

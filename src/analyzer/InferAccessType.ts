@@ -7,8 +7,8 @@ import {
   ModuleType,
   TupleType,
   TypeConstructor,
-  NUMBER_TYPE_CONSTRUCTOR,
-  STRING_TYPE_CONSTRUCTOR
+  NUMBER_TYPE,
+  STRING_TYPE
 } from '../types'
 
 export class InferAccessType {
@@ -56,7 +56,7 @@ export class InferAccessType {
     listType: ListType,
     accessType: TypeConstructor
   ): TypeConstructor => {
-    if (accessType.equals(NUMBER_TYPE_CONSTRUCTOR)) return listType.type
+    if (accessType.matches(NUMBER_TYPE)) return listType.type
     else
       this.errorHandler.throw(
         'Contents of list can only be accessed by an accessor of type ' +
@@ -69,7 +69,7 @@ export class InferAccessType {
     mapType: MapType,
     accessType: TypeConstructor
   ): TypeConstructor => {
-    if (accessType.equals(mapType.keyType)) return mapType.valueType
+    if (accessType.matches(mapType.keyType)) return mapType.valueType
     else
       this.errorHandler.throw(
         `Expected key type '${mapType.keyType}', but got ` +
@@ -84,7 +84,7 @@ export class InferAccessType {
   ): TypeConstructor => {
     const index = parseInt(this.node.namedChild(1).text)
 
-    if (accessType.equals(NUMBER_TYPE_CONSTRUCTOR))
+    if (accessType.matches(NUMBER_TYPE))
       return tupleType.types[index]
     else
       this.errorHandler.throw(
@@ -100,7 +100,7 @@ export class InferAccessType {
   ): TypeConstructor => {
     const property = this.node.namedChild(1).text
 
-    if (accessType.equals(STRING_TYPE_CONSTRUCTOR))
+    if (accessType.matches(STRING_TYPE))
       if (moduleType.propertyTypes.has(property))
         return moduleType.propertyTypes.get(property)
       else
