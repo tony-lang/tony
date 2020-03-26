@@ -1,6 +1,5 @@
-export abstract class TypeInterface {
-  equals = (type: TypeInterface): boolean => this.toString() === type.toString()
-
-  abstract isValid(): boolean
-  abstract toString(): string
+export interface TypeInterface {
+  matches(pattern: TypeInterface): boolean;
+  isValid(): boolean;
+  toString(): string;
 }

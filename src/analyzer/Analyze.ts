@@ -2,9 +2,11 @@ import Parser from 'tree-sitter'
 
 import { ErrorHandler } from '../ErrorHandler'
 import {
+  MapType,
   ModuleType,
   TupleType,
   TypeConstructor,
+  MISSING_TYPE,
   VOID_TYPE,
   VOID_TYPE_CONSTRUCTOR,
   NUMBER_TYPE_CONSTRUCTOR,
@@ -57,12 +59,18 @@ export class Analyze {
       return this.generateComment(node)
     case 'export':
       return this.generateExport(node)
+    case 'expression_pair':
+      return this.generateExpressionPair(node)
     case 'identifier':
       return this.generateIdentifier(node)
     case 'identifier_pattern':
       return this.generateIdentifierPattern(node)
     case 'interpolation':
       return this.generateInterpolation(node)
+    case 'map':
+      return this.generateMap(node)
+    case 'map_pattern':
+      return this.generateMapPattern(node)
     case 'module':
       return this.generateModule(node)
     case 'number':
@@ -71,10 +79,14 @@ export class Analyze {
       return this.generateParameters(node)
     case 'pattern':
       return this.generatePattern(node)
+    case 'pattern_pair':
+      return this.generatePatternPair(node)
     case 'program':
       return this.generateProgram(node)
     case 'shorthand_access_identifier':
       return this.generateShorthandAccessIdentifier(node)
+    case 'shorthand_pair_identifier_pattern':
+      return this.generateShorthandPairIdentifierPattern(node)
     case 'string':
       return this.generateString(node)
     case 'type':
@@ -93,7 +105,7 @@ export class Analyze {
     const abstractionType = abstractionBranchTypes[0]
 
     if (!abstractionBranchTypes.every(abstractionBranchType => {
-      return abstractionBranchType.equals(abstractionType)
+      return abstractionBranchType.matches(abstractionType)
     })) this.errorHandler.throw('Abstraction branches have varying types', node)
 
     return abstractionType
@@ -130,7 +142,7 @@ export class Analyze {
         node
       )
     argTypes.types.forEach((argType, i) => {
-      if (!argType.equals(abstractionType.types[i]))
+      if (!argType.matches(abstractionType.types[i]))
         this.errorHandler.throw(
           `Expected argument of type '${abstractionType.types[i].toString()}'` +
           `, but got '${argType.toString()}'`,
@@ -169,13 +181,13 @@ export class Analyze {
     this.exportBindings = false
     const expressionType = this.generate(node.namedChild(1))
 
-    if (!patternType.equals(expressionType)) this.errorHandler.throw(
+    if (!expressionType.matches(patternType)) this.errorHandler.throw(
       `Pattern type '${patternType.toString()}' and expression type ` +
       `'${expressionType.toString()}' do not match`,
       node
     )
 
-    const typeArgs = new PatternMatchType(isExported)
+    const typeArgs = new PatternMatchType(this.errorHandler, node, isExported)
       .perform(pattern, expressionType)
       .map(binding => binding.type)
     return new TypeConstructor([new TupleType(typeArgs)])
@@ -199,6 +211,15 @@ export class Analyze {
     return this.generate(declaration)
   }
 
+  private generateExpressionPair = (
+    node: Parser.SyntaxNode
+  ): TypeConstructor => {
+    const keyType = this.generate(node.namedChild(0))
+    const valueType = this.generate(node.namedChild(1))
+
+    return new TypeConstructor([new MapType(keyType, valueType)])
+  }
+
   private generateIdentifier = (node: Parser.SyntaxNode): TypeConstructor => {
     const name = node.text
 
@@ -220,7 +241,7 @@ export class Analyze {
     this.generate(typeNode)
 
     const binding = new Binding(name, type, isExported)
-    const matchingBinding = this.currentScope.resolveBinding(binding.name)
+    const matchingBinding = this.currentScope.resolveBinding(binding.name, 0)
     if (matchingBinding)
       this.errorHandler.throw(
         `A binding with name '${matchingBinding.name}' already exists`,
@@ -233,6 +254,30 @@ export class Analyze {
 
   private generateInterpolation = (node: Parser.SyntaxNode): TypeConstructor =>
     this.generate(node.namedChild(0))
+
+  private generateMap = (node: Parser.SyntaxNode): TypeConstructor => {
+    const mapTypes = node.namedChildren.map(child => this.generate(child))
+    const mapType = mapTypes[0]
+
+    if (!mapTypes.every(otherMapType => {
+      return otherMapType.matches(mapType)
+    })) this.errorHandler.throw(
+      'Keys/values of map have to be of the same type',
+      node
+    )
+
+    return mapType
+  }
+
+  private generateMapPattern = (node: Parser.SyntaxNode): TypeConstructor => {
+    const moduleTypes = node.namedChildren.map(child => this.generate(child))
+
+    return moduleTypes.reduce((type, moduleType) => {
+      return new TypeConstructor([
+        (type.types[0] as ModuleType).concat(moduleType.types[0] as ModuleType)
+      ])
+    }, new TypeConstructor([new ModuleType(new Map())]))
+  }
 
   private generateModule = (node: Parser.SyntaxNode): TypeConstructor => {
     const isExported = this.exportBindings
@@ -278,6 +323,15 @@ export class Analyze {
     return this.generate(node.namedChild(0))
   }
 
+  private generatePatternPair = (node: Parser.SyntaxNode): TypeConstructor => {
+    const identifierPatternName = node.namedChild(0)
+    const pattern = node.namedChild(1)
+
+    return new TypeConstructor([new ModuleType(
+      new Map([[identifierPatternName.text, this.generate(pattern)]])
+    )])
+  }
+
   private generateProgram = (node: Parser.SyntaxNode): TypeConstructor => {
     this.symbolTable = new SymbolTable()
     this.currentScope = this.symbolTable
@@ -289,8 +343,17 @@ export class Analyze {
 
   private generateShorthandAccessIdentifier = (
     node: Parser.SyntaxNode
+  ): TypeConstructor => STRING_TYPE_CONSTRUCTOR
+
+  private generateShorthandPairIdentifierPattern = (
+    node: Parser.SyntaxNode
   ): TypeConstructor => {
-    return STRING_TYPE_CONSTRUCTOR
+    const identifierPattern = node.namedChild(0)
+    const identifierPatternName = identifierPattern.namedChild(0)
+
+    return new TypeConstructor([new ModuleType(
+      new Map([[identifierPatternName.text, this.generate(identifierPattern)]])
+    )])
   }
 
   private generateString = (node: Parser.SyntaxNode): TypeConstructor => {
@@ -298,7 +361,7 @@ export class Analyze {
       if (child.type !== 'interpolation') return
 
       const type = this.generate(child)
-      if (!type.equals(STRING_TYPE_CONSTRUCTOR))
+      if (!type.matches(STRING_TYPE_CONSTRUCTOR))
         this.errorHandler.throw(
           'String interpolation must return \'String\', instead returned ' +
           `'${type.toString()}'`,

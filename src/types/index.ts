@@ -1,4 +1,4 @@
-import { Type } from './Type'
+import { Type, MISSING_TYPE_REPR } from './Type'
 import { TypeConstructor, AtomicType } from './TypeConstructor'
 
 export { BasicType } from './BasicType'
@@ -6,6 +6,8 @@ export { ListType } from './ListType'
 export { MapType } from './MapType'
 export { ModuleType } from './ModuleType'
 export { TupleType } from './TupleType'
+
+export const MISSING_TYPE = new TypeConstructor([new Type(MISSING_TYPE_REPR)])
 
 export const VOID_TYPE = new Type('Void')
 export const NUMBER_TYPE = new Type('Number')

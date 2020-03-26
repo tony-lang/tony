@@ -10,12 +10,10 @@ import { VOID_TYPE } from '.'
 export type AtomicType = Type | BasicType | ListType | MapType | ModuleType |
                          TupleType | TypeConstructor
 
-export class TypeConstructor extends TypeInterface {
+export class TypeConstructor implements TypeInterface {
   private _types: AtomicType[]
 
   constructor(types: AtomicType[]) {
-    super()
-
     this._types = types
   }
 
@@ -35,9 +33,17 @@ export class TypeConstructor extends TypeInterface {
 
   pop = (): AtomicType => this._types.pop()
 
+  matches = (pattern: TypeInterface): boolean => {
+    if (!(pattern instanceof TypeConstructor)) return false
+
+    return this.types.every((type, i) => {
+      return type.matches(pattern.types[i])
+    })
+  }
+
   isValid = (): boolean => {
     if (this._types.includes(VOID_TYPE))
-      return this._types.length == 2 && !this._types[1].equals(VOID_TYPE)
+      return this._types.length == 2 && !this._types[1].matches(VOID_TYPE)
 
     return this._types.every(type => type.isValid())
   }

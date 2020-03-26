@@ -16,7 +16,7 @@ export class Scope {
     return scope
   }
 
-  resolveBinding = (name: string): Binding => {
+  resolveBinding = (name: string, depth: number = null): Binding => {
     // TODO: remove this when basic types are implemented in Tony
     if (BASIC_TYPES.find(type => type.name === name))
       return new Binding(name, new TypeConstructor([new BasicType()]))
@@ -24,7 +24,8 @@ export class Scope {
     const binding = this._bindings.find(binding => binding.name === name)
     if (binding) return binding
 
-    return this._parentScope.resolveBinding(name)
+    if (depth === null) return this._parentScope.resolveBinding(name)
+    else if (depth > 0) return this._parentScope.resolveBinding(name, depth - 1)
   }
 
   addBinding = (binding: Binding): void => {
@@ -75,7 +76,7 @@ export class SymbolTable extends Scope {
     const binding = this.bindings.find(binding => binding.name === name)
     if (binding) return binding
 
-    return null
+    return
   }
 }
 
