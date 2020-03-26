@@ -21,8 +21,10 @@ export class ModuleType implements TypeInterface {
 
     return Array.from(pattern.propertyTypes.entries())
       .every(([property, propertyType]) => {
-        return this.propertyTypes.has(property) &&
-               this.propertyTypes.get(property).matches(propertyType)
+        if (this.propertyTypes.has(property))
+          return this.propertyTypes.get(property).matches(propertyType)
+
+        return propertyType.isOptional
       })
   }
 

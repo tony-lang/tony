@@ -320,7 +320,21 @@ export class Analyze {
   }
 
   private generatePattern = (node: Parser.SyntaxNode): TypeConstructor => {
-    return this.generate(node.namedChild(0))
+    const type = this.generate(node.namedChild(0))
+
+    if (node.namedChildCount == 2) {
+      const defaultValueType = this.generate(node.namedChild(1))
+
+      if (!defaultValueType.matches(type)) this.errorHandler.throw(
+        `Type of default value '${defaultValueType.toString()}' does not ` +
+        `match expected type '${type.toString()}'`,
+        node
+      )
+
+      type.isOptional = true
+    }
+
+    return type
   }
 
   private generatePatternPair = (node: Parser.SyntaxNode): TypeConstructor => {
@@ -351,8 +365,23 @@ export class Analyze {
     const identifierPattern = node.namedChild(0)
     const identifierPatternName = identifierPattern.namedChild(0)
 
+    const type = this.generate(identifierPattern)
+
+    if (node.namedChildCount == 2) {
+      const defaultValueType = this.generate(node.namedChild(1))
+
+      if (!defaultValueType.matches(type)) this.errorHandler.throw(
+        `Type of default value '${defaultValueType.toString()}' does not ` +
+        `match expected type '${type.toString()}'`,
+        node
+      )
+
+      type.isOptional = true
+      console.log('->', type.isOptional)
+    }
+
     return new TypeConstructor([new ModuleType(
-      new Map([[identifierPatternName.text, this.generate(identifierPattern)]])
+      new Map([[identifierPatternName.text, type]])
     )])
   }
 

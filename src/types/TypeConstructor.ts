@@ -12,13 +12,23 @@ export type AtomicType = Type | BasicType | ListType | MapType | ModuleType |
 
 export class TypeConstructor implements TypeInterface {
   private _types: AtomicType[]
+  private _isOptional: boolean
 
-  constructor(types: AtomicType[]) {
+  constructor(types: AtomicType[], isOptional = false) {
     this._types = types
+    this._isOptional = isOptional
   }
 
   get types(): AtomicType[] {
     return this._types
+  }
+
+  get isOptional(): boolean {
+    return this._isOptional
+  }
+
+  set isOptional(value: boolean) {
+    this._isOptional = value
   }
 
   get length(): number {
