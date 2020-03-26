@@ -1,13 +1,13 @@
 import Parser from 'tree-sitter'
 
-import { TypeConstructor, AtomicType, Type } from './types'
+import { AtomicType, Type, TypeConstructor } from '../types'
 
 export class ParseType {
-  static perform = (node: Parser.SyntaxNode): TypeConstructor => {
-    return node.namedChildren.map(child => ParseType.rec(child))
-  }
+  static perform = (node: Parser.SyntaxNode): TypeConstructor =>
+    new TypeConstructor(node.namedChildren.map(child => ParseType.rec(child)))
 
-  private static performType = (node: Parser.SyntaxNode): Type => node.text
+  private static performType = (node: Parser.SyntaxNode): Type =>
+    new Type(node.text)
 
   private static rec = (node: Parser.SyntaxNode): AtomicType => {
     switch (node.type) {

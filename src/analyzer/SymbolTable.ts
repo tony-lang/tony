@@ -1,6 +1,6 @@
 import Parser from 'tree-sitter'
 
-import { TypeConstructor, BASIC_TYPES } from './types'
+import { TypeConstructor, BASIC_TYPES } from '../types'
 
 export class Scope {
   private _bindings: Binding[] = []
@@ -20,7 +20,8 @@ export class Scope {
 
   resolveBinding = (name: string): Binding => {
     // TODO: remove this when basic types are implemented in Tony
-    if (BASIC_TYPES.includes(name)) return new Binding(name, null)
+    if (BASIC_TYPES.find(type => type.name === name))
+      return new Binding(name, null)
 
     const binding = this._bindings.find(binding => binding.name === name)
     if (binding) return binding
@@ -30,6 +31,14 @@ export class Scope {
 
   addBinding = (binding: Binding): void => {
     this._bindings = [binding, ...this._bindings]
+  }
+
+  getBindingTypes = (): Map<string, TypeConstructor> => {
+    const result = new Map<string, TypeConstructor>()
+
+    this._bindings.forEach(binding => result.set(binding.name, binding.type))
+
+    return result
   }
 
   protected get bindings(): Binding[] {
@@ -58,7 +67,8 @@ export class SymbolTable extends Scope {
 
   resolveBinding = (name: string): Binding => {
     // TODO: remove this when basic types are implemented in Tony
-    if (BASIC_TYPES.includes(name)) return new Binding(name, null)
+    if (BASIC_TYPES.find(type => type.name === name))
+      return new Binding(name, null)
 
     const binding = this.bindings.find(binding => binding.name === name)
     if (binding) return binding
