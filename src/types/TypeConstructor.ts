@@ -38,13 +38,14 @@ export class TypeConstructor implements TypeInterface {
   concat = (typeConstructor: TypeConstructor): TypeConstructor =>
     new TypeConstructor(this._types.concat(typeConstructor._types))
 
-  apply = (argsCount: number): TypeConstructor =>
-    new TypeConstructor(this._types.slice(argsCount))
+  apply = (appliedArgs: number[]): TypeConstructor =>
+    new TypeConstructor(this._types.filter((_, i) => !appliedArgs.includes(i)))
 
   pop = (): AtomicType => this._types.pop()
 
   matches = (pattern: TypeInterface): boolean => {
     if (!(pattern instanceof TypeConstructor)) return false
+    if (this.types.length != pattern.types.length) return false
 
     return this.types.every((type, i) => {
       return type.matches(pattern.types[i])

@@ -14,6 +14,7 @@ export class TupleType implements TypeInterface {
 
   matches = (pattern: TypeInterface): boolean => {
     if (!(pattern instanceof TupleType)) return false
+    if (this.types.length != pattern.types.length) return false
 
     return this.types.every((type, i) => {
       return type.matches(pattern.types[i])

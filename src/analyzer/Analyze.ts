@@ -7,6 +7,7 @@ import {
   TupleType,
   TypeConstructor,
   MISSING_TYPE,
+  MISSING_TYPE_NAME,
   VOID_TYPE,
   VOID_TYPE_CONSTRUCTOR,
   NUMBER_TYPE_CONSTRUCTOR,
@@ -136,38 +137,44 @@ export class Analyze {
 
     if (abstractionType.types[0] === VOID_TYPE) abstractionType.pop()
     if (abstractionType.length <= argTypes.length)
-      this.errorHandler.throw(
-        `Expected at most ${abstractionType.length - 1} arguments, but ` +
-        `applied ${argTypes.length} arguments`,
-        node
-      )
-    argTypes.types.forEach((argType, i) => {
-      if (!argType.matches(abstractionType.types[i]))
+      if (abstractionType.length == 1)
+        this.errorHandler.throw(
+          'Cannot apply to the non-curried type ' +
+          `'${abstractionType.toString()}'`,
+          node
+        )
+      else
+        this.errorHandler.throw(
+          `Expected at most ${abstractionType.length - 1} arguments, but ` +
+          `applied ${argTypes.length} arguments`,
+          node
+        )
+    const appliedArgs = argTypes.types.map((argType, i) => {
+      if (!new TypeConstructor([abstractionType.types[i]]).matches(argType))
         this.errorHandler.throw(
           `Expected argument of type '${abstractionType.types[i].toString()}'` +
           `, but got '${argType.toString()}'`,
           node
         )
-    })
 
-    return abstractionType.apply(argTypes.length)
+      return argType.toString() === MISSING_TYPE_NAME ? null : i
+    }).filter(i => i !== null)
+
+    return abstractionType.apply(appliedArgs)
   }
 
   private generateArgument = (node: Parser.SyntaxNode): TypeConstructor => {
-    if (node.namedChildCount == 0) {
-      console.log('not implemented yet')
-      process.exit(1)
-    }
+    if (node.namedChildCount == 0) return MISSING_TYPE
 
     return this.generate(node.namedChild(0))
   }
 
   private generateArguments = (node: Parser.SyntaxNode): TypeConstructor => {
-    return node.namedChildren
+    if (node.namedChildCount == 0) return VOID_TYPE_CONSTRUCTOR
+
+    const argTypes = node.namedChildren
       .map(argumentNode => this.generate(argumentNode))
-      .reduce((argumentTypes, argumentType) => {
-        return argumentTypes.concat(argumentType)
-      })
+    return new TypeConstructor(argTypes)
   }
 
   private generateAssignment = (node: Parser.SyntaxNode): TypeConstructor => {
