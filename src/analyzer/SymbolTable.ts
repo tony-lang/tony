@@ -43,8 +43,6 @@ export class Scope {
     return result
   }
 
-  isNested = (): boolean => true
-
   protected get bindings(): Binding[] {
     return this._bindings
   }
@@ -79,8 +77,6 @@ export class SymbolTable extends Scope {
 
     return null
   }
-
-  isNested = (): boolean => false
 }
 
 export class Binding {

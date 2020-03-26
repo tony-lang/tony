@@ -1,6 +1,5 @@
 import Parser from 'tree-sitter'
 
-import { PRIVATE_ACCESS_PREFIX } from '../constants'
 import { ErrorHandler } from '../ErrorHandler'
 import {
   ModuleType,
@@ -161,7 +160,7 @@ export class Analyze {
 
   private generateAssignment = (node: Parser.SyntaxNode): TypeConstructor => {
     // TODO: don't check types in pattern and instead use bindings returned by
-    //       running PatternMatchType agains expressionType
+    //       running PatternMatchType against expressionType
 
     const pattern = node.namedChild(0)
     const patternType = this.generate(pattern)
@@ -197,9 +196,7 @@ export class Analyze {
     const declaration = node.namedChild(0)
 
     this.exportBindings = true
-    this.generate(declaration)
-
-    return
+    return this.generate(declaration)
   }
 
   private generateIdentifier = (node: Parser.SyntaxNode): TypeConstructor => {
@@ -214,12 +211,11 @@ export class Analyze {
   private generateIdentifierPattern = (
     node: Parser.SyntaxNode
   ): TypeConstructor => {
+    const isExported = this.exportBindings
+
     const name = node.namedChild(0).text
     const typeNode = node.namedChild(1)
     const type = ParseType.perform(typeNode)
-    const isExported =
-      this.exportBindings || this.currentScope.isNested() &&
-      !name.startsWith(PRIVATE_ACCESS_PREFIX)
 
     this.generate(typeNode)
 
