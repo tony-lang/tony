@@ -1,4 +1,5 @@
 import { Type } from './Type'
+import { BasicType } from './BasicType'
 import { ListType } from './ListType'
 import { MapType } from './MapType'
 import { ModuleType } from './ModuleType'
@@ -6,7 +7,8 @@ import { TupleType } from './TupleType'
 import { TypeInterface } from './TypeInterface'
 import { VOID_TYPE } from '.'
 
-export type AtomicType = Type | ListType | MapType | ModuleType | TupleType | TypeConstructor
+export type AtomicType = Type | BasicType | ListType | MapType | ModuleType |
+                         TupleType | TypeConstructor
 
 export class TypeConstructor extends TypeInterface {
   private _types: AtomicType[]

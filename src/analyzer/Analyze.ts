@@ -1,11 +1,7 @@
 import Parser from 'tree-sitter'
 
+import { PRIVATE_ACCESS_PREFIX } from '../constants'
 import { ErrorHandler } from '../ErrorHandler'
-
-import { GetImport } from './GetImport'
-import { ParseType } from './ParseType'
-import { PatternMatchType } from './PatternMatchType'
-import { SymbolTable, Scope, Binding } from './SymbolTable'
 import {
   ModuleType,
   TupleType,
@@ -15,7 +11,12 @@ import {
   NUMBER_TYPE_CONSTRUCTOR,
   STRING_TYPE_CONSTRUCTOR
 } from '../types'
-import deepEqual from 'deep-equal'
+
+import { GetImport } from './GetImport'
+import { InferAccessType } from './InferAccessType'
+import { ParseType } from './ParseType'
+import { PatternMatchType } from './PatternMatchType'
+import { SymbolTable, Scope, Binding } from './SymbolTable'
 
 export class Analyze {
   private currentScope: Scope
@@ -41,6 +42,8 @@ export class Analyze {
       return this.generateAbstraction(node)
     case 'abstraction_branch':
       return this.generateAbstractionBranch(node)
+    case 'access':
+      return this.generateAccess(node)
     case 'application':
       return this.generateApplication(node)
     case 'argument':
@@ -49,6 +52,10 @@ export class Analyze {
       return this.generateArguments(node)
     case 'assignment':
       return this.generateAssignment(node)
+    case 'block':
+      return this.generateBlock(node)
+    case 'comment':
+      return this.generateComment(node)
     case 'export':
       return this.generateExport(node)
     case 'identifier':
@@ -67,6 +74,8 @@ export class Analyze {
       return this.generatePattern(node)
     case 'program':
       return this.generateProgram(node)
+    case 'shorthand_access_identifier':
+      return this.generateShorthandAccessIdentifier(node)
     case 'string':
       return this.generateString(node)
     case 'type':
@@ -84,13 +93,16 @@ export class Analyze {
       .map(child => this.generate(child))
     const abstractionType = abstractionBranchTypes[0]
 
-    if (!abstractionBranchTypes.every(abstractionBranchType => abstractionBranchType.equals(abstractionType)))
-      this.errorHandler.throw('Abstraction branches have varying types', node)
+    if (!abstractionBranchTypes.every(abstractionBranchType => {
+      return abstractionBranchType.equals(abstractionType)
+    })) this.errorHandler.throw('Abstraction branches have varying types', node)
 
     return abstractionType
   }
 
-  private generateAbstractionBranch = (node: Parser.SyntaxNode): TypeConstructor => {
+  private generateAbstractionBranch = (
+    node: Parser.SyntaxNode
+  ): TypeConstructor => {
     this.currentScope = this.currentScope.createScope()
     const parameterTypes = this.generate(node.namedChild(0))
     const bodyType = this.generate(node.namedChild(1))
@@ -99,16 +111,32 @@ export class Analyze {
     return parameterTypes.concat(bodyType)
   }
 
+  private generateAccess = (node: Parser.SyntaxNode): TypeConstructor => {
+    const leftType = this.generate(node.namedChild(0))
+    const rightType = this.generate(node.namedChild(1))
+
+    return new InferAccessType(node, this.errorHandler)
+      .perform(leftType, rightType)
+  }
+
   private generateApplication = (node: Parser.SyntaxNode): TypeConstructor => {
-    let abstractionType = this.generate(node.namedChild(0))
+    const abstractionType = this.generate(node.namedChild(0))
     const argTypes = this.generate(node.namedChild(1))
 
     if (abstractionType.types[0] === VOID_TYPE) abstractionType.pop()
     if (abstractionType.length <= argTypes.length)
-      this.errorHandler.throw('Too many arguments applied to abstraction', node)
+      this.errorHandler.throw(
+        `Expected at most ${abstractionType.length - 1} arguments, but ` +
+        `applied ${argTypes.length} arguments`,
+        node
+      )
     argTypes.types.forEach((argType, i) => {
       if (!argType.equals(abstractionType.types[i]))
-        this.errorHandler.throw('Argument type mismatch', node)
+        this.errorHandler.throw(
+          `Expected argument of type '${abstractionType.types[i].toString()}'` +
+          `, but got '${argType.toString()}'`,
+          node
+        )
     })
 
     return abstractionType.apply(argTypes.length)
@@ -126,20 +154,25 @@ export class Analyze {
   private generateArguments = (node: Parser.SyntaxNode): TypeConstructor => {
     return node.namedChildren
       .map(argumentNode => this.generate(argumentNode))
-      .reduce((argumentTypes, argumentType) => argumentTypes.concat(argumentType))
+      .reduce((argumentTypes, argumentType) => {
+        return argumentTypes.concat(argumentType)
+      })
   }
 
   private generateAssignment = (node: Parser.SyntaxNode): TypeConstructor => {
-    // TODO: don't check types in pattern and instead use bindings returned by running PatternMatchType agains expressionType
+    // TODO: don't check types in pattern and instead use bindings returned by
+    //       running PatternMatchType agains expressionType
 
     const pattern = node.namedChild(0)
     const patternType = this.generate(pattern)
     const isExported = this.exportBindings
-    this.exportBindings = false // required if it was previously set to true by the export generator
+    // required if it was previously set to true by the export generator
+    this.exportBindings = false
     const expressionType = this.generate(node.namedChild(1))
 
     if (!patternType.equals(expressionType)) this.errorHandler.throw(
-      `Pattern type '${patternType.toString()}' and expression type '${expressionType.toString()}' do not match`,
+      `Pattern type '${patternType.toString()}' and expression type ` +
+      `'${expressionType.toString()}' do not match`,
       node
     )
 
@@ -147,6 +180,17 @@ export class Analyze {
       .perform(pattern, expressionType)
       .map(binding => binding.type)
     return new TypeConstructor([new TupleType(typeArgs)])
+  }
+
+  private generateBlock = (node: Parser.SyntaxNode): TypeConstructor => {
+    const expressionTypes = node.namedChildren
+      .map(child => this.generate(child))
+
+    return expressionTypes[expressionTypes.length - 1]
+  }
+
+  private generateComment = (node: Parser.SyntaxNode): TypeConstructor => {
+    return
   }
 
   private generateExport = (node: Parser.SyntaxNode): TypeConstructor => {
@@ -167,12 +211,15 @@ export class Analyze {
       this.errorHandler.throw(`Could not find '${name}' in current scope`, node)
   }
 
-  private generateIdentifierPattern = (node: Parser.SyntaxNode): TypeConstructor => {
-    const isExported = this.exportBindings
-
+  private generateIdentifierPattern = (
+    node: Parser.SyntaxNode
+  ): TypeConstructor => {
     const name = node.namedChild(0).text
     const typeNode = node.namedChild(1)
     const type = ParseType.perform(typeNode)
+    const isExported =
+      this.exportBindings || this.currentScope.isNested() &&
+      !name.startsWith(PRIVATE_ACCESS_PREFIX)
 
     this.generate(typeNode)
 
@@ -188,20 +235,22 @@ export class Analyze {
     return type
   }
 
-  private generateInterpolation = (node: Parser.SyntaxNode): TypeConstructor => {
-    return this.generate(node.namedChild(0))
-  }
+  private generateInterpolation = (node: Parser.SyntaxNode): TypeConstructor =>
+    this.generate(node.namedChild(0))
 
   private generateModule = (node: Parser.SyntaxNode): TypeConstructor => {
     const isExported = this.exportBindings
-    this.exportBindings = false // required if it was previously set to true by the export generator
+    // required if it was previously set to true by the export generator
+    this.exportBindings = false
 
     const name = node.namedChild(0).text
     const body = node.namedChild(1)
 
     this.currentScope = this.currentScope.createScope()
     this.generate(body)
-    const type = new TypeConstructor([new ModuleType(this.currentScope.getBindingTypes())])
+    const type = new TypeConstructor([
+      new ModuleType(this.currentScope.getExportedBindingTypes())
+    ])
     this.currentScope = this.currentScope.parentScope
 
     const binding = new Binding(name, type, isExported)
@@ -224,7 +273,9 @@ export class Analyze {
 
     return node.namedChildren
       .map(parameterNode => this.generate(parameterNode))
-      .reduce((parameterTypes, parameterType) => parameterTypes.concat(parameterType))
+      .reduce((parameterTypes, parameterType) => {
+        return parameterTypes.concat(parameterType)
+      })
   }
 
   private generatePattern = (node: Parser.SyntaxNode): TypeConstructor => {
@@ -240,6 +291,12 @@ export class Analyze {
     return
   }
 
+  private generateShorthandAccessIdentifier = (
+    node: Parser.SyntaxNode
+  ): TypeConstructor => {
+    return STRING_TYPE_CONSTRUCTOR
+  }
+
   private generateString = (node: Parser.SyntaxNode): TypeConstructor => {
     node.namedChildren.forEach(child => {
       if (child.type !== 'interpolation') return
@@ -247,7 +304,8 @@ export class Analyze {
       const type = this.generate(child)
       if (!type.equals(STRING_TYPE_CONSTRUCTOR))
         this.errorHandler.throw(
-          `String interpolation must return 'String', instead returned '${type.toString()}'`,
+          'String interpolation must return \'String\', instead returned ' +
+          `'${type.toString()}'`,
           child
         )
     })
@@ -259,16 +317,18 @@ export class Analyze {
     const name = node.text
 
     const binding = this.currentScope.resolveBinding(name)
-    if (binding) return
+    if (binding) return binding.type
     else this.errorHandler.throw(
       `Could not find type '${name}' in current scope`,
       node
     )
   }
 
-  private generateTypeConstructor = (node: Parser.SyntaxNode): TypeConstructor => {
-    node.namedChildren.map(child => this.generate(child))
-
-    return
+  private generateTypeConstructor = (
+    node: Parser.SyntaxNode
+  ): TypeConstructor => {
+    return node.namedChildren
+      .map(childNode => this.generate(childNode))
+      .reduce((childTypes, childType) => childTypes.concat(childType))
   }
 }

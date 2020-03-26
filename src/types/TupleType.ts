@@ -10,7 +10,12 @@ export class TupleType extends TypeInterface {
     this._types = types
   }
 
-  isValid = (): boolean => this._types.every(type => type.isValid())
+  get types(): TypeConstructor[] {
+    return this._types
+  }
 
-  toString = (): string => `(${this._types.map(type => type.toString()).join(', ')})`
+  isValid = (): boolean => this.types.every(type => type.isValid())
+
+  toString = (): string =>
+    `(${this.types.map(type => type.toString()).join(', ')})`
 }

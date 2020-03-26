@@ -1,6 +1,4 @@
-import Parser from 'tree-sitter'
-
-import { TypeConstructor, BASIC_TYPES } from '../types'
+import { TypeConstructor, BasicType, BASIC_TYPES } from '../types'
 
 export class Scope {
   private _bindings: Binding[] = []
@@ -21,7 +19,7 @@ export class Scope {
   resolveBinding = (name: string): Binding => {
     // TODO: remove this when basic types are implemented in Tony
     if (BASIC_TYPES.find(type => type.name === name))
-      return new Binding(name, null)
+      return new Binding(name, new TypeConstructor([new BasicType()]))
 
     const binding = this._bindings.find(binding => binding.name === name)
     if (binding) return binding
@@ -33,13 +31,19 @@ export class Scope {
     this._bindings = [binding, ...this._bindings]
   }
 
-  getBindingTypes = (): Map<string, TypeConstructor> => {
+  getExportedBindingTypes = (): Map<string, TypeConstructor> => {
     const result = new Map<string, TypeConstructor>()
 
-    this._bindings.forEach(binding => result.set(binding.name, binding.type))
+    this._bindings.forEach(binding => {
+      if (!binding.isExported) return
+
+      result.set(binding.name, binding.type)
+    })
 
     return result
   }
+
+  isNested = (): boolean => true
 
   protected get bindings(): Binding[] {
     return this._bindings
@@ -68,13 +72,15 @@ export class SymbolTable extends Scope {
   resolveBinding = (name: string): Binding => {
     // TODO: remove this when basic types are implemented in Tony
     if (BASIC_TYPES.find(type => type.name === name))
-      return new Binding(name, null)
+      return new Binding(name, new TypeConstructor([new BasicType()]))
 
     const binding = this.bindings.find(binding => binding.name === name)
     if (binding) return binding
 
     return null
   }
+
+  isNested = (): boolean => false
 }
 
 export class Binding {

@@ -1,6 +1,9 @@
 import { Type } from './Type'
 import { TypeConstructor, AtomicType } from './TypeConstructor'
 
+export { BasicType } from './BasicType'
+export { ListType } from './ListType'
+export { MapType } from './MapType'
 export { ModuleType } from './ModuleType'
 export { TupleType } from './TupleType'
 

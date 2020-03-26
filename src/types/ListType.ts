@@ -1,5 +1,5 @@
-import { TypeConstructor } from "./TypeConstructor";
-import { TypeInterface } from "./TypeInterface";
+import { TypeConstructor } from './TypeConstructor'
+import { TypeInterface } from './TypeInterface'
 
 export class ListType extends TypeInterface {
   private _type: TypeConstructor
@@ -10,7 +10,11 @@ export class ListType extends TypeInterface {
     this._type = type
   }
 
-  isValid = (): boolean => this._type.isValid()
+  get type(): TypeConstructor {
+    return this._type
+  }
 
-  toString = (): string => `[${this._type.toString()}]`
+  isValid = (): boolean => this.type.isValid()
+
+  toString = (): string => `[${this.type.toString()}]`
 }

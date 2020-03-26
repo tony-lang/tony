@@ -12,7 +12,16 @@ export class MapType extends TypeInterface {
     this._valueType = valueType
   }
 
+  get keyType(): TypeConstructor {
+    return this._keyType
+  }
+
+  get valueType(): TypeConstructor {
+    return this._valueType
+  }
+
   isValid = (): boolean => this._keyType.isValid() && this._valueType.isValid()
 
-  toString = (): string => `{ ${this._keyType.toString()}: ${this._valueType.toString()} }`
+  toString = (): string =>
+    `{ ${this._keyType.toString()}: ${this._valueType.toString()} }`
 }
