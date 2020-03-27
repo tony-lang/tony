@@ -1,6 +1,7 @@
 import Parser from 'tree-sitter'
 
 import { ErrorHandler } from '../../error_handling'
+
 import {
   ListType,
   MapType,
@@ -40,7 +41,7 @@ export class InferAccessType {
     else return this.access(valueType, accessType)
   }
 
-  access = (
+  private access = (
     valueType: SingleTypeConstructor,
     accessType: SingleTypeConstructor
   ): TypeConstructor => {

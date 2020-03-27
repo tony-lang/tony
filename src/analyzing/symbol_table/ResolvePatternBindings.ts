@@ -1,6 +1,8 @@
 import Parser from 'tree-sitter'
 
 import { ErrorHandler } from '../../error_handling'
+import { assert } from '../../utilities'
+
 import {
   CurriedTypeConstructor,
   ListType,
@@ -105,13 +107,13 @@ export class ResolvePatternBindings {
     pattern: Parser.SyntaxNode,
     type: TypeConstructor
   ): void => {
-    console.assert(
+    assert(
       type instanceof CurriedTypeConstructor,
       'Parameters must be curried'
     )
 
     pattern.namedChildren.forEach((child, i) => {
-      this.match(child, (type as CurriedTypeConstructor).types[i])
+      this.match(child, type.types[i])
     })
   }
 

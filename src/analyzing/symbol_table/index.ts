@@ -3,6 +3,7 @@ import { BASIC_TYPES } from '../types'
 import { Binding } from './Binding'
 import { Scope } from './Scope'
 
+export { BuildSymbolTable } from './BuildSymbolTable'
 export { ResolvePatternBindings } from './ResolvePatternBindings'
 
 export class SymbolTable extends Scope {

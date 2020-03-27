@@ -69,3 +69,9 @@ export const getEntryFilePath = (project: string): string => {
 
   return path.join(process.cwd(), file)
 }
+
+export function assert(value: any, message: string): asserts value {
+  if (value) return
+
+  console.error(message)
+}
