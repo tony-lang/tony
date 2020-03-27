@@ -20,7 +20,9 @@ import {
   InferMapType,
   InferMapPatternType,
   InferRestListType,
-  InferRestMapType
+  InferRestMapType,
+  InferSpreadType,
+  InferTupleType
 } from './type_inference'
 import {
   CurriedTypeConstructor,
@@ -125,6 +127,8 @@ export class Analyze {
       return this.generateShorthandAccessIdentifier(node)
     case 'shorthand_pair_identifier_pattern':
       return this.generateShorthandPairIdentifierPattern(node)
+    case 'spread':
+      return this.generateSpread(node)
     case 'string':
       return this.generateString(node)
     case 'tuple':
@@ -435,6 +439,12 @@ export class Analyze {
     ))
   }
 
+  private generateSpread = (node: Parser.SyntaxNode): TypeConstructor => {
+    const valueType = this.generate(node.namedChild(0))
+
+    return new InferSpreadType(node, this.errorHandler).perform(valueType)
+  }
+
   private generateString = (node: Parser.SyntaxNode): TypeConstructor => {
     const stringEmbeddingTypes = node.namedChildren
       .map(child => this.generate(child))
@@ -448,17 +458,13 @@ export class Analyze {
   private generateTuple = (node: Parser.SyntaxNode): TypeConstructor => {
     const valueTypes = node.namedChildren.map(child => this.generate(child))
 
-    return new SingleTypeConstructor(new TupleType(valueTypes))
+    return new InferTupleType().perform(valueTypes)
   }
 
   private generateTuplePattern = (node: Parser.SyntaxNode): TypeConstructor => {
-    const valueTypes = node.namedChildren
-      .map(child => this.generate(child))
-      .reduce((valueTypes: CurriedTypeConstructor, valueType) => {
-        return valueTypes.concat(valueType)
-      }, new CurriedTypeConstructor([])).types
+    const valueTypes = node.namedChildren.map(child => this.generate(child))
 
-    return new SingleTypeConstructor(new TupleType(valueTypes))
+    return new InferTupleType().perform(valueTypes)
   }
 
   private generateTupleType = (node: Parser.SyntaxNode): TypeConstructor => {

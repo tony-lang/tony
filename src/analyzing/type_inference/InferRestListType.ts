@@ -29,8 +29,11 @@ export class InferRestListType {
 
       return typeConstructor
     } else if (allowTuple && typeConstructor instanceof SingleTypeConstructor &&
-              typeConstructor.type instanceof TupleType)
-      return new CurriedTypeConstructor(typeConstructor.type.types)
+              typeConstructor.type instanceof TupleType) {
+      typeConstructor.type.isRest = true
+
+      return typeConstructor
+    }
 
     this.throwRestListTypeMismatch(typeConstructor, allowTuple)
   }
