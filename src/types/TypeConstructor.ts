@@ -6,7 +6,7 @@ import { ObjectType } from './ObjectType'
 import { RestListType } from './RestListType'
 import { TupleType } from './TupleType'
 import { TypeInterface } from './TypeInterface'
-import { VOID_TYPE } from '.'
+import { VOID_TYPE, MISSING_TYPE } from '.'
 
 export type AtomicType = Type | BasicType | ListType | MapType | ObjectType |
                          RestListType | TupleType | TypeConstructor
@@ -72,7 +72,7 @@ export class TypeConstructor implements TypeInterface {
              this._types.indexOf(voidTypes[0]) == 0
 
     const restListTypes =
-      this._types.filter(type => type instanceof RestListType)
+      this._types.filter(type => type.matches(REST_LIST_TYPE))
     if (restListTypes.length > 0)
       return this._types.length > 1 && restListTypes.length == 1 &&
              this._types.indexOf(restListTypes[0]) == this._types.length - 2
@@ -83,7 +83,11 @@ export class TypeConstructor implements TypeInterface {
   toString = (): string => {
     const str = this._types.map(type => type.toString()).join(' -> ')
 
-    if (this.length > 1) return `(${str})`
+    if (this.length > 1 || this.types[0] instanceof TypeConstructor)
+      return `(${str})`
     else return str
   }
 }
+
+const REST_LIST_TYPE =
+  new TypeConstructor([new RestListType(new ListType(MISSING_TYPE))])

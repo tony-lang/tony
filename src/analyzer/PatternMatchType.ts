@@ -1,7 +1,7 @@
 import Parser from 'tree-sitter'
 
 import { ErrorHandler } from '../ErrorHandler'
-import { TypeConstructor, MapType, ModuleType } from '../types'
+import { TypeConstructor, MapType, ObjectType } from '../types'
 
 import { Binding } from './SymbolTable'
 
@@ -95,7 +95,7 @@ export class PatternMatchType {
     const atomicType = type.types[0]
     if (atomicType instanceof MapType)
       this.match(nestedPattern, atomicType.valueType)
-    else if (atomicType instanceof ModuleType)
+    else if (atomicType instanceof ObjectType)
       this.match(
         nestedPattern,
         atomicType.propertyTypes.get(identifierPatternName.text)
@@ -123,7 +123,7 @@ export class PatternMatchType {
     const atomicType = type.types[0]
     if (atomicType instanceof MapType)
       this.match(identifierPattern, atomicType.valueType)
-    else if (atomicType instanceof ModuleType)
+    else if (atomicType instanceof ObjectType)
       this.match(
         identifierPattern,
         atomicType.propertyTypes.get(identifierPatternName.text)

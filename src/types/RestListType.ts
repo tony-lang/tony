@@ -1,5 +1,4 @@
 import { ListType } from './ListType'
-import { TypeConstructor } from './TypeConstructor'
 import { TypeInterface } from './TypeInterface'
 
 export class RestListType implements TypeInterface {
@@ -10,12 +9,12 @@ export class RestListType implements TypeInterface {
   }
 
   matches = (pattern: TypeInterface): boolean => {
-    if (!(pattern instanceof TypeConstructor)) return false
+    if (!(pattern instanceof RestListType)) return false
 
-    return this._listType.matches(new ListType(pattern))
+    return this._listType.matches(pattern._listType)
   }
 
   isValid = (): boolean => this._listType.isValid()
 
-  toString = (): string => `...[${this._listType.toString()}]`
+  toString = (): string => `...${this._listType.toString()}`
 }

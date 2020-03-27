@@ -120,8 +120,10 @@ export class Analyze {
       return abstractionBranchType.matches(abstractionType)
     })) this.errorHandler.throw('Abstraction branches have varying types', node)
 
-    if (!abstractionType.isValid())
-      this.errorHandler.throw('Abstraction type is invalid', node)
+    if (!abstractionType.isValid()) this.errorHandler.throw(
+      `Type '${abstractionType.toString()}' of abstraction is invalid`,
+      node
+    )
 
     return abstractionType
   }
@@ -207,6 +209,11 @@ export class Analyze {
     if (!expressionType.matches(patternType)) this.errorHandler.throw(
       `Pattern type '${patternType.toString()}' and expression type ` +
       `'${expressionType.toString()}' do not match`,
+      node
+    )
+
+    if (!expressionType.isValid()) this.errorHandler.throw(
+      `Type '${expressionType.toString()}' of assignment is invalid`,
       node
     )
 
