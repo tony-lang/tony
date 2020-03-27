@@ -6,8 +6,9 @@ import { assert } from '../utilities'
 import {
   Binding,
   BuildSymbolTable,
-  SymbolTable,
-  ResolvePatternBindings
+  ResolveImport,
+  ResolvePatternBindings,
+  SymbolTable
 } from './symbol_table'
 import {
   CheckDefaultValueType,
@@ -39,19 +40,19 @@ import {
   STRING_TYPE,
   REGULAR_EXPRESSION_TYPE
 } from './types'
-import { GetImport } from './GetImport'
+import { ImportBinding } from './symbol_table/ImportBinding'
 
 export class Analyze {
   private errorHandler: ErrorHandler
 
   private buildSymbolTable: BuildSymbolTable
-  private getImport: GetImport
+  private resolveImport: ResolveImport
 
   constructor(file: string, outputPath: string) {
     this.errorHandler = new ErrorHandler(file)
 
     this.buildSymbolTable = new BuildSymbolTable(this.errorHandler)
-    this.getImport = new GetImport(file, outputPath)
+    this.resolveImport = new ResolveImport(this, file, outputPath)
   }
 
   perform = (node: Parser.SyntaxNode): SymbolTable => {
@@ -59,7 +60,7 @@ export class Analyze {
     return this.buildSymbolTable.symbolTable
   }
 
-  private generate = (node: Parser.SyntaxNode): TypeConstructor => {
+  generate = (node: Parser.SyntaxNode): TypeConstructor => {
     switch (node.type) {
     case 'abstraction':
       return this.generateAbstraction(node)
@@ -85,10 +86,14 @@ export class Analyze {
       return this.generateExport(node)
     case 'expression_pair':
       return this.generateExpressionPair(node)
+    case 'external_import':
+      return this.generateExternalImport(node)
     case 'identifier':
       return this.generateIdentifier(node)
     case 'identifier_pattern':
       return this.generateIdentifierPattern(node)
+    case 'import':
+      return this.generateImport(node)
     case 'interpolation':
       return this.generateInterpolation(node)
     case 'list':
@@ -256,6 +261,16 @@ export class Analyze {
     return new SingleTypeConstructor(new MapType(keyType, valueType))
   }
 
+  private generateExternalImport = (
+    node: Parser.SyntaxNode
+  ): TypeConstructor => {
+    this.buildSymbolTable.symbolTable.addImport(
+      this.resolveImport.performExternalImport(node)
+    )
+
+    return
+  }
+
   private generateIdentifier = (node: Parser.SyntaxNode): TypeConstructor => {
     const name = node.text
 
@@ -268,6 +283,14 @@ export class Analyze {
     const type = this.generate(node.namedChild(1))
 
     return type
+  }
+
+  private generateImport = (node: Parser.SyntaxNode): TypeConstructor => {
+    this.buildSymbolTable.symbolTable.addImport(
+      this.resolveImport.performImport(node)
+    )
+
+    return
   }
 
   private generateInterpolation = (

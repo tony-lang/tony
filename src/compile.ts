@@ -37,7 +37,7 @@ export const compile = async (
     const file = files.pop()
     if (compiledFiles.includes(file)) continue
 
-    await compileFile(tony, codeGenerator, file, outputDirPath)
+    await compileFile(tony, codeGenerator, files, file, outputDirPath)
     compiledFiles.push(file)
   }
 
@@ -49,6 +49,7 @@ export const compile = async (
 const compileFile = (
   tony: Tony,
   codeGenerator: GenerateCode,
+  files: string[],
   file: string,
   outputDirPath: string
 ): Promise<void> => {
@@ -70,8 +71,9 @@ const compileFile = (
     if (tony.debug) console.log(`Analyzing ${file}...`)
     const analyzer = new Analyze(file, outputDirPath)
     const symbolTable = analyzer.perform(node)
+    files.push(...symbolTable.importedFiles)
     console.dir(symbolTable, { depth: null })
-    process.exit(0)
+    // process.exit(0)
 
     // if (tony.debug) console.log(`Compiling ${file}...`)
     // codeGenerator.getImportSource.file = file

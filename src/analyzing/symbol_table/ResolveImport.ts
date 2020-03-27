@@ -1,0 +1,126 @@
+import path from 'path'
+import Parser from 'tree-sitter'
+
+import { FILE_EXTENSION, TARGET_FILE_EXTENSION } from '../../constants'
+import { getOutputPathForFile, assert } from '../../utilities'
+
+import { Analyze } from '../Analyze'
+
+import { Import } from './Import'
+import { ImportBinding } from './ImportBinding'
+
+export class ResolveImport {
+  private analyzer: Analyze
+  private file: string
+  private outputPath: string
+
+  constructor(analyzer: Analyze, file: string, outputPath: string) {
+    this.analyzer = analyzer
+    this.file = file
+    this.outputPath = outputPath
+  }
+
+  performImport = (node: Parser.SyntaxNode): Import => {
+    assert(node.type === 'import', 'Node must be of type `import`.')
+
+    const importClause = node.namedChild(0)
+    const source = node.namedChild(1).text.slice(1, -1)
+    const bindings =
+      importClause.namedChildren.map(this.resolveImportClauseEntry)
+
+    return this.buildImport(source, bindings)
+  }
+
+  performExternalImport = (node: Parser.SyntaxNode): Import => {
+    assert(
+      node.type === 'external_import',
+      'Node must be of type `external_import`.'
+    )
+
+    const importClause = node.namedChild(0)
+    const source = node.namedChild(1).text.slice(1, -1)
+    const bindings =
+      importClause.namedChildren.map(this.resolveImportClauseEntry)
+
+    return this.buildImport(source, bindings)
+  }
+
+  private resolveImportClauseEntry = (
+    node: Parser.SyntaxNode
+  ): ImportBinding => {
+    switch (node.type) {
+    case 'external_import_clause_identifier_pair':
+      return this.resolveExternalImportClauseIdentifierPair(node)
+    case 'identifier_pattern':
+      return this.resolveIdentifierPattern(node)
+    case 'identifier_pattern_name':
+      return this.resolveIdentifierPatternName(node)
+    case 'import_clause_identifier_pair':
+      return this.resolveImportClauseIdentifierPair(node)
+    default:
+      console.log(`Could not find resolver for AST import node '${node.type}'.`)
+      process.exit(1)
+    }
+  }
+
+  private resolveExternalImportClauseIdentifierPair = (
+    node: Parser.SyntaxNode
+  ): ImportBinding => {
+    const originalIdentifierPatternNameNode = node.namedChild(0)
+    const originalName = originalIdentifierPatternNameNode.text
+
+    const identifierPatternNode = node.namedChild(1)
+    const identifierPatternNameNode = identifierPatternNode.namedChild(0)
+    const name = identifierPatternNameNode.text
+
+    return new ImportBinding(
+      name,
+      originalName,
+      this.analyzer.generate(identifierPatternNode)
+    )
+  }
+
+  private resolveIdentifierPattern = (
+    node: Parser.SyntaxNode
+  ): ImportBinding => {
+    const identifierPatternNameNode = node.namedChild(0)
+    const name = identifierPatternNameNode.text
+
+    return new ImportBinding(
+      name,
+      name,
+      this.analyzer.generate(node)
+    )
+  }
+
+  private resolveIdentifierPatternName = (
+    node: Parser.SyntaxNode
+  ): ImportBinding =>
+    new ImportBinding(node.text, node.text)
+
+  private resolveImportClauseIdentifierPair = (
+    node: Parser.SyntaxNode
+  ): ImportBinding => {
+    const originalName = node.namedChild(0).text
+    const name = node.namedChild(1).text
+
+    return new ImportBinding(name, originalName)
+  }
+
+  private buildImport = (
+    relativePath: string,
+    bindings: ImportBinding[]
+  ): Import => {
+    const dir = this.file.substring(0, this.file.lastIndexOf('/'))
+    const fullPath = path.join(dir, relativePath)
+    if (!relativePath.endsWith(FILE_EXTENSION))
+      return { fullPath, relativePath, bindings }
+
+    const relativePathAfterCompilation = path.join(
+      getOutputPathForFile(this.outputPath, this.file),
+      '..',
+      relativePath.replace(FILE_EXTENSION, TARGET_FILE_EXTENSION)
+    )
+    return { fullPath, relativePath: relativePathAfterCompilation, bindings }
+  }
+}

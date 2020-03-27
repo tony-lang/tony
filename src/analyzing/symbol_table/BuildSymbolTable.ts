@@ -4,9 +4,9 @@ import { ErrorHandler } from '../../error_handling'
 
 import { TypeConstructor } from '../types'
 
-import { SymbolTable } from '.'
 import { Binding } from './Binding'
 import { Scope } from './Scope'
+import { SymbolTable } from './SymbolTable'
 
 export class BuildSymbolTable {
   private _currentScope: Scope
