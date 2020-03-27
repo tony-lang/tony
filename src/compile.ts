@@ -5,7 +5,7 @@ import Parser from 'tree-sitter'
 
 import Tony from './Tony'
 import parser from './parser'
-import { Analyze } from './analyzer'
+import { Analyze } from './analyzing'
 import { GenerateCode } from './code_generation'
 import {
   readFile,

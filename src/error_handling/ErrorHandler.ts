@@ -1,6 +1,6 @@
 import Parser from 'tree-sitter'
 
-import { readFile } from './utilities'
+import { readFile } from '../utilities'
 
 const CONTEXT_DELTA = Object.freeze(2)
 

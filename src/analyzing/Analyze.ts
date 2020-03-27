@@ -1,6 +1,14 @@
 import Parser from 'tree-sitter'
 
-import { ErrorHandler } from '../ErrorHandler'
+import { ErrorHandler } from '../error_handling'
+
+import {
+  Binding,
+  Scope,
+  SymbolTable,
+  ResolvePatternBindings
+} from './symbol_table'
+import { InferAccessType } from './type_inference'
 import {
   CurriedTypeConstructor,
   ListType,
@@ -16,12 +24,8 @@ import {
   NUMBER_TYPE,
   STRING_TYPE,
   REGULAR_EXPRESSION_TYPE
-} from '../types'
-
+} from './types'
 import { GetImport } from './GetImport'
-import { InferAccessType } from './InferAccessType'
-import { PatternMatchType } from './PatternMatchType'
-import { SymbolTable, Scope, Binding } from './SymbolTable'
 
 export class Analyze {
   private currentScope: Scope
@@ -283,7 +287,7 @@ export class Analyze {
       )
 
     const usedType = expressionTypeIsValid ? expressionType : patternType
-    const bindings = new PatternMatchType(this.errorHandler, node, isExported)
+    const bindings = new ResolvePatternBindings(this.errorHandler, node, isExported)
       .perform(pattern, usedType)
     bindings.forEach(binding => {
       const matchingBinding = this.currentScope.resolveBinding(binding.name, 0)
@@ -496,7 +500,7 @@ export class Analyze {
         return parameterTypes.concat(parameterType)
       }, new CurriedTypeConstructor([]))
 
-    const bindings = new PatternMatchType(this.errorHandler, node)
+    const bindings = new ResolvePatternBindings(this.errorHandler, node)
       .perform(node, parameterTypes)
     bindings.forEach(binding => {
       const matchingBinding = this.currentScope.resolveBinding(binding.name, 0)

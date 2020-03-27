@@ -1,6 +1,6 @@
 import Parser from 'tree-sitter'
 
-import { ErrorHandler } from '../ErrorHandler'
+import { ErrorHandler } from '../../error_handling'
 import {
   ListType,
   MapType,

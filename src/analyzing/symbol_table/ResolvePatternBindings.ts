@@ -1,6 +1,6 @@
 import Parser from 'tree-sitter'
 
-import { ErrorHandler } from '../ErrorHandler'
+import { ErrorHandler } from '../../error_handling'
 import {
   CurriedTypeConstructor,
   ListType,
@@ -11,9 +11,9 @@ import {
   TypeConstructor
 } from '../types'
 
-import { Binding } from './SymbolTable'
+import { Binding } from './Binding'
 
-export class PatternMatchType {
+export class ResolvePatternBindings {
   private bindings: Binding[] = []
   private isExported: boolean
   private errorHandler: ErrorHandler
