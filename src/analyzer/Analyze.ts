@@ -2,22 +2,24 @@ import Parser from 'tree-sitter'
 
 import { ErrorHandler } from '../ErrorHandler'
 import {
+  CurriedTypeConstructor,
   ListType,
   MapType,
   ObjectType,
-  RestListType,
+  SingleTypeConstructor,
   TupleType,
   TypeConstructor,
   MISSING_TYPE,
   MISSING_TYPE_NAME,
   VOID_TYPE,
+  BOOLEAN_TYPE,
   NUMBER_TYPE,
-  STRING_TYPE
+  STRING_TYPE,
+  REGULAR_EXPRESSION_TYPE
 } from '../types'
 
 import { GetImport } from './GetImport'
 import { InferAccessType } from './InferAccessType'
-// import { ParseType } from './ParseType'
 import { PatternMatchType } from './PatternMatchType'
 import { SymbolTable, Scope, Binding } from './SymbolTable'
 
@@ -57,6 +59,8 @@ export class Analyze {
       return this.generateAssignment(node)
     case 'block':
       return this.generateBlock(node)
+    case 'boolean':
+      return this.generateBoolean(node)
     case 'comment':
       return this.generateComment(node)
     case 'export':
@@ -71,12 +75,16 @@ export class Analyze {
       return this.generateInterpolation(node)
     case 'list':
       return this.generateList(node)
+    case 'list_pattern':
+      return this.generateListPattern(node)
     case 'list_type':
       return this.generateListType(node)
     case 'map':
       return this.generateMap(node)
     case 'map_pattern':
       return this.generateMapPattern(node)
+    case 'map_type':
+      return this.generateMapType(node)
     case 'module':
       return this.generateModule(node)
     case 'number':
@@ -89,8 +97,14 @@ export class Analyze {
       return this.generatePatternPair(node)
     case 'program':
       return this.generateProgram(node)
+    case 'regex':
+      return this.generateRegex(node)
     case 'rest_list':
       return this.generateRestList(node)
+    case 'rest_list_type':
+      return this.generateRestListType(node)
+    case 'rest_map':
+      return this.generateRestMap(node)
     case 'shorthand_access_identifier':
       return this.generateShorthandAccessIdentifier(node)
     case 'shorthand_pair_identifier_pattern':
@@ -99,6 +113,8 @@ export class Analyze {
       return this.generateString(node)
     case 'tuple':
       return this.generateTuple(node)
+    case 'tuple_pattern':
+      return this.generateTuplePattern(node)
     case 'tuple_type':
       return this.generateTupleType(node)
     case 'type':
@@ -135,8 +151,13 @@ export class Analyze {
     const parameterTypes = this.generate(node.namedChild(0))
     const bodyType = this.generate(node.namedChild(1))
 
+    console.assert(
+      parameterTypes instanceof CurriedTypeConstructor,
+      'Parameters must be curried.'
+    )
+
     this.currentScope = this.currentScope.parentScope
-    return new TypeConstructor(parameterTypes.types.concat([bodyType]))
+    return parameterTypes.concat(bodyType, false)
   }
 
   private generateAccess = (node: Parser.SyntaxNode): TypeConstructor => {
@@ -151,33 +172,73 @@ export class Analyze {
     const abstractionType = this.generate(node.namedChild(0))
     const argTypes = this.generate(node.namedChild(1))
 
-    if (abstractionType.matches(VOID_TYPE)) abstractionType.pop()
-    if (abstractionType.length <= argTypes.length)
-      if (abstractionType.length == 1)
-        this.errorHandler.throw(
-          'Cannot apply to the non-curried type ' +
-          `'${abstractionType.toString()}'`,
-          node
-        )
-      else if (!(abstractionType.types[abstractionType.length - 2]
-                 instanceof RestListType))
-        this.errorHandler.throw(
-          `Expected at most ${abstractionType.length - 1} arguments, but ` +
-          `applied ${argTypes.length} arguments`,
-          node
-        )
-    const appliedArgs = argTypes.types.map((argType, i) => {
-      if (!abstractionType.types[i].matches(argType))
-        this.errorHandler.throw(
-          `Expected argument of type '${abstractionType.types[i].toString()}'` +
-          `, but got '${argType.toString()}'`,
+    console.assert(
+      argTypes instanceof CurriedTypeConstructor,
+      'Arguments must be curried'
+    )
+
+    if (!(abstractionType instanceof CurriedTypeConstructor))
+      this.errorHandler.throw(
+        'Cannot apply to the non-curried type ' +
+        `'${abstractionType.toString()}'`,
+        node
+      )
+    else {
+      if (abstractionType.matches(VOID_TYPE)) abstractionType.types.pop()
+      if (abstractionType.length <= argTypes.length) {
+        if (abstractionType.length == 1)
+          this.errorHandler.throw(
+            'Cannot apply to the non-curried type ' +
+            `'${abstractionType.toString()}'`,
+            node
+          )
+
+        const lastParameterType =
+          abstractionType.types[abstractionType.length - 2]
+        if (!(lastParameterType instanceof SingleTypeConstructor &&
+              lastParameterType.type instanceof ListType &&
+              lastParameterType.type.isRest))
+          this.errorHandler.throw(
+            `Expected at most ${abstractionType.length - 1} arguments, but ` +
+            `applied ${argTypes.length} arguments`,
+            node
+          )
+      }
+
+      const appliedArgs: number[] = []
+      const tmpAbstractionTypes = abstractionType.types.slice(0, -1)
+      for (let i = 0; i < tmpAbstractionTypes.length; i++) {
+        const parameterType = tmpAbstractionTypes[i]
+        const argType = (argTypes as CurriedTypeConstructor).types[i]
+
+        if (parameterType instanceof SingleTypeConstructor &&
+            parameterType.type instanceof ListType &&
+            parameterType.type.isRest) {
+          if (argType === undefined) continue
+
+          if (!parameterType.type.type.matches(argType))
+            this.errorHandler.throw(
+              'Expected argument of type ' +
+              `'${parameterType.type.type.toString()}', but got ` +
+              `'${argType.toString()}'`,
+              node
+            )
+
+          if (i < argTypes.length - 1)
+            tmpAbstractionTypes.splice(i, 0, parameterType)
+
+          continue
+        } else if (!parameterType.matches(argType)) this.errorHandler.throw(
+          `Expected argument of type '${parameterType.toString()}', but got ` +
+          `'${argType.toString()}'`,
           node
         )
 
-      return argType.toString() === MISSING_TYPE_NAME ? null : i
-    }).filter(i => i !== null)
+        if (argType.toString() !== MISSING_TYPE_NAME) appliedArgs.push(i)
+      }
 
-    return abstractionType.apply(appliedArgs)
+      return abstractionType.apply(appliedArgs)
+    }
   }
 
   private generateArgument = (node: Parser.SyntaxNode): TypeConstructor => {
@@ -188,39 +249,55 @@ export class Analyze {
   }
 
   private generateArguments = (node: Parser.SyntaxNode): TypeConstructor => {
-    if (node.namedChildCount == 0) return VOID_TYPE
+    if (node.namedChildCount == 0)
+      return new CurriedTypeConstructor([VOID_TYPE])
 
     const argTypes = node.namedChildren
       .map(argNode => this.generate(argNode))
-    return new TypeConstructor(argTypes)
+    return new CurriedTypeConstructor(argTypes)
   }
 
   private generateAssignment = (node: Parser.SyntaxNode): TypeConstructor => {
-    // TODO: don't check types in pattern and instead use bindings returned by
-    //       running PatternMatchType against expressionType
-
-    const pattern = node.namedChild(0)
-    const patternType = this.generate(pattern)
     const isExported = this.exportBindings
     // required if it was previously set to true by the export generator
     this.exportBindings = false
+
+    const pattern = node.namedChild(0)
+    const patternType = this.generate(pattern)
     const expressionType = this.generate(node.namedChild(1))
 
-    if (!expressionType.matches(patternType)) this.errorHandler.throw(
-      `Pattern type '${patternType.toString()}' and expression type ` +
-      `'${expressionType.toString()}' do not match`,
-      node
-    )
+    const expressionTypeIsValid = expressionType.isValid()
+    if (!expressionTypeIsValid && !patternType.isValid())
+      this.errorHandler.throw(
+        'Provided type information is incomplete, tried to match pattern ' +
+        `type '${patternType.toString()}' against expression type ` +
+        `'${expressionType.toString()}'`,
+        node
+      )
+    if (expressionTypeIsValid && !expressionType.matches(patternType) ||
+        !expressionTypeIsValid && !patternType.matches(expressionType))
+      this.errorHandler.throw(
+        `Pattern type '${patternType.toString()}' and expression type ` +
+        `'${expressionType.toString()}' do not match`,
+        node
+      )
 
-    if (!expressionType.isValid()) this.errorHandler.throw(
-      `Type '${expressionType.toString()}' of assignment is invalid`,
-      node
-    )
+    const usedType = expressionTypeIsValid ? expressionType : patternType
+    const bindings = new PatternMatchType(this.errorHandler, node, isExported)
+      .perform(pattern, usedType)
+    bindings.forEach(binding => {
+      const matchingBinding = this.currentScope.resolveBinding(binding.name, 0)
+      if (matchingBinding)
+        this.errorHandler.throw(
+          `A binding with name '${matchingBinding.name}' already exists in ` +
+          'the current block',
+          node
+        )
+      this.currentScope.addBinding(binding)
+    })
 
-    const typeArgs = new PatternMatchType(this.errorHandler, node, isExported)
-      .perform(pattern, expressionType)
-      .map(binding => binding.type)
-    return new TypeConstructor([new TupleType(typeArgs)])
+    const typeArgs = bindings.map(binding => binding.type)
+    return new SingleTypeConstructor(new TupleType(typeArgs))
   }
 
   private generateBlock = (node: Parser.SyntaxNode): TypeConstructor => {
@@ -229,6 +306,9 @@ export class Analyze {
 
     return expressionTypes[expressionTypes.length - 1]
   }
+
+  private generateBoolean = (node: Parser.SyntaxNode): TypeConstructor =>
+    BOOLEAN_TYPE
 
   private generateComment = (node: Parser.SyntaxNode): TypeConstructor => {
     return
@@ -247,7 +327,7 @@ export class Analyze {
     const keyType = this.generate(node.namedChild(0))
     const valueType = this.generate(node.namedChild(1))
 
-    return new TypeConstructor([new MapType(keyType, valueType)])
+    return new SingleTypeConstructor(new MapType(keyType, valueType))
   }
 
   private generateIdentifier = (node: Parser.SyntaxNode): TypeConstructor => {
@@ -262,22 +342,7 @@ export class Analyze {
   private generateIdentifierPattern = (
     node: Parser.SyntaxNode
   ): TypeConstructor => {
-    const isExported = this.exportBindings
-
-    const name = node.namedChild(0).text
-    const typeNode = node.namedChild(1)
-    // const type = ParseType.perform(typeNode)
-    const type = this.generate(typeNode)
-
-    const binding = new Binding(name, type, isExported)
-    const matchingBinding = this.currentScope.resolveBinding(binding.name, 0)
-    if (matchingBinding)
-      this.errorHandler.throw(
-        `A binding with name '${matchingBinding.name}' already exists in the ` +
-        'current block',
-        node
-      )
-    this.currentScope.addBinding(binding)
+    const type = this.generate(node.namedChild(1))
 
     return type
   }
@@ -292,7 +357,7 @@ export class Analyze {
 
   private generateList = (node: Parser.SyntaxNode): TypeConstructor => {
     const valueTypes = node.namedChildren.map(child => this.generate(child))
-    const valueType = valueTypes[0]
+    const valueType = valueTypes[0] || MISSING_TYPE
 
     if (!valueTypes.every(otherValueType => otherValueType.matches(valueType)))
       this.errorHandler.throw(
@@ -300,18 +365,40 @@ export class Analyze {
         node
       )
 
-    return new TypeConstructor([new ListType(valueType)])
+    return new SingleTypeConstructor(new ListType(valueType))
+  }
+
+  private generateListPattern = (node: Parser.SyntaxNode): TypeConstructor => {
+    const valueTypes = node.namedChildren.map(child => {
+      const childType = this.generate(child)
+
+      if (childType instanceof SingleTypeConstructor &&
+          childType.type instanceof ListType && childType.type.isRest)
+        return childType.type.type
+      else return childType
+    })
+    const valueType = valueTypes[0] || MISSING_TYPE
+
+    if (!valueTypes.every(otherValueType => otherValueType.matches(valueType)))
+      this.errorHandler.throw(
+        'Values of list have to be of the same type',
+        node
+      )
+
+    return new SingleTypeConstructor(new ListType(valueType))
   }
 
   private generateListType = (node: Parser.SyntaxNode): TypeConstructor => {
     const valueType = this.generate(node.namedChild(0))
 
-    return new TypeConstructor([new ListType(valueType)])
+    return new SingleTypeConstructor(new ListType(valueType))
   }
 
   private generateMap = (node: Parser.SyntaxNode): TypeConstructor => {
     const mapTypes = node.namedChildren.map(child => this.generate(child))
-    const mapType = mapTypes[0]
+    const mapType = mapTypes[0] || new SingleTypeConstructor(
+      new MapType(MISSING_TYPE, MISSING_TYPE)
+    )
 
     if (!mapTypes.every(otherMapType => otherMapType.matches(mapType)))
       this.errorHandler.throw(
@@ -324,10 +411,48 @@ export class Analyze {
 
   private generateMapPattern = (node: Parser.SyntaxNode): TypeConstructor => {
     const objectTypes = node.namedChildren.map(child => this.generate(child))
+    const mapType = objectTypes.find(objectType => {
+      console.assert(
+        objectType instanceof SingleTypeConstructor,
+        'Map pattern must be non-curried.'
+      )
 
-    return objectTypes.reduce((type, objectType) => new TypeConstructor([
-      (type.types[0] as ObjectType).concat(objectType.types[0] as ObjectType)
-    ]), new TypeConstructor([new ObjectType(new Map())]))
+      return (objectType as SingleTypeConstructor).type instanceof MapType
+    })
+
+    if (mapType) {
+      if (!objectTypes.every(otherObjectType => {
+        return mapType.matches(otherObjectType)
+      })) this.errorHandler.throw(
+        'Keys/values of map have to be of the same type',
+        node
+      )
+
+      return mapType
+    } else
+      return objectTypes.reduce((type: SingleTypeConstructor, objectType) => {
+        console.assert(
+          objectType instanceof SingleTypeConstructor,
+          'Map pattern must be non-curried.'
+        )
+        console.assert(
+          (objectType as SingleTypeConstructor).type instanceof ObjectType,
+          'Map pattern must be either of a map or an object type.'
+        )
+
+        return new SingleTypeConstructor(
+          (type.type as ObjectType).concat(
+            (objectType as SingleTypeConstructor).type as ObjectType
+          )
+        )
+      }, new SingleTypeConstructor(new ObjectType(new Map())))
+  }
+
+  private generateMapType = (node: Parser.SyntaxNode): TypeConstructor => {
+    const keyType = this.generate(node.namedChild(0))
+    const valueType = this.generate(node.namedChild(1))
+
+    return new SingleTypeConstructor(new MapType(keyType, valueType))
   }
 
   private generateModule = (node: Parser.SyntaxNode): TypeConstructor => {
@@ -340,9 +465,9 @@ export class Analyze {
 
     this.currentScope = this.currentScope.createScope()
     this.generate(body)
-    const type = new TypeConstructor([
+    const type = new SingleTypeConstructor(
       new ObjectType(this.currentScope.getExportedBindingTypes())
-    ])
+    )
     this.currentScope = this.currentScope.parentScope
 
     const binding = new Binding(name, type, isExported)
@@ -362,13 +487,29 @@ export class Analyze {
     NUMBER_TYPE
 
   private generateParameters = (node: Parser.SyntaxNode): TypeConstructor => {
-    if (node.namedChildCount == 0) return new TypeConstructor([VOID_TYPE])
+    if (node.namedChildCount == 0)
+      return new CurriedTypeConstructor([VOID_TYPE])
 
-    return node.namedChildren
+    const parameterTypes = node.namedChildren
       .map(parameterNode => this.generate(parameterNode))
       .reduce((parameterTypes, parameterType) => {
         return parameterTypes.concat(parameterType)
-      }, new TypeConstructor([]))
+      }, new CurriedTypeConstructor([]))
+
+    const bindings = new PatternMatchType(this.errorHandler, node)
+      .perform(node, parameterTypes)
+    bindings.forEach(binding => {
+      const matchingBinding = this.currentScope.resolveBinding(binding.name, 0)
+      if (matchingBinding)
+        this.errorHandler.throw(
+          `A binding with name '${matchingBinding.name}' already exists in ` +
+          'the current block',
+          node
+        )
+      this.currentScope.addBinding(binding)
+    })
+
+    return parameterTypes
   }
 
   private generatePattern = (node: Parser.SyntaxNode): TypeConstructor => {
@@ -393,9 +534,9 @@ export class Analyze {
     const identifierPatternName = node.namedChild(0)
     const pattern = node.namedChild(1)
 
-    return new TypeConstructor([new ObjectType(
+    return new SingleTypeConstructor(new ObjectType(
       new Map([[identifierPatternName.text, this.generate(pattern)]])
-    )])
+    ))
   }
 
   private generateProgram = (node: Parser.SyntaxNode): TypeConstructor => {
@@ -407,16 +548,47 @@ export class Analyze {
     return
   }
 
+  private generateRegex = (node: Parser.SyntaxNode): TypeConstructor =>
+    REGULAR_EXPRESSION_TYPE
+
   private generateRestList = (node: Parser.SyntaxNode): TypeConstructor => {
     const type = this.generate(node.namedChild(0))
 
-    const atomicType = type.types[0]
-    if (type.length == 1 && atomicType instanceof ListType)
-      return new TypeConstructor([new RestListType(atomicType)])
-    else if (type.length == 1 && atomicType instanceof TupleType)
-      return new TypeConstructor(atomicType.types)
+    if (type instanceof SingleTypeConstructor &&
+        type.type instanceof ListType) {
+      type.type.isRest = true
+      return type
+    } else if (type instanceof SingleTypeConstructor &&
+               type.type instanceof TupleType)
+      return new CurriedTypeConstructor(type.type.types)
     else this.errorHandler.throw(
       `Rest list is either of a list or tuple type, got '${type.toString()}'`,
+      node
+    )
+  }
+
+  private generateRestListType = (node: Parser.SyntaxNode): TypeConstructor => {
+    const type = this.generate(node.namedChild(0))
+
+    if (type instanceof SingleTypeConstructor &&
+        type.type instanceof ListType) {
+      type.type.isRest = true
+      return type
+    } else this.errorHandler.throw(
+      'Rest list type operator can only be used on lists, got ' +
+      `'${type.toString()}'`,
+      node
+    )
+  }
+
+  private generateRestMap = (node: Parser.SyntaxNode): TypeConstructor => {
+    const type = this.generate(node.namedChild(0))
+
+    if (type instanceof SingleTypeConstructor &&
+        (type.type instanceof MapType || type.type instanceof ObjectType))
+      return type
+    else this.errorHandler.throw(
+      `Rest map must be of a map or object type, got '${type.toString()}'`,
       node
     )
   }
@@ -445,9 +617,9 @@ export class Analyze {
       type.isOptional = true
     }
 
-    return new TypeConstructor([new ObjectType(
+    return new SingleTypeConstructor(new ObjectType(
       new Map([[identifierPatternName.text, type]])
-    )])
+    ))
   }
 
   private generateString = (node: Parser.SyntaxNode): TypeConstructor => {
@@ -468,13 +640,23 @@ export class Analyze {
   private generateTuple = (node: Parser.SyntaxNode): TypeConstructor => {
     const valueTypes = node.namedChildren.map(child => this.generate(child))
 
-    return new TypeConstructor([new TupleType(valueTypes)])
+    return new SingleTypeConstructor(new TupleType(valueTypes))
+  }
+
+  private generateTuplePattern = (node: Parser.SyntaxNode): TypeConstructor => {
+    const valueTypes = node.namedChildren
+      .map(child => this.generate(child))
+      .reduce((valueTypes: CurriedTypeConstructor, valueType) => {
+        return valueTypes.concat(valueType)
+      }, new CurriedTypeConstructor([])).types
+
+    return new SingleTypeConstructor(new TupleType(valueTypes))
   }
 
   private generateTupleType = (node: Parser.SyntaxNode): TypeConstructor => {
     const valueTypes = node.namedChildren.map(child => this.generate(child))
 
-    return new TypeConstructor([new TupleType(valueTypes)])
+    return new SingleTypeConstructor(new TupleType(valueTypes))
   }
 
   private generateType = (node: Parser.SyntaxNode): TypeConstructor => {
@@ -494,6 +676,6 @@ export class Analyze {
     if (node.namedChildCount == 1) return this.generate(node.namedChild(0))
 
     const types = node.namedChildren.map(childNode => this.generate(childNode))
-    return new TypeConstructor(types)
+    return new CurriedTypeConstructor(types)
   }
 }

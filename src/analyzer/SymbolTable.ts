@@ -1,4 +1,4 @@
-import { TypeConstructor, BasicType, BASIC_TYPES } from '../types'
+import { TypeConstructor, BASIC_TYPES } from '../types'
 
 export class Scope {
   private _bindings: Binding[] = []

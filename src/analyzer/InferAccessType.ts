@@ -4,7 +4,8 @@ import { ErrorHandler } from '../ErrorHandler'
 import {
   ListType,
   MapType,
-  ModuleType,
+  ObjectType,
+  SingleTypeConstructor,
   TupleType,
   TypeConstructor,
   NUMBER_TYPE,
@@ -24,13 +25,27 @@ export class InferAccessType {
     valueType: TypeConstructor,
     accessType: TypeConstructor
   ): TypeConstructor => {
-    if (valueType.length != 1) this.errorHandler.throw(
-      'Access operator cannot be used on values of type ' +
-      `'${valueType.toString()}'`,
-      this.node
-    )
+    if (!(valueType instanceof SingleTypeConstructor))
+      this.errorHandler.throw(
+        'Access operator cannot be used on values of type ' +
+        `'${valueType.toString()}'`,
+        this.node
+      )
+    else if (!(accessType instanceof SingleTypeConstructor))
+      this.errorHandler.throw(
+        'Access operator cannot be used on values of type ' +
+        `'${accessType.toString()}'`,
+        this.node
+      )
+    else return this.access(valueType, accessType)
+  }
 
-    const atomicValueType = valueType.types[0]
+  access = (
+    valueType: SingleTypeConstructor,
+    accessType: SingleTypeConstructor
+  ): TypeConstructor => {
+    const atomicValueType = valueType.type
+
     if (atomicValueType instanceof ListType)
       return this.accessList(atomicValueType, accessType)
     else if (atomicValueType instanceof MapType)
@@ -38,8 +53,8 @@ export class InferAccessType {
     else if (this.node.namedChild(1).type === 'shorthand_access_identifier')
       if (atomicValueType instanceof TupleType)
         return this.accessTuple(atomicValueType, accessType)
-      else if (atomicValueType instanceof ModuleType)
-        return this.accessModule(atomicValueType, accessType)
+      else if (atomicValueType instanceof ObjectType)
+        return this.accessObject(atomicValueType, accessType)
       else
         this.errorHandler.throw(
           'Access operator cannot be used on values of type ' +
@@ -54,7 +69,7 @@ export class InferAccessType {
 
   private accessList = (
     listType: ListType,
-    accessType: TypeConstructor
+    accessType: SingleTypeConstructor
   ): TypeConstructor => {
     if (accessType.matches(NUMBER_TYPE)) return listType.type
     else
@@ -67,7 +82,7 @@ export class InferAccessType {
 
   private accessMap = (
     mapType: MapType,
-    accessType: TypeConstructor
+    accessType: SingleTypeConstructor
   ): TypeConstructor => {
     if (accessType.matches(mapType.keyType)) return mapType.valueType
     else
@@ -80,7 +95,7 @@ export class InferAccessType {
 
   private accessTuple = (
     tupleType: TupleType,
-    accessType: TypeConstructor
+    accessType: SingleTypeConstructor
   ): TypeConstructor => {
     const index = parseInt(this.node.namedChild(1).text)
 
@@ -94,18 +109,18 @@ export class InferAccessType {
       )
   }
 
-  private accessModule = (
-    moduleType: ModuleType,
-    accessType: TypeConstructor
+  private accessObject = (
+    objectType: ObjectType,
+    accessType: SingleTypeConstructor
   ): TypeConstructor => {
     const property = this.node.namedChild(1).text
 
     if (accessType.matches(STRING_TYPE))
-      if (moduleType.propertyTypes.has(property))
-        return moduleType.propertyTypes.get(property)
+      if (objectType.propertyTypes.has(property))
+        return objectType.propertyTypes.get(property)
       else
         this.errorHandler.throw(
-          `Module ${moduleType.toString()} does not include accessible ` +
+          `Module ${objectType.toString()} does not include accessible ` +
           `property '${property}'`,
           this.node
         )

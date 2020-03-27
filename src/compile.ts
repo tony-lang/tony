@@ -69,7 +69,8 @@ const compileFile = (
   }).then((node: Parser.SyntaxNode) => {
     if (tony.debug) console.log(`Analyzing ${file}...`)
     const analyzer = new Analyze(file, outputDirPath)
-    console.dir(analyzer.perform(node), { depth: null })
+    const symbolTable = analyzer.perform(node)
+    console.dir(symbolTable, { depth: null })
     process.exit(0)
 
     // if (tony.debug) console.log(`Compiling ${file}...`)
