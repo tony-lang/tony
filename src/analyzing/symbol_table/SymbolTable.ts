@@ -1,4 +1,9 @@
-import { BASIC_TYPES } from '../types'
+import {
+  CurriedTypeConstructor,
+  VOID_TYPE,
+  STRING_TYPE,
+  BASIC_TYPES
+} from '../types'
 
 import { Binding } from './Binding'
 import { Import } from './Import'
@@ -34,6 +39,11 @@ export class SymbolTable extends Scope {
   }
 
   resolveBinding = (name: string): Binding => {
+    if (name === 'eval') return new Binding(
+      'eval',
+      new CurriedTypeConstructor([STRING_TYPE, VOID_TYPE])
+    )
+
     // TODO: remove this when basic types are implemented in Tony
     const matchingBasicType = BASIC_TYPES.find(type => type.toString() === name)
     if (matchingBasicType) return new Binding(name, matchingBasicType)

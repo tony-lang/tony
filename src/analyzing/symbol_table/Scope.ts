@@ -21,10 +21,6 @@ export class Scope {
   }
 
   resolveBinding = (name: string, depth: number = null): Binding => {
-    // TODO: remove this when basic types are implemented in Tony
-    const matchingBasicType = BASIC_TYPES.find(type => type.toString() === name)
-    if (matchingBasicType) return new Binding(name, matchingBasicType)
-
     const binding = this.bindings.find(binding => binding.name === name)
     if (binding) return binding
 

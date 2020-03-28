@@ -116,7 +116,10 @@ export class ResolveImport {
     return new ImportBinding(name, originalName)
   }
 
-  private checkInvalidImportType = (type: TypeConstructor, node: Parser.SyntaxNode): void => {
+  private checkInvalidImportType = (
+    type: TypeConstructor,
+    node: Parser.SyntaxNode
+  ): void => {
     if (type.isValid()) return
 
     this.errorHandler.throw(`Imported type ${type} is invalid`, node)
