@@ -1,4 +1,4 @@
-import { VOID_TYPE } from '.'
+import { VOID_TYPE, Type } from '.'
 import { ListType } from './ListType'
 import { SingleTypeConstructor } from './SingleTypeConstructor'
 import { TypeConstructor } from './TypeConstructor'
@@ -48,6 +48,8 @@ export class CurriedTypeConstructor extends TypeConstructor {
   }
 
   matches = (pattern: TypeInterface): boolean => {
+    if (pattern instanceof SingleTypeConstructor &&
+        pattern.type instanceof Type && pattern.type.isMissing) return true
     if (!(pattern instanceof CurriedTypeConstructor)) return false
     if (this.length != pattern.length) return false
 
