@@ -1,6 +1,7 @@
 import { AtomicType, VOID_TYPE } from '.'
 import { CurriedTypeConstructor } from './CurriedTypeConstructor'
 import { ListType } from './ListType'
+import { Type } from './Type'
 import { TypeConstructor } from './TypeConstructor'
 import { TypeInterface } from './TypeInterface'
 
@@ -33,6 +34,7 @@ export class SingleTypeConstructor extends TypeConstructor {
 
   matches = (pattern: TypeInterface): boolean => {
     if (!(pattern instanceof SingleTypeConstructor)) return false
+    if (pattern.type instanceof Type && pattern.type.isMissing) return true
 
     return this.type.matches(pattern.type)
   }

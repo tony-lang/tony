@@ -16,14 +16,11 @@ type Range = {
 export class ErrorHandler {
   private file: string
 
-  constructor(file: string = null) {
+  constructor(file?: string) {
     this.file = file
   }
 
-  throw = async (
-    message: string,
-    node: Parser.SyntaxNode = null
-  ): Promise<void> => {
+  throw = async (message: string, node?: Parser.SyntaxNode): Promise<void> => {
     console.log(message)
     // if (node) await this.printContext(ErrorHandler.getRangeForNode(node))
 

@@ -20,12 +20,12 @@ export class Scope {
     return scope
   }
 
-  resolveBinding = (name: string, depth: number = null): Binding => {
+  resolveBinding = (name: string, depth: number = 0): Binding => {
     const binding = this.bindings.find(binding => binding.name === name)
     if (binding) return binding
 
-    if (depth === null) return this._parentScope.resolveBinding(name)
-    else if (depth > 0) return this._parentScope.resolveBinding(name, depth - 1)
+    if (depth > 0) return this._parentScope.resolveBinding(name, depth - 1)
+    else return this._parentScope.resolveBinding(name)
   }
 
   addBinding = (binding: Binding): void => {

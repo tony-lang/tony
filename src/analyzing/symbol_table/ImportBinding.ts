@@ -7,11 +7,7 @@ export class ImportBinding extends Binding {
   private _originalName: string
   private _import: Import
 
-  constructor(
-    name: string,
-    originalName: string,
-    type: TypeConstructor = null
-  ) {
+  constructor(name: string, originalName: string, type?: TypeConstructor) {
     super(name, type || MISSING_TYPE, true)
 
     this._originalName = originalName

@@ -146,6 +146,8 @@ export class Analyze {
       return this.generateType(node)
     case 'type_constructor':
       return this.generateTypeConstructor(node)
+    case 'type_interpretation':
+      return this.generateTypeInterpretation(node)
     default:
       assert(false, `Could not find generator for AST node '${node.type}'.`)
     }
@@ -509,5 +511,16 @@ export class Analyze {
 
     const types = node.namedChildren.map(childNode => this.generate(childNode))
     return new CurriedTypeConstructor(types)
+  }
+
+  private generateTypeInterpretation = (
+    node: Parser.SyntaxNode
+  ): TypeConstructor => {
+    const valueNode = node.namedChild(0)
+    const type = this.generate(node.namedChild(1))
+
+    this.generate(valueNode)
+
+    return type
   }
 }

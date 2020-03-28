@@ -12,7 +12,8 @@ import {
   writeFile,
   getEntryFilePath,
   getOutputPathForFile,
-  copyFile
+  copyFile,
+  assert
 } from './utilities'
 import { FILE_EXTENSION } from './constants'
 
@@ -57,11 +58,10 @@ const compileFile = (
   return readFile(file).then((sourceCode: string) => {
     if (tony.debug) console.log(`Parsing ${file}...`)
     const tree = parser.parse(sourceCode.toString())
-    if (tree.rootNode.hasError()) {
-      console.log(`Error while parsing ${file}...`)
-      console.log(tree.rootNode.toString())
-      process.exit(1)
-    }
+    assert(
+      !tree.rootNode.hasError(),
+      `Error while parsing ${file}...\n${tree.rootNode.toString()}`
+    )
     if (tony.debug) console.log(tree.rootNode.toString())
 
     return tree.rootNode
@@ -100,15 +100,13 @@ const webpackCompile = (
     { stdio: tony.debug ? 'inherit' : null }
   )
 
-  if (p.status != 0) {
-    console.log(p.stdout.toString())
-    console.log(
-      `Oh noes! Tony wasn't able to compile ${entryFilePath}.\nPlease report ` +
-      'the file you tried to compile as well as the printed output at ' +
-      'https://github.com/tony-lang/tony/issues'
-    )
-    process.exit(p.status)
-  }
+  assert(
+    p.status == 0,
+    () => `${p.stdout.toString()}\n\n` +
+    `Oh noes! Tony wasn't able to compile ${entryFilePath}.\nPlease report ` +
+    'the file you tried to compile as well as the printed output at ' +
+    'https://github.com/tony-lang/tony/issues'
+  )
 }
 
 const cleanup = (

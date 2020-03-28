@@ -70,8 +70,12 @@ export const getEntryFilePath = (project: string): string => {
   return path.join(process.cwd(), file)
 }
 
-export function assert(value: any, message: string): asserts value {
+export function assert(
+  value: any,
+  message: string | (() => string)
+): asserts value {
   if (value) return
+  if (typeof message !== 'string') message = message()
 
   throw new Error(message)
 }

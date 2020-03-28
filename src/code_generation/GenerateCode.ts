@@ -134,6 +134,8 @@ export class GenerateCode {
       return this.generateTuple(node)
     case 'tuple_pattern':
       return this.generateTuplePattern(node)
+    case 'type_interpretation':
+      return this.generateTypeInterpretation(node)
     case 'when_clause':
       return this.generateWhenClause(node)
     case 'when_clauses':
@@ -567,6 +569,12 @@ export class GenerateCode {
       .join(',')
 
     return `[${elements}]`
+  }
+
+  generateTypeInterpretation = (node: Parser.SyntaxNode): string => {
+    const value = this.generate(node.namedChild(0))
+
+    return value
   }
 
   generateWhenClause = (node: Parser.SyntaxNode): string => {

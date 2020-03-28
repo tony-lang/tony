@@ -10,7 +10,7 @@ export class ResolveAbstractionBranch {
   static perform = (
     args: any,
     branches: [string, any[], (match: any[]) => any][],
-    alternativeBranch: () => any = null,
+    alternativeBranch?: () => any,
     partialMatching = true
   ): any => {
     let match
@@ -29,8 +29,7 @@ export class ResolveAbstractionBranch {
       return match === null ? null : branch(match)
     }
 
-    if (alternativeBranch !== null)
-      return alternativeBranch()
+    if (alternativeBranch) return alternativeBranch()
 
     throw new NonExhaustivePatterns('Non-exhaustive patterns')
   }
