@@ -47,6 +47,8 @@ export class ResolvePatternBindings {
       return this.matchListPattern(pattern, type)
     case 'map_pattern':
       return this.matchMapPattern(pattern, type)
+    case 'number':
+      return
     case 'parameters':
       return this.matchParameters(pattern, type)
     case 'pattern':

@@ -94,6 +94,8 @@ export class Analyze {
       return this.generateIdentifierPattern(node)
     case 'import':
       return this.generateImport(node)
+    case 'infix_application':
+      return this.generateInfixApplication(node)
     case 'interpolation':
       return this.generateInterpolation(node)
     case 'list':
@@ -296,6 +298,16 @@ export class Analyze {
     )
 
     return
+  }
+
+  private generateInfixApplication = (node: Parser.SyntaxNode): TypeConstructor => {
+    const leftType = this.generate(node.namedChild(0))
+    const abstractionType = this.generate(node.namedChild(1))
+    const rightType = this.generate(node.namedChild(2))
+    const argumentTypes = new CurriedTypeConstructor([leftType, rightType])
+
+    return new InferApplicationType(node, this.errorHandler)
+      .perform(abstractionType, argumentTypes)
   }
 
   private generateInterpolation = (

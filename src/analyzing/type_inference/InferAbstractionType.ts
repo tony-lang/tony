@@ -36,7 +36,8 @@ export class InferAbstractionType {
   ): void => {
     const varyingAbstractionBranchType = abstractionBranchTypes
       .find(abstractionBranchType => {
-        return !abstractionBranchType.matches(abstractionType)
+        return !abstractionType.matches(abstractionBranchType) &&
+               !abstractionBranchType.matches(abstractionType)
       })
 
     if (varyingAbstractionBranchType) this.errorHandler.throw(
