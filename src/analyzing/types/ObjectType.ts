@@ -28,6 +28,9 @@ export class ObjectType implements TypeInterface {
       })
   }
 
+  isComplete = (): boolean => Array.from(this.propertyTypes.values())
+    .every(propertyTypes => propertyTypes.isComplete())
+
   isValid = (): boolean => Array.from(this.propertyTypes.values())
     .every(propertyTypes => propertyTypes.isValid())
 

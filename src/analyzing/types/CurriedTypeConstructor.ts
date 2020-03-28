@@ -56,6 +56,8 @@ export class CurriedTypeConstructor extends TypeConstructor {
     return this.types.every((type, i) => type.matches(pattern.types[i]))
   }
 
+  isComplete = (): boolean => this.types.every(type => type.isComplete())
+
   isValid = (): boolean => {
     if (this.length < 2) return false
 

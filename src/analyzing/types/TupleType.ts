@@ -31,6 +31,7 @@ export class TupleType implements TypeInterface {
     })
   }
 
+  isComplete = (): boolean => this.types.every(type => type.isComplete())
   isValid = (): boolean => this.types.every(type => type.isValid())
 
   toString = (): string =>

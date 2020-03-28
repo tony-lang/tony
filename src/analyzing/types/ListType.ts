@@ -28,6 +28,7 @@ export class ListType implements TypeInterface {
     return this.isRest == pattern.isRest && this.type.matches(pattern.type)
   }
 
+  isComplete = (): boolean => this.type.isComplete()
   isValid = (): boolean => this.type.isValid()
 
   toString = (): string =>

@@ -37,6 +37,8 @@ export class SingleTypeConstructor extends TypeConstructor {
     return this.type.matches(pattern.type)
   }
 
+  isComplete = (): boolean => this.type.isComplete()
+
   isValid = (): boolean => {
     if (this.type.matches(VOID_TYPE)) return false
     if (this.type instanceof SingleTypeConstructor &&

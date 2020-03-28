@@ -25,7 +25,8 @@ export class Type implements TypeInterface {
     return pattern.isMissing || this.name === pattern.name
   }
 
-  isValid = (): boolean => !this.isMissing
+  isComplete = (): boolean => !this.isMissing
+  isValid = (): boolean => true
 
   toString = (): string => this.isMissing ? MISSING_TYPE_NAME : this.name
 }

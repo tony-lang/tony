@@ -29,6 +29,7 @@ export class MapType implements TypeInterface {
     else return false
   }
 
+  isComplete = (): boolean => this._keyType.isComplete() && this._valueType.isComplete()
   isValid = (): boolean => this._keyType.isValid() && this._valueType.isValid()
 
   toString = (): string =>

@@ -22,6 +22,7 @@ export abstract class TypeConstructor implements TypeInterface {
     merge?: boolean
   ) => CurriedTypeConstructor
   abstract matches: (pattern: TypeInterface) => boolean
+  abstract isComplete: () => boolean
   abstract isValid: () => boolean
   abstract toString: () => string
 }
