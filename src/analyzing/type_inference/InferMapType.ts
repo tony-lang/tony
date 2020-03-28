@@ -5,12 +5,13 @@ import { ErrorHandler } from '../../error_handling'
 import {
   MapType,
   SingleTypeConstructor,
+  Type,
   TypeConstructor,
   MISSING_TYPE
 } from '../types'
 
 const DEFAULT_MAP_TYPE =
-  new SingleTypeConstructor(new MapType(MISSING_TYPE, MISSING_TYPE))
+  new SingleTypeConstructor(new MapType(new SingleTypeConstructor(new Type(MISSING_TYPE, true)), new SingleTypeConstructor(new Type(MISSING_TYPE, true))))
 
 export class InferMapType {
   private errorHandler: ErrorHandler

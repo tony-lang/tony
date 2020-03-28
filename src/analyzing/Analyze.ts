@@ -32,8 +32,10 @@ import {
   ObjectType,
   SingleTypeConstructor,
   TupleType,
+  Type,
   TypeConstructor,
   MISSING_TYPE,
+  PLACEHOLDER_TYPE,
   VOID_TYPE,
   BOOLEAN_TYPE,
   NUMBER_TYPE,
@@ -96,6 +98,8 @@ export class Analyze {
       return this.generateImport(node)
     case 'infix_application':
       return this.generateInfixApplication(node)
+    case 'infix_application_operator':
+      return this.generateInfixApplicationOperator(node)
     case 'interpolation':
       return this.generateInterpolation(node)
     case 'list':
@@ -203,7 +207,7 @@ export class Analyze {
   }
 
   private generateArgument = (node: Parser.SyntaxNode): TypeConstructor => {
-    if (node.namedChildCount == 0) return MISSING_TYPE
+    if (node.namedChildCount == 0) return new SingleTypeConstructor(new Type(PLACEHOLDER_TYPE, true))
 
     const type = this.generate(node.namedChild(0))
     return type
@@ -211,7 +215,7 @@ export class Analyze {
 
   private generateArguments = (node: Parser.SyntaxNode): TypeConstructor => {
     if (node.namedChildCount == 0)
-      return new CurriedTypeConstructor([VOID_TYPE])
+      return new CurriedTypeConstructor([new SingleTypeConstructor(new Type(VOID_TYPE))])
 
     const argTypes = node.namedChildren
       .map(argNode => this.generate(argNode))
@@ -223,13 +227,20 @@ export class Analyze {
 
     const pattern = node.namedChild(0)
     const patternType = this.generate(pattern)
+    const presumedBindings =
+      new ResolvePatternBindings(this.errorHandler, node, false, isExported)
+        .perform(pattern, patternType)
+    this.buildSymbolTable.addBindings(presumedBindings, node)
+
     const valueType = this.generate(node.namedChild(1))
 
-    const usedType = valueType.isValid() ? valueType : patternType
     const bindings =
       new ResolvePatternBindings(this.errorHandler, node, false, isExported)
-        .perform(pattern, usedType)
-    this.buildSymbolTable.addBindings(bindings, node)
+        .perform(pattern, valueType)
+    bindings.forEach(binding => {
+      this.buildSymbolTable.resolveBinding(binding.name, node).type =
+        binding.type
+    })
 
     return new InferAssignmentType(node, this.errorHandler)
       .perform(patternType, valueType)
@@ -245,7 +256,7 @@ export class Analyze {
   }
 
   private generateBoolean = (node: Parser.SyntaxNode): TypeConstructor =>
-    BOOLEAN_TYPE
+  new SingleTypeConstructor(new Type(BOOLEAN_TYPE))
 
   private generateComment = (node: Parser.SyntaxNode): TypeConstructor => {
     return
@@ -286,7 +297,7 @@ export class Analyze {
   private generateIdentifierPattern = (
     node: Parser.SyntaxNode
   ): TypeConstructor => {
-    if (node.namedChildCount == 1) return MISSING_TYPE
+    if (node.namedChildCount == 1) return new SingleTypeConstructor(new Type(MISSING_TYPE, true))
 
     const type = this.generate(node.namedChild(1))
     return type
@@ -310,6 +321,14 @@ export class Analyze {
 
     return new InferApplicationType(node, this.errorHandler)
       .perform(abstractionType, argumentTypes)
+  }
+
+  private generateInfixApplicationOperator = (
+    node: Parser.SyntaxNode
+  ): TypeConstructor => {
+    const name = node.text
+
+    return this.buildSymbolTable.resolveBinding(name, node).type
   }
 
   private generateInterpolation = (
@@ -383,11 +402,11 @@ export class Analyze {
   }
 
   private generateNumber = (node: Parser.SyntaxNode): TypeConstructor =>
-    NUMBER_TYPE
+  new SingleTypeConstructor(new Type(NUMBER_TYPE))
 
   private generateParameters = (node: Parser.SyntaxNode): TypeConstructor => {
     if (node.namedChildCount == 0)
-      return new CurriedTypeConstructor([VOID_TYPE])
+      return new CurriedTypeConstructor([new SingleTypeConstructor(new Type(VOID_TYPE))])
 
     const parameterTypes = node.namedChildren
       .map(parameterNode => this.generate(parameterNode))
@@ -441,7 +460,7 @@ export class Analyze {
   }
 
   private generateRegex = (node: Parser.SyntaxNode): TypeConstructor =>
-    REGULAR_EXPRESSION_TYPE
+  new SingleTypeConstructor(new Type(REGULAR_EXPRESSION_TYPE))
 
   private generateRestList = (node: Parser.SyntaxNode): TypeConstructor => {
     const typeConstructor = this.generate(node.namedChild(0))
@@ -466,7 +485,7 @@ export class Analyze {
 
   private generateShorthandAccessIdentifier = (
     node: Parser.SyntaxNode
-  ): TypeConstructor => STRING_TYPE
+  ): TypeConstructor => new SingleTypeConstructor(new Type(STRING_TYPE))
 
   private generateShorthandPairIdentifierPattern = (
     node: Parser.SyntaxNode
@@ -501,7 +520,7 @@ export class Analyze {
     new CheckStringEmbeddingType(node, this.errorHandler)
       .perform(stringEmbeddingTypes)
 
-    return STRING_TYPE
+    return new SingleTypeConstructor(new Type(STRING_TYPE))
   }
 
   private generateTuple = (node: Parser.SyntaxNode): TypeConstructor => {

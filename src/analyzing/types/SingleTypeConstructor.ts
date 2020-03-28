@@ -34,7 +34,6 @@ export class SingleTypeConstructor extends TypeConstructor {
 
   matches = (pattern: TypeInterface): boolean => {
     if (!(pattern instanceof SingleTypeConstructor)) return false
-    if (pattern.type instanceof Type && pattern.type.isMissing) return true
 
     return this.type.matches(pattern.type)
   }
@@ -42,7 +41,7 @@ export class SingleTypeConstructor extends TypeConstructor {
   isComplete = (): boolean => this.type.isComplete()
 
   isValid = (): boolean => {
-    if (this.type.matches(VOID_TYPE)) return false
+    if (this.type instanceof SingleTypeConstructor && this.type.type instanceof Type && this.type.type.name === VOID_TYPE) return false
     if (this.type instanceof SingleTypeConstructor &&
         this.type.type instanceof ListType &&
         this.type.type.isRest) return false

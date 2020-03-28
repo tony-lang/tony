@@ -61,7 +61,7 @@ export class CurriedTypeConstructor extends TypeConstructor {
   isValid = (): boolean => {
     if (this.length < 2) return false
 
-    const voidTypes = this.types.filter(type => type.matches(VOID_TYPE))
+    const voidTypes = this.types.filter(type => type instanceof SingleTypeConstructor && type.type instanceof Type && type.type.name === VOID_TYPE)
     if (voidTypes.length > 1) return this.length == 2 && voidTypes.length == 2
     if (voidTypes.length == 1)
       return this.types.indexOf(voidTypes[0]) == this.length - 1 ||

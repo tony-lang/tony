@@ -1,8 +1,9 @@
-a1 := (a) => print(a)
+a1 := (a) => print(a.to_str)
 a1(0)
 
-a3 := (a) =>
-  b := (c) =>
+# a3 := (a) =>
+a3 := (a :: Number) =>
+  b := (c :: Number) =>
     c
   b(a)
-print(a3(0))
+print(a3(0).to_str)

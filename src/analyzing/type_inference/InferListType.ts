@@ -5,11 +5,12 @@ import { ErrorHandler } from '../../error_handling'
 import {
   ListType,
   SingleTypeConstructor,
+  Type,
   TypeConstructor,
   MISSING_TYPE
 } from '../types'
 
-const DEFAULT_VALUE_TYPE = MISSING_TYPE
+const DEFAULT_VALUE_TYPE = new SingleTypeConstructor(new Type(MISSING_TYPE, true))
 
 export class InferListType {
   private errorHandler: ErrorHandler

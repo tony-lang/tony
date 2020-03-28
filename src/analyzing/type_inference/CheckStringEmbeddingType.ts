@@ -2,7 +2,7 @@ import Parser from 'tree-sitter'
 
 import { ErrorHandler } from '../../error_handling'
 
-import { TypeConstructor, STRING_TYPE } from '../types'
+import { SingleTypeConstructor, Type, TypeConstructor, STRING_TYPE } from '../types'
 
 export class CheckStringEmbeddingType {
   private errorHandler: ErrorHandler
@@ -22,7 +22,7 @@ export class CheckStringEmbeddingType {
   private checkStringEmbeddingTypeMismatch = (
     stringEmbeddingType: TypeConstructor
   ): void => {
-    if (stringEmbeddingType.matches(STRING_TYPE)) return
+    if (stringEmbeddingType instanceof SingleTypeConstructor && stringEmbeddingType.type instanceof Type && stringEmbeddingType.type.name === STRING_TYPE) return
 
     this.errorHandler.throw(
       'String embedding must return value of type \'String\', instead ' +

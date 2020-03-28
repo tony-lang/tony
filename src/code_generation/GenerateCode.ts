@@ -471,7 +471,12 @@ export class GenerateCode {
     const combinedDeclarations =
       declarations.length > 0 ? `let ${declarations.join(',')}` : ''
 
-    const imports = (this.walkSymbolTable.currentScope as SymbolTable).imports
+    assert(
+      this.walkSymbolTable.currentScope instanceof SymbolTable,
+      'Symbol table walker should end up at symbol table scope.'
+    )
+
+    const imports = this.walkSymbolTable.currentScope.imports
       .map(imp => {
         const aliases = imp.bindings.map(binding => {
           return `${binding.originalName} as ${binding.name}`

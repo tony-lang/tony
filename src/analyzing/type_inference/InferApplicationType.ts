@@ -6,8 +6,9 @@ import {
   CurriedTypeConstructor,
   ListType,
   SingleTypeConstructor,
+  Type,
   TypeConstructor,
-  MISSING_TYPE_NAME,
+  PLACEHOLDER_TYPE,
   VOID_TYPE
 } from '../types'
 
@@ -73,7 +74,7 @@ export class InferApplicationType {
   private handleVoidParameterType = (
     valueType: CurriedTypeConstructor
   ): void => {
-    if (!valueType.matches(VOID_TYPE)) return
+    if (!(valueType instanceof SingleTypeConstructor && valueType.type instanceof Type && valueType.type.name === VOID_TYPE)) return
 
     valueType.types.pop()
   }
@@ -121,5 +122,5 @@ export class InferApplicationType {
   }
 
   private isPlaceholderArgument = (argumentType: TypeConstructor): boolean =>
-    argumentType.toString() === MISSING_TYPE_NAME
+    argumentType.toString() === PLACEHOLDER_TYPE
 }

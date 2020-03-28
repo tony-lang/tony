@@ -53,6 +53,7 @@ export class Scope {
     )
 
     const mergingScope = this._scopes.pop()
+    mergingScope._scopes.map(scope => scope._parentScope = this)
 
     this._bindings = [...this.bindings, ...mergingScope.bindings]
     this._scopes = [...this._scopes, ...mergingScope._scopes]

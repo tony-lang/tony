@@ -26,6 +26,10 @@ export class Binding {
     return this._type
   }
 
+  set type(value: TypeConstructor) {
+    this._type = value
+  }
+
   get isExported(): boolean {
     return this._isExported
   }
