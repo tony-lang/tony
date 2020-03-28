@@ -60,9 +60,10 @@ export class CurriedTypeConstructor extends TypeConstructor {
     if (this.length < 2) return false
 
     const voidTypes = this.types.filter(type => type.matches(VOID_TYPE))
-    if (voidTypes.length > 0)
-      return this.length == 2 && voidTypes.length == 1 &&
-             this.types.indexOf(voidTypes[0]) == 0
+    if (voidTypes.length > 1) return this.length == 2 && voidTypes.length == 2
+    if (voidTypes.length == 1)
+      return this.types.indexOf(voidTypes[0]) == this.length - 1 ||
+             this.length == 2 && this.types.indexOf(voidTypes[0]) == 0
 
     const restListTypes = this.types.filter(type => {
       return (type instanceof SingleTypeConstructor &&

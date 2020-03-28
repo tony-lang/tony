@@ -40,7 +40,6 @@ import {
   STRING_TYPE,
   REGULAR_EXPRESSION_TYPE
 } from './types'
-import { ImportBinding } from './symbol_table/ImportBinding'
 
 export class Analyze {
   private errorHandler: ErrorHandler
@@ -52,7 +51,8 @@ export class Analyze {
     this.errorHandler = new ErrorHandler(file)
 
     this.buildSymbolTable = new BuildSymbolTable(this.errorHandler)
-    this.resolveImport = new ResolveImport(this, file, outputPath)
+    this.resolveImport =
+      new ResolveImport(this, this.errorHandler, file, outputPath)
   }
 
   perform = (node: Parser.SyntaxNode): SymbolTable => {

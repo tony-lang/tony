@@ -1,6 +1,7 @@
 import path from 'path'
 import Parser from 'tree-sitter'
 
+import { ErrorHandler } from '../../error_handling'
 import { FILE_EXTENSION, TARGET_FILE_EXTENSION } from '../../constants'
 import { getOutputPathForFile, assert } from '../../utilities'
 
@@ -8,14 +9,22 @@ import { Analyze } from '../Analyze'
 
 import { Import } from './Import'
 import { ImportBinding } from './ImportBinding'
+import { TypeConstructor } from '../types'
 
 export class ResolveImport {
   private analyzer: Analyze
+  private errorHandler: ErrorHandler
   private file: string
   private outputPath: string
 
-  constructor(analyzer: Analyze, file: string, outputPath: string) {
+  constructor(
+    analyzer: Analyze,
+    errorHandler: ErrorHandler,
+    file: string,
+    outputPath: string
+  ) {
     this.analyzer = analyzer
+    this.errorHandler = errorHandler
     this.file = file
     this.outputPath = outputPath
   }
@@ -75,11 +84,10 @@ export class ResolveImport {
     const identifierPatternNameNode = identifierPatternNode.namedChild(0)
     const name = identifierPatternNameNode.text
 
-    return new ImportBinding(
-      name,
-      originalName,
-      this.analyzer.generate(identifierPatternNode)
-    )
+    const type = this.analyzer.generate(identifierPatternNode)
+    this.checkInvalidImportType(type, identifierPatternNode)
+
+    return new ImportBinding(name, originalName, type)
   }
 
   private resolveIdentifierPattern = (
@@ -88,11 +96,10 @@ export class ResolveImport {
     const identifierPatternNameNode = node.namedChild(0)
     const name = identifierPatternNameNode.text
 
-    return new ImportBinding(
-      name,
-      name,
-      this.analyzer.generate(node)
-    )
+    const type = this.analyzer.generate(node)
+    this.checkInvalidImportType(type, node)
+
+    return new ImportBinding(name, name, type)
   }
 
   private resolveIdentifierPatternName = (
@@ -107,6 +114,12 @@ export class ResolveImport {
     const name = node.namedChild(1).text
 
     return new ImportBinding(name, originalName)
+  }
+
+  private checkInvalidImportType = (type: TypeConstructor, node: Parser.SyntaxNode): void => {
+    if (type.isValid()) return
+
+    this.errorHandler.throw(`Imported type ${type} is invalid`, node)
   }
 
   private buildImport = (
