@@ -2,4 +2,4 @@ fib :=
   (0) => 0
   (1) => 1
   (n) => fib(n - 1) + fib(n - 2)
-print(fib(0), fib(1), fib(2), fib(3), fib(4), fib(5))
+print(fib(0).to_str, fib(1).to_str, fib(2).to_str, fib(3).to_str, fib(4).to_str, fib(5).to_str)

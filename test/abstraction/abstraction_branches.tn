@@ -1,2 +1,2 @@
 fn := (0) => 1, (x) => x
-print(fn(0), fn(1))
+print(fn(0).to_str, fn(1).to_str)

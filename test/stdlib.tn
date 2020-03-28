@@ -1,14 +1,17 @@
-print := eval('console.log')
+print := eval('console.log') as String -> Void
+to_str := eval('parseInt') as Number -> String
 
-+ := (a, b) => eval('{a} + {b}')
-- := (a) => eval('-{a}'), (a, b) => eval('{a} - {b}')
-% := (a, b) => eval('{a} % {b}')
+! := (a :: Number) => eval('-{a.to_str}') as Number
++ := (a :: Number, b :: Number) => eval('{a.to_str} + {b.to_str}') as Number
+- := (a :: Number, b :: Number) => eval('{a.to_str} - {b.to_str}') as Number
+% := (a :: Number, b :: Number) => eval('{a.to_str} % {b.to_str}') as Number
 
-++ := (a, b) => eval('[{a}].concat([{b}])')
+++ := (a :: [Number], b :: [Number]) =>
+  eval('[{a as String}].concat([{b as String}])') as [Number]
 
-<= := (a, b) => eval('{a} <= {b}')
-< := (a, b) => eval('{a} < {b}')
->= := (a, b) => eval('{a} >= {b}')
-> := (a, b) => eval('{a} > {b}')
+<= := (a :: Number, b :: Number) => eval('{a.to_str} <= {b.to_str}') as Boolean
+< := (a :: Number, b :: Number) => eval('{a.to_str} < {b.to_str}') as Boolean
+>= := (a :: Number, b :: Number) => eval('{a.to_str} >= {b.to_str}') as Boolean
+> := (a :: Number, b :: Number) => eval('{a.to_str} > {b.to_str}') as Boolean
 
-== := (a, b) => eval('{a} == {b}')
+== := (a :: Number, b :: Number) => eval('{a.to_str} == {b.to_str}') as Boolean
