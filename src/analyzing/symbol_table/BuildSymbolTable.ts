@@ -2,8 +2,6 @@ import Parser from 'tree-sitter'
 
 import { ErrorHandler } from '../../error_handling'
 
-import { TypeConstructor } from '../types'
-
 import { Binding } from './Binding'
 import { Scope } from './Scope'
 import { SymbolTable } from './SymbolTable'
@@ -23,6 +21,10 @@ export class BuildSymbolTable {
     return this._symbolTable
   }
 
+  get currentScope(): Scope {
+    return this._currentScope
+  }
+
   initializeProgram = (): void => {
     this._symbolTable = new SymbolTable()
     this._currentScope = this.symbolTable
@@ -34,6 +36,15 @@ export class BuildSymbolTable {
 
   leaveBlock = (): void => {
     this._currentScope = this._currentScope.parentScope
+  }
+
+  enterAbstraction = (): void => {
+    this.enterBlock()
+  }
+
+  leaveAbstraction = (): void => {
+    this.currentScope.reduce()
+    this.leaveBlock()
   }
 
   enableExports = (): void => {
@@ -84,7 +95,4 @@ export class BuildSymbolTable {
       node
     )
   }
-
-  getExportedBindingTypes = (): Map<string, TypeConstructor> =>
-    this._currentScope.getExportedBindingTypes()
 }

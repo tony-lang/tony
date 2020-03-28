@@ -1,3 +1,5 @@
+import { assert } from '../../utilities'
+
 import { TypeConstructor, BASIC_TYPES } from '../types'
 
 import { Binding } from './Binding'
@@ -23,7 +25,7 @@ export class Scope {
     const matchingBasicType = BASIC_TYPES.find(type => type.toString() === name)
     if (matchingBasicType) return new Binding(name, matchingBasicType)
 
-    const binding = this._bindings.find(binding => binding.name === name)
+    const binding = this.bindings.find(binding => binding.name === name)
     if (binding) return binding
 
     if (depth === null) return this._parentScope.resolveBinding(name)
@@ -31,13 +33,13 @@ export class Scope {
   }
 
   addBinding = (binding: Binding): void => {
-    this._bindings = [binding, ...this._bindings]
+    this._bindings = [binding, ...this.bindings]
   }
 
   getExportedBindingTypes = (): Map<string, TypeConstructor> => {
     const result = new Map<string, TypeConstructor>()
 
-    this._bindings.forEach(binding => {
+    this.bindings.forEach(binding => {
       if (!binding.isExported) return
 
       result.set(binding.name, binding.type)
@@ -46,11 +48,33 @@ export class Scope {
     return result
   }
 
-  protected get bindings(): Binding[] {
+  // takes the last nested scope and merges it with the current scope
+  reduce = (): void => {
+    assert(
+      this._scopes.length == 1,
+      'Scopes may only be reduced when the parent only has a single nested ' +
+      'scope.'
+    )
+
+    const mergingScope = this._scopes.pop()
+
+    this._bindings = [...this.bindings, ...mergingScope.bindings]
+    this._scopes = [...this._scopes, ...mergingScope._scopes]
+  }
+
+  get bindings(): Binding[] {
     return this._bindings
   }
 
   get parentScope(): Scope {
     return this._parentScope
+  }
+
+  nestedScope(index: number): Scope {
+    return this._scopes[index]
+  }
+
+  get lastNestedScope(): Scope {
+    return this._scopes[this._scopes.length - 1]
   }
 }

@@ -4,11 +4,18 @@ export class Binding {
   private _name: string
   private _type: TypeConstructor
   private _isExported: boolean
+  private _isImplicit: boolean
 
-  constructor(name: string, type: TypeConstructor, isExported = false) {
+  constructor(
+    name: string,
+    type: TypeConstructor,
+    isImplicit = false,
+    isExported = false
+  ) {
     this._name = name
     this._type = type
     this._isExported = isExported
+    this._isImplicit = isImplicit
   }
 
   get name(): string {
@@ -21,5 +28,9 @@ export class Binding {
 
   get isExported(): boolean {
     return this._isExported
+  }
+
+  get isImplicit(): boolean {
+    return this._isImplicit
   }
 }

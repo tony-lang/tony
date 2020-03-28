@@ -1,35 +1,29 @@
 import Parser from 'tree-sitter'
 
+import { SymbolTable, WalkSymbolTable } from '../analyzing'
 import {
   DEFAULT_IMPORTS,
   TRANSFORM_PLACEHOLDER_ARGUMENT,
   TRANSFORM_REST_PATTERN,
-  INTERNAL_TEMP_TOKEN,
-  PRIVATE_ACCESS_PREFIX
+  INTERNAL_TEMP_TOKEN
 } from '../constants'
-import { GetImportSource } from '../analyzer/GetImportSource'
+import { assert } from '../utilities'
 
 import { CollectDefaultValues } from './CollectDefaultValues'
-import { GetExports } from './GetExports'
-import { GetScope } from './GetScope'
 import { ParseStringContent } from './ParseStringContent'
 import { ResolvePattern } from './ResolvePattern'
 import { TransformIdentifier } from './TransformIdentifier'
 
 export class GenerateCode {
   private declarationBlock = false
-  private stack: any[] = []
+  private listComprehensionGeneratorCountStack: any[] = []
 
-  private getExports: GetExports
-  getImportSource: GetImportSource
-  private getScope: GetScope
   private transformIdentifier: TransformIdentifier
+  private walkSymbolTable: WalkSymbolTable
 
-  constructor(outputPath: string, files: string[]) {
+  constructor(symbolTable: SymbolTable) {
     this.transformIdentifier = new TransformIdentifier
-    this.getImportSource = new GetImportSource(outputPath, files)
-    this.getExports = new GetExports(this.transformIdentifier)
-    this.getScope = new GetScope(this.transformIdentifier)
+    this.walkSymbolTable = new WalkSymbolTable(symbolTable)
   }
 
   generate = (node: Parser.SyntaxNode): string => {
@@ -64,6 +58,8 @@ export class GenerateCode {
       return this.generateExport(node)
     case 'expression_pair':
       return this.generateExpressionPair(node)
+    case 'external_import':
+      return this.generateExternalImport(node)
     case 'generator':
       return this.generateGenerator(node)
     case 'generator_condition':
@@ -74,14 +70,12 @@ export class GenerateCode {
       return this.generateIdentifier(node)
     case 'identifier_pattern':
       return this.generateIdentifierPattern(node)
+    case 'identifier_pattern_name':
+      return this.generateIdentifierPatternName(node)
     case 'if':
       return this.generateIf(node)
     case 'import':
       return this.generateImport(node)
-    case 'import_clause':
-      return this.generateImportClause(node)
-    case 'import_clause_identifier_pair':
-      return this.generateImportClauseIdentifierPair(node)
     case 'infix_application':
       return this.generateInfixApplication(node)
     case 'infix_application_operator':
@@ -145,8 +139,7 @@ export class GenerateCode {
     case 'when_clauses':
       return this.generateWhenClauses(node)
     default:
-      console.log(`Could not find generator for AST node '${node.type}'.`)
-      process.exit(1)
+      assert(false, `Could not find generator for AST node '${node.type}'.`)
     }
   }
 
@@ -210,21 +203,30 @@ export class GenerateCode {
   }
 
   generateBlock = (node: Parser.SyntaxNode): string => {
+    this.walkSymbolTable.enterBlock()
+
     const isDeclaration = this.declarationBlock
     if (isDeclaration)
       this.declarationBlock = false
 
     const expressions = node.namedChildren
       .map(expression => this.generate(expression))
-    const declarations = this.getScope.perform(node)
+
+    const bindings = this.walkSymbolTable.currentScope.bindings
+      .filter(binding => !binding.isImplicit)
+    const declarations = bindings
+      .map(binding => this.transformIdentifier.perform(binding.name))
     const combinedDeclarations =
       declarations.length > 0 ? `let ${declarations.join(',')}` : ''
-    const returnedDeclarations = declarations
-      .filter(identifier => !identifier.startsWith(PRIVATE_ACCESS_PREFIX))
+    const returnedDeclarations = bindings
+      .filter(binding => binding.isExported)
+      .map(binding => this.transformIdentifier.perform(binding.name))
       .join(',')
+
     const returnValue =
       isDeclaration ? `{${returnedDeclarations}}` : expressions.pop()
 
+    this.walkSymbolTable.leaveBlock()
     return `(()=>{${combinedDeclarations};` +
            `${expressions.join(';')};return ${returnValue}})()`
   }
@@ -276,6 +278,10 @@ export class GenerateCode {
     return `[${left}]:${right}`
   }
 
+  generateExternalImport = (node: Parser.SyntaxNode): string => {
+    return ''
+  }
+
   generateGenerator = (node: Parser.SyntaxNode): string => {
     const name = this.generate(node.namedChild(0))
     const value = this.generate(node.namedChild(1))
@@ -297,7 +303,7 @@ export class GenerateCode {
       .map(generator => this.generate(generator))
       .join('')
 
-    this.stack.push(node.namedChildCount)
+    this.listComprehensionGeneratorCountStack.push(node.namedChildCount)
     return generators
   }
 
@@ -306,6 +312,10 @@ export class GenerateCode {
   }
 
   generateIdentifierPattern = (node: Parser.SyntaxNode): string => {
+    return this.generate(node.namedChild(0))
+  }
+
+  generateIdentifierPatternName = (node: Parser.SyntaxNode): string => {
     const name = this.transformIdentifier.perform(node.text)
 
     return `"${INTERNAL_TEMP_TOKEN}${name}"`
@@ -336,25 +346,7 @@ export class GenerateCode {
   }
 
   generateImport = (node: Parser.SyntaxNode): string => {
-    const clause = this.generate(node.namedChild(0))
-    const source = this.generate(node.namedChild(1)).slice(1, -1)
-
-    return `import ${clause} from '${this.getImportSource.perform(source)}'`
-  }
-
-  generateImportClause = (node: Parser.SyntaxNode): string => {
-    const elements = node.namedChildren
-      .map(element => this.generate(element))
-      .join(',')
-
-    return `{${elements}}`
-  }
-
-  generateImportClauseIdentifierPair = (node: Parser.SyntaxNode): string => {
-    const left = this.generate(node.namedChild(0))
-    const right = this.generate(node.namedChild(1))
-
-    return `${left} as ${right}`
+    return ''
   }
 
   generateInfixApplication = (node: Parser.SyntaxNode): string => {
@@ -384,7 +376,7 @@ export class GenerateCode {
   generateListComprehension = (node: Parser.SyntaxNode): string => {
     const body = this.generate(node.namedChild(0))
     const generators = this.generate(node.namedChild(1))
-    const generatorCount = this.stack.pop()
+    const generatorCount = this.listComprehensionGeneratorCountStack.pop()
 
     return `${generators}${body}${')'.repeat(generatorCount)}` +
            `.flat(${generatorCount - 1}).filter(e=>e!==null)`
@@ -470,15 +462,30 @@ export class GenerateCode {
     const expressions = node.namedChildren
       .map(expression => this.generate(expression))
       .join(';')
-    const declarations = this.getScope.perform(node)
+
+    const declarations = this.walkSymbolTable.currentScope.bindings
+      .filter(binding => !binding.isImplicit)
+      .map(binding => this.transformIdentifier.perform(binding.name))
     const combinedDeclarations =
       declarations.length > 0 ? `let ${declarations.join(',')}` : ''
-    const exports = this.getExports.perform(node)
+
+    const imports = (this.walkSymbolTable.currentScope as SymbolTable).imports
+      .map(imp => {
+        const aliases = imp.bindings.map(binding => {
+          return `${binding.originalName} as ${binding.name}`
+        }).join(',')
+
+        return `import {${aliases}} from '${imp.relativePath}'`
+      }).join(';')
+
+    const exports = this.walkSymbolTable.currentScope.bindings
+      .filter(binding => binding.isExported)
+      .map(binding => this.transformIdentifier.perform(binding.name))
     const combinedExports =
       exports.length > 0 ? `export {${exports.join(',')}}` : ''
 
-    return `${DEFAULT_IMPORTS};${combinedDeclarations};${expressions};` +
-           `${combinedExports}`
+    return `${DEFAULT_IMPORTS};${imports};${combinedDeclarations};` +
+           `${expressions};${combinedExports}`
   }
 
   generateRegex = (node: Parser.SyntaxNode): string => {

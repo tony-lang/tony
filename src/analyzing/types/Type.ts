@@ -11,6 +11,14 @@ export class Type implements TypeInterface {
     this._isMissing = isMissing
   }
 
+  get name(): string {
+    return this._name
+  }
+
+  get isMissing(): boolean {
+    return this._isMissing
+  }
+
   matches = (pattern: TypeInterface): boolean => {
     if (!(pattern instanceof Type)) return false
 
@@ -20,12 +28,4 @@ export class Type implements TypeInterface {
   isValid = (): boolean => !this.isMissing
 
   toString = (): string => this.isValid() ? this.name : MISSING_TYPE_NAME
-
-  get name(): string {
-    return this._name
-  }
-
-  get isMissing(): boolean {
-    return this._isMissing
-  }
 }

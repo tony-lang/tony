@@ -12,7 +12,7 @@ export class ImportBinding extends Binding {
     originalName: string,
     type: TypeConstructor = null
   ) {
-    super(name, type || MISSING_TYPE)
+    super(name, type || MISSING_TYPE, true)
 
     this._originalName = originalName
   }

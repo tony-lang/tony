@@ -58,8 +58,10 @@ export class ResolveImport {
     case 'import_clause_identifier_pair':
       return this.resolveImportClauseIdentifierPair(node)
     default:
-      console.log(`Could not find resolver for AST import node '${node.type}'.`)
-      process.exit(1)
+      assert(
+        false,
+        `Could not find resolver for AST import node '${node.type}'.`
+      )
     }
   }
 

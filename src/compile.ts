@@ -31,24 +31,22 @@ export const compile = async (
   const compiledFiles: string[] = []
   const outputDirPath = path.join(process.cwd(), outDir)
   const outputFilePath = path.join(process.cwd(), outFile)
-  const codeGenerator = new GenerateCode(outputDirPath, files)
 
   while (files.length > 0) {
     const file = files.pop()
     if (compiledFiles.includes(file)) continue
 
-    await compileFile(tony, codeGenerator, files, file, outputDirPath)
+    await compileFile(tony, files, file, outputDirPath)
     compiledFiles.push(file)
   }
 
-  // webpackCompile(tony, outputFilePath, outputDirPath, entryFilePath, mode)
-  // if (!retainOutDir) await cleanup(tony, outputDirPath)
+  webpackCompile(tony, outputFilePath, outputDirPath, entryFilePath, mode)
+  if (!retainOutDir) await cleanup(tony, outputDirPath)
   return outputFilePath
 }
 
 const compileFile = (
   tony: Tony,
-  codeGenerator: GenerateCode,
   files: string[],
   file: string,
   outputDirPath: string
@@ -72,15 +70,14 @@ const compileFile = (
     const analyzer = new Analyze(file, outputDirPath)
     const symbolTable = analyzer.perform(node)
     files.push(...symbolTable.importedFiles)
-    console.dir(symbolTable, { depth: null })
-    // process.exit(0)
+    if (tony.debug) console.dir(symbolTable, { depth: null })
 
-    // if (tony.debug) console.log(`Compiling ${file}...`)
-    // codeGenerator.getImportSource.file = file
-    // return writeFile(
-    //   getOutputPathForFile(outputDirPath, file),
-    //   codeGenerator.generate(node)
-    // )
+    if (tony.debug) console.log(`Compiling ${file}...`)
+    const codeGenerator = new GenerateCode(symbolTable)
+    return writeFile(
+      getOutputPathForFile(outputDirPath, file),
+      codeGenerator.generate(node)
+    )
   })
 }
 

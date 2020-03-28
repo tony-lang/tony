@@ -18,16 +18,19 @@ import { Binding } from './Binding'
 export class ResolvePatternBindings {
   private bindings: Binding[] = []
   private isExported: boolean
+  private isImplicit: boolean
   private errorHandler: ErrorHandler
   private node: Parser.SyntaxNode
 
   constructor(
     errorHandler: ErrorHandler,
     node: Parser.SyntaxNode,
+    isImplicit = false,
     isExported = false
   ) {
     this.errorHandler = errorHandler
     this.node = node
+    this.isImplicit = isImplicit
     this.isExported = isExported
   }
 
@@ -36,18 +39,14 @@ export class ResolvePatternBindings {
     return this.bindings
   }
 
-  match = (pattern: Parser.SyntaxNode, type: TypeConstructor): void => {
+  private match = (pattern: Parser.SyntaxNode, type: TypeConstructor): void => {
     switch (pattern.type) {
-    // case 'boolean':
-    //   return this.matchBoolean(pattern, type)
     case 'identifier_pattern':
       return this.matchIdentifierPattern(pattern, type)
     case 'list_pattern':
       return this.matchListPattern(pattern, type)
     case 'map_pattern':
       return this.matchMapPattern(pattern, type)
-    // case 'number':
-    //   return this.matchNumber(pattern, type)
     case 'parameters':
       return this.matchParameters(pattern, type)
     case 'pattern':
@@ -60,31 +59,30 @@ export class ResolvePatternBindings {
       return this.matchRestMap(pattern, type)
     case 'shorthand_pair_identifier_pattern':
       return this.matchShorthandPairIdentifierPattern(pattern, type)
-    // case 'string_pattern':
-    //   return this.matchStringPattern(pattern, type)
     case 'tuple_pattern':
       return this.matchTuplePattern(pattern, type)
-    // case 'type':
-    //   return this.matchType(pattern, type)
     default:
-      console.log(
+      assert(
+        false,
         `Could not find matcher for AST pattern node '${pattern.type}'.`
       )
-      process.exit(1)
     }
   }
 
-  matchIdentifierPattern = (
+  private matchIdentifierPattern = (
     pattern: Parser.SyntaxNode,
     type: TypeConstructor
   ): void => {
     const identifierPatternName = pattern.namedChild(0)
     const name = identifierPatternName.text
 
-    this.bindings = [new Binding(name, type, this.isExported), ...this.bindings]
+    this.bindings = [
+      new Binding(name, type, this.isImplicit, this.isExported),
+      ...this.bindings
+    ]
   }
 
-  matchListPattern = (
+  private matchListPattern = (
     pattern: Parser.SyntaxNode,
     type: TypeConstructor
   ): void => {
@@ -98,12 +96,12 @@ export class ResolvePatternBindings {
     )
   }
 
-  matchMapPattern = (
+  private matchMapPattern = (
     pattern: Parser.SyntaxNode,
     type: TypeConstructor
   ): void => pattern.namedChildren.forEach(child => this.match(child, type))
 
-  matchParameters = (
+  private matchParameters = (
     pattern: Parser.SyntaxNode,
     type: TypeConstructor
   ): void => {
@@ -117,10 +115,12 @@ export class ResolvePatternBindings {
     })
   }
 
-  matchPattern = (pattern: Parser.SyntaxNode, type: TypeConstructor): void =>
-    this.match(pattern.namedChild(0), type)
+  private matchPattern = (
+    pattern: Parser.SyntaxNode,
+    type: TypeConstructor
+  ): void => this.match(pattern.namedChild(0), type)
 
-  matchPatternPair = (
+  private matchPatternPair = (
     pattern: Parser.SyntaxNode,
     type: TypeConstructor
   ): void => {
@@ -145,16 +145,29 @@ export class ResolvePatternBindings {
     )
   }
 
-  matchRestList = (pattern: Parser.SyntaxNode, type: TypeConstructor): void =>
-    this.match(
-      pattern.namedChild(0),
-      new SingleTypeConstructor(new ListType(type))
+  private matchRestList = (
+    pattern: Parser.SyntaxNode,
+    type: TypeConstructor
+  ): void => {
+    // returns new list type with `isRest == false`
+    if (type instanceof SingleTypeConstructor && type.type instanceof ListType)
+      this.match(
+        pattern.namedChild(0),
+        new SingleTypeConstructor(new ListType(type.type.type))
+      )
+    else this.errorHandler.throw(
+      `Values of type '${type.toString()}' cannot be used with the rest list ` +
+      'operator',
+      this.node
     )
+  }
 
-  matchRestMap = (pattern: Parser.SyntaxNode, type: TypeConstructor): void =>
-    this.match(pattern.namedChild(0), type)
+  private matchRestMap = (
+    pattern: Parser.SyntaxNode,
+    type: TypeConstructor
+  ): void => this.match(pattern.namedChild(0), type)
 
-  matchShorthandPairIdentifierPattern = (
+  private matchShorthandPairIdentifierPattern = (
     pattern: Parser.SyntaxNode,
     type: TypeConstructor
   ): void => {
@@ -179,7 +192,7 @@ export class ResolvePatternBindings {
     )
   }
 
-  matchTuplePattern = (
+  private matchTuplePattern = (
     pattern: Parser.SyntaxNode,
     type: TypeConstructor
   ): void => {

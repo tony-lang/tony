@@ -1,6 +1,7 @@
 import Parser from 'tree-sitter'
 
 import { ErrorHandler } from '../../error_handling'
+import { assert } from '../../utilities'
 
 import {
   ListType,
@@ -63,8 +64,11 @@ export class InferAccessType {
           this.node
         )
     else {
-      console.log('not implemented yet, has to wait for union types')
-      process.exit(1)
+      assert(
+        false,
+        'NOT_IMPLEMENTED_YET: dynamic access to tuples and objects has to ' +
+        'wait for union types'
+      )
     }
   }
 

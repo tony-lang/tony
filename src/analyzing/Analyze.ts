@@ -147,8 +147,7 @@ export class Analyze {
     case 'type_constructor':
       return this.generateTypeConstructor(node)
     default:
-      console.log(`Could not find generator for AST node '${node.type}'.`)
-      process.exit(1)
+      assert(false, `Could not find generator for AST node '${node.type}'.`)
     }
   }
 
@@ -163,7 +162,7 @@ export class Analyze {
   private generateAbstractionBranch = (
     node: Parser.SyntaxNode
   ): TypeConstructor => {
-    this.buildSymbolTable.enterBlock()
+    this.buildSymbolTable.enterAbstraction()
     const parameterTypes = this.generate(node.namedChild(0))
     const bodyType = this.generate(node.namedChild(1))
 
@@ -172,7 +171,7 @@ export class Analyze {
       'Parameters must be curried.'
     )
 
-    this.buildSymbolTable.leaveBlock()
+    this.buildSymbolTable.leaveAbstraction()
     return parameterTypes.concat(bodyType, false)
   }
 
@@ -222,7 +221,7 @@ export class Analyze {
 
     const usedType = valueType.isValid() ? valueType : patternType
     const bindings =
-      new ResolvePatternBindings(this.errorHandler, node, isExported)
+      new ResolvePatternBindings(this.errorHandler, node, false, isExported)
         .perform(pattern, usedType)
     this.buildSymbolTable.addBindings(bindings, node)
 
@@ -232,8 +231,10 @@ export class Analyze {
   }
 
   private generateBlock = (node: Parser.SyntaxNode): TypeConstructor => {
+    this.buildSymbolTable.enterBlock()
     const expressionTypes = node.namedChildren
       .map(child => this.generate(child))
+    this.buildSymbolTable.leaveBlock()
 
     return expressionTypes[expressionTypes.length - 1]
   }
@@ -280,8 +281,9 @@ export class Analyze {
   private generateIdentifierPattern = (
     node: Parser.SyntaxNode
   ): TypeConstructor => {
-    const type = this.generate(node.namedChild(1))
+    if (node.namedChildCount == 1) return MISSING_TYPE
 
+    const type = this.generate(node.namedChild(1))
     return type
   }
 
@@ -351,14 +353,13 @@ export class Analyze {
     const name = node.namedChild(0).text
     const body = node.namedChild(1)
 
-    this.buildSymbolTable.enterBlock()
     this.generate(body)
     const type = new SingleTypeConstructor(new ObjectType(
-      this.buildSymbolTable.getExportedBindingTypes()
+      this.buildSymbolTable.currentScope.lastNestedScope
+        .getExportedBindingTypes()
     ))
-    this.buildSymbolTable.leaveBlock()
 
-    const binding = new Binding(name, type, isExported)
+    const binding = new Binding(name, type, false, isExported)
     this.buildSymbolTable.addTypeBinding(binding, node)
 
     return type
@@ -373,11 +374,11 @@ export class Analyze {
 
     const parameterTypes = node.namedChildren
       .map(parameterNode => this.generate(parameterNode))
-      .reduce((parameterTypes, parameterType) => {
+      .reduce((parameterTypes: CurriedTypeConstructor, parameterType) => {
         return parameterTypes.concat(parameterType)
       }, new CurriedTypeConstructor([]))
 
-    const bindings = new ResolvePatternBindings(this.errorHandler, node)
+    const bindings = new ResolvePatternBindings(this.errorHandler, node, true)
       .perform(node, parameterTypes)
     this.buildSymbolTable.addBindings(bindings, node)
 

@@ -2,14 +2,17 @@ import { BASIC_TYPES } from '../types'
 
 import { Binding } from './Binding'
 import { Import } from './Import'
-import { ImportBinding } from './ImportBinding'
 import { Scope } from './Scope'
 
 export class SymbolTable extends Scope {
-  private imports: Import[] = []
+  private _imports: Import[] = []
 
   constructor() {
     super(null)
+  }
+
+  get imports(): Import[] {
+    return this._imports
   }
 
   get importedFiles(): string[] {
@@ -21,7 +24,7 @@ export class SymbolTable extends Scope {
   }
 
   addImport = (imp: Import): void => {
-    this.imports = [imp, ...this.imports]
+    this._imports = [imp, ...this.imports]
 
     imp.bindings.forEach(binding => {
       binding.import = imp
