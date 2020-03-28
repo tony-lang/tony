@@ -300,7 +300,9 @@ export class Analyze {
     return
   }
 
-  private generateInfixApplication = (node: Parser.SyntaxNode): TypeConstructor => {
+  private generateInfixApplication = (
+    node: Parser.SyntaxNode
+  ): TypeConstructor => {
     const leftType = this.generate(node.namedChild(0))
     const abstractionType = this.generate(node.namedChild(1))
     const rightType = this.generate(node.namedChild(2))

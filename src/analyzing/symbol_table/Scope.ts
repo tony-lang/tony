@@ -20,7 +20,7 @@ export class Scope {
     return scope
   }
 
-  resolveBinding = (name: string, depth: number = 0): Binding => {
+  resolveBinding = (name: string, depth = 0): Binding => {
     const binding = this.bindings.find(binding => binding.name === name)
     if (binding) return binding
 
