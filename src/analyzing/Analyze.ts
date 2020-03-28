@@ -225,9 +225,8 @@ export class Analyze {
         .perform(pattern, usedType)
     this.buildSymbolTable.addBindings(bindings, node)
 
-    const matchType = bindings.map(binding => binding.type)
     return new InferAssignmentType(node, this.errorHandler)
-      .perform(patternType, valueType, matchType)
+      .perform(patternType, valueType)
   }
 
   private generateBlock = (node: Parser.SyntaxNode): TypeConstructor => {

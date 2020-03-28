@@ -26,7 +26,7 @@ export class TupleType implements TypeInterface {
     if (!(pattern instanceof TupleType)) return false
     if (this.types.length != pattern.types.length) return false
 
-    return this.types.every((type, i) => {
+    return this.isRest == pattern.isRest && this.types.every((type, i) => {
       return type.matches(pattern.types[i])
     })
   }
@@ -34,5 +34,6 @@ export class TupleType implements TypeInterface {
   isValid = (): boolean => this.types.every(type => type.isValid())
 
   toString = (): string =>
+    `${this.isRest ? '...' : ''}` +
     `(${this.types.map(type => type.toString()).join(', ')})`
 }

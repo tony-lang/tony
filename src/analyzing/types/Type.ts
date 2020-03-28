@@ -27,5 +27,5 @@ export class Type implements TypeInterface {
 
   isValid = (): boolean => !this.isMissing
 
-  toString = (): string => this.isValid() ? this.name : MISSING_TYPE_NAME
+  toString = (): string => this.isMissing ? MISSING_TYPE_NAME : this.name
 }

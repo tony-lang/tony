@@ -76,5 +76,6 @@ export class CurriedTypeConstructor extends TypeConstructor {
   }
 
   toString = (): string =>
-    `(${this._types.map(type => type.toString()).join(' -> ')})`
+    `(${this._types.map(type => type.toString()).join(' -> ')})` +
+    `${this.isOptional ? '?' : ''}`
 }

@@ -15,19 +15,15 @@ export class InferAssignmentType {
 
   perform = (
     patternType: TypeConstructor,
-    valueType: TypeConstructor,
-    matchType: TypeConstructor[]
+    valueType: TypeConstructor
   ): TypeConstructor => {
     this.checkIncompleteType(patternType, valueType)
     this.checkTypeMismatch(patternType, valueType)
 
-    return this.inferType(matchType)
+    return valueType
   }
 
-  inferType = (matchType: TypeConstructor[]): TypeConstructor =>
-    new SingleTypeConstructor(new TupleType(matchType))
-
-  checkIncompleteType = (
+  private checkIncompleteType = (
     patternType: TypeConstructor,
     valueType: TypeConstructor
   ): void => {
@@ -41,7 +37,7 @@ export class InferAssignmentType {
     )
   }
 
-  checkTypeMismatch = (
+  private checkTypeMismatch = (
     patternType: TypeConstructor,
     valueType: TypeConstructor
   ): void => {

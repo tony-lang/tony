@@ -197,9 +197,9 @@ export class GenerateCode {
     const [pattern, identifiers] = ResolvePattern.perform(left)
     const defaults = new CollectDefaultValues(this).perform(node.namedChild(0))
 
-    return `(()=>{const match=new stdlib.PatternMatch({defaults:${defaults},` +
-           `overmatching:true}).perform(${pattern},${right});` +
-           `[${identifiers.join(',')}]=match;return match})()`
+    return `(()=>{const value=${right};[${identifiers.join(',')}]=new stdlib.` +
+           `PatternMatch({defaults:${defaults},overmatching:true}).perform(` +
+           `${pattern},value);return value})()`
   }
 
   generateBlock = (node: Parser.SyntaxNode): string => {

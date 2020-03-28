@@ -46,6 +46,10 @@ export class SingleTypeConstructor extends TypeConstructor {
     return this.type.isValid()
   }
 
-  toString = (): string => this.type instanceof TypeConstructor ?
-    `(${this.type.toString()})` : this.type.toString()
+  toString = (): string => {
+    if (this.type instanceof TypeConstructor)
+      return `(${this.type.toString()})${this.isOptional ? '?' : ''}`
+    else
+      return `${this.type.toString()}${this.isOptional ? '?' : ''}`
+  }
 }
