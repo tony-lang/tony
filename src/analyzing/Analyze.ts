@@ -118,6 +118,8 @@ export class Analyze {
       return this.generatePattern(node)
     case 'pattern_pair':
       return this.generatePatternPair(node)
+    case 'pipeline':
+      return this.generatePipeline(node)
     case 'program':
       return this.generateProgram(node)
     case 'regex':
@@ -195,7 +197,7 @@ export class Analyze {
     )
 
     return new InferApplicationType(node, this.errorHandler)
-      .perform(valueType, argumentTypes as CurriedTypeConstructor)
+      .perform(valueType, argumentTypes)
   }
 
   private generateArgument = (node: Parser.SyntaxNode): TypeConstructor => {
@@ -397,6 +399,14 @@ export class Analyze {
     }
 
     return type
+  }
+
+  private generatePipeline = (node: Parser.SyntaxNode): TypeConstructor => {
+    const argumentType = this.generate(node.namedChild(0))
+    const valueType = this.generate(node.namedChild(1))
+
+    return new InferApplicationType(node, this.errorHandler)
+      .perform(valueType, new CurriedTypeConstructor([argumentType]))
   }
 
   private generatePatternPair = (node: Parser.SyntaxNode): TypeConstructor => {
