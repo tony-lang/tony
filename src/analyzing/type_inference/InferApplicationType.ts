@@ -43,6 +43,7 @@ export class InferApplicationType {
           return parameterTypes.concat([parameterType])
 
         this.checkArgumentTypeMismatch(parameterType, argumentType)
+        return parameterTypes
       }, [])
 
     if (parameterTypes.length == 1) return parameterTypes[0]

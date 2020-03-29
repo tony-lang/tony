@@ -48,8 +48,9 @@ export class ResolveImport {
 
     const importClause = node.namedChild(0)
     const source = node.namedChild(1).text.slice(1, -1)
-    const bindings =
-      importClause.namedChildren.map(this.resolveImportClauseEntry)
+    const bindings = importClause.namedChildren
+      .map(this.resolveImportClauseEntry)
+      .filter(binding => binding !== undefined)
 
     this.checkDuplicateIdentifiers(bindings, node)
     return this.buildImport(source, bindings)
@@ -59,6 +60,8 @@ export class ResolveImport {
     node: Parser.SyntaxNode
   ): ImportBinding => {
     switch (node.type) {
+    case 'comment':
+      return
     case 'external_import_clause_identifier_pair':
       return this.resolveExternalImportClauseIdentifierPair(node)
     case 'identifier_pattern':
