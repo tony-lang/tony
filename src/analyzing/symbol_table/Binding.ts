@@ -1,16 +1,16 @@
-import { TypeConstructor } from '../types'
+import { Type } from '../types'
 
 export class Binding {
   private _name: string
-  private _type: TypeConstructor
+  protected _type: Type
   private _isExported: boolean
   private _isImplicit: boolean
 
   constructor(
     name: string,
-    type: TypeConstructor,
-    isImplicit = false,
-    isExported = false
+    type: Type,
+    isImplicit: boolean,
+    isExported: boolean
   ) {
     this._name = name
     this._type = type
@@ -22,11 +22,11 @@ export class Binding {
     return this._name
   }
 
-  get type(): TypeConstructor {
+  get type(): Type {
     return this._type
   }
 
-  set type(value: TypeConstructor) {
+  set type(value: Type) {
     this._type = value
   }
 

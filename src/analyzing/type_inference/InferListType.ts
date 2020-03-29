@@ -3,15 +3,11 @@ import Parser from 'tree-sitter'
 import { ErrorHandler } from '../../error_handling'
 
 import {
-  ListType,
-  SingleTypeConstructor,
+  ParametricType,
   Type,
-  TypeConstructor,
-  MISSING_TYPE
+  TypeVariable,
+  LIST_TYPE
 } from '../types'
-
-const DEFAULT_VALUE_TYPE =
-  new SingleTypeConstructor(new Type(MISSING_TYPE, true))
 
 export class InferListType {
   private errorHandler: ErrorHandler
@@ -22,29 +18,16 @@ export class InferListType {
     this.errorHandler = errorHandler
   }
 
-  perform = (valueTypes: TypeConstructor[]): TypeConstructor => {
-    this.checkListVaryingValueTypes(valueTypes)
-
-    return this.inferType(valueTypes)
-  }
-
-  private inferType = (valueTypes: TypeConstructor[]): TypeConstructor =>
-    new SingleTypeConstructor(new ListType(valueTypes[0] || DEFAULT_VALUE_TYPE))
-
-  private checkListVaryingValueTypes = (
-    valueTypes: TypeConstructor[]
-  ): void => {
-    const valueType = valueTypes[0]
-    const varyingValueType = valueTypes
-      .find(otherValueType => {
-        return !otherValueType.matches(valueType)
-      })
-
-    if (varyingValueType)
+  perform = (valueTypes: Type[]): Type => {
+    try {
+      return valueTypes.reduce((valueType, otherValueType) => {
+        return valueType.unify(otherValueType)
+      }, new ParametricType(LIST_TYPE, [new TypeVariable]))
+    } catch (error) {
       this.errorHandler.throw(
-        'Values of list have varying types, got ' +
-        `'${varyingValueType.toString()}', expected '${valueType.toString()}'`,
+        `Values of list have varying types.\n\n${error.message}`,
         this.node
       )
+    }
   }
 }

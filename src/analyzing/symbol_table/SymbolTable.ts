@@ -1,15 +1,9 @@
-import {
-  CurriedTypeConstructor,
-  VOID_TYPE,
-  STRING_TYPE,
-  BASIC_TYPES,
-  SingleTypeConstructor,
-  Type
-} from '../types'
+import { ParametricType, BASIC_TYPES, Type } from '../types'
 
 import { Binding } from './Binding'
 import { Import } from './Import'
 import { Scope } from './Scope'
+import { TypeBinding } from './TypeBinding'
 
 export class SymbolTable extends Scope {
   private _imports: Import[] = []
@@ -26,10 +20,6 @@ export class SymbolTable extends Scope {
     return this.imports.map(({ fullPath }) => fullPath)
   }
 
-  get exports(): Binding[] {
-    return this.bindings.filter(binding => binding.isExported)
-  }
-
   addImport = (imp: Import): void => {
     this._imports = [imp, ...this.imports]
 
@@ -44,14 +34,9 @@ export class SymbolTable extends Scope {
     // TODO: remove this when basic types are implemented in Tony
     const matchingBasicType = BASIC_TYPES.find(type => type === name)
     if (matchingBasicType)
-      return new Binding(
-        name,
-        new SingleTypeConstructor(new Type(matchingBasicType))
-      )
+      return new TypeBinding(new ParametricType(matchingBasicType))
 
     const binding = this.bindings.find(binding => binding.name === name)
     if (binding) return binding
-
-    return
   }
 }

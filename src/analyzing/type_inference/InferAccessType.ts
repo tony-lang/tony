@@ -4,15 +4,14 @@ import { ErrorHandler } from '../../error_handling'
 import { assert } from '../../utilities'
 
 import {
-  ListType,
-  MapType,
-  ObjectType,
-  SingleTypeConstructor,
-  TupleType,
+  ObjectRepresentation,
+  ParametricType,
   Type,
-  TypeConstructor,
   NUMBER_TYPE,
-  STRING_TYPE
+  STRING_TYPE,
+  LIST_TYPE,
+  MAP_TYPE,
+  TUPLE_TYPE
 } from '../types'
 
 export class InferAccessType {
@@ -25,120 +24,105 @@ export class InferAccessType {
   }
 
   perform = (
-    valueType: TypeConstructor,
-    accessType: TypeConstructor
-  ): TypeConstructor => {
-    if (!(valueType instanceof SingleTypeConstructor))
-      this.errorHandler.throw(
-        'Access operator cannot be used on values of type ' +
-        `'${valueType.toString()}'`,
-        this.node
-      )
-    else if (!(accessType instanceof SingleTypeConstructor))
-      this.errorHandler.throw(
-        'Access operator cannot be used on values of type ' +
-        `'${accessType.toString()}'`,
-        this.node
-      )
-    else return this.access(valueType, accessType)
+    valueType: Type,
+    accessType: Type,
+    valueRepresentation: ObjectRepresentation
+  ): Type => {
+    if (valueType instanceof ParametricType) {
+      if (valueType.name === LIST_TYPE)
+        return this.accessList(valueType, accessType)
+      else if (valueType.name === MAP_TYPE)
+        return this.accessMap(valueType, accessType)
+      else if (valueType.name === TUPLE_TYPE)
+        return this.accessTuple(valueType, accessType)
+      else
+        return this.accessRepresentation(
+          valueType,
+          accessType,
+          valueRepresentation
+        )
+    }
+
+    this.errorHandler.throw(
+      'Access operator cannot be used on values of type ' +
+      `'${valueType.toString()}'`,
+      this.node
+    )
   }
 
-  private access = (
-    valueType: SingleTypeConstructor,
-    accessType: SingleTypeConstructor
-  ): TypeConstructor => {
-    const atomicValueType = valueType.type
-
-    if (atomicValueType instanceof ListType)
-      return this.accessList(atomicValueType, accessType)
-    else if (atomicValueType instanceof MapType)
-      return this.accessMap(atomicValueType, accessType)
-    else if (this.node.namedChild(1).type === 'shorthand_access_identifier')
-      if (atomicValueType instanceof TupleType)
-        return this.accessTuple(atomicValueType, accessType)
-      else if (atomicValueType instanceof ObjectType)
-        return this.accessObject(atomicValueType, accessType)
-      else
-        this.errorHandler.throw(
-          'Access operator cannot be used on values of type ' +
-          `'${atomicValueType.toString()}'`,
-          this.node
-        )
-    else {
-      assert(
-        false,
-        'NOT_IMPLEMENTED_YET: dynamic access to tuples and objects has to ' +
-        'wait for union types'
+  private accessList = (valueType: ParametricType, accessType: Type): Type => {
+    try {
+      accessType.unify(new ParametricType(NUMBER_TYPE))
+      return valueType.parameters[0]
+    } catch (error) {
+      this.errorHandler.throw(
+        `Type '${accessType.toString()}' not assignable to type ` +
+        `'${NUMBER_TYPE}'.\n\n${error.message}`,
+        this.node
       )
     }
   }
 
-  private accessList = (
-    listType: ListType,
-    accessType: SingleTypeConstructor
-  ): TypeConstructor => {
-    if (accessType instanceof SingleTypeConstructor &&
-        accessType.type instanceof Type &&
-        accessType.type.name === NUMBER_TYPE) return listType.type
-    else
+  private accessMap = (valueType: ParametricType, accessType: Type): Type => {
+    try {
+      accessType.unify(valueType.parameters[0])
+      return valueType.parameters[1]
+    } catch (error) {
       this.errorHandler.throw(
-        'Contents of list can only be accessed by an accessor of type ' +
-        `'Number', but got '${accessType.toString()}'`,
+        `Type '${accessType.toString()}' not assignable to type ` +
+        `'${valueType.parameters[0]}'.\n\n${error.message}`,
         this.node
       )
+    }
   }
 
-  private accessMap = (
-    mapType: MapType,
-    accessType: SingleTypeConstructor
-  ): TypeConstructor => {
-    if (accessType.matches(mapType.keyType)) return mapType.valueType
-    else
+  private accessTuple = (valueType: ParametricType, accessType: Type): Type => {
+    // TODO: implement dynamic access with union types
+    try {
+      accessType.unify(new ParametricType(NUMBER_TYPE))
+
+      if (this.node.namedChild(1).type === 'shorthand_access_identifier') {
+        const shorthandAccessIdentifier = this.node.namedChild(1)
+        const index = parseInt(shorthandAccessIdentifier.text)
+
+        return valueType.parameters[index]
+      } else assert(false, 'Dynamic tuple access has not been implemented yet.')
+    } catch (error) {
       this.errorHandler.throw(
-        `Expected key type '${mapType.keyType}', but got ` +
-        `'${accessType.toString()}'`,
+        `Type '${accessType.toString()}' not assignable to type ` +
+        `'${NUMBER_TYPE}'.\n\n${error.message}`,
         this.node
       )
+    }
   }
 
-  private accessTuple = (
-    tupleType: TupleType,
-    accessType: SingleTypeConstructor
-  ): TypeConstructor => {
-    const index = parseInt(this.node.namedChild(1).text)
+  private accessRepresentation = (
+    valueType: ParametricType,
+    accessType: Type,
+    valueRepresentation: ObjectRepresentation
+  ): Type => {
+    // TODO: implement dynamic access with union types
+    try {
+      accessType.unify(new ParametricType(STRING_TYPE))
 
-    if (accessType instanceof SingleTypeConstructor &&
-        accessType.type instanceof Type &&
-        accessType.type.name === NUMBER_TYPE) return tupleType.types[index]
-    else
-      this.errorHandler.throw(
-        'Contents of tuple can only be accessed by an accessor of type ' +
-        `'Number', but got '${accessType.toString()}'`,
-        this.node
-      )
-  }
+      if (this.node.namedChild(1).type === 'shorthand_access_identifier') {
+        const shorthandAccessIdentifier = this.node.namedChild(1)
+        const property = shorthandAccessIdentifier.text
 
-  private accessObject = (
-    objectType: ObjectType,
-    accessType: SingleTypeConstructor
-  ): TypeConstructor => {
-    const property = this.node.namedChild(1).text
-
-    if (accessType instanceof SingleTypeConstructor &&
-        accessType.type instanceof Type && accessType.type.name === STRING_TYPE)
-      if (objectType.propertyTypes.has(property))
-        return objectType.propertyTypes.get(property)
-      else
-        this.errorHandler.throw(
-          `Module ${objectType.toString()} does not include accessible ` +
-          `property '${property}'`,
-          this.node
+        assert(
+          valueRepresentation,
+          `Object representation of ${valueType.toString()} should be present.`
         )
-    else
+
+        return valueRepresentation.findProperty(property).type
+      } else
+        assert(false, 'Dynamic object access has not been implemented yet.')
+    } catch (error) {
       this.errorHandler.throw(
-        'Contents of module can only be accessed by an accessor of type ' +
-        `'String', but got '${accessType.toString()}'`,
+        `Type '${accessType.toString()}' not assignable to type ` +
+        `'${STRING_TYPE}'.\n\n${error.message}`,
         this.node
       )
+    }
   }
 }

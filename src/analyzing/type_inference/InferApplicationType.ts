@@ -3,12 +3,11 @@ import Parser from 'tree-sitter'
 import { ErrorHandler } from '../../error_handling'
 
 import {
-  CurriedTypeConstructor,
-  ListType,
-  SingleTypeConstructor,
+  CurriedType,
+  ParametricType,
   Type,
-  TypeConstructor,
-  PLACEHOLDER_TYPE,
+  TypeVariable,
+  INTERNAL_PARTIAL_APPLICATION_TYPE_NAME,
   VOID_TYPE
 } from '../types'
 
@@ -21,108 +20,83 @@ export class InferApplicationType {
     this.errorHandler = errorHandler
   }
 
-  perform = (
-    valueType: TypeConstructor,
-    argumentTypes: CurriedTypeConstructor
-  ): TypeConstructor => {
+  perform = (valueType: Type, argumentTypes: CurriedType): Type => {
     this.checkApplicationToNonCurriedType(valueType)
     this.handleVoidParameterType(valueType)
-    this.checkAppliedTooManyArguments(valueType, argumentTypes.length)
+    this.checkAppliedTooManyArguments(
+      valueType,
+      argumentTypes.parameters.length
+    )
 
     return this.inferType(valueType, argumentTypes)
   }
 
   private inferType = (
-    valueType: CurriedTypeConstructor,
-    argumentTypes: CurriedTypeConstructor
-  ): TypeConstructor => {
-    const appliedParameterIndices: number[] = []
-    const parameterTypes = valueType.types.slice(0, -1)
+    valueType: CurriedType,
+    argumentTypes: CurriedType
+  ): Type => {
+    const parameterTypes =
+      valueType.parameters.reduce((parameterTypes, parameterType, i) => {
+        const argumentType = argumentTypes.parameters[i]
+        if (argumentType === undefined ||
+            this.isPlaceholderArgument(argumentType))
+          return parameterTypes.concat([parameterType])
 
-    for (
-      let parameterIndex = 0;
-      parameterIndex < parameterTypes.length;
-      parameterIndex++
-    ) {
-      const parameterType = parameterTypes[parameterIndex]
-      const argumentType = argumentTypes.types[parameterIndex]
+        this.checkArgumentTypeMismatch(parameterType, argumentType)
+      }, [])
 
-      if (this.isPlaceholderArgument(argumentType)) continue
-
-      if (parameterType instanceof SingleTypeConstructor &&
-          parameterType.type instanceof ListType &&
-          parameterType.type.isRest) {
-        // no argument applied to rest parameter
-        if (argumentType === undefined) continue
-
-        this.checkArgumentTypeMismatch(parameterType.type.type, argumentType)
-
-        if (parameterIndex < argumentTypes.length - 1)
-          parameterTypes.splice(parameterIndex, 0, parameterType)
-
-        continue
-      }
-
-      this.checkArgumentTypeMismatch(parameterType, argumentType)
-
-      appliedParameterIndices.push(parameterIndex)
-    }
-
-    return valueType.apply(appliedParameterIndices)
+    if (parameterTypes.length == 1) return parameterTypes[0]
+    else return new CurriedType(parameterTypes)
   }
 
-  private handleVoidParameterType = (
-    valueType: CurriedTypeConstructor
-  ): void => {
-    if (!(valueType instanceof SingleTypeConstructor &&
-          valueType.type instanceof Type &&
-          valueType.type.name === VOID_TYPE)) return
+  private handleVoidParameterType = (valueType: CurriedType): void => {
+    if (!(valueType instanceof ParametricType &&
+          valueType.name === VOID_TYPE)) return
 
-    valueType.types.pop()
+    valueType.parameters.pop()
   }
 
   private checkApplicationToNonCurriedType(
-    valueType: TypeConstructor
-  ): asserts valueType is CurriedTypeConstructor {
-    if (valueType instanceof CurriedTypeConstructor) return
+    valueType: Type
+  ): asserts valueType is CurriedType {
+    if (valueType instanceof CurriedType) return
 
     this.errorHandler.throw(
-      `Cannot apply to the non-curried type '${valueType.toString()}'`,
+      `Cannot apply to the non-curried type '${valueType.toString()}'.`,
       this.node
     )
   }
 
   private checkAppliedTooManyArguments = (
-    valueType: CurriedTypeConstructor,
+    valueType: CurriedType,
     argumentTypeCount: number
   ): void => {
-    if (valueType.length > argumentTypeCount) return
-
-    const lastParameterType = valueType.types[valueType.length - 2]
-    if (lastParameterType instanceof SingleTypeConstructor &&
-        lastParameterType.type instanceof ListType &&
-        lastParameterType.type.isRest) return
+    if (valueType.parameters.length > argumentTypeCount) return
 
     this.errorHandler.throw(
-      `Expected at most ${valueType.length - 1} arguments, but applied ` +
-      `${argumentTypeCount} arguments`,
+      `Applied ${argumentTypeCount} arguments to type ` +
+      `'${valueType.toString()}' accepting at most ` +
+      `${valueType.parameters.length - 1} arguments.`,
       this.node
     )
   }
 
   private checkArgumentTypeMismatch = (
-    parameterType: TypeConstructor,
-    argumentType: TypeConstructor
+    parameterType: Type,
+    argumentType: Type
   ): void => {
-    if (parameterType.matches(argumentType)) return
-
-    this.errorHandler.throw(
-      `Expected argument of type '${parameterType.toString()}', but got ` +
-      `'${argumentType.toString()}'`,
-      this.node
-    )
+    try {
+      parameterType.unify(argumentType)
+    } catch (error) {
+      this.errorHandler.throw(
+        `Argument of type '${argumentType.toString()}' not assignable to ` +
+        `type '${parameterType.toString()}'.\n\n${error.message}`,
+        this.node
+      )
+    }
   }
 
-  private isPlaceholderArgument = (argumentType: TypeConstructor): boolean =>
-    argumentType.toString() === PLACEHOLDER_TYPE
+  private isPlaceholderArgument = (argumentType: Type): boolean =>
+    argumentType instanceof TypeVariable &&
+    argumentType.name === INTERNAL_PARTIAL_APPLICATION_TYPE_NAME
 }

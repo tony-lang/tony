@@ -2,13 +2,7 @@ import Parser from 'tree-sitter'
 
 import { ErrorHandler } from '../../error_handling'
 
-import {
-  ListType,
-  MapType,
-  SingleTypeConstructor,
-  TupleType,
-  TypeConstructor
-} from '../types'
+import { ParametricType, Type, LIST_TYPE, MAP_TYPE, TUPLE_TYPE } from '../types'
 
 export class InferSpreadType {
   private errorHandler: ErrorHandler
@@ -19,25 +13,16 @@ export class InferSpreadType {
     this.errorHandler = errorHandler
   }
 
-  perform = (valueType: TypeConstructor): TypeConstructor => {
-    if (valueType instanceof SingleTypeConstructor &&
-        valueType.type instanceof ListType)
-      return valueType.type.type
-    else if (valueType instanceof SingleTypeConstructor &&
-             valueType.type instanceof TupleType) {
-      valueType.type.isRest = true
-
+  perform = (valueType: Type): Type => {
+    if (valueType instanceof ParametricType && valueType.name === LIST_TYPE)
+      return valueType.parameters[0]
+    else if (valueType instanceof ParametricType &&
+             valueType.name === TUPLE_TYPE)
       return valueType
-    } else if (valueType instanceof SingleTypeConstructor &&
-               valueType.type instanceof MapType)
+    else if (valueType instanceof ParametricType &&
+               valueType.name === MAP_TYPE)
       return valueType
 
-    this.throwSpreadTypeMismatch(valueType)
-  }
-
-  private throwSpreadTypeMismatch = (
-    valueType: TypeConstructor
-  ): void => {
     this.errorHandler.throw(
       'Spread operator may only be used on values of list, tuple or map ' +
       `types, got '${valueType.toString()}'`,

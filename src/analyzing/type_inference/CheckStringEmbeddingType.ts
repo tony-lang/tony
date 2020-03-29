@@ -3,9 +3,8 @@ import Parser from 'tree-sitter'
 import { ErrorHandler } from '../../error_handling'
 
 import {
-  SingleTypeConstructor,
+  ParametricType,
   Type,
-  TypeConstructor,
   STRING_TYPE
 } from '../types'
 
@@ -18,22 +17,21 @@ export class CheckStringEmbeddingType {
     this.errorHandler = errorHandler
   }
 
-  perform = (stringEmbeddingTypes: TypeConstructor[]): void => {
+  perform = (stringEmbeddingTypes: Type[]): void => {
     stringEmbeddingTypes.forEach(stringEmbeddingType => {
       this.checkStringEmbeddingTypeMismatch(stringEmbeddingType)
     })
   }
 
   private checkStringEmbeddingTypeMismatch = (
-    stringEmbeddingType: TypeConstructor
+    stringEmbeddingType: Type
   ): void => {
-    if (stringEmbeddingType instanceof SingleTypeConstructor &&
-        stringEmbeddingType.type instanceof Type &&
-        stringEmbeddingType.type.name === STRING_TYPE) return
+    if (stringEmbeddingType instanceof ParametricType &&
+        stringEmbeddingType.name === STRING_TYPE) return
 
     this.errorHandler.throw(
-      'String embedding must return value of type \'String\', instead ' +
-      `returned '${stringEmbeddingType.toString()}'`,
+      `String embedding must return value of type '${STRING_TYPE}', ` +
+      `instead returned '${stringEmbeddingType.toString()}'`,
       this.node
     )
   }

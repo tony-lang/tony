@@ -4,13 +4,7 @@ import { ErrorHandler } from '../../error_handling'
 import { assert } from '../../utilities'
 
 import {
-  CurriedTypeConstructor,
-  ListType,
-  MapType,
-  ObjectType,
-  SingleTypeConstructor,
-  TupleType,
-  TypeConstructor
+  Type, ParametricType, LIST_TYPE, CurriedType, MAP_TYPE, TUPLE_TYPE
 } from '../types'
 
 import { Binding } from './Binding'
@@ -34,12 +28,12 @@ export class ResolvePatternBindings {
     this.isExported = isExported
   }
 
-  perform = (pattern: Parser.SyntaxNode, type: TypeConstructor): Binding[] => {
+  perform = (pattern: Parser.SyntaxNode, type: Type): Binding[] => {
     this.match(pattern, type)
     return this.bindings
   }
 
-  private match = (pattern: Parser.SyntaxNode, type: TypeConstructor): void => {
+  private match = (pattern: Parser.SyntaxNode, type: Type): void => {
     switch (pattern.type) {
     case 'identifier_pattern':
       return this.matchIdentifierPattern(pattern, type)
@@ -73,7 +67,7 @@ export class ResolvePatternBindings {
 
   private matchIdentifierPattern = (
     pattern: Parser.SyntaxNode,
-    type: TypeConstructor
+    type: Type
   ): void => {
     const identifierPatternName = pattern.namedChild(0)
     const name = identifierPatternName.text
@@ -84,13 +78,10 @@ export class ResolvePatternBindings {
     ]
   }
 
-  private matchListPattern = (
-    pattern: Parser.SyntaxNode,
-    type: TypeConstructor
-  ): void => {
-    if (type instanceof SingleTypeConstructor && type.type instanceof ListType)
+  private matchListPattern = (pattern: Parser.SyntaxNode, type: Type): void => {
+    if (type instanceof ParametricType && type.name === LIST_TYPE)
       pattern.namedChildren
-        .forEach(child => this.match(child, (type.type as ListType).type))
+        .forEach(child => this.match(child, type.parameters[0]))
     else this.errorHandler.throw(
       `Values of type '${type.toString()}' cannot be pattern matched ` +
       'against list',
@@ -98,47 +89,26 @@ export class ResolvePatternBindings {
     )
   }
 
-  private matchMapPattern = (
-    pattern: Parser.SyntaxNode,
-    type: TypeConstructor
-  ): void => pattern.namedChildren.forEach(child => this.match(child, type))
+  private matchMapPattern = (pattern: Parser.SyntaxNode, type: Type): void =>
+    pattern.namedChildren.forEach(child => this.match(child, type))
 
-  private matchParameters = (
-    pattern: Parser.SyntaxNode,
-    type: TypeConstructor
-  ): void => {
+  private matchParameters = (pattern: Parser.SyntaxNode, type: Type): void => {
     assert(
-      type instanceof CurriedTypeConstructor,
+      type instanceof CurriedType,
       'Parameters must be curried'
     )
 
     pattern.namedChildren.forEach((child, i) => {
-      this.match(child, type.types[i])
+      this.match(child, type.parameters[i])
     })
   }
 
-  private matchPattern = (
-    pattern: Parser.SyntaxNode,
-    type: TypeConstructor
-  ): void => this.match(pattern.namedChild(0), type)
+  private matchPattern = (pattern: Parser.SyntaxNode, type: Type): void =>
+    this.match(pattern.namedChild(0), type)
 
-  private matchPatternPair = (
-    pattern: Parser.SyntaxNode,
-    type: TypeConstructor
-  ): void => {
-    if (type instanceof SingleTypeConstructor) {
-      const identifierPatternName = pattern.namedChild(0)
-      const nestedPattern = pattern.namedChild(1)
-      const atomicType = type.type
-
-      if (atomicType instanceof MapType)
-        return this.match(nestedPattern, atomicType.valueType)
-      else if (atomicType instanceof ObjectType)
-        return this.match(
-          nestedPattern,
-          atomicType.propertyTypes.get(identifierPatternName.text)
-        )
-    }
+  private matchPatternPair = (pattern: Parser.SyntaxNode, type: Type): void => {
+    if (type instanceof ParametricType && type.name === MAP_TYPE)
+      return this.match(pattern.namedChild(1), type.parameters[1])
 
     this.errorHandler.throw(
       `Values of type '${type.toString()}' cannot be pattern matched ` +
@@ -147,45 +117,18 @@ export class ResolvePatternBindings {
     )
   }
 
-  private matchRestList = (
-    pattern: Parser.SyntaxNode,
-    type: TypeConstructor
-  ): void => {
-    // returns new list type with `isRest == false`
-    if (type instanceof SingleTypeConstructor && type.type instanceof ListType)
-      this.match(
-        pattern.namedChild(0),
-        new SingleTypeConstructor(new ListType(type.type.type))
-      )
-    else this.errorHandler.throw(
-      `Values of type '${type.toString()}' cannot be used with the rest list ` +
-      'operator',
-      this.node
-    )
-  }
+  private matchRestList = (pattern: Parser.SyntaxNode, type: Type): void =>
+    this.match(pattern.namedChild(0), new ParametricType(LIST_TYPE, [type]))
 
-  private matchRestMap = (
-    pattern: Parser.SyntaxNode,
-    type: TypeConstructor
-  ): void => this.match(pattern.namedChild(0), type)
+  private matchRestMap = (pattern: Parser.SyntaxNode,type: Type): void =>
+    this.match(pattern.namedChild(0), type)
 
   private matchShorthandPairIdentifierPattern = (
     pattern: Parser.SyntaxNode,
-    type: TypeConstructor
+    type: Type
   ): void => {
-    if (type instanceof SingleTypeConstructor) {
-      const identifierPattern = pattern.namedChild(0)
-      const identifierPatternName = identifierPattern.namedChild(0)
-      const atomicType = type.type
-
-      if (atomicType instanceof MapType)
-        return this.match(identifierPattern, atomicType.valueType)
-      else if (atomicType instanceof ObjectType)
-        return this.match(
-          identifierPattern,
-          atomicType.propertyTypes.get(identifierPatternName.text)
-        )
-    }
+    if (type instanceof ParametricType && type.name === MAP_TYPE)
+      return this.match(pattern.namedChild(0), type.parameters[1])
 
     this.errorHandler.throw(
       `Values of type '${type.toString()}' cannot be pattern matched ` +
@@ -196,15 +139,17 @@ export class ResolvePatternBindings {
 
   private matchTuplePattern = (
     pattern: Parser.SyntaxNode,
-    type: TypeConstructor
+    type: Type
   ): void => {
-    if (type instanceof SingleTypeConstructor && type.type instanceof TupleType)
+    if (type instanceof ParametricType && type.name === TUPLE_TYPE &&
+        pattern.namedChildCount >= type.parameters.length)
       pattern.namedChildren.forEach((child, i) => {
-        this.match(child, (type.type as TupleType).types[i])
+        this.match(child, type.parameters[i])
       })
-    else this.errorHandler.throw(
+
+    this.errorHandler.throw(
       `Values of type '${type.toString()}' cannot be pattern matched ` +
-      'against tuple',
+      'against tuple pattern',
       this.node
     )
   }

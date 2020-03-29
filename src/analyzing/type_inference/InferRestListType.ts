@@ -2,12 +2,7 @@ import Parser from 'tree-sitter'
 
 import { ErrorHandler } from '../../error_handling'
 
-import {
-  ListType,
-  SingleTypeConstructor,
-  TupleType,
-  TypeConstructor
-} from '../types'
+import { ParametricType, Type, LIST_TYPE } from '../types'
 
 export class InferRestListType {
   private errorHandler: ErrorHandler
@@ -18,33 +13,13 @@ export class InferRestListType {
     this.errorHandler = errorHandler
   }
 
-  perform = (
-    typeConstructor: TypeConstructor,
-    allowTuple = true
-  ): TypeConstructor => {
-    if (typeConstructor instanceof SingleTypeConstructor &&
-        typeConstructor.type instanceof ListType) {
-      typeConstructor.type.isRest = true
+  perform = (type: Type): Type => {
+    if (type instanceof ParametricType &&
+        type.name === LIST_TYPE) return type.parameters[0]
 
-      return typeConstructor
-    } else if (allowTuple && typeConstructor instanceof SingleTypeConstructor &&
-              typeConstructor.type instanceof TupleType) {
-      typeConstructor.type.isRest = true
-
-      return typeConstructor
-    }
-
-    this.throwRestListTypeMismatch(typeConstructor, allowTuple)
-  }
-
-  private throwRestListTypeMismatch = (
-    typeConstructor: TypeConstructor,
-    allowTuple: boolean
-  ): void => {
     this.errorHandler.throw(
-      'Rest list operator may only be used on list' +
-      `${allowTuple ? ' or tuple' : ''} types, got ` +
-      `'${typeConstructor.toString()}'`,
+      'Rest operator within list pattern may only be used on list types, got ' +
+      `'${type.toString()}'`,
       this.node
     )
   }

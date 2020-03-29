@@ -4,7 +4,7 @@ import { ErrorHandler } from '../../error_handling'
 
 import { Type } from '../types'
 
-export class InferAssignmentType {
+export class InferDefaultValueType {
   private errorHandler: ErrorHandler
   private node: Parser.SyntaxNode
 
@@ -13,13 +13,16 @@ export class InferAssignmentType {
     this.errorHandler = errorHandler
   }
 
-  perform = (patternType: Type, valueType: Type): Type => {
+  perform = (type: Type, defaultValueType: Type): Type => {
     try {
-      return patternType.unify(valueType)
+      const unifiedType = type.unify(defaultValueType)
+      unifiedType.isOptional = true
+
+      return unifiedType
     } catch (error) {
       this.errorHandler.throw(
-        `Type '${valueType.toString()}' not assignable to type ` +
-        `'${valueType.toString()}'.\n\n${error.message}`,
+        `Type '${defaultValueType.toString()}' is not assignable to type ` +
+        `'${type.toString()}'.\n\n${error.message}`,
         this.node
       )
     }

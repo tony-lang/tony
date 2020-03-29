@@ -2,9 +2,12 @@ import Parser from 'tree-sitter'
 
 import { ErrorHandler } from '../../error_handling'
 
+import { Type } from '../types'
+
 import { Binding } from './Binding'
 import { Scope } from './Scope'
 import { SymbolTable } from './SymbolTable'
+import { TypeBinding } from './TypeBinding'
 
 export class BuildSymbolTable {
   private _currentScope: Scope
@@ -60,39 +63,28 @@ export class BuildSymbolTable {
     return value
   }
 
-  addBindings = (bindings: Binding[], context: Parser.SyntaxNode): void => {
-    bindings.forEach(binding => {
-      const matchingBinding = this._currentScope.resolveBinding(binding.name, 0)
-      if (matchingBinding)
-        this._errorHandler.throw(
-          `A binding with name '${matchingBinding.name}' already exists in ` +
-          'the current block',
-          context
-        )
+  addBindings = (bindings: Binding[],context: Parser.SyntaxNode): void =>
+    bindings.forEach(binding => this.addBinding(binding, context))
 
-      this._currentScope.addBinding(binding)
-    })
-  }
-
-  addTypeBinding = (binding: Binding, context: Parser.SyntaxNode): void => {
-    const matchingBinding = this._currentScope.resolveBinding(binding.name)
+  addBinding = (binding: Binding, context: Parser.SyntaxNode): void => {
+    const matchingBinding = this._currentScope.resolveBinding(binding.name, 0)
     if (matchingBinding)
       this._errorHandler.throw(
-        `A type binding with name '${matchingBinding.name}' already exists ` +
-        'in the current scope',
+        `A binding with name '${matchingBinding.name}' already exists in ` +
+        'the current block',
         context
       )
 
     this._currentScope.addBinding(binding)
   }
 
-  resolveBinding = (name: string, node: Parser.SyntaxNode): Binding => {
+  resolveBinding = (name: string, context: Parser.SyntaxNode): Binding => {
     const binding = this._currentScope.resolveBinding(name)
 
     if (binding) return binding
     else this._errorHandler.throw(
       `Could not find '${name}' in current scope`,
-      node
+      context
     )
   }
 }

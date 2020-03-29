@@ -1,42 +1,22 @@
-import { TypeInterface } from './TypeInterface'
+import { CurriedType } from './CurriedType'
 
-export class Type implements TypeInterface {
-  private _name: string
-  private _isMissing: boolean
+export abstract class Type {
+  private _isOptional: boolean
 
-  constructor(name: string, isMissing = false) {
-    this._name = name
-    this._isMissing = isMissing
+  constructor(isOptional = false) {
+    this._isOptional = isOptional
   }
 
-  get name(): string {
-    return this._name
+  get isOptional(): boolean {
+    return this._isOptional
   }
 
-  get isMissing(): boolean {
-    return this._isMissing
+  set isOptional(value: boolean) {
+    this._isOptional = value
   }
 
-  resolve = (name: string): void => {
-    if (this.isComplete()) return
-
-    this._name = name
-    this._isMissing = false
-  }
-
-  matches = (pattern: TypeInterface): boolean => {
-    if (!(pattern instanceof Type)) return false
-    if (pattern.isMissing) {
-      pattern.resolve(this.name)
-
-      return true
-    }
-
-    return this.name === pattern.name
-  }
-
-  isComplete = (): boolean => !this.isMissing
-  isValid = (): boolean => true
-
-  toString = (): string => this.name
+  abstract concat: (type: Type) => CurriedType
+  abstract unify: (type: Type) => Type
+  abstract isComplete: () => boolean
+  abstract toString: () => string
 }

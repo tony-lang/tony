@@ -2,9 +2,9 @@ import Parser from 'tree-sitter'
 
 import { ErrorHandler } from '../../error_handling'
 
-import { Type, ParametricType, MAP_TYPE } from '../types'
+import { ParametricType, Type, TUPLE_TYPE } from '../types'
 
-export class InferRestMapType {
+export class InferRestTupleType {
   private errorHandler: ErrorHandler
   private node: Parser.SyntaxNode
 
@@ -14,12 +14,11 @@ export class InferRestMapType {
   }
 
   perform = (type: Type): Type => {
-    if (type instanceof ParametricType &&
-        type.name === MAP_TYPE) return type
+    if (type instanceof ParametricType && type.name === TUPLE_TYPE) return type
 
     this.errorHandler.throw(
-      'Rest operator within map pattern may only be used on map types, got ' +
-      `'${type.toString()}'`,
+      'Rest operator within tuple pattern may only be used on tuple types' +
+      `, got '${type.toString()}'`,
       this.node
     )
   }

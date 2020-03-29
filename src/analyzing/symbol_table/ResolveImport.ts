@@ -9,7 +9,6 @@ import { Analyze } from '../Analyze'
 
 import { Import } from './Import'
 import { ImportBinding } from './ImportBinding'
-import { TypeConstructor } from '../types'
 
 export class ResolveImport {
   private analyzer: Analyze
@@ -37,6 +36,7 @@ export class ResolveImport {
     const bindings =
       importClause.namedChildren.map(this.resolveImportClauseEntry)
 
+    this.checkDuplicateIdentifiers(bindings, node)
     return this.buildImport(source, bindings)
   }
 
@@ -51,6 +51,7 @@ export class ResolveImport {
     const bindings =
       importClause.namedChildren.map(this.resolveImportClauseEntry)
 
+    this.checkDuplicateIdentifiers(bindings, node)
     return this.buildImport(source, bindings)
   }
 
@@ -85,7 +86,6 @@ export class ResolveImport {
     const name = identifierPatternNameNode.text
 
     const type = this.analyzer.generate(identifierPatternNode)
-    this.checkInvalidImportType(type, identifierPatternNode)
 
     return new ImportBinding(name, originalName, type)
   }
@@ -97,7 +97,6 @@ export class ResolveImport {
     const name = identifierPatternNameNode.text
 
     const type = this.analyzer.generate(node)
-    this.checkInvalidImportType(type, node)
 
     return new ImportBinding(name, name, type)
   }
@@ -116,15 +115,6 @@ export class ResolveImport {
     return new ImportBinding(name, originalName)
   }
 
-  private checkInvalidImportType = (
-    type: TypeConstructor,
-    node: Parser.SyntaxNode
-  ): void => {
-    if (type.isValid()) return
-
-    this.errorHandler.throw(`Imported type ${type} is invalid`, node)
-  }
-
   private buildImport = (
     relativePath: string,
     bindings: ImportBinding[]
@@ -140,5 +130,20 @@ export class ResolveImport {
       relativePath.replace(FILE_EXTENSION, TARGET_FILE_EXTENSION)
     )
     return { fullPath, relativePath: relativePathAfterCompilation, bindings }
+  }
+
+  private checkDuplicateIdentifiers = (
+    bindings: ImportBinding[],
+    node: Parser.SyntaxNode
+  ): void => {
+    const identifiers = bindings.map(binding => binding.name)
+    const duplicateIdentifier = identifiers
+      .find((identifier, i) => identifiers.slice(i, i).includes(identifier))
+    if (!duplicateIdentifier) return
+
+    this.errorHandler.throw(
+      `Identifier ${duplicateIdentifier} found multiple times in import`,
+      node
+    )
   }
 }

@@ -3,17 +3,11 @@ import Parser from 'tree-sitter'
 import { ErrorHandler } from '../../error_handling'
 
 import {
-  MapType,
-  SingleTypeConstructor,
+  ParametricType,
   Type,
-  TypeConstructor,
-  MISSING_TYPE
+  TypeVariable,
+  MAP_TYPE
 } from '../types'
-
-const DEFAULT_MAP_TYPE = new SingleTypeConstructor(new MapType(
-  new SingleTypeConstructor(new Type(MISSING_TYPE, true)),
-  new SingleTypeConstructor(new Type(MISSING_TYPE, true))
-))
 
 export class InferMapType {
   private errorHandler: ErrorHandler
@@ -24,27 +18,16 @@ export class InferMapType {
     this.errorHandler = errorHandler
   }
 
-  perform = (mapTypes: TypeConstructor[]): TypeConstructor => {
-    this.checkMapVaryingEntriesTypes(mapTypes)
-
-    return this.inferType(mapTypes)
-  }
-
-  private inferType = (mapTypes: TypeConstructor[]): TypeConstructor =>
-    mapTypes[0] || DEFAULT_MAP_TYPE
-
-  private checkMapVaryingEntriesTypes = (mapTypes: TypeConstructor[]): void => {
-    const mapType = mapTypes[0]
-    const varyingMapType = mapTypes
-      .find(otherMapType => {
-        return !otherMapType.matches(mapType)
-      })
-
-    if (varyingMapType)
+  perform = (mapTypes: Type[]): Type => {
+    try {
+      return mapTypes.reduce((mapType, otherMapType) => {
+        return mapType.unify(otherMapType)
+      }, new ParametricType(MAP_TYPE, [new TypeVariable, new TypeVariable]))
+    } catch (error) {
       this.errorHandler.throw(
-        'Keys or values of map have varying types, got ' +
-        `'${varyingMapType.toString()}', expected '${mapType.toString()}'`,
+        `Keys or values of map have varying types.\n\n${error.message}`,
         this.node
       )
+    }
   }
 }
