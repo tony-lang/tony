@@ -13,7 +13,7 @@ export const DESTRUCTURING_PATTERN_NODE_TYPES = Object.freeze(
 )
 
 // standard library
-const STDLIB_PATH = Object.freeze(path.join(__dirname, 'stdlib'))
+const STDLIB_PATH = Object.freeze(path.join(__dirname, 'stdlib', 'index.js'))
 export const DEFAULT_IMPORTS =
   Object.freeze(`import * as stdlib from '${STDLIB_PATH}'`)
 

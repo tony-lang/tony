@@ -479,7 +479,11 @@ export class GenerateCode {
     const imports = this.walkSymbolTable.currentScope.imports
       .map(imp => {
         const aliases = imp.bindings.map(binding => {
-          return `${binding.originalName} as ${binding.name}`
+          const originalName = this.transformIdentifier
+            .perform(binding.originalName)
+          const name = this.transformIdentifier.perform(binding.name)
+
+          return `${originalName} as ${name}`
         }).join(',')
 
         return `import {${aliases}} from '${imp.relativePath}'`

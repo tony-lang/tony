@@ -1,17 +1,14 @@
-print := eval('console.log') as String -> Void
-to_str := eval('parseInt') as Number -> String
-
-! := (a :: Number) => eval('-{a.to_str}') as Number
-+ := (a :: Number, b :: Number) => eval('{a.to_str} + {b.to_str}') as Number
-- := (a :: Number, b :: Number) => eval('{a.to_str} - {b.to_str}') as Number
-% := (a :: Number, b :: Number) => eval('{a.to_str} % {b.to_str}') as Number
-
-++ := (a :: [Number], b :: [Number]) =>
-  eval('[{a as String}].concat([{b as String}])') as [Number]
-
-<= := (a :: Number, b :: Number) => eval('{a.to_str} <= {b.to_str}') as Boolean
-< := (a :: Number, b :: Number) => eval('{a.to_str} < {b.to_str}') as Boolean
->= := (a :: Number, b :: Number) => eval('{a.to_str} >= {b.to_str}') as Boolean
-> := (a :: Number, b :: Number) => eval('{a.to_str} > {b.to_str}') as Boolean
-
-== := (a :: Number, b :: Number) => eval('{a.to_str} == {b.to_str}') as Boolean
+import extern {
+  print :: ...[String] -> Void,
+  to_str :: Number -> String,
+  neg: ! :: Number -> Number,
+  add: + :: Number -> Number -> Number,
+  sub: - :: Number -> Number -> Number,
+  mod: % :: Number -> Number -> Number,
+  concat: ++ :: [Number] -> [Number] -> [Number],
+  leq: <= :: Number -> Number -> Boolean,
+  l: < :: Number -> Number -> Boolean,
+  geq: >= :: Number -> Number -> Boolean,
+  g: > :: Number -> Number -> Boolean,
+  eq: == :: Number -> Number -> Boolean
+} from '../../stdlib.js'
