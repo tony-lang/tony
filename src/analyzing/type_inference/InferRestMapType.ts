@@ -14,8 +14,7 @@ export class InferRestMapType {
   }
 
   perform = (type: Type): Type => {
-    if (type instanceof ParametricType &&
-        type.name === MAP_TYPE) return type
+    if (type instanceof ParametricType && type.name === MAP_TYPE) return type
 
     this.errorHandler.throw(
       'Rest operator within map pattern may only be used on map types, got ' +

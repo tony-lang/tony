@@ -14,8 +14,8 @@ export class InferRestListType {
   }
 
   perform = (type: Type): Type => {
-    if (type instanceof ParametricType &&
-        type.name === LIST_TYPE) return type.parameters[0]
+    if (type instanceof ParametricType && type.name === LIST_TYPE)
+      return type.parameters[0]
 
     this.errorHandler.throw(
       'Rest operator within list pattern may only be used on list types, got ' +

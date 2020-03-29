@@ -22,7 +22,8 @@ import {
   InferRestListType,
   InferRestMapType,
   InferRestTupleType,
-  InferSpreadType
+  InferSpreadType,
+  InferTupleType
 } from './type_inference'
 import {
   CurriedType,
@@ -483,37 +484,27 @@ export class Analyze {
   }
 
   private generateTuple = (node: Parser.SyntaxNode): Type => {
-    const valueTypes = node.namedChildren.reduce((valueTypes, valueNode) => {
-      const valueType = this.generate(valueNode)
+    const valueTypes = node.namedChildren
+      .filter(child => child.type !== 'spread')
+      .map(child => this.generate(child))
+    const restValueTypes = node.namedChildren
+      .filter(child => child.type === 'spread')
+      .map(child => this.generate(child))
 
-      if (valueNode.type === 'rest_tuple') {
-        assert(
-          valueType instanceof ParametricType && valueType.name === TUPLE_TYPE,
-          'Inferred type from spread operator within tuple should be a tuple.'
-        )
-
-        return valueTypes.concat(valueType.parameters)
-      } else return valueTypes.concat([valueType])
-    }, [])
-
-    return new ParametricType(TUPLE_TYPE, valueTypes)
+    return new InferTupleType(node, this.errorHandler)
+      .perform(valueTypes, restValueTypes)
   }
 
   private generateTuplePattern = (node: Parser.SyntaxNode): Type => {
-    const valueTypes = node.namedChildren.reduce((valueTypes, valueNode) => {
-      const valueType = this.generate(valueNode)
+    const valueTypes = node.namedChildren
+      .filter(child => child.type !== 'rest_tuple')
+      .map(child => this.generate(child))
+    const restValueTypes = node.namedChildren
+      .filter(child => child.type === 'rest_tuple')
+      .map(child => this.generate(child))
 
-      if (valueNode.type === 'rest_tuple') {
-        assert(
-          valueType instanceof ParametricType && valueType.name === TUPLE_TYPE,
-          'Inferred type from rest operator within tuple should be a tuple.'
-        )
-
-        return valueTypes.concat(valueType.parameters)
-      } else return valueTypes.concat([valueType])
-    }, [])
-
-    return new ParametricType(TUPLE_TYPE, valueTypes)
+    return new InferTupleType(node, this.errorHandler)
+      .perform(valueTypes, restValueTypes)
   }
 
   private generateTupleType = (node: Parser.SyntaxNode): Type => {

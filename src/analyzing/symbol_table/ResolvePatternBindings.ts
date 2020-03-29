@@ -4,7 +4,12 @@ import { ErrorHandler } from '../../error_handling'
 import { assert } from '../../utilities'
 
 import {
-  Type, ParametricType, LIST_TYPE, CurriedType, MAP_TYPE, TUPLE_TYPE
+  CurriedType,
+  ParametricType,
+  Type,
+  LIST_TYPE,
+  MAP_TYPE,
+  TUPLE_TYPE
 } from '../types'
 
 import { Binding } from './Binding'

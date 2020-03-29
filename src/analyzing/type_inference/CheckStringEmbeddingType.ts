@@ -26,13 +26,14 @@ export class CheckStringEmbeddingType {
   private checkStringEmbeddingTypeMismatch = (
     stringEmbeddingType: Type
   ): void => {
-    if (stringEmbeddingType instanceof ParametricType &&
-        stringEmbeddingType.name === STRING_TYPE) return
-
-    this.errorHandler.throw(
-      `String embedding must return value of type '${STRING_TYPE}', ` +
-      `instead returned '${stringEmbeddingType.toString()}'`,
-      this.node
-    )
+    try {
+      stringEmbeddingType.unify(new ParametricType(STRING_TYPE))
+    } catch (error) {
+      this.errorHandler.throw(
+        `Type '${stringEmbeddingType.toString()}' not assignable to type ` +
+        `'${STRING_TYPE}'.\n\n${error.message}`,
+        this.node
+      )
+    }
   }
 }
