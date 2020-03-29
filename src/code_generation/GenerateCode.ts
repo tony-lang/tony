@@ -367,8 +367,8 @@ export class GenerateCode {
     const generators = this.generate(node.namedChild(1))
     const generatorCount = this.listComprehensionGeneratorCountStack.pop()
 
-    return `${generators}${body}${')'.repeat(generatorCount)}` +
-           `.flat(${generatorCount - 1}).filter(e=>e!=="${INTERNAL_TEMP_TOKEN}")`
+    return `${generators}${body}${')'.repeat(generatorCount)}.flat(` +
+           `${generatorCount - 1}).filter(e=>e!=="${INTERNAL_TEMP_TOKEN}")`
   }
 
   generateListPattern = (node: Parser.SyntaxNode): string => {
