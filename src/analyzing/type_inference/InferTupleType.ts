@@ -15,7 +15,8 @@ export class InferTupleType {
 
   perform = (valueTypes: Type[], restValueTypes: Type[]): Type => {
     const parameters = restValueTypes.reduce((valueTypes, restValueType) => {
-      if (restValueType instanceof ParametricType && restValueType.name === TUPLE_TYPE)
+      if (restValueType instanceof ParametricType &&
+          restValueType.name === TUPLE_TYPE)
         return valueTypes.concat(restValueType.parameters)
 
       this.errorHandler.throw(
