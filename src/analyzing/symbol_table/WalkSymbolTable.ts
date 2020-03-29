@@ -18,7 +18,8 @@ export class WalkSymbolTable {
 
   enterBlock = (): void => {
     this._nestedScopesIndexStack.push(this._currentNestedScopeIndex + 1)
-    this._currentScope = this.currentScope.nestedScope(this._currentNestedScopeIndex + 1)
+    this._currentScope =
+      this.currentScope.nestedScope(this._currentNestedScopeIndex + 1)
     this._currentNestedScopeIndex = -1
   }
 

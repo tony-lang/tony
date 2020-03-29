@@ -43,7 +43,11 @@ export class SymbolTable extends Scope {
   resolveBinding = (name: string): Binding => {
     // TODO: remove this when basic types are implemented in Tony
     const matchingBasicType = BASIC_TYPES.find(type => type === name)
-    if (matchingBasicType) return new Binding(name, new SingleTypeConstructor(new Type(matchingBasicType)))
+    if (matchingBasicType)
+      return new Binding(
+        name,
+        new SingleTypeConstructor(new Type(matchingBasicType))
+      )
 
     const binding = this.bindings.find(binding => binding.name === name)
     if (binding) return binding

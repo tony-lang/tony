@@ -1,4 +1,9 @@
-import { SingleTypeConstructor, Type, TypeConstructor, MISSING_TYPE } from '../types'
+import {
+  SingleTypeConstructor,
+  Type,
+  TypeConstructor,
+  MISSING_TYPE
+} from '../types'
 
 import { Binding } from './Binding'
 import { Import } from './Import'
@@ -8,7 +13,11 @@ export class ImportBinding extends Binding {
   private _import: Import
 
   constructor(name: string, originalName: string, type?: TypeConstructor) {
-    super(name, type || new SingleTypeConstructor(new Type(MISSING_TYPE, true)), true)
+    super(
+      name,
+      type || new SingleTypeConstructor(new Type(MISSING_TYPE, true)),
+      true
+    )
 
     this._originalName = originalName
   }

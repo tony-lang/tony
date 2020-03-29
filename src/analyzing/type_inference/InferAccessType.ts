@@ -77,7 +77,9 @@ export class InferAccessType {
     listType: ListType,
     accessType: SingleTypeConstructor
   ): TypeConstructor => {
-    if (accessType instanceof SingleTypeConstructor && accessType.type instanceof Type && accessType.type.name === NUMBER_TYPE) return listType.type
+    if (accessType instanceof SingleTypeConstructor &&
+        accessType.type instanceof Type &&
+        accessType.type.name === NUMBER_TYPE) return listType.type
     else
       this.errorHandler.throw(
         'Contents of list can only be accessed by an accessor of type ' +
@@ -105,8 +107,9 @@ export class InferAccessType {
   ): TypeConstructor => {
     const index = parseInt(this.node.namedChild(1).text)
 
-    if (accessType instanceof SingleTypeConstructor && accessType.type instanceof Type && accessType.type.name === NUMBER_TYPE)
-      return tupleType.types[index]
+    if (accessType instanceof SingleTypeConstructor &&
+        accessType.type instanceof Type &&
+        accessType.type.name === NUMBER_TYPE) return tupleType.types[index]
     else
       this.errorHandler.throw(
         'Contents of tuple can only be accessed by an accessor of type ' +
@@ -121,7 +124,8 @@ export class InferAccessType {
   ): TypeConstructor => {
     const property = this.node.namedChild(1).text
 
-    if (accessType instanceof SingleTypeConstructor && accessType.type instanceof Type && accessType.type.name === STRING_TYPE)
+    if (accessType instanceof SingleTypeConstructor &&
+        accessType.type instanceof Type && accessType.type.name === STRING_TYPE)
       if (objectType.propertyTypes.has(property))
         return objectType.propertyTypes.get(property)
       else

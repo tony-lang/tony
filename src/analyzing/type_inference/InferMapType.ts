@@ -10,8 +10,10 @@ import {
   MISSING_TYPE
 } from '../types'
 
-const DEFAULT_MAP_TYPE =
-  new SingleTypeConstructor(new MapType(new SingleTypeConstructor(new Type(MISSING_TYPE, true)), new SingleTypeConstructor(new Type(MISSING_TYPE, true))))
+const DEFAULT_MAP_TYPE = new SingleTypeConstructor(new MapType(
+  new SingleTypeConstructor(new Type(MISSING_TYPE, true)),
+  new SingleTypeConstructor(new Type(MISSING_TYPE, true))
+))
 
 export class InferMapType {
   private errorHandler: ErrorHandler

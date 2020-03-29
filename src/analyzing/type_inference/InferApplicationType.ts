@@ -74,7 +74,9 @@ export class InferApplicationType {
   private handleVoidParameterType = (
     valueType: CurriedTypeConstructor
   ): void => {
-    if (!(valueType instanceof SingleTypeConstructor && valueType.type instanceof Type && valueType.type.name === VOID_TYPE)) return
+    if (!(valueType instanceof SingleTypeConstructor &&
+          valueType.type instanceof Type &&
+          valueType.type.name === VOID_TYPE)) return
 
     valueType.types.pop()
   }

@@ -1,5 +1,5 @@
 export const print = console.log
-export const to_str = parseInt
+export const toStr = parseInt
 
 export const neg = (n: number): number => -n
 export const add = (n: number, m: number): number => n + m
@@ -9,8 +9,8 @@ export const mod = (n: number, m: number): number => Math.abs(n % m)
 export const concat = (a: number[], b: number[]): number[] => a.concat(b)
 
 export const leq = (n: number, m: number): boolean => n <= m
-export const l = (n: number, m: number): boolean => n < m
+export const lt = (n: number, m: number): boolean => n < m
 export const geq = (n: number, m: number): boolean => n >= m
-export const g = (n: number, m: number): boolean => n > m
+export const gt = (n: number, m: number): boolean => n > m
 
 export const eq = (n: number, m: number): boolean => n == m

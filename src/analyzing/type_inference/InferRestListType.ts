@@ -3,7 +3,6 @@ import Parser from 'tree-sitter'
 import { ErrorHandler } from '../../error_handling'
 
 import {
-  CurriedTypeConstructor,
   ListType,
   SingleTypeConstructor,
   TupleType,

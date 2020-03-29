@@ -41,7 +41,9 @@ export class SingleTypeConstructor extends TypeConstructor {
   isComplete = (): boolean => this.type.isComplete()
 
   isValid = (): boolean => {
-    if (this.type instanceof SingleTypeConstructor && this.type.type instanceof Type && this.type.type.name === VOID_TYPE) return false
+    if (this.type instanceof SingleTypeConstructor &&
+        this.type.type instanceof Type &&
+        this.type.type.name === VOID_TYPE) return false
     if (this.type instanceof SingleTypeConstructor &&
         this.type.type instanceof ListType &&
         this.type.type.isRest) return false

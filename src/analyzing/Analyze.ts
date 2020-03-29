@@ -207,7 +207,8 @@ export class Analyze {
   }
 
   private generateArgument = (node: Parser.SyntaxNode): TypeConstructor => {
-    if (node.namedChildCount == 0) return new SingleTypeConstructor(new Type(PLACEHOLDER_TYPE, true))
+    if (node.namedChildCount == 0)
+      return new SingleTypeConstructor(new Type(PLACEHOLDER_TYPE, true))
 
     const type = this.generate(node.namedChild(0))
     return type
@@ -215,7 +216,9 @@ export class Analyze {
 
   private generateArguments = (node: Parser.SyntaxNode): TypeConstructor => {
     if (node.namedChildCount == 0)
-      return new CurriedTypeConstructor([new SingleTypeConstructor(new Type(VOID_TYPE))])
+      return new CurriedTypeConstructor([
+        new SingleTypeConstructor(new Type(VOID_TYPE))
+      ])
 
     const argTypes = node.namedChildren
       .map(argNode => this.generate(argNode))
@@ -256,7 +259,7 @@ export class Analyze {
   }
 
   private generateBoolean = (node: Parser.SyntaxNode): TypeConstructor =>
-  new SingleTypeConstructor(new Type(BOOLEAN_TYPE))
+    new SingleTypeConstructor(new Type(BOOLEAN_TYPE))
 
   private generateComment = (node: Parser.SyntaxNode): TypeConstructor => {
     return
@@ -297,7 +300,8 @@ export class Analyze {
   private generateIdentifierPattern = (
     node: Parser.SyntaxNode
   ): TypeConstructor => {
-    if (node.namedChildCount == 1) return new SingleTypeConstructor(new Type(MISSING_TYPE, true))
+    if (node.namedChildCount == 1)
+      return new SingleTypeConstructor(new Type(MISSING_TYPE, true))
 
     const type = this.generate(node.namedChild(1))
     return type
@@ -402,11 +406,13 @@ export class Analyze {
   }
 
   private generateNumber = (node: Parser.SyntaxNode): TypeConstructor =>
-  new SingleTypeConstructor(new Type(NUMBER_TYPE))
+    new SingleTypeConstructor(new Type(NUMBER_TYPE))
 
   private generateParameters = (node: Parser.SyntaxNode): TypeConstructor => {
     if (node.namedChildCount == 0)
-      return new CurriedTypeConstructor([new SingleTypeConstructor(new Type(VOID_TYPE))])
+      return new CurriedTypeConstructor([
+        new SingleTypeConstructor(new Type(VOID_TYPE))
+      ])
 
     const parameterTypes = node.namedChildren
       .map(parameterNode => this.generate(parameterNode))
@@ -460,7 +466,7 @@ export class Analyze {
   }
 
   private generateRegex = (node: Parser.SyntaxNode): TypeConstructor =>
-  new SingleTypeConstructor(new Type(REGULAR_EXPRESSION_TYPE))
+    new SingleTypeConstructor(new Type(REGULAR_EXPRESSION_TYPE))
 
   private generateRestList = (node: Parser.SyntaxNode): TypeConstructor => {
     const typeConstructor = this.generate(node.namedChild(0))

@@ -10,7 +10,8 @@ import {
   MISSING_TYPE
 } from '../types'
 
-const DEFAULT_VALUE_TYPE = new SingleTypeConstructor(new Type(MISSING_TYPE, true))
+const DEFAULT_VALUE_TYPE =
+  new SingleTypeConstructor(new Type(MISSING_TYPE, true))
 
 export class InferListType {
   private errorHandler: ErrorHandler
