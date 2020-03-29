@@ -4,8 +4,7 @@ import { SymbolTable, WalkSymbolTable } from '../analyzing'
 import {
   DEFAULT_IMPORTS,
   TRANSFORM_PLACEHOLDER_ARGUMENT,
-  TRANSFORM_REST_PATTERN,
-  INTERNAL_TEMP_TOKEN
+  TRANSFORM_REST_PATTERN
 } from '../constants'
 import { assert } from '../utilities'
 
@@ -13,6 +12,8 @@ import { CollectDefaultValues } from './CollectDefaultValues'
 import { ParseStringContent } from './ParseStringContent'
 import { ResolvePattern } from './ResolvePattern'
 import { TransformIdentifier } from './TransformIdentifier'
+
+export const INTERNAL_TEMP_TOKEN = Object.freeze('#TONY_INTERNAL_TEMP')
 
 export class GenerateCode {
   private declarationBlock = false
@@ -49,7 +50,7 @@ export class GenerateCode {
     case 'case':
       return this.generateCase(node)
     case 'comment':
-      return this.generateComment(node)
+      return ''
     case 'else_if_clause':
       return this.generateElseIfClause(node)
     case 'else_if_clauses':
@@ -59,7 +60,7 @@ export class GenerateCode {
     case 'expression_pair':
       return this.generateExpressionPair(node)
     case 'external_import':
-      return this.generateExternalImport(node)
+      return ''
     case 'generator':
       return this.generateGenerator(node)
     case 'generator_condition':
@@ -75,7 +76,7 @@ export class GenerateCode {
     case 'if':
       return this.generateIf(node)
     case 'import':
-      return this.generateImport(node)
+      return ''
     case 'infix_application':
       return this.generateInfixApplication(node)
     case 'infix_application_operator':
@@ -134,8 +135,6 @@ export class GenerateCode {
       return this.generateTuple(node)
     case 'tuple_pattern':
       return this.generateTuplePattern(node)
-    case 'type_interpretation':
-      return this.generateTypeInterpretation(node)
     case 'when_clause':
       return this.generateWhenClause(node)
     case 'when_clauses':
@@ -248,10 +247,6 @@ export class GenerateCode {
            `()=>${defaultValue},false)`
   }
 
-  generateComment = (node: Parser.SyntaxNode): string => {
-    return ''
-  }
-
   generateElseIfClause = (node: Parser.SyntaxNode): string => {
     const condition = this.generate(node.namedChild(0))
     const consequence = this.generate(node.namedChild(1))
@@ -280,10 +275,6 @@ export class GenerateCode {
     return `[${left}]:${right}`
   }
 
-  generateExternalImport = (node: Parser.SyntaxNode): string => {
-    return ''
-  }
-
   generateGenerator = (node: Parser.SyntaxNode): string => {
     const name = this.generate(node.namedChild(0))
     const value = this.generate(node.namedChild(1))
@@ -291,7 +282,7 @@ export class GenerateCode {
       return `${value}.map((${name})=>`
 
     const condition = this.generate(node.namedChild(2))
-    return `${value}.map((${name})=>!${condition} ? null : `
+    return `${value}.map((${name})=>!${condition} ? "${INTERNAL_TEMP_TOKEN}" : `
   }
 
   generateGeneratorCondition = (node: Parser.SyntaxNode): string => {
@@ -347,10 +338,6 @@ export class GenerateCode {
     }
   }
 
-  generateImport = (node: Parser.SyntaxNode): string => {
-    return ''
-  }
-
   generateInfixApplication = (node: Parser.SyntaxNode): string => {
     const abstraction = this.generate(node.namedChild(1))
     const left = this.generate(node.namedChild(0))
@@ -381,7 +368,7 @@ export class GenerateCode {
     const generatorCount = this.listComprehensionGeneratorCountStack.pop()
 
     return `${generators}${body}${')'.repeat(generatorCount)}` +
-           `.flat(${generatorCount - 1}).filter(e=>e!==null)`
+           `.flat(${generatorCount - 1}).filter(e=>e!=="${INTERNAL_TEMP_TOKEN}")`
   }
 
   generateListPattern = (node: Parser.SyntaxNode): string => {
@@ -578,12 +565,6 @@ export class GenerateCode {
       .join(',')
 
     return `[${elements}]`
-  }
-
-  generateTypeInterpretation = (node: Parser.SyntaxNode): string => {
-    const value = this.generate(node.namedChild(0))
-
-    return value
   }
 
   generateWhenClause = (node: Parser.SyntaxNode): string => {

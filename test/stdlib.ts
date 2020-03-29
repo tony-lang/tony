@@ -1,5 +1,5 @@
 export const print = console.log
-export const toStr = parseInt
+export const to_str = parseInt
 
 export const neg = (n: number): number => -n
 export const add = (n: number, m: number): number => n + m

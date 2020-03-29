@@ -1,8 +1,9 @@
 import {
   TRANSFORM_IDENTIFIER_PATTERN,
-  TRANSFORM_REST_PATTERN,
-  INTERNAL_TEMP_TOKEN
+  TRANSFORM_REST_PATTERN
 } from '../constants'
+
+import { INTERNAL_TEMP_TOKEN } from './GenerateCode'
 
 export class ResolvePattern {
   static perform = (pattern: string): [string, string[]] => {

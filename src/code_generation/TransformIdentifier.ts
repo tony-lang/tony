@@ -1,4 +1,6 @@
-import { OPERATOR_REGEX, INTERNAL_IDENTIFIER_PREFIX } from '../constants'
+import { OPERATOR_REGEX } from '../constants'
+
+const INTERNAL_IDENTIFIER_PREFIX = Object.freeze('tony_internal_')
 
 export class TransformIdentifier {
   private identifiers: string[] = []

@@ -17,10 +17,6 @@ const STDLIB_PATH = Object.freeze(path.join(__dirname, 'stdlib', 'index.js'))
 export const DEFAULT_IMPORTS =
   Object.freeze(`import * as stdlib from '${STDLIB_PATH}'`)
 
-// internal representation
-export const INTERNAL_IDENTIFIER_PREFIX = Object.freeze('tony_internal_')
-export const INTERNAL_TEMP_TOKEN = Object.freeze('#TONY_INTERNAL_TEMP')
-
 // intermediate representation
 export const TRANSFORM_PLACEHOLDER_ARGUMENT =
   Object.freeze('#internal/TRANSFORM_PLACEHOLDER_ARGUMENT')
