@@ -133,7 +133,12 @@ export class ResolveImport {
       '..',
       relativePath.replace(FILE_EXTENSION, TARGET_FILE_EXTENSION)
     )
-    return { fullPath, relativePath: relativePathAfterCompilation, bindings, isExternal }
+    return {
+      fullPath,
+      relativePath: relativePathAfterCompilation,
+      bindings,
+      isExternal
+    }
   }
 
   private checkDuplicateIdentifiers = (

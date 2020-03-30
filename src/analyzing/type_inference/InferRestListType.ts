@@ -3,7 +3,13 @@ import Parser from 'tree-sitter'
 import { ErrorHandler } from '../../error_handling'
 import { assert } from '../../utilities'
 
-import { ParametricType, Type, TypeConstraints, TypeVariable, LIST_TYPE } from '../types'
+import {
+  ParametricType,
+  Type,
+  TypeConstraints,
+  TypeVariable,
+  LIST_TYPE
+} from '../types'
 
 export class InferRestListType {
   private errorHandler: ErrorHandler
@@ -26,7 +32,10 @@ export class InferRestListType {
         new ParametricType(LIST_TYPE, [new TypeVariable]),
         this.typeConstraints
       )
-      assert(unifiedType instanceof ParametricType, 'List type should be parametric.')
+      assert(
+        unifiedType instanceof ParametricType,
+        'List type should be parametric.'
+      )
 
       return unifiedType.parameters[0]
     } catch (error) {

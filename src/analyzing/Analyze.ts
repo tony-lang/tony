@@ -199,8 +199,9 @@ export class Analyze {
     const valueType = this.generate(node.namedChild(0))
     const accessType = this.generate(node.namedChild(1))
 
-    return new InferAccessType(node, this.errorHandler, this.buildSymbolTable, this.typeConstraints)
-      .perform(valueType, accessType)
+    return new InferAccessType(
+      node, this.errorHandler, this.buildSymbolTable, this.typeConstraints
+    ).perform(valueType, accessType)
   }
 
   private generateApplication = (node: Parser.SyntaxNode): Type => {

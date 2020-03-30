@@ -2,7 +2,13 @@ import Parser from 'tree-sitter'
 
 import { ErrorHandler } from '../../error_handling'
 
-import { ParametricType, Type, TypeConstraints, TypeVariable, MAP_TYPE } from '../types'
+import {
+  ParametricType,
+  Type,
+  TypeConstraints,
+  TypeVariable,
+  MAP_TYPE
+} from '../types'
 
 export class InferRestMapType {
   private errorHandler: ErrorHandler

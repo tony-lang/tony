@@ -477,13 +477,15 @@ export class GenerateCode {
       }).join(';')
     const externalImports = this.walkSymbolTable.currentScope.imports
       .filter(imp => imp.isExternal)
-      .reduce((bindings: ImportBinding[], imp) => bindings.concat(imp.bindings), [])
+      .reduce((bindings: ImportBinding[], imp) => {
+        return bindings.concat(imp.bindings)
+      }, [])
       .map(binding => {
         const tmpName = `${this.transformIdentifier.perform(binding.name)}EXT`
         const name = this.transformIdentifier
           .perform(binding.name)
 
-          return `${name}=stdlib.Curry.external(${tmpName})`
+        return `${name}=stdlib.Curry.external(${tmpName})`
       }).join(',')
     const combinedExternalImports = externalImports.length > 0 ?
       `const ${externalImports}` : ''
@@ -495,8 +497,8 @@ export class GenerateCode {
     const combinedExports =
       exports.length > 0 ? `export {${exports.join(',')}}` : ''
 
-    return `${DEFAULT_IMPORTS};${imports};${combinedExternalImports};${combinedDeclarations};` +
-           `${expressions};${combinedExports}`
+    return `${DEFAULT_IMPORTS};${imports};${combinedExternalImports};` +
+           `${combinedDeclarations};${expressions};${combinedExports}`
   }
 
   generateRegex = (node: Parser.SyntaxNode): string => {
