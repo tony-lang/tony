@@ -97,8 +97,6 @@ export class Analyze {
       return this.generateImport(node)
     case 'infix_application':
       return this.generateInfixApplication(node)
-    case 'infix_application_operator':
-      return this.generateInfixApplicationOperator(node)
     case 'interpolation':
       return this.generateInterpolation(node)
     case 'list':
@@ -303,14 +301,6 @@ export class Analyze {
 
     return new InferApplicationType(node, this.errorHandler)
       .perform(abstractionType, argumentTypes)
-  }
-
-  private generateInfixApplicationOperator = (
-    node: Parser.SyntaxNode
-  ): Type => {
-    const name = node.text
-
-    return this.buildSymbolTable.resolveBinding(name, node).type
   }
 
   private generateInterpolation = (node: Parser.SyntaxNode): Type =>

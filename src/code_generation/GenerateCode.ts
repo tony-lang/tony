@@ -79,8 +79,6 @@ export class GenerateCode {
       return ''
     case 'infix_application':
       return this.generateInfixApplication(node)
-    case 'infix_application_operator':
-      return this.generateInfixApplicationOperator(node)
     case 'interpolation':
       return this.generateInterpolation(node)
     case 'list':
@@ -344,10 +342,6 @@ export class GenerateCode {
     const right = this.generate(node.namedChild(2))
 
     return `${abstraction}(${left},${right})`
-  }
-
-  generateInfixApplicationOperator = (node: Parser.SyntaxNode): string => {
-    return this.transformIdentifier.perform(node.text)
   }
 
   generateInterpolation = (node: Parser.SyntaxNode): string => {
