@@ -12,6 +12,7 @@ import { CollectDefaultValues } from './CollectDefaultValues'
 import { ParseStringContent } from './ParseStringContent'
 import { ResolvePattern } from './ResolvePattern'
 import { TransformIdentifier } from './TransformIdentifier'
+import { ImportBinding } from '../analyzing/symbol_table/ImportBinding'
 
 export const INTERNAL_TEMP_TOKEN = Object.freeze('#TONY_INTERNAL_TEMP')
 
@@ -466,13 +467,27 @@ export class GenerateCode {
         const aliases = imp.bindings.map(binding => {
           const originalName = this.transformIdentifier
             .perform(binding.originalName)
-          const name = this.transformIdentifier.perform(binding.name)
+          const name = this.transformIdentifier
+            .perform(binding.name)
 
-          return `${originalName} as ${name}`
+          return `${originalName} as ${name}${imp.isExternal ? 'EXT' : ''}`
         }).join(',')
 
         return `import {${aliases}} from '${imp.relativePath}'`
       }).join(';')
+    const externalImports = this.walkSymbolTable.currentScope.imports
+      .filter(imp => imp.isExternal)
+      .reduce((bindings: ImportBinding[], imp) => bindings.concat(imp.bindings), [])
+      .map(binding => {
+        const tmpName = `${this.transformIdentifier.perform(binding.name)}EXT`
+        const name = this.transformIdentifier
+          .perform(binding.name)
+
+          return `${name}=stdlib.Curry.external(${tmpName})`
+      }).join(',')
+    const combinedExternalImports = externalImports.length > 0 ?
+      `const ${externalImports}` : ''
+
 
     const exports = this.walkSymbolTable.currentScope.bindings
       .filter(binding => binding.isExported)
@@ -480,7 +495,7 @@ export class GenerateCode {
     const combinedExports =
       exports.length > 0 ? `export {${exports.join(',')}}` : ''
 
-    return `${DEFAULT_IMPORTS};${imports};${combinedDeclarations};` +
+    return `${DEFAULT_IMPORTS};${imports};${combinedExternalImports};${combinedDeclarations};` +
            `${expressions};${combinedExports}`
   }
 

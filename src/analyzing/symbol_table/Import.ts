@@ -4,4 +4,5 @@ export type Import = {
   fullPath: string;
   relativePath: string;
   bindings: ImportBinding[];
+  isExternal: boolean;
 }

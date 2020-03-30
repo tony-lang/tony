@@ -4,7 +4,7 @@ export const FILE_EXTENSION = Object.freeze('.tn')
 export const TARGET_FILE_EXTENSION = Object.freeze('.js')
 
 // parser
-export const OPERATOR_REGEX = Object.freeze(/[!@$%^&*|<>~*\\\-+.=/]+/)
+export const OPERATOR_REGEX = Object.freeze(/(\.\.|[!@$%^&*|<>~*\\\-+=/]+)\.*/)
 export const NODE_TYPES_WITH_DEFAULT_VALUES = Object.freeze(
   ['pattern', 'shorthand_pair_identifier_pattern']
 )
@@ -13,7 +13,7 @@ export const DESTRUCTURING_PATTERN_NODE_TYPES = Object.freeze(
 )
 
 // standard library
-const STDLIB_PATH = Object.freeze(path.join(__dirname, 'stdlib', 'index.js'))
+const STDLIB_PATH = Object.freeze(path.join(__dirname, 'stdlib'))
 export const DEFAULT_IMPORTS =
   Object.freeze(`import * as stdlib from '${STDLIB_PATH}'`)
 

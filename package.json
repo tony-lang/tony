@@ -4,7 +4,7 @@
   "description": "The Tony programming language",
   "main": "lib/index.js",
   "scripts": {
-    "build": "babel src test --out-dir lib --extensions .ts",
+    "build": "babel src --out-dir lib --extensions .ts && babel test --out-dir tmp --extensions .ts",
     "start": "yarn link && nodemon --watch src --watch test --exec 'yarn build' -e ts",
     "eslint": "eslint src test --ext .ts",
     "test": "ava"

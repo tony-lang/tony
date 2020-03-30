@@ -37,7 +37,7 @@ export class ResolveImport {
       importClause.namedChildren.map(this.resolveImportClauseEntry)
 
     this.checkDuplicateIdentifiers(bindings, node)
-    return this.buildImport(source, bindings)
+    return this.buildImport(source, bindings, false)
   }
 
   performExternalImport = (node: Parser.SyntaxNode): Import => {
@@ -53,7 +53,7 @@ export class ResolveImport {
       .filter(binding => binding !== undefined)
 
     this.checkDuplicateIdentifiers(bindings, node)
-    return this.buildImport(source, bindings)
+    return this.buildImport(source, bindings, true)
   }
 
   private resolveImportClauseEntry = (
@@ -120,19 +120,20 @@ export class ResolveImport {
 
   private buildImport = (
     relativePath: string,
-    bindings: ImportBinding[]
+    bindings: ImportBinding[],
+    isExternal: boolean
   ): Import => {
     const dir = this.file.substring(0, this.file.lastIndexOf('/'))
     const fullPath = path.join(dir, relativePath)
     if (!relativePath.endsWith(FILE_EXTENSION))
-      return { fullPath, relativePath, bindings }
+      return { fullPath, relativePath, bindings, isExternal }
 
     const relativePathAfterCompilation = path.join(
       getOutputPathForFile(this.outputPath, this.file),
       '..',
       relativePath.replace(FILE_EXTENSION, TARGET_FILE_EXTENSION)
     )
-    return { fullPath, relativePath: relativePathAfterCompilation, bindings }
+    return { fullPath, relativePath: relativePathAfterCompilation, bindings, isExternal }
   }
 
   private checkDuplicateIdentifiers = (

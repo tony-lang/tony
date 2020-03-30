@@ -1,4 +1,4 @@
-import { ParametricType, BASIC_TYPES, Type } from '../types'
+import { ParametricType, BASIC_TYPES } from '../types'
 
 import { Binding } from './Binding'
 import { Import } from './Import'
