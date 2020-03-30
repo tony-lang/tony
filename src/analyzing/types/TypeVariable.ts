@@ -1,6 +1,6 @@
 import { CurriedType } from './CurriedType'
 import { Type } from './Type'
-import { UnificationError } from './UnificationError'
+import { TypeConstraints } from './TypeConstraints'
 
 export class TypeVariable extends Type {
   private static unnamedVariableCount = 0
@@ -23,17 +23,29 @@ export class TypeVariable extends Type {
     return new CurriedType([this, type])
   }
 
-  unify = (type: Type): Type => {
-    if (!(type instanceof TypeVariable)) return type
-    if (this.name !== type.name)
-      throw new UnificationError(this, type, 'Type variables do not match')
+  unify = (type: Type, constraints: TypeConstraints): Type => {
+    if (!(type instanceof TypeVariable)) {
+      constraints.add(this, type)
+      return type
+    }
+
+    if (this.name !== type.name) constraints.add(type, this)
+    return this
+  }
+
+  applyConstraints = (constraints: TypeConstraints): Type => {
+    if (constraints.has(this)) return constraints.resolve(this)
 
     return this
   }
 
   isComplete = (): boolean => false
 
-  toString = (): string => `${this.name}`
+  toString = (): string => {
+    const optional = this.isOptional ? '?' : ''
+
+    return `${this.name}${optional}`
+  }
 
   private static getUnusedVariableName = (): string => {
     const name = `t${TypeVariable.unnamedVariableCount}`

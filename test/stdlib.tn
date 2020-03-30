@@ -1,6 +1,6 @@
 import extern {
-  print :: ...[String] -> Void,
-  toStr: to_str :: Number -> String,
+  print :: String -> Void,
+  to_str :: Number -> String,
   neg: ! :: Number -> Number,
   add: + :: Number -> Number -> Number,
   sub: - :: Number -> Number -> Number,

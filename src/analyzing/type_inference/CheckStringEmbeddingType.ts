@@ -5,16 +5,19 @@ import { ErrorHandler } from '../../error_handling'
 import {
   ParametricType,
   Type,
+  TypeConstraints,
   STRING_TYPE
 } from '../types'
 
 export class CheckStringEmbeddingType {
   private errorHandler: ErrorHandler
   private node: Parser.SyntaxNode
+  private typeConstraints: TypeConstraints
 
-  constructor(node: Parser.SyntaxNode, errorHandler: ErrorHandler) {
+  constructor(node: Parser.SyntaxNode, errorHandler: ErrorHandler, typeConstraints: TypeConstraints) {
     this.node = node
     this.errorHandler = errorHandler
+    this.typeConstraints = typeConstraints
   }
 
   perform = (stringEmbeddingTypes: Type[]): void => {
@@ -27,7 +30,7 @@ export class CheckStringEmbeddingType {
     stringEmbeddingType: Type
   ): void => {
     try {
-      stringEmbeddingType.unify(new ParametricType(STRING_TYPE))
+      stringEmbeddingType.unify(new ParametricType(STRING_TYPE), this.typeConstraints)
     } catch (error) {
       this.errorHandler.throw(
         `Type '${stringEmbeddingType.toString()}' not assignable to type ` +

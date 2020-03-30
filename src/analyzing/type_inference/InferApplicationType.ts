@@ -6,6 +6,7 @@ import {
   CurriedType,
   ParametricType,
   Type,
+  TypeConstraints,
   TypeVariable,
   INTERNAL_PARTIAL_APPLICATION_TYPE_NAME,
   VOID_TYPE
@@ -21,33 +22,43 @@ export class InferApplicationType {
   }
 
   perform = (valueType: Type, argumentTypes: CurriedType): Type => {
-    this.checkApplicationToNonCurriedType(valueType)
-    this.handleVoidParameterType(valueType)
+    const inferredValueType = this.inferValueType(valueType, argumentTypes)
+
+    this.handleVoidParameterType(inferredValueType)
     this.checkAppliedTooManyArguments(
-      valueType,
+      inferredValueType,
       argumentTypes.parameters.length
     )
 
-    return this.inferType(valueType, argumentTypes)
+    return this.inferType(inferredValueType, argumentTypes)
   }
 
   private inferType = (
     valueType: CurriedType,
     argumentTypes: CurriedType
   ): Type => {
+    const typeConstraints = new TypeConstraints
     const parameterTypes =
       valueType.parameters.reduce((parameterTypes, parameterType, i) => {
         const argumentType = argumentTypes.parameters[i]
+        if (argumentType === undefined && parameterType.isOptional)
+          return parameterTypes
         if (argumentType === undefined ||
             this.isPlaceholderArgument(argumentType))
           return parameterTypes.concat([parameterType])
 
-        this.checkArgumentTypeMismatch(parameterType, argumentType)
+        this.checkArgumentTypeMismatch(
+          parameterType,
+          argumentType,
+          typeConstraints
+        )
         return parameterTypes
       }, [])
 
-    if (parameterTypes.length == 1) return parameterTypes[0]
-    else return new CurriedType(parameterTypes)
+    if (parameterTypes.length == 1)
+      return parameterTypes[0].applyConstraints(typeConstraints)
+    else
+      return new CurriedType(parameterTypes).applyConstraints(typeConstraints)
   }
 
   private handleVoidParameterType = (valueType: CurriedType): void => {
@@ -57,10 +68,13 @@ export class InferApplicationType {
     valueType.parameters.pop()
   }
 
-  private checkApplicationToNonCurriedType(
-    valueType: Type
-  ): asserts valueType is CurriedType {
-    if (valueType instanceof CurriedType) return
+  private inferValueType(
+    valueType: Type,
+    argumentTypes: CurriedType
+  ): CurriedType {
+    if (valueType instanceof CurriedType) return valueType
+    if (valueType instanceof TypeVariable)
+      return argumentTypes.concat(new TypeVariable)
 
     this.errorHandler.throw(
       `Cannot apply to the non-curried type '${valueType.toString()}'.`,
@@ -84,10 +98,11 @@ export class InferApplicationType {
 
   private checkArgumentTypeMismatch = (
     parameterType: Type,
-    argumentType: Type
+    argumentType: Type,
+    typeConstraints: TypeConstraints
   ): void => {
     try {
-      parameterType.unify(argumentType)
+      parameterType.unify(argumentType, typeConstraints)
     } catch (error) {
       this.errorHandler.throw(
         `Argument of type '${argumentType.toString()}' not assignable to ` +

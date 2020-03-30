@@ -2,20 +2,22 @@ import Parser from 'tree-sitter'
 
 import { ErrorHandler } from '../../error_handling'
 
-import { Type } from '../types'
+import { Type, TypeConstraints } from '../types'
 
 export class InferDefaultValueType {
   private errorHandler: ErrorHandler
   private node: Parser.SyntaxNode
+  private typeConstraints: TypeConstraints
 
-  constructor(node: Parser.SyntaxNode, errorHandler: ErrorHandler) {
+  constructor(node: Parser.SyntaxNode, errorHandler: ErrorHandler, typeConstraints: TypeConstraints) {
     this.node = node
     this.errorHandler = errorHandler
+    this.typeConstraints = typeConstraints
   }
 
   perform = (type: Type, defaultValueType: Type): Type => {
     try {
-      const unifiedType = type.unify(defaultValueType)
+      const unifiedType = type.unify(defaultValueType, this.typeConstraints)
       unifiedType.isOptional = true
 
       return unifiedType

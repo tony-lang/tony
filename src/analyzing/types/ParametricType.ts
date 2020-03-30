@@ -1,5 +1,6 @@
 import { CurriedType } from './CurriedType'
 import { Type } from './Type'
+import { TypeConstraints } from './TypeConstraints'
 import { TypeVariable } from './TypeVariable'
 import { UnificationError } from './UnificationError'
 
@@ -28,17 +29,27 @@ export class ParametricType extends Type {
     return new CurriedType([this, type])
   }
 
-  unify = (type: Type): Type => {
-    if (type instanceof TypeVariable) return this
-    if (type instanceof ParametricType && this.name === type.name &&
-        this.parameters.length == type.parameters.length) {
-      const parameters = this.parameters
-        .map((parameter, i) => parameter.unify(type.parameters[i]))
+  unify = (type: Type, constraints: TypeConstraints): Type => {
+    if (type instanceof TypeVariable) {
+      constraints.add(type, this)
+      return this
+    } else if (type instanceof ParametricType && this.name === type.name &&
+               this.parameters.length == type.parameters.length) {
+      const parameters = this.parameters.map((parameter, i) => {
+        return parameter.unify(type.parameters[i], constraints)
+      })
 
       return new ParametricType(this.name, parameters)
     }
 
     throw new UnificationError(this, type, 'Non-variable types do not match')
+  }
+
+  applyConstraints = (constraints: TypeConstraints): Type => {
+    const parameters = this.parameters
+      .map(parameter => parameter.applyConstraints(constraints))
+
+    return new ParametricType(this.name, parameters)
   }
 
   isComplete = (): boolean =>

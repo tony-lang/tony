@@ -7,6 +7,7 @@ import {
   ObjectRepresentation,
   ParametricType,
   Type,
+  TypeConstraints,
   NUMBER_TYPE,
   STRING_TYPE,
   LIST_TYPE,
@@ -17,10 +18,12 @@ import {
 export class InferAccessType {
   private errorHandler: ErrorHandler
   private node: Parser.SyntaxNode
+  private typeConstraints: TypeConstraints
 
-  constructor(node: Parser.SyntaxNode, errorHandler: ErrorHandler) {
+  constructor(node: Parser.SyntaxNode, errorHandler: ErrorHandler, typeConstraints: TypeConstraints) {
     this.node = node
     this.errorHandler = errorHandler
+    this.typeConstraints = typeConstraints
   }
 
   perform = (
@@ -52,7 +55,7 @@ export class InferAccessType {
 
   private accessList = (valueType: ParametricType, accessType: Type): Type => {
     try {
-      accessType.unify(new ParametricType(NUMBER_TYPE))
+      accessType.unify(new ParametricType(NUMBER_TYPE), this.typeConstraints)
       return valueType.parameters[0]
     } catch (error) {
       this.errorHandler.throw(
@@ -65,7 +68,7 @@ export class InferAccessType {
 
   private accessMap = (valueType: ParametricType, accessType: Type): Type => {
     try {
-      accessType.unify(valueType.parameters[0])
+      accessType.unify(valueType.parameters[0], this.typeConstraints)
       return valueType.parameters[1]
     } catch (error) {
       this.errorHandler.throw(
@@ -79,7 +82,7 @@ export class InferAccessType {
   private accessTuple = (valueType: ParametricType, accessType: Type): Type => {
     // TODO: implement dynamic access with union types
     try {
-      accessType.unify(new ParametricType(NUMBER_TYPE))
+      accessType.unify(new ParametricType(NUMBER_TYPE), this.typeConstraints)
 
       if (this.node.namedChild(1).type === 'shorthand_access_identifier') {
         const shorthandAccessIdentifier = this.node.namedChild(1)
@@ -103,7 +106,7 @@ export class InferAccessType {
   ): Type => {
     // TODO: implement dynamic access with union types
     try {
-      accessType.unify(new ParametricType(STRING_TYPE))
+      accessType.unify(new ParametricType(STRING_TYPE), this.typeConstraints)
 
       if (this.node.namedChild(1).type === 'shorthand_access_identifier') {
         const shorthandAccessIdentifier = this.node.namedChild(1)

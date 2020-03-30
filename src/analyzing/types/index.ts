@@ -2,6 +2,7 @@ export { CurriedType } from './CurriedType'
 export { ObjectRepresentation } from './ObjectRepresentation'
 export { ParametricType } from './ParametricType'
 export { Type } from './Type'
+export { TypeConstraints } from './TypeConstraints'
 export { TypeVariable } from './TypeVariable'
 
 export const INTERNAL_PARTIAL_APPLICATION_TYPE_NAME = Object.freeze('?')

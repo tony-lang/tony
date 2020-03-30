@@ -30,6 +30,7 @@ import {
   ObjectRepresentation,
   ParametricType,
   Type,
+  TypeConstraints,
   TypeVariable,
   INTERNAL_PARTIAL_APPLICATION_TYPE_NAME,
   VOID_TYPE,
@@ -47,6 +48,7 @@ export class Analyze {
 
   private buildSymbolTable: BuildSymbolTable
   private resolveImport: ResolveImport
+  private typeConstraints: TypeConstraints
 
   constructor(file: string, outputPath: string) {
     this.errorHandler = new ErrorHandler(file)
@@ -54,6 +56,7 @@ export class Analyze {
     this.buildSymbolTable = new BuildSymbolTable(this.errorHandler)
     this.resolveImport =
       new ResolveImport(this, this.errorHandler, file, outputPath)
+    this.typeConstraints = new TypeConstraints
   }
 
   perform = (node: Parser.SyntaxNode): SymbolTable => {
@@ -160,7 +163,7 @@ export class Analyze {
     const abstractionBranchTypes = node.namedChildren
       .map(child => this.generate(child))
 
-    return new InferAbstractionType(node, this.errorHandler)
+    return new InferAbstractionType(node, this.errorHandler, this.typeConstraints)
       .perform(abstractionBranchTypes)
   }
 
@@ -179,6 +182,7 @@ export class Analyze {
     const valueType = this.generate(node.namedChild(0))
     const accessType = this.generate(node.namedChild(1))
 
+    console.log(valueType.toString())
     assert(
       valueType instanceof ParametricType,
       'Value type in access operator should be a parametric type.'
@@ -188,7 +192,7 @@ export class Analyze {
     assert(binding instanceof TypeBinding, 'Should be a type binding.')
     const valueRepresentation = binding.representation
 
-    return new InferAccessType(node, this.errorHandler)
+    return new InferAccessType(node, this.errorHandler, this.typeConstraints)
       .perform(valueType, accessType, valueRepresentation)
   }
 
@@ -238,7 +242,7 @@ export class Analyze {
         binding.type
     })
 
-    return new InferAssignmentType(node, this.errorHandler)
+    return new InferAssignmentType(node, this.errorHandler, this.typeConstraints)
       .perform(patternType, valueType)
   }
 
@@ -309,13 +313,13 @@ export class Analyze {
   private generateList = (node: Parser.SyntaxNode): Type => {
     const valueTypes = node.namedChildren.map(child => this.generate(child))
 
-    return new InferListType(node, this.errorHandler).perform(valueTypes)
+    return new InferListType(node, this.errorHandler, this.typeConstraints).perform(valueTypes)
   }
 
   private generateListPattern = (node: Parser.SyntaxNode): Type => {
     const valueTypes = node.namedChildren.map(child => this.generate(child))
 
-    return new InferListType(node, this.errorHandler).perform(valueTypes)
+    return new InferListType(node, this.errorHandler, this.typeConstraints).perform(valueTypes)
   }
 
   private generateListType = (node: Parser.SyntaxNode): Type => {
@@ -327,13 +331,13 @@ export class Analyze {
   private generateMap = (node: Parser.SyntaxNode): Type => {
     const mapTypes = node.namedChildren.map(child => this.generate(child))
 
-    return new InferMapType(node, this.errorHandler).perform(mapTypes)
+    return new InferMapType(node, this.errorHandler, this.typeConstraints).perform(mapTypes)
   }
 
   private generateMapPattern = (node: Parser.SyntaxNode): Type => {
     const mapTypes = node.namedChildren.map(child => this.generate(child))
 
-    return new InferMapType(node, this.errorHandler).perform(mapTypes)
+    return new InferMapType(node, this.errorHandler, this.typeConstraints).perform(mapTypes)
   }
 
   private generateMapType = (node: Parser.SyntaxNode): Type => {
@@ -391,7 +395,7 @@ export class Analyze {
     if (node.namedChildCount == 2) {
       const defaultValueType = this.generate(node.namedChild(1))
 
-      return new InferDefaultValueType(node, this.errorHandler)
+      return new InferDefaultValueType(node, this.errorHandler, this.typeConstraints)
         .perform(type, defaultValueType)
     }
 
@@ -450,8 +454,11 @@ export class Analyze {
     if (node.namedChildCount == 2) {
       const defaultValueType = this.generate(node.namedChild(1))
 
-      return new InferDefaultValueType(node, this.errorHandler)
-        .perform(type, defaultValueType)
+      return new ParametricType(MAP_TYPE, [
+        new ParametricType(STRING_TYPE),
+        new InferDefaultValueType(node, this.errorHandler, this.typeConstraints)
+          .perform(type, defaultValueType)
+      ])
     }
 
     return new ParametricType(MAP_TYPE, [new ParametricType(STRING_TYPE), type])
@@ -467,7 +474,7 @@ export class Analyze {
     const stringEmbeddingTypes = node.namedChildren
       .map(child => this.generate(child))
 
-    new CheckStringEmbeddingType(node, this.errorHandler)
+    new CheckStringEmbeddingType(node, this.errorHandler, this.typeConstraints)
       .perform(stringEmbeddingTypes)
 
     return new ParametricType(STRING_TYPE)
