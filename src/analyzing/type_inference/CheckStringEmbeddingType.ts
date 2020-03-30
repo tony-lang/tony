@@ -14,7 +14,11 @@ export class CheckStringEmbeddingType {
   private node: Parser.SyntaxNode
   private typeConstraints: TypeConstraints
 
-  constructor(node: Parser.SyntaxNode, errorHandler: ErrorHandler, typeConstraints: TypeConstraints) {
+  constructor(
+    node: Parser.SyntaxNode,
+    errorHandler: ErrorHandler,
+    typeConstraints: TypeConstraints
+  ) {
     this.node = node
     this.errorHandler = errorHandler
     this.typeConstraints = typeConstraints
@@ -30,7 +34,10 @@ export class CheckStringEmbeddingType {
     stringEmbeddingType: Type
   ): void => {
     try {
-      stringEmbeddingType.unify(new ParametricType(STRING_TYPE), this.typeConstraints)
+      stringEmbeddingType.unify(
+        new ParametricType(STRING_TYPE),
+        this.typeConstraints
+      )
     } catch (error) {
       this.errorHandler.throw(
         `Type '${stringEmbeddingType.toString()}' not assignable to type ` +

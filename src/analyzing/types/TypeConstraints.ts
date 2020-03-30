@@ -7,7 +7,7 @@ export class TypeConstraints {
   has = (variable: TypeVariable): boolean => this._map.has(variable.name)
 
   resolve = (variable: TypeVariable): Type => {
-    let type = this._map.get(variable.name)
+    const type = this._map.get(variable.name)
 
     if (type instanceof TypeVariable && this.has(type))
       return this.resolve(type)

@@ -15,7 +15,11 @@ export class InferListType {
   private node: Parser.SyntaxNode
   private typeConstraints: TypeConstraints
 
-  constructor(node: Parser.SyntaxNode, errorHandler: ErrorHandler, typeConstraints: TypeConstraints) {
+  constructor(
+    node: Parser.SyntaxNode,
+    errorHandler: ErrorHandler,
+    typeConstraints: TypeConstraints
+  ) {
     this.node = node
     this.errorHandler = errorHandler
     this.typeConstraints = typeConstraints
@@ -24,7 +28,10 @@ export class InferListType {
   perform = (valueTypes: Type[]): Type => {
     try {
       return valueTypes.reduce((valueType, otherValueType) => {
-        return valueType.unify(new ParametricType(LIST_TYPE, [otherValueType]), this.typeConstraints)
+        return valueType.unify(
+          new ParametricType(LIST_TYPE, [otherValueType]),
+          this.typeConstraints
+        )
       }, new ParametricType(LIST_TYPE, [new TypeVariable]))
     } catch (error) {
       this.errorHandler.throw(

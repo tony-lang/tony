@@ -163,8 +163,9 @@ export class Analyze {
     const abstractionBranchTypes = node.namedChildren
       .map(child => this.generate(child))
 
-    return new InferAbstractionType(node, this.errorHandler, this.typeConstraints)
-      .perform(abstractionBranchTypes)
+    return new InferAbstractionType(
+      node, this.errorHandler, this.typeConstraints
+    ).perform(abstractionBranchTypes)
   }
 
   private generateAbstractionBranch = (node: Parser.SyntaxNode): Type => {
@@ -242,8 +243,9 @@ export class Analyze {
         binding.type
     })
 
-    return new InferAssignmentType(node, this.errorHandler, this.typeConstraints)
-      .perform(patternType, valueType)
+    return new InferAssignmentType(
+      node, this.errorHandler, this.typeConstraints
+    ).perform(patternType, valueType)
   }
 
   private generateBlock = (node: Parser.SyntaxNode): Type => {
@@ -313,13 +315,15 @@ export class Analyze {
   private generateList = (node: Parser.SyntaxNode): Type => {
     const valueTypes = node.namedChildren.map(child => this.generate(child))
 
-    return new InferListType(node, this.errorHandler, this.typeConstraints).perform(valueTypes)
+    return new InferListType(node, this.errorHandler, this.typeConstraints)
+      .perform(valueTypes)
   }
 
   private generateListPattern = (node: Parser.SyntaxNode): Type => {
     const valueTypes = node.namedChildren.map(child => this.generate(child))
 
-    return new InferListType(node, this.errorHandler, this.typeConstraints).perform(valueTypes)
+    return new InferListType(node, this.errorHandler, this.typeConstraints)
+      .perform(valueTypes)
   }
 
   private generateListType = (node: Parser.SyntaxNode): Type => {
@@ -331,13 +335,15 @@ export class Analyze {
   private generateMap = (node: Parser.SyntaxNode): Type => {
     const mapTypes = node.namedChildren.map(child => this.generate(child))
 
-    return new InferMapType(node, this.errorHandler, this.typeConstraints).perform(mapTypes)
+    return new InferMapType(node, this.errorHandler, this.typeConstraints)
+      .perform(mapTypes)
   }
 
   private generateMapPattern = (node: Parser.SyntaxNode): Type => {
     const mapTypes = node.namedChildren.map(child => this.generate(child))
 
-    return new InferMapType(node, this.errorHandler, this.typeConstraints).perform(mapTypes)
+    return new InferMapType(node, this.errorHandler, this.typeConstraints)
+      .perform(mapTypes)
   }
 
   private generateMapType = (node: Parser.SyntaxNode): Type => {
@@ -395,8 +401,9 @@ export class Analyze {
     if (node.namedChildCount == 2) {
       const defaultValueType = this.generate(node.namedChild(1))
 
-      return new InferDefaultValueType(node, this.errorHandler, this.typeConstraints)
-        .perform(type, defaultValueType)
+      return new InferDefaultValueType(
+        node, this.errorHandler, this.typeConstraints
+      ).perform(type, defaultValueType)
     }
 
     return type

@@ -9,7 +9,11 @@ export class InferAssignmentType {
   private node: Parser.SyntaxNode
   private typeConstraints: TypeConstraints
 
-  constructor(node: Parser.SyntaxNode, errorHandler: ErrorHandler, typeConstraints: TypeConstraints) {
+  constructor(
+    node: Parser.SyntaxNode,
+    errorHandler: ErrorHandler,
+    typeConstraints: TypeConstraints
+  ) {
     this.node = node
     this.errorHandler = errorHandler
     this.typeConstraints = typeConstraints
