@@ -6,8 +6,8 @@ import { UnificationError } from './UnificationError'
 export class CurriedType extends Type {
   private _parameters: Type[]
 
-  constructor(parameters: Type[], isOptional = false) {
-    super(isOptional)
+  constructor(parameters: Type[]) {
+    super()
 
     this._parameters = parameters
   }
@@ -49,8 +49,7 @@ export class CurriedType extends Type {
     const parameters = this.parameters
       .map(parameter => parameter.toString())
       .join(' -> ')
-    const optional = this.isOptional ? '?' : ''
 
-    return `(${parameters})${optional}`
+    return `(${parameters})`
   }
 }

@@ -1,4 +1,4 @@
-fn := 0 => 1, x => x
+fn := (0) => 1, (x) => x
 
 print(fn(0).to_str)
 print(fn(1).to_str)

@@ -8,8 +8,8 @@ export class ParametricType extends Type {
   private _name: string
   private _parameters: Type[]
 
-  constructor(name: string, parameters: Type[] = [], isOptional = false) {
-    super(isOptional)
+  constructor(name: string, parameters: Type[] = []) {
+    super()
 
     this._name = name
     this._parameters = parameters
@@ -60,8 +60,7 @@ export class ParametricType extends Type {
       .map(parameter => parameter.toString())
     const combinedParameters =
       parameters.length > 0 ? `<${parameters.join(', ')}>` : ''
-    const optional = this.isOptional ? '?' : ''
 
-    return `${this.name}${combinedParameters}${optional}`
+    return `${this.name}${combinedParameters}`
   }
 }

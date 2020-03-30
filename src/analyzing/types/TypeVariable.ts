@@ -8,7 +8,7 @@ export class TypeVariable extends Type {
   private _name: string
 
   constructor(name?: string) {
-    super(false)
+    super()
 
     this._name = name || TypeVariable.getUnusedVariableName()
   }
@@ -41,11 +41,7 @@ export class TypeVariable extends Type {
 
   isComplete = (): boolean => false
 
-  toString = (): string => {
-    const optional = this.isOptional ? '?' : ''
-
-    return `${this.name}${optional}`
-  }
+  toString = (): string => this.name
 
   private static getUnusedVariableName = (): string => {
     const name = `t${TypeVariable.unnamedVariableCount}`

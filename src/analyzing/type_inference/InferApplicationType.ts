@@ -41,8 +41,6 @@ export class InferApplicationType {
     const parameterTypes =
       valueType.parameters.reduce((parameterTypes, parameterType, i) => {
         const argumentType = argumentTypes.parameters[i]
-        if (argumentType === undefined && parameterType.isOptional)
-          return parameterTypes
         if (argumentType === undefined ||
             this.isPlaceholderArgument(argumentType))
           return parameterTypes.concat([parameterType])

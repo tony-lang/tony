@@ -14,8 +14,10 @@ import {
   MAP_TYPE,
   TUPLE_TYPE
 } from '../types'
+import { BuildSymbolTable, TypeBinding } from '../symbol_table'
 
 export class InferAccessType {
+  private buildSymbolTable: BuildSymbolTable
   private errorHandler: ErrorHandler
   private node: Parser.SyntaxNode
   private typeConstraints: TypeConstraints
@@ -23,18 +25,16 @@ export class InferAccessType {
   constructor(
     node: Parser.SyntaxNode,
     errorHandler: ErrorHandler,
+    buildSymbolTable: BuildSymbolTable,
     typeConstraints: TypeConstraints
   ) {
     this.node = node
     this.errorHandler = errorHandler
+    this.buildSymbolTable = buildSymbolTable
     this.typeConstraints = typeConstraints
   }
 
-  perform = (
-    valueType: Type,
-    accessType: Type,
-    valueRepresentation: ObjectRepresentation
-  ): Type => {
+  perform = (valueType: Type, accessType: Type): Type => {
     if (valueType instanceof ParametricType) {
       if (valueType.name === LIST_TYPE)
         return this.accessList(valueType, accessType)
@@ -43,11 +43,7 @@ export class InferAccessType {
       else if (valueType.name === TUPLE_TYPE)
         return this.accessTuple(valueType, accessType)
       else
-        return this.accessRepresentation(
-          valueType,
-          accessType,
-          valueRepresentation
-        )
+        return this.accessRepresentation(valueType, accessType)
     }
 
     this.errorHandler.throw(
@@ -105,8 +101,7 @@ export class InferAccessType {
 
   private accessRepresentation = (
     valueType: ParametricType,
-    accessType: Type,
-    valueRepresentation: ObjectRepresentation
+    accessType: Type
   ): Type => {
     // TODO: implement dynamic access with union types
     try {
@@ -116,12 +111,15 @@ export class InferAccessType {
         const shorthandAccessIdentifier = this.node.namedChild(1)
         const property = shorthandAccessIdentifier.text
 
+        const binding = this.buildSymbolTable
+          .resolveBinding(valueType.name, this.node)
+        assert(binding instanceof TypeBinding, 'Should be a type binding.')
         assert(
-          valueRepresentation,
+          binding.representation,
           `Object representation of ${valueType.toString()} should be present.`
         )
 
-        return valueRepresentation.findProperty(property).type
+        return binding.representation.findProperty(property).type
       } else
         assert(false, 'Dynamic object access has not been implemented yet.')
     } catch (error) {

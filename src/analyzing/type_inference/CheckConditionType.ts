@@ -2,9 +2,14 @@ import Parser from 'tree-sitter'
 
 import { ErrorHandler } from '../../error_handling'
 
-import { Type, TypeConstraints } from '../types'
+import {
+  ParametricType,
+  Type,
+  TypeConstraints,
+  BOOLEAN_TYPE
+} from '../types'
 
-export class InferDefaultValueType {
+export class CheckConditionType {
   private errorHandler: ErrorHandler
   private node: Parser.SyntaxNode
   private typeConstraints: TypeConstraints
@@ -19,13 +24,16 @@ export class InferDefaultValueType {
     this.typeConstraints = typeConstraints
   }
 
-  perform = (type: Type, defaultValueType: Type): Type => {
+  perform = (conditionType: Type): void => {
     try {
-      return type.unify(defaultValueType, this.typeConstraints)
+      conditionType.unify(
+        new ParametricType(BOOLEAN_TYPE),
+        this.typeConstraints
+      )
     } catch (error) {
       this.errorHandler.throw(
-        `Type '${defaultValueType.toString()}' is not assignable to type ` +
-        `'${type.toString()}'.\n\n${error.message}`,
+        `Type '${conditionType.toString()}' not assignable to type ` +
+        `'${BOOLEAN_TYPE}'.\n\n${error.message}`,
         this.node
       )
     }

@@ -4,6 +4,7 @@ import { ErrorHandler } from '../error_handling'
 import { assert } from '../utilities'
 
 import {
+  Binding,
   BuildSymbolTable,
   ResolveImport,
   ResolvePatternBindings,
@@ -11,6 +12,7 @@ import {
   TypeBinding
 } from './symbol_table'
 import {
+  CheckConditionType,
   CheckStringEmbeddingType,
   InferAbstractionType,
   InferAccessType,
@@ -86,12 +88,20 @@ export class Analyze {
       return new ParametricType(BOOLEAN_TYPE)
     case 'comment':
       return
+    case 'escape_sequence':
+      return new ParametricType(STRING_TYPE)
     case 'export':
       return this.generateExport(node)
     case 'expression_pair':
       return this.generateExpressionPair(node)
     case 'external_import':
       return this.generateExternalImport(node)
+    case 'generator':
+      return this.generateGenerator(node)
+    case 'generator_condition':
+      return this.generateGeneratorCondition(node)
+    case 'generators':
+      return this.generateGenerators(node)
     case 'identifier':
       return this.generateIdentifier(node)
     case 'identifier_pattern':
@@ -104,6 +114,8 @@ export class Analyze {
       return this.generateInterpolation(node)
     case 'list':
       return this.generateList(node)
+    case 'list_comprehension':
+      return this.generateListComprehension(node)
     case 'list_pattern':
       return this.generateListPattern(node)
     case 'list_type':
@@ -126,6 +138,8 @@ export class Analyze {
       return this.generatePatternPair(node)
     case 'pipeline':
       return this.generatePipeline(node)
+    case 'prefix_application':
+      return this.generatePrefixApplication(node)
     case 'program':
       return this.generateProgram(node)
     case 'regex':
@@ -136,6 +150,8 @@ export class Analyze {
       return this.generateRestMap(node)
     case 'rest_tuple':
       return this.generateRestTuple(node)
+    case 'return':
+      return this.generateReturn(node)
     case 'shorthand_access_identifier':
       return new ParametricType(STRING_TYPE)
     case 'shorthand_pair_identifier_pattern':
@@ -183,18 +199,8 @@ export class Analyze {
     const valueType = this.generate(node.namedChild(0))
     const accessType = this.generate(node.namedChild(1))
 
-    console.log(valueType.toString())
-    assert(
-      valueType instanceof ParametricType,
-      'Value type in access operator should be a parametric type.'
-    )
-    const binding = this.buildSymbolTable.resolveBinding(valueType.name, node)
-
-    assert(binding instanceof TypeBinding, 'Should be a type binding.')
-    const valueRepresentation = binding.representation
-
-    return new InferAccessType(node, this.errorHandler, this.typeConstraints)
-      .perform(valueType, accessType, valueRepresentation)
+    return new InferAccessType(node, this.errorHandler, this.buildSymbolTable, this.typeConstraints)
+      .perform(valueType, accessType)
   }
 
   private generateApplication = (node: Parser.SyntaxNode): Type => {
@@ -279,6 +285,38 @@ export class Analyze {
     return
   }
 
+  private generateGenerator = (node: Parser.SyntaxNode): Type => {
+    const name = node.namedChild(0).text
+    const valueType = this.generate(node.namedChild(1))
+
+    const type = new InferRestListType(
+      node, this.errorHandler, this.typeConstraints
+    ).perform(valueType)
+    this.buildSymbolTable.addBinding(
+      new Binding(name, type, true, false),
+      node
+    )
+
+    if (node.namedChildCount == 3) this.generate(node.namedChild(2))
+
+    return
+  }
+
+  private generateGeneratorCondition = (node: Parser.SyntaxNode): Type => {
+    const type = this.generate(node.namedChild(0))
+
+    new CheckConditionType(node, this.errorHandler, this.typeConstraints)
+      .perform(type)
+
+    return
+  }
+
+  private generateGenerators = (node: Parser.SyntaxNode): Type => {
+    node.namedChildren.map(child => this.generate(child))
+
+    return
+  }
+
   private generateIdentifier = (node: Parser.SyntaxNode): Type => {
     const name = node.text
 
@@ -317,6 +355,15 @@ export class Analyze {
 
     return new InferListType(node, this.errorHandler, this.typeConstraints)
       .perform(valueTypes)
+  }
+
+  private generateListComprehension = (node: Parser.SyntaxNode): Type => {
+    this.buildSymbolTable.enterAbstraction()
+    this.generate(node.namedChild(1))
+    const bodyType = this.generate(node.namedChild(0))
+
+    this.buildSymbolTable.leaveAbstraction()
+    return new ParametricType(LIST_TYPE, [bodyType])
   }
 
   private generateListPattern = (node: Parser.SyntaxNode): Type => {
@@ -409,6 +456,13 @@ export class Analyze {
     return type
   }
 
+  private generatePatternPair = (node: Parser.SyntaxNode): Type => {
+    const keyType = this.generate(node.namedChild(0))
+    const valueType = this.generate(node.namedChild(1))
+
+    return new ParametricType(MAP_TYPE, [keyType, valueType])
+  }
+
   private generatePipeline = (node: Parser.SyntaxNode): Type => {
     const argumentType = this.generate(node.namedChild(0))
     const valueType = this.generate(node.namedChild(1))
@@ -417,11 +471,12 @@ export class Analyze {
       .perform(valueType, new CurriedType([argumentType]))
   }
 
-  private generatePatternPair = (node: Parser.SyntaxNode): Type => {
-    const keyType = this.generate(node.namedChild(0))
-    const valueType = this.generate(node.namedChild(1))
+  private generatePrefixApplication = (node: Parser.SyntaxNode): Type => {
+    const abstractionType = this.generate(node.namedChild(0))
+    const argumentTypes = new CurriedType([this.generate(node.namedChild(1))])
 
-    return new ParametricType(MAP_TYPE, [keyType, valueType])
+    return new InferApplicationType(node, this.errorHandler)
+      .perform(abstractionType, argumentTypes)
   }
 
   private generateProgram = (node: Parser.SyntaxNode): Type => {
@@ -435,14 +490,14 @@ export class Analyze {
   private generateRestList = (node: Parser.SyntaxNode): Type => {
     const typeConstructor = this.generate(node.namedChild(0))
 
-    return new InferRestListType(node, this.errorHandler)
+    return new InferRestListType(node, this.errorHandler, this.typeConstraints)
       .perform(typeConstructor)
   }
 
   private generateRestMap = (node: Parser.SyntaxNode): Type => {
     const typeConstructor = this.generate(node.namedChild(0))
 
-    return new InferRestMapType(node, this.errorHandler)
+    return new InferRestMapType(node, this.errorHandler, this.typeConstraints)
       .perform(typeConstructor)
   }
 
@@ -452,6 +507,9 @@ export class Analyze {
     return new InferRestTupleType(node, this.errorHandler)
       .perform(typeConstructor)
   }
+
+  private generateReturn = (node: Parser.SyntaxNode): Type =>
+    this.generate(node.namedChild(0))
 
   private generateShorthandPairIdentifierPattern = (
     node: Parser.SyntaxNode

@@ -1,3 +1,4 @@
+export { CheckConditionType } from './CheckConditionType'
 export { CheckStringEmbeddingType } from './CheckStringEmbeddingType'
 export { InferAbstractionType } from './InferAbstractionType'
 export { InferAccessType } from './InferAccessType'

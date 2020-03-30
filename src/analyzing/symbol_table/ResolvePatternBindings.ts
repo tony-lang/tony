@@ -58,6 +58,8 @@ export class ResolvePatternBindings {
       return this.matchRestList(pattern, type)
     case 'rest_map':
       return this.matchRestMap(pattern, type)
+    case 'rest_tuple':
+      return this.matchRestList(pattern, type)
     case 'shorthand_pair_identifier_pattern':
       return this.matchShorthandPairIdentifierPattern(pattern, type)
     case 'tuple_pattern':
@@ -128,6 +130,9 @@ export class ResolvePatternBindings {
   private matchRestMap = (pattern: Parser.SyntaxNode,type: Type): void =>
     this.match(pattern.namedChild(0), type)
 
+  private matchRestTuple = (pattern: Parser.SyntaxNode, type: Type): void =>
+    this.match(pattern.namedChild(0), type)
+
   private matchShorthandPairIdentifierPattern = (
     pattern: Parser.SyntaxNode,
     type: Type
@@ -146,15 +151,14 @@ export class ResolvePatternBindings {
     pattern: Parser.SyntaxNode,
     type: Type
   ): void => {
-    if (type instanceof ParametricType && type.name === TUPLE_TYPE &&
-        pattern.namedChildCount >= type.parameters.length)
-      pattern.namedChildren.forEach((child, i) => {
+    if (type instanceof ParametricType && type.name === TUPLE_TYPE)
+      return pattern.namedChildren.forEach((child, i) => {
         this.match(child, type.parameters[i])
       })
 
     this.errorHandler.throw(
       `Values of type '${type.toString()}' cannot be pattern matched ` +
-      'against tuple pattern',
+      'against tuple',
       this.node
     )
   }

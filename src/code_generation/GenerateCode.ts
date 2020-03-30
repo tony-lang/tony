@@ -115,6 +115,8 @@ export class GenerateCode {
       return this.generateRestList(node)
     case 'rest_map':
       return this.generateRestMap(node)
+    case 'rest_tuple':
+      return this.generateRestTuple(node)
     case 'return':
       return this.generateReturn(node)
     case 'shorthand_access_identifier':
@@ -224,10 +226,12 @@ export class GenerateCode {
 
     const returnValue =
       isDeclaration ? `{${returnedDeclarations}}` : expressions.pop()
+    const explicitReturn =
+      !isDeclaration && node.lastNamedChild.type === 'return' ? '' : 'return '
 
     this.walkSymbolTable.leaveBlock()
     return `(()=>{${combinedDeclarations};` +
-           `${expressions.join(';')};return ${returnValue}})()`
+           `${expressions.join(';')};${explicitReturn}${returnValue}})()`
   }
 
   generateBoolean = (node: Parser.SyntaxNode): string => {
@@ -424,7 +428,7 @@ export class GenerateCode {
     const left = this.generate(node.namedChild(0))
     const right = this.generate(node.namedChild(1))
 
-    return `"${left.slice(1, -1)}":${right}`
+    return `"[${left}]":${right}`
   }
 
   generatePipeline = (node: Parser.SyntaxNode): string => {
@@ -494,6 +498,12 @@ export class GenerateCode {
     const name = this.generate(node.namedChild(0)).slice(1, -1)
 
     return `"['${TRANSFORM_REST_PATTERN}']":"${name}"`
+  }
+
+  generateRestTuple = (node: Parser.SyntaxNode): string => {
+    const name = this.generate(node.namedChild(0)).slice(1, -1)
+
+    return `"${INTERNAL_TEMP_TOKEN}${name}"`
   }
 
   generateReturn = (node: Parser.SyntaxNode): string => {
