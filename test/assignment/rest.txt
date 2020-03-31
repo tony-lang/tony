@@ -1,11 +1,11 @@
-NaN
-NaN
+undefined
+undefined
 1
-NaN
+undefined
 1
 2
 3
-NaN
+undefined
 1
 2
 3

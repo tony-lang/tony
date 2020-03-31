@@ -3,12 +3,10 @@
 86
 Tony
 Hoare
-0
 hello world
-NaN
+undefined
+2
 1
 hello
-2
-Tony
 0
 200
