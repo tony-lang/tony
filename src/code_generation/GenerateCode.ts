@@ -136,6 +136,8 @@ export class GenerateCode {
       return this.generateTuple(node)
     case 'tuple_pattern':
       return this.generateTuplePattern(node)
+    case 'type':
+      return this.generateType(node)
     case 'when_clause':
       return this.generateWhenClause(node)
     case 'when_clauses':
@@ -395,10 +397,11 @@ export class GenerateCode {
   }
 
   generateModule = (node: Parser.SyntaxNode): string => {
+    const name = this.generate(node.namedChild(0))
     this.declarationBlock = true
-    const body = this.generate(node.namedChild(0))
+    const body = this.generate(node.namedChild(1))
 
-    return body
+    return `(()=>{${name}=${body};return ${name}})()`
   }
 
   generateNumber = (node: Parser.SyntaxNode): string => {
@@ -586,6 +589,12 @@ export class GenerateCode {
       .join(',')
 
     return `[${elements}]`
+  }
+
+  generateType = (node: Parser.SyntaxNode): string => {
+    const name = node.text
+
+    return this.transformIdentifier.perform(name)
   }
 
   generateWhenClause = (node: Parser.SyntaxNode): string => {

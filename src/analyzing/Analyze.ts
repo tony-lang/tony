@@ -55,6 +55,8 @@ export class Analyze {
 
   // used to communicate type of provided value to when branches
   private caseValueType: Type
+  // used to prevent looking up types when declaring them
+  private isDeclaration = false
 
   constructor(file: string, outputPath: string) {
     this.errorHandler = new ErrorHandler(file)
@@ -475,7 +477,9 @@ export class Analyze {
   private generateModule = (node: Parser.SyntaxNode): Type => {
     const isExported = this.buildSymbolTable.disableExports()
 
+    this.isDeclaration = true
     const type = this.generate(node.namedChild(0))
+    this.isDeclaration = false
     const body = node.namedChild(1)
 
     assert(
@@ -486,12 +490,14 @@ export class Analyze {
     this.generate(body)
     const moduleScope = this.buildSymbolTable.currentScope.lastNestedScope
     const representation = new ObjectRepresentation(
-      moduleScope.bindings.map(binding => ({
-        name: binding.name,
-        type: binding.type,
-        representation: binding instanceof TypeBinding ?
-          binding.representation : undefined
-      }))
+      moduleScope.bindings
+        .filter(binding => binding.isExported)
+        .map(binding => ({
+          name: binding.name,
+          type: binding.type,
+          representation: binding instanceof TypeBinding ?
+            binding.representation : undefined
+        }))
     )
 
     const binding = new TypeBinding(type, representation, false, isExported)
@@ -675,7 +681,8 @@ export class Analyze {
   private generateType = (node: Parser.SyntaxNode): Type => {
     const name = node.text
 
-    return this.buildSymbolTable.resolveBinding(name, node).type
+    if (this.isDeclaration) return new ParametricType(name)
+    else return this.buildSymbolTable.resolveBinding(name, node).type
   }
 
   private generateTypeConstructor = (node: Parser.SyntaxNode): Type => {

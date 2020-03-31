@@ -109,7 +109,7 @@ export class InferAccessType {
 
       if (this.node.namedChild(1).type === 'shorthand_access_identifier') {
         const shorthandAccessIdentifier = this.node.namedChild(1)
-        const property = shorthandAccessIdentifier.text
+        const propertyName = shorthandAccessIdentifier.text
 
         const binding = this.buildSymbolTable
           .resolveBinding(valueType.name, this.node)
@@ -119,7 +119,13 @@ export class InferAccessType {
           `Object representation of ${valueType.toString()} should be present.`
         )
 
-        return binding.representation.findProperty(property).type
+        const property = binding.representation.findProperty(propertyName)
+        if (property) return property.type
+        else this.errorHandler.throw(
+          `Property '${propertyName}' does not exist on object with ` +
+          `representation '${binding.representation.toString()}'.`,
+          this.node
+        )
       } else
         assert(false, 'Dynamic object access has not been implemented yet.')
     } catch (error) {

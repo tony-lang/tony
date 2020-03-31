@@ -1,1 +1,1 @@
-ERROR: m._internal is not a function
+ERROR: Property 'internal' does not exist on object

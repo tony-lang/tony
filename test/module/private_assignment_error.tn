@@ -1,5 +1,4 @@
-m := module
-  _internal := (x) => x
-  fn := (x) => _internal(x)
-
-m->_internal(0)
+module M
+  internal := (x) => x
+  export fn := (x) => internal(x)
+M->internal(0)
