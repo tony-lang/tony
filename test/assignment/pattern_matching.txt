@@ -1,5 +1,12 @@
-0 2
-86 [ 'Tony', 'Hoare' ]
-0 hello world {} 1
-hello [ 2, 'Tony' ]
-0 200
+0
+2
+86
+Tony
+Hoare
+hello world
+undefined
+2
+1
+hello
+0
+200

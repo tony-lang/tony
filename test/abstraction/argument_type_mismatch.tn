@@ -1,0 +1,2 @@
+fn := (a, b, 1, { c }) => [a, b, c]
+print(fn(0, 'hello', 1, { c: 2 })[0].to_str)

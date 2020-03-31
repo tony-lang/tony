@@ -1,1 +1,4 @@
-print([x + 1 | x in [1, 2, 3]])
+list := [x + 1 | x in [1, 2, 3]]
+print(list[0].to_str)
+print(list[1].to_str)
+print(list[2].to_str)

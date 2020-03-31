@@ -2,11 +2,11 @@ m := (value) =>
   case value
   when [1], [1, 2] then 0
   when [1, 2, x] then x
-  when [1, 2, ...x] then x
-  else -1
+  when [1, 2, ...x] then x[0]
+  else !1
 
-print(m([1]))
-print(m([1, 2]))
-print(m([1, 2, 3]))
-print(m([1, 2, 3, 4]))
-print(m([0, 1, 2, 3, 4]))
+print(m([1]).to_str)
+print(m([1, 2]).to_str)
+print(m([1, 2, 3]).to_str)
+print(m([1, 2, 3, 4]).to_str)
+print(m([0, 1, 2, 3, 4]).to_str)

@@ -15,4 +15,10 @@ export class Curry {
   private static addNewArgs = (args: any[], newArgs: any[]): any[] => args
     .map(arg => arg === TRANSFORM_PLACEHOLDER_ARGUMENT ? newArgs.pop() : arg)
     .concat(newArgs)
+
+  static external = (fn: any, ...cache: any[]) => (...args: any[]): any => {
+    const all = cache.concat(args)
+
+    return all.length >= fn.length ? fn(...all) : Curry.external(fn, ...all)
+  }
 }

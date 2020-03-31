@@ -5,24 +5,26 @@ import Parser from 'tree-sitter'
 
 import Tony from './Tony'
 import parser from './parser'
+import { Analyze } from './analyzing'
 import { GenerateCode } from './code_generation'
 import {
   readFile,
   writeFile,
   getEntryFilePath,
   getOutputPathForFile,
-  copyFile
+  copyFile,
+  assert
 } from './utilities'
 import { FILE_EXTENSION } from './constants'
 
-export async function compile(
+export const compile = async (
   tony: Tony,
   project: string,
   mode: string,
   outFile: string,
   outDir: string,
   retainOutDir: boolean
-): Promise<string> {
+): Promise<string> => {
   if (tony.debug) console.log('Compiling...')
 
   const entryFilePath = getEntryFilePath(project)
@@ -30,13 +32,12 @@ export async function compile(
   const compiledFiles: string[] = []
   const outputDirPath = path.join(process.cwd(), outDir)
   const outputFilePath = path.join(process.cwd(), outFile)
-  const codeGenerator = new GenerateCode(outputDirPath, files)
 
   while (files.length > 0) {
     const file = files.pop()
     if (compiledFiles.includes(file)) continue
 
-    await compileFile(tony, codeGenerator, file, outputDirPath)
+    await compileFile(tony, files, file, outputDirPath)
     compiledFiles.push(file)
   }
 
@@ -47,7 +48,7 @@ export async function compile(
 
 const compileFile = (
   tony: Tony,
-  codeGenerator: GenerateCode,
+  files: string[],
   file: string,
   outputDirPath: string
 ): Promise<void> => {
@@ -57,17 +58,22 @@ const compileFile = (
   return readFile(file).then((sourceCode: string) => {
     if (tony.debug) console.log(`Parsing ${file}...`)
     const tree = parser.parse(sourceCode.toString())
-    if (tree.rootNode.hasError()) {
-      console.log(`Error while parsing ${file}...`)
-      console.log(tree.rootNode.toString())
-      process.exit(1)
-    }
+    assert(
+      !tree.rootNode.hasError(),
+      `Error while parsing ${file}...\n${tree.rootNode.toString()}`
+    )
     if (tony.debug) console.log(tree.rootNode.toString())
 
     return tree.rootNode
   }).then((node: Parser.SyntaxNode) => {
+    if (tony.debug) console.log(`Analyzing ${file}...`)
+    const analyzer = new Analyze(file, outputDirPath)
+    const symbolTable = analyzer.perform(node)
+    files.push(...symbolTable.importedFiles)
+    if (tony.debug) console.dir(symbolTable, { depth: null })
+
     if (tony.debug) console.log(`Compiling ${file}...`)
-    codeGenerator.getImportSource.file = file
+    const codeGenerator = new GenerateCode(symbolTable)
     return writeFile(
       getOutputPathForFile(outputDirPath, file),
       codeGenerator.generate(node)
@@ -94,15 +100,13 @@ const webpackCompile = (
     { stdio: tony.debug ? 'inherit' : null }
   )
 
-  if (p.status != 0) {
-    console.log(p.stdout.toString())
-    console.log(
-      `Oh noes! Tony wasn't able to compile ${entryFilePath}.\nPlease report ` +
-      'the file you tried to compile as well as the printed output at ' +
-      'https://github.com/tony-lang/tony/issues'
-    )
-    process.exit(p.status)
-  }
+  assert(
+    p.status == 0,
+    () => `${p.stdout.toString()}\n\n` +
+    `Oh noes! Tony wasn't able to compile ${entryFilePath}.\nPlease report ` +
+    'the file you tried to compile as well as the printed output at ' +
+    'https://github.com/tony-lang/tony/issues'
+  )
 }
 
 const cleanup = (

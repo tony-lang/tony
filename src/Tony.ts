@@ -4,7 +4,8 @@ import parser from './parser'
 import {
   readFile,
   getWorkingDirectoryName,
-  getOutputFileName
+  getOutputFileName,
+  assert
 } from './utilities'
 import { compile } from './compile'
 import { exec } from './exec'
@@ -18,8 +19,7 @@ export default class Tony {
   }
 
   init = (project: string): void => {
-    console.log('The init command has not been implemented yet.')
-    process.exit(1)
+    assert(false, 'The init command has not been implemented yet.')
   }
 
   run = (
@@ -75,7 +75,6 @@ export default class Tony {
   }
 
   repl = (projects: string[] = []): void => {
-    console.log('The shell has not been implemented yet.')
-    process.exit(1)
+    assert(false, 'The shell has not been implemented yet.')
   }
 }

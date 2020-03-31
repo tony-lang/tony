@@ -1,5 +1,4 @@
 abstraction := (x) =>
-  y := x
-  print(y)
+  return y := x
 
-abstraction(0)
+print(abstraction(0).to_str)

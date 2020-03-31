@@ -1,0 +1,1 @@
+ERROR: The binding 'x' is missing from one of the patterns.

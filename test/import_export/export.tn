@@ -1,1 +1,1 @@
-export p := eval('console.log')
+export n := 1

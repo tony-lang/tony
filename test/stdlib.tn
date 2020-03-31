@@ -1,14 +1,14 @@
-print := eval('console.log')
-
-+ := (a, b) => eval('{a} + {b}')
-- := (a) => eval('-{a}'), (a, b) => eval('{a} - {b}')
-% := (a, b) => eval('{a} % {b}')
-
-++ := (a, b) => eval('[{a}].concat([{b}])')
-
-<= := (a, b) => eval('{a} <= {b}')
-< := (a, b) => eval('{a} < {b}')
->= := (a, b) => eval('{a} >= {b}')
-> := (a, b) => eval('{a} > {b}')
-
-== := (a, b) => eval('{a} == {b}')
+import extern {
+  print :: String -> Void,
+  to_str :: Number -> String,
+  neg: ! :: Number -> Number,
+  add: + :: Number -> Number -> Number,
+  sub: - :: Number -> Number -> Number,
+  mod: % :: Number -> Number -> Number,
+  concat: ++ :: [Number] -> [Number] -> [Number],
+  leq: <= :: Number -> Number -> Boolean,
+  lt: < :: Number -> Number -> Boolean,
+  geq: >= :: Number -> Number -> Boolean,
+  gt: > :: Number -> Number -> Boolean,
+  eq: == :: Number -> Number -> Boolean
+} from '../../stdlib.js'
