@@ -4,7 +4,7 @@ import { ErrorHandler } from '../../error_handling'
 
 import { Type, TypeConstraints } from '../types'
 
-export class InferAbstractionType {
+export class InferBranchType {
   private errorHandler: ErrorHandler
   private node: Parser.SyntaxNode
   private typeConstraints: TypeConstraints
@@ -19,17 +19,16 @@ export class InferAbstractionType {
     this.typeConstraints = typeConstraints
   }
 
-  perform = (abstractionBranchTypes: Type[]): Type => {
+  perform = (branchTypes: Type[]): Type => {
     try {
-      return abstractionBranchTypes.reduce(
-        (abstractionType, abstractionBranchType) => {
-          return abstractionType
-            .unify(abstractionBranchType, this.typeConstraints)
+      return branchTypes.reduce(
+        (type, branchType) => {
+          return type.unify(branchType, this.typeConstraints)
         }
       ).applyConstraints(this.typeConstraints)
     } catch (error) {
       this.errorHandler.throw(
-        `Abstraction branches have varying types.\n\n${error.message}`,
+        `Branches have varying types.\n\n${error.message}`,
         this.node
       )
     }

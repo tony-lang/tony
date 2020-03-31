@@ -19,16 +19,13 @@ export class ResolvePatternBindings {
   private isExported: boolean
   private isImplicit: boolean
   private errorHandler: ErrorHandler
-  private node: Parser.SyntaxNode
 
   constructor(
     errorHandler: ErrorHandler,
-    node: Parser.SyntaxNode,
     isImplicit = false,
     isExported = false
   ) {
     this.errorHandler = errorHandler
-    this.node = node
     this.isImplicit = isImplicit
     this.isExported = isExported
   }
@@ -92,7 +89,7 @@ export class ResolvePatternBindings {
     else this.errorHandler.throw(
       `Values of type '${type.toString()}' cannot be pattern matched ` +
       'against list',
-      this.node
+      pattern
     )
   }
 
@@ -120,7 +117,7 @@ export class ResolvePatternBindings {
     this.errorHandler.throw(
       `Values of type '${type.toString()}' cannot be pattern matched ` +
       'against map',
-      this.node
+      pattern
     )
   }
 
@@ -143,7 +140,7 @@ export class ResolvePatternBindings {
     this.errorHandler.throw(
       `Values of type '${type.toString()}' cannot be pattern matched ` +
       'against map',
-      this.node
+      pattern
     )
   }
 
@@ -159,7 +156,7 @@ export class ResolvePatternBindings {
     this.errorHandler.throw(
       `Values of type '${type.toString()}' cannot be pattern matched ` +
       'against tuple',
-      this.node
+      pattern
     )
   }
 }
