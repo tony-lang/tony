@@ -19,6 +19,7 @@ import {
   InferApplicationType,
   InferAssignmentType,
   InferDefaultValueType,
+  InferIfType,
   InferListType,
   InferMapType,
   InferRestListType,
@@ -90,6 +91,10 @@ export class Analyze {
       return
     case 'escape_sequence':
       return new ParametricType(STRING_TYPE)
+    case 'else_if_clause':
+      return this.generateElseIfClause(node)
+    case 'else_if_clauses':
+      return this.generateElseIfClauses(node)
     case 'export':
       return this.generateExport(node)
     case 'expression_pair':
@@ -106,6 +111,8 @@ export class Analyze {
       return this.generateIdentifier(node)
     case 'identifier_pattern':
       return this.generateIdentifierPattern(node)
+    case 'if':
+      return this.generateIf(node)
     case 'import':
       return this.generateImport(node)
     case 'infix_application':
@@ -264,6 +271,23 @@ export class Analyze {
     return expressionTypes[expressionTypes.length - 1]
   }
 
+  private generateElseIfClause = (node: Parser.SyntaxNode): Type => {
+    const conditionType = this.generate(node.namedChild(0))
+    const type = this.generate(node.namedChild(1))
+
+    new CheckConditionType(node, this.errorHandler, this.typeConstraints)
+      .perform(conditionType)
+
+    return type
+  }
+
+  private generateElseIfClauses = (node: Parser.SyntaxNode): Type => {
+    const blockTypes = node.namedChildren.map(child => this.generate(child))
+
+    return new InferIfType(node, this.errorHandler, this.typeConstraints)
+      .perform(blockTypes)
+  }
+
   private generateExport = (node: Parser.SyntaxNode): Type => {
     this.buildSymbolTable.enableExports()
 
@@ -328,6 +352,21 @@ export class Analyze {
     if (node.namedChildCount == 1) return new TypeVariable
 
     return this.generate(node.namedChild(1))
+  }
+
+  private generateIf = (node: Parser.SyntaxNode): Type => {
+    const conditionType = this.generate(node.namedChild(0))
+    const blockTypes = [this.generate(node.namedChild(1))]
+    if (node.namedChildCount >= 3)
+      blockTypes.push(this.generate(node.namedChild(2)))
+    if (node.namedChildCount >= 4)
+      blockTypes.push(this.generate(node.namedChild(3)))
+
+    new CheckConditionType(node, this.errorHandler, this.typeConstraints)
+      .perform(conditionType)
+
+    return new InferIfType(node, this.errorHandler, this.typeConstraints)
+      .perform(blockTypes)
   }
 
   private generateImport = (node: Parser.SyntaxNode): Type => {

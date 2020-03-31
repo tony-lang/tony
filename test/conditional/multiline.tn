@@ -5,6 +5,6 @@ a :=
   else 'oh'
 print(a)
 
-b := if false
+b := if true
   0
-print(b)
+print(b.to_str)
