@@ -1,3 +1,1 @@
 export n := 1
-export module M
-  export m := 2
