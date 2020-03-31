@@ -1,3 +1,4 @@
-import { n } from './export.tn'
+import { n, M } from './export.tn'
 
 print(n.to_str)
+print(M->m.to_str)

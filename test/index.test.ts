@@ -6,7 +6,7 @@ import childProcess from 'child_process'
 
 type Example = { name: string; source: string; expectedOutput: string }
 
-const ERROR_PREFIX = Object.freeze('ERROR: ')
+const ERROR_PREFIX = Object.freeze('ERROR:')
 const TEST_DIR_PATH = Object.freeze(path.join(__dirname, '..', 'test'))
 const TEST_OUT_DIR_PATH = Object.freeze(path.join(__dirname, 'tmp'))
 const STDLIB = fs.readFileSync(path.join(TEST_DIR_PATH, 'stdlib.tn'))
@@ -58,7 +58,7 @@ const runTests = async (examples: Example[]): Promise<void> => {
       const output = await runExample(`${name}.tn`, `${STDLIB}\n${source}`)
 
       if (expectedOutput.startsWith(ERROR_PREFIX) &&
-          output.includes(expectedOutput.substring(ERROR_PREFIX.length)))
+          output.includes(expectedOutput.substring(ERROR_PREFIX.length).trim()))
         t.pass(name)
       else t.is(expectedOutput.trim(), output.trim())
     })
