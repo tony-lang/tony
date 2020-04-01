@@ -4,21 +4,21 @@ import Parser from 'tree-sitter'
 
 import { Analyze, SymbolTable } from './analyzing'
 import { GenerateCode } from './code_generation'
+import { FILE_EXTENSION } from './constants'
 import { parse } from './parse'
 import {
   assert,
   getFilePath,
   getOutFile,
-  readFile,
   writeFile
 } from './utilities'
 
 export const compile = async (
   file: string,
   { outFile, webpackMode = 'production', verbose = false }: {
-    outFile: string;
-    webpackMode: string;
-    verbose: boolean;
+    outFile?: string;
+    webpackMode?: string;
+    verbose?: boolean;
   }
 ): Promise<string> => {
   const filePath = getFilePath(file)
@@ -30,13 +30,14 @@ export const compile = async (
 
   while (files.length > 0) {
     const file = files.pop()
-    if (compiledFiles.includes(file)) continue
+    if (compiledFiles.includes(file) || !file.includes(FILE_EXTENSION)) continue
 
-    await compileFile(files, file, verbose)
+    await compileFile(files, file, verbose).catch(error => { throw error })
     compiledFiles.push(file)
   }
 
   await webpackCompile(outFilePath, webpackMode, verbose)
+    .catch(error => { throw error })
   return outFilePath
 }
 
@@ -44,8 +45,7 @@ const compileFile = (
   files: string[],
   filePath: string,
   verbose: boolean
-): Promise<void> => readFile(filePath)
-  .then(source => parse(source, { verbose }))
+): Promise<void> => parse(filePath, { verbose })
   .then(tree => analyze(files, filePath, tree, verbose))
   .then(([tree, symbolTable]) =>
     generateCode(filePath, tree, symbolTable, verbose)
@@ -60,8 +60,7 @@ const analyze = (
 ): [Parser.Tree, SymbolTable] => {
   if (verbose) console.log(`Analyzing ${filePath}...`)
 
-  const symbolTable = new Analyze(filePath)
-    .perform(tree.rootNode)
+  let symbolTable = new Analyze(filePath).perform(tree.rootNode)
   files.push(...symbolTable.importedFiles)
 
   return [tree, symbolTable]
@@ -88,7 +87,7 @@ const webpackCompile = (
   return new Promise(resolve => {
     childProcess
       .spawn(
-        path.join(__dirname, '..', 'node_modules', '.bin', 'webpack-cli'),
+        path.join(__dirname, '..', '..', 'node_modules', '.bin', 'webpack-cli'),
         [filePath, '-o', filePath, '--mode', mode],
         { stdio: verbose ? 'inherit' : null }
       )

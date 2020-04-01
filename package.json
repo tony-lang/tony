@@ -2,13 +2,13 @@
   "name": "tony-lang",
   "version": "0.1.4",
   "description": "The Tony programming language",
-  "main": "lib/index.js",
+  "main": "dist/src/index.js",
   "types": "tony-lang.d.ts",
   "scripts": {
-    "build": "babel src --out-dir lib --extensions .ts && babel test --out-dir tmp --extensions .ts",
+    "build": "babel . --ignore dist,node_modules --out-dir dist --extensions .ts",
     "start": "yarn link && nodemon --watch src --watch test --exec 'yarn build' -e ts",
     "eslint": "eslint src test --ext .ts",
-    "test": "ava"
+    "test": "ava dist/test/index.test.js"
   },
   "engines": {
     "node": ">=12.0"

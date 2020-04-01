@@ -21,10 +21,9 @@ export class ErrorHandler {
   }
 
   throw = async (message: string, node?: Parser.SyntaxNode): Promise<void> => {
-    console.log(message)
-    // if (node) await this.printContext(ErrorHandler.getRangeForNode(node))
-
+    console.error(message)
     process.exit(1)
+    // if (node) await this.printContext(ErrorHandler.getRangeForNode(node))
   }
 
   private printContext = async (range: Range): Promise<void> => {

@@ -120,14 +120,13 @@ export class ResolveImport {
     bindings: ImportBinding[],
     isExternal: boolean
   ): Import => {
-    const dir = this.file.substring(0, this.file.lastIndexOf('/'))
+    const dir = path.dirname(this.file)
     const fullPath = path.join(dir, relativePath)
     if (!relativePath.endsWith(FILE_EXTENSION))
       return { fullPath, relativePath, bindings, isExternal }
 
     const relativePathAfterCompilation = path.join(
       getOutFile(this.file),
-      '..',
       relativePath.replace(FILE_EXTENSION, TARGET_FILE_EXTENSION)
     )
     return {
