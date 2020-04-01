@@ -20,6 +20,10 @@ export class TypeConstraints {
       this.resolve(variable).unify(type, this)
       return
     }
+    if (type instanceof TypeVariable && this.has(type)) {
+      this.resolve(type).unify(variable, this)
+      return
+    }
 
     this._map.set(variable.name, type)
   }

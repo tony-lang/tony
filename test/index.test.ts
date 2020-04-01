@@ -6,6 +6,7 @@ import childProcess from 'child_process'
 
 import { compile } from '../src'
 import { FILE_EXTENSION, TARGET_FILE_EXTENSION } from '../src/constants'
+import { InternalError } from '../src/errors'
 
 type Example = { name: string; source: string; expected: string }
 
@@ -74,6 +75,7 @@ const runExample = async (
   try {
     await compile(sourcePath, {})
   } catch (error) {
+    if (error instanceof InternalError) return error.message
     return error.name
   }
 

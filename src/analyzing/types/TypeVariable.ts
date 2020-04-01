@@ -23,7 +23,10 @@ export class TypeVariable extends Type {
     return new CurriedType([this, type])
   }
 
-  unify = (actual: Type, constraints: TypeConstraints): Type => {
+  unify = (actual: Type, constraints: TypeConstraints): Type =>
+    this._unify(actual, constraints)._reduce(constraints)
+
+  _unify = (actual: Type, constraints: TypeConstraints): Type => {
     if (!(actual instanceof TypeVariable)) {
       constraints.add(this, actual)
       return actual
@@ -33,7 +36,7 @@ export class TypeVariable extends Type {
     return this
   }
 
-  applyConstraints = (constraints: TypeConstraints): Type => {
+  _reduce = (constraints: TypeConstraints): Type => {
     if (constraints.has(this)) return constraints.resolve(this)
 
     return this
