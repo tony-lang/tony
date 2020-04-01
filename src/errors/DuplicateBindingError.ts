@@ -1,15 +1,16 @@
 import { CompileError } from './CompileError'
 
 export class DuplicateBindingError extends CompileError {
-  private _name: string
+  private _binding: string
 
-  constructor(name: string) {
+  constructor(binding: string) {
     super(null)
+    this.name = this.constructor.name
 
-    this._name = name
+    this._binding = binding
   }
 
-  get name(): string {
-    return this._name
+  get binding(): string {
+    return this._binding
   }
 }

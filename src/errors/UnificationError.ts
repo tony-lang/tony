@@ -9,6 +9,7 @@ export class UnificationError extends CompileError {
 
   constructor(expected: Type, actual: Type, message: string) {
     super(message)
+    this.name = this.constructor.name
 
     this._typeTrace = [[expected, actual]]
   }

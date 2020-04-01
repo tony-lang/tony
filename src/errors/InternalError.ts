@@ -3,6 +3,7 @@ export class InternalError extends Error {
 
   constructor(message: string, context?: string) {
     super(message)
+    this.name = this.constructor.name
 
     this._context = context
   }

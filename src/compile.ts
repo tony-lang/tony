@@ -30,12 +30,11 @@ export const compile = async (
     const file = files.pop()
     if (compiledFiles.includes(file) || !file.includes(FILE_EXTENSION)) continue
 
-    await compileFile(files, file, verbose).catch(error => { throw error })
+    await compileFile(files, file, verbose)
     compiledFiles.push(file)
   }
 
   await webpackCompile(outFilePath, webpackMode, verbose)
-    .catch(error => { throw error })
   return outFilePath
 }
 

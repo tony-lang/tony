@@ -195,6 +195,7 @@ export class Analyze {
     } catch (error) {
       if (error instanceof UnificationError && error.context === undefined)
         error.addContext(node)
+      throw error
     }
   }
 

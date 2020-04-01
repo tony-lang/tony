@@ -6,6 +6,7 @@ export class SyntaxError extends Error {
 
   constructor(filePath: string, tree: Parser.Tree) {
     super(null)
+    this.name = this.constructor.name
 
     this._filePath = filePath
     this._tree = tree

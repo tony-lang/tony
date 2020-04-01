@@ -1,1 +1,1 @@
-COMPILE_ERROR: Property 'internal' does not exist on object
+MissingBindingError
