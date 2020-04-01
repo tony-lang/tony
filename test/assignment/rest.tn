@@ -8,12 +8,6 @@ print(b->x.to_str)
 print(c.to_str)
 print(d[0].to_str)
 
-(e :: Number, ...f :: (Number, Number)) := (1, 2, 3)
-print(e.to_str)
-print(f[0].to_str)
-print(f[1].to_str)
-print(f[2].to_str)
-
 { a: g :: Number, ...h :: { String: Number } } := { a: 1, b: 2, c: 3 }
 print(g.to_str)
 print(h->b.to_str)
