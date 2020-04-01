@@ -4,7 +4,7 @@ import {
   assert,
   InternalError,
   MissingBindingError,
-  UnificationError
+  TypeError
 } from '../../errors'
 
 import {
@@ -46,7 +46,7 @@ export class InferAccessType {
         return this.accessRepresentation(valueType, accessType)
     }
 
-    throw new UnificationError(
+    throw new TypeError(
       null,
       valueType,
       'The access operator may only be used on objects or values of a list, ' +
@@ -101,7 +101,7 @@ export class InferAccessType {
       const property = binding.representation.findProperty(propertyName)
       if (property) return property.type
       else throw new MissingBindingError(
-        propertyName, binding.type, binding.representation
+        propertyName, binding.type.toString(), binding.representation.toString()
       )
     } else throw new InternalError(
       'Dynamic object access has not been implemented yet.'

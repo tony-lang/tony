@@ -1,6 +1,6 @@
 import Parser from 'tree-sitter'
 
-import { assert, InternalError, UnificationError } from '../../errors'
+import { assert, InternalError, TypeError } from '../../errors'
 
 import {
   CurriedType,
@@ -145,7 +145,7 @@ export class ResolvePatternBindings {
         this.match(child, type.parameters[i])
       })
 
-    throw new UnificationError(
+    throw new TypeError(
       null,
       type,
       'Only values of a tuple type may be pattern matched against a tuple.'

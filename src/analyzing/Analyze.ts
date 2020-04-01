@@ -4,7 +4,7 @@ import {
   assert,
   CompileError,
   InternalError,
-  UnificationError
+  TypeError
 } from '../errors'
 
 import {
@@ -193,7 +193,7 @@ export class Analyze {
         )
       }
     } catch (error) {
-      if (error instanceof UnificationError && error.context === undefined)
+      if (error instanceof TypeError && error.context === undefined)
         error.addContext(node)
       throw error
     }

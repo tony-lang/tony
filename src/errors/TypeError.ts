@@ -2,16 +2,16 @@ import { Type } from '../analyzing/types'
 
 import { CompileError } from './CompileError'
 
-type TypeMismatch = [Type, Type]
+type TypeMismatch = [string, string]
 
-export class UnificationError extends CompileError {
+export class TypeError extends CompileError {
   private _typeTrace: TypeMismatch[]
 
   constructor(expected: Type, actual: Type, message: string) {
     super(message)
     this.name = this.constructor.name
 
-    this._typeTrace = [[expected, actual]]
+    this._typeTrace = [[expected.toString(), actual.toString()]]
   }
 
   get typeTrace(): TypeMismatch[] {
@@ -19,6 +19,9 @@ export class UnificationError extends CompileError {
   }
 
   addTypeMismatch = (expected: Type, actual: Type): void => {
-    this._typeTrace = [[expected, actual], ...this.typeTrace]
+    this._typeTrace = [
+      [expected.toString(), actual.toString()],
+      ...this.typeTrace
+    ]
   }
 }

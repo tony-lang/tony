@@ -1,4 +1,4 @@
-import { UnificationError } from '../../errors'
+import { TypeError } from '../../errors'
 
 import { ParametricType, Type, LIST_TYPE, MAP_TYPE } from '../types'
 
@@ -10,7 +10,7 @@ export class InferSpreadType {
              valueType.name === MAP_TYPE)
       return valueType
 
-    throw new UnificationError(
+    throw new TypeError(
       null,
       valueType,
       'The spread operator may only be used on values of a list or map type.'

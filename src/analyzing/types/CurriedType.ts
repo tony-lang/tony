@@ -1,4 +1,4 @@
-import { assert, UnificationError } from '../../errors'
+import { assert, TypeError } from '../../errors'
 
 import { Type } from './Type'
 import { TypeConstraints } from './TypeConstraints'
@@ -31,8 +31,8 @@ export class CurriedType extends Type {
           return parameter.unify(actual.parameters[i], constraints)
         } catch (error) {
           assert(
-            error instanceof UnificationError,
-            'Should be UnificationError.'
+            error instanceof TypeError,
+            'Should be TypeError.'
           )
 
           error.addTypeMismatch(this, actual)
@@ -43,7 +43,7 @@ export class CurriedType extends Type {
       return new CurriedType(parameters)
     }
 
-    throw new UnificationError(this, actual, 'Non-variable types do not match')
+    throw new TypeError(this, actual, 'Non-variable types do not match')
   }
 
   applyConstraints = (constraints: TypeConstraints): Type => {

@@ -1,16 +1,14 @@
-import { ObjectRepresentation, Type } from '../analyzing/types'
-
 import { CompileError } from './CompileError'
 
 export class MissingBindingError extends CompileError {
   private _binding: string
-  private _representation: ObjectRepresentation
-  private _type: Type
+  private _representation: string
+  private _type: string
 
   constructor(
     binding: string,
-    type?: Type,
-    representation?: ObjectRepresentation
+    type?: string,
+    representation?: string
   ) {
     super(null)
     this.name = this.constructor.name
@@ -24,11 +22,11 @@ export class MissingBindingError extends CompileError {
     return this._binding
   }
 
-  get representation(): ObjectRepresentation {
+  get representation(): string {
     return this._representation
   }
 
-  get type(): Type {
+  get type(): string {
     return this._type
   }
 }

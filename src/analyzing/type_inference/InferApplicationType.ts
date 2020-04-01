@@ -1,4 +1,4 @@
-import { UnificationError } from '../../errors'
+import { TypeError } from '../../errors'
 
 import {
   CurriedType,
@@ -72,7 +72,7 @@ export class InferApplicationType {
   ): asserts valueType is CurriedType {
     if (valueType instanceof CurriedType) return
 
-    throw new UnificationError(
+    throw new TypeError(
       null, valueType, 'Cannot apply to a non-curried type.'
     )
   }
@@ -83,7 +83,7 @@ export class InferApplicationType {
   ): void => {
     if (valueType.parameters.length > argumentTypeCount) return
 
-    throw new UnificationError(
+    throw new TypeError(
       null,
       valueType,
       `Applied ${argumentTypeCount} arguments to a type accepting at most ` +
