@@ -30,7 +30,10 @@ export class ParametricType extends Type {
     return new CurriedType([this, type])
   }
 
-  unify = (actual: Type, constraints: TypeConstraints): ParametricType => {
+  unify = (actual: Type, constraints: TypeConstraints): ParametricType =>
+    this._unify(actual, constraints)._reduce(constraints)
+
+  _unify = (actual: Type, constraints: TypeConstraints): ParametricType => {
     if (actual instanceof TypeVariable) {
       constraints.add(actual, this)
       return this
@@ -38,7 +41,7 @@ export class ParametricType extends Type {
                this.parameters.length == actual.parameters.length) {
       const parameters = this.parameters.map((parameter, i) => {
         try {
-          return parameter.unify(actual.parameters[i], constraints)
+          return parameter._unify(actual.parameters[i], constraints)
         } catch (error) {
           assert(
             error instanceof TypeError,
@@ -56,9 +59,9 @@ export class ParametricType extends Type {
     throw new TypeError(this, actual, 'Non-variable types do not match')
   }
 
-  applyConstraints = (constraints: TypeConstraints): Type => {
+  _reduce = (constraints: TypeConstraints): ParametricType => {
     const parameters = this.parameters
-      .map(parameter => parameter.applyConstraints(constraints))
+      .map(parameter => parameter._reduce(constraints))
 
     return new ParametricType(this.name, parameters)
   }

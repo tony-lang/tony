@@ -20,7 +20,10 @@ export class CurriedType extends Type {
   concat = (type: Type): CurriedType =>
     new CurriedType(this.parameters.concat(type))
 
-  unify = (actual: Type, constraints: TypeConstraints): CurriedType => {
+  unify = (actual: Type, constraints: TypeConstraints): CurriedType =>
+    this._unify(actual, constraints)._reduce(constraints)
+
+  _unify = (actual: Type, constraints: TypeConstraints): CurriedType => {
     if (actual instanceof TypeVariable) {
       constraints.add(actual, this)
       return this
@@ -28,7 +31,7 @@ export class CurriedType extends Type {
                this.parameters.length == actual.parameters.length) {
       const parameters = this.parameters.map((parameter, i) => {
         try {
-          return parameter.unify(actual.parameters[i], constraints)
+          return parameter._unify(actual.parameters[i], constraints)
         } catch (error) {
           assert(
             error instanceof TypeError,
@@ -46,9 +49,9 @@ export class CurriedType extends Type {
     throw new TypeError(this, actual, 'Non-variable types do not match')
   }
 
-  applyConstraints = (constraints: TypeConstraints): Type => {
+  _reduce = (constraints: TypeConstraints): CurriedType => {
     const parameters = this.parameters
-      .map(parameter => parameter.applyConstraints(constraints))
+      .map(parameter => parameter._reduce(constraints))
 
     return new CurriedType(parameters)
   }
