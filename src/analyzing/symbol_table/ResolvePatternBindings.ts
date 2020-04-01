@@ -1,7 +1,6 @@
 import Parser from 'tree-sitter'
 
-import { ErrorHandler } from '../../error_handling'
-import { assert } from '../../utilities'
+import { assert, InternalError, TypeError } from '../../errors'
 
 import {
   CurriedType,
@@ -9,7 +8,9 @@ import {
   Type,
   LIST_TYPE,
   MAP_TYPE,
-  TUPLE_TYPE
+  TUPLE_TYPE,
+  TypeVariable,
+  TypeConstraints
 } from '../types'
 
 import { Binding } from './Binding'
@@ -18,14 +19,14 @@ export class ResolvePatternBindings {
   private bindings: Binding[] = []
   private isExported: boolean
   private isImplicit: boolean
-  private errorHandler: ErrorHandler
+  private typeConstraints: TypeConstraints
 
   constructor(
-    errorHandler: ErrorHandler,
+    typeConstraints: TypeConstraints,
     isImplicit = false,
     isExported = false
   ) {
-    this.errorHandler = errorHandler
+    this.typeConstraints = typeConstraints
     this.isImplicit = isImplicit
     this.isExported = isExported
   }
@@ -62,9 +63,9 @@ export class ResolvePatternBindings {
     case 'tuple_pattern':
       return this.matchTuplePattern(pattern, type)
     default:
-      assert(
-        false,
-        `Could not find matcher for AST pattern node '${pattern.type}'.`
+      throw new InternalError(
+        'ResolvePatternBindings: Could not find matcher for AST pattern node ' +
+        `'${pattern.type}'.`
       )
     }
   }
@@ -83,14 +84,11 @@ export class ResolvePatternBindings {
   }
 
   private matchListPattern = (pattern: Parser.SyntaxNode, type: Type): void => {
-    if (type instanceof ParametricType && type.name === LIST_TYPE)
-      pattern.namedChildren
-        .forEach(child => this.match(child, type.parameters[0]))
-    else this.errorHandler.throw(
-      `Values of type '${type.toString()}' cannot be pattern matched ` +
-      'against list',
-      pattern
-    )
+    const unifiedType = new ParametricType(LIST_TYPE, [new TypeVariable])
+      .unify(type, this.typeConstraints)
+
+    pattern.namedChildren
+      .forEach(child => this.match(child, unifiedType.parameters[0]))
   }
 
   private matchMapPattern = (pattern: Parser.SyntaxNode, type: Type): void =>
@@ -99,7 +97,7 @@ export class ResolvePatternBindings {
   private matchParameters = (pattern: Parser.SyntaxNode, type: Type): void => {
     assert(
       type instanceof CurriedType,
-      'Parameters must be curried'
+      'Parameters are expected to be curried.'
     )
 
     pattern.namedChildren.forEach((child, i) => {
@@ -111,14 +109,11 @@ export class ResolvePatternBindings {
     this.match(pattern.namedChild(0), type)
 
   private matchPatternPair = (pattern: Parser.SyntaxNode, type: Type): void => {
-    if (type instanceof ParametricType && type.name === MAP_TYPE)
-      return this.match(pattern.namedChild(1), type.parameters[1])
+    const unifiedType =
+      new ParametricType(MAP_TYPE, [new TypeVariable, new TypeVariable])
+        .unify(type, this.typeConstraints)
 
-    this.errorHandler.throw(
-      `Values of type '${type.toString()}' cannot be pattern matched ` +
-      'against map',
-      pattern
-    )
+    return this.match(pattern.namedChild(1), unifiedType.parameters[1])
   }
 
   private matchRestList = (pattern: Parser.SyntaxNode, type: Type): void =>
@@ -134,14 +129,11 @@ export class ResolvePatternBindings {
     pattern: Parser.SyntaxNode,
     type: Type
   ): void => {
-    if (type instanceof ParametricType && type.name === MAP_TYPE)
-      return this.match(pattern.namedChild(0), type.parameters[1])
+    const unifiedType =
+      new ParametricType(MAP_TYPE, [new TypeVariable, new TypeVariable])
+        .unify(type, this.typeConstraints)
 
-    this.errorHandler.throw(
-      `Values of type '${type.toString()}' cannot be pattern matched ` +
-      'against map',
-      pattern
-    )
+    return this.match(pattern.namedChild(0), unifiedType.parameters[1])
   }
 
   private matchTuplePattern = (
@@ -153,10 +145,10 @@ export class ResolvePatternBindings {
         this.match(child, type.parameters[i])
       })
 
-    this.errorHandler.throw(
-      `Values of type '${type.toString()}' cannot be pattern matched ` +
-      'against tuple',
-      pattern
+    throw new TypeError(
+      null,
+      type,
+      'Only values of a tuple type may be pattern matched against a tuple.'
     )
   }
 }

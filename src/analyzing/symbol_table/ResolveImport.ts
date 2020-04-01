@@ -1,9 +1,9 @@
 import path from 'path'
 import Parser from 'tree-sitter'
 
-import { ErrorHandler } from '../../error_handling'
+import { assert, DuplicateBindingError, InternalError } from '../../errors'
 import { FILE_EXTENSION, TARGET_FILE_EXTENSION } from '../../constants'
-import { assert, getOutFile } from '../../utilities'
+import { getOutFile } from '../../utilities'
 
 import { Analyze } from '../Analyze'
 
@@ -12,16 +12,10 @@ import { ImportBinding } from './ImportBinding'
 
 export class ResolveImport {
   private analyzer: Analyze
-  private errorHandler: ErrorHandler
   private file: string
 
-  constructor(
-    analyzer: Analyze,
-    errorHandler: ErrorHandler,
-    file: string
-  ) {
+  constructor(analyzer: Analyze, file: string) {
     this.analyzer = analyzer
-    this.errorHandler = errorHandler
     this.file = file
   }
 
@@ -68,9 +62,9 @@ export class ResolveImport {
     case 'import_clause_identifier_pair':
       return this.resolveImportClauseIdentifierPair(node)
     default:
-      assert(
-        false,
-        `Could not find resolver for AST import node '${node.type}'.`
+      throw new InternalError(
+        'ResolveImport: Could not find resolver for AST import node ' +
+        `'${node.type}'.`
       )
     }
   }
@@ -147,9 +141,6 @@ export class ResolveImport {
       .find((identifier, i) => identifiers.slice(i, i).includes(identifier))
     if (!duplicateIdentifier) return
 
-    this.errorHandler.throw(
-      `Identifier ${duplicateIdentifier} found multiple times in import`,
-      node
-    )
+    throw new DuplicateBindingError(duplicateIdentifier)
   }
 }

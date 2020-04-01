@@ -4,7 +4,7 @@ import { TypeConstraints } from './TypeConstraints'
 export abstract class Type {
   abstract concat: (type: Type) => CurriedType
 
-  abstract unify: (type: Type, constraints: TypeConstraints) => Type
+  abstract unify: (actual: Type, constraints: TypeConstraints) => Type
   abstract applyConstraints: (constraints: TypeConstraints) => Type
 
   abstract isComplete: () => boolean

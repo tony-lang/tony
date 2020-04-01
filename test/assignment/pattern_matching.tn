@@ -2,11 +2,6 @@
 print(a.to_str)
 print(b.to_str)
 
-(c, ...d :: (String, String)) := (86, 'Tony', 'Hoare')
-print(c.to_str)
-print(d[0])
-print(d[1])
-
 { f, ...g } := { f: 'hello world' }
 print(f)
 print(g->x)

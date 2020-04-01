@@ -6,13 +6,12 @@ import {
   TRANSFORM_PLACEHOLDER_ARGUMENT,
   TRANSFORM_REST_PATTERN
 } from '../constants'
-import { assert } from '../utilities'
+import { assert, InternalError } from '../errors'
 
 import { CollectDefaultValues } from './CollectDefaultValues'
 import { ParseStringContent } from './ParseStringContent'
 import { ResolvePattern } from './ResolvePattern'
 import { TransformIdentifier } from './TransformIdentifier'
-import { ImportBinding } from '../analyzing/symbol_table/ImportBinding'
 
 export const INTERNAL_TEMP_TOKEN = Object.freeze('#TONY_INTERNAL_TEMP')
 
@@ -143,7 +142,10 @@ export class GenerateCode {
     case 'when_clauses':
       return this.generateWhenClauses(node)
     default:
-      assert(false, `Could not find generator for AST node '${node.type}'.`)
+      throw new InternalError(
+        'GenerateCode: Could not find generator for AST node ' +
+        `'${node.type}'.`
+      )
     }
   }
 
@@ -480,7 +482,7 @@ export class GenerateCode {
       }).join(';')
     const externalImports = this.walkSymbolTable.currentScope.imports
       .filter(imp => imp.isExternal)
-      .reduce((bindings: ImportBinding[], imp) => {
+      .reduce((bindings, imp) => {
         return bindings.concat(imp.bindings)
       }, [])
       .map(binding => {

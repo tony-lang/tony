@@ -1,8 +1,5 @@
 0
 2
-86
-Tony
-Hoare
 hello world
 undefined
 2

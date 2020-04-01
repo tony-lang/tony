@@ -1,7 +1,8 @@
+import { assert, TypeError } from '../../errors'
+
 import { Type } from './Type'
 import { TypeConstraints } from './TypeConstraints'
 import { TypeVariable } from './TypeVariable'
-import { UnificationError } from './UnificationError'
 
 export class CurriedType extends Type {
   private _parameters: Type[]
@@ -19,20 +20,30 @@ export class CurriedType extends Type {
   concat = (type: Type): CurriedType =>
     new CurriedType(this.parameters.concat(type))
 
-  unify = (type: Type, constraints: TypeConstraints): Type => {
-    if (type instanceof TypeVariable) {
-      constraints.add(type, this)
+  unify = (actual: Type, constraints: TypeConstraints): CurriedType => {
+    if (actual instanceof TypeVariable) {
+      constraints.add(actual, this)
       return this
-    } else if (type instanceof CurriedType &&
-               this.parameters.length == type.parameters.length) {
+    } else if (actual instanceof CurriedType &&
+               this.parameters.length == actual.parameters.length) {
       const parameters = this.parameters.map((parameter, i) => {
-        return parameter.unify(type.parameters[i], constraints)
+        try {
+          return parameter.unify(actual.parameters[i], constraints)
+        } catch (error) {
+          assert(
+            error instanceof TypeError,
+            'Should be TypeError.'
+          )
+
+          error.addTypeMismatch(this, actual)
+          throw error
+        }
       })
 
       return new CurriedType(parameters)
     }
 
-    throw new UnificationError(this, type, 'Non-variable types do not match')
+    throw new TypeError(this, actual, 'Non-variable types do not match')
   }
 
   applyConstraints = (constraints: TypeConstraints): Type => {

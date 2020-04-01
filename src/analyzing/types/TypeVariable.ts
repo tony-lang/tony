@@ -23,13 +23,13 @@ export class TypeVariable extends Type {
     return new CurriedType([this, type])
   }
 
-  unify = (type: Type, constraints: TypeConstraints): Type => {
-    if (!(type instanceof TypeVariable)) {
-      constraints.add(this, type)
-      return type
+  unify = (actual: Type, constraints: TypeConstraints): Type => {
+    if (!(actual instanceof TypeVariable)) {
+      constraints.add(this, actual)
+      return actual
     }
 
-    if (this.name !== type.name) constraints.add(type, this)
+    if (this.name !== actual.name) constraints.add(actual, this)
     return this
   }
 

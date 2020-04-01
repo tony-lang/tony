@@ -1,10 +1,13 @@
 import Parser from 'tree-sitter'
 
-import { ErrorHandler } from '../../error_handling'
-import { assert } from '../../utilities'
+import {
+  assert,
+  InternalError,
+  MissingBindingError,
+  TypeError
+} from '../../errors'
 
 import {
-  ObjectRepresentation,
   ParametricType,
   Type,
   TypeConstraints,
@@ -18,18 +21,15 @@ import { BuildSymbolTable, TypeBinding } from '../symbol_table'
 
 export class InferAccessType {
   private buildSymbolTable: BuildSymbolTable
-  private errorHandler: ErrorHandler
   private node: Parser.SyntaxNode
   private typeConstraints: TypeConstraints
 
   constructor(
     node: Parser.SyntaxNode,
-    errorHandler: ErrorHandler,
     buildSymbolTable: BuildSymbolTable,
     typeConstraints: TypeConstraints
   ) {
     this.node = node
-    this.errorHandler = errorHandler
     this.buildSymbolTable = buildSymbolTable
     this.typeConstraints = typeConstraints
   }
@@ -38,102 +38,73 @@ export class InferAccessType {
     if (valueType instanceof ParametricType) {
       if (valueType.name === LIST_TYPE)
         return this.accessList(valueType, accessType)
-      else if (valueType.name === MAP_TYPE)
-        return this.accessMap(valueType, accessType)
       else if (valueType.name === TUPLE_TYPE)
         return this.accessTuple(valueType, accessType)
+      else if (valueType.name === MAP_TYPE)
+        return this.accessMap(valueType, accessType)
       else
         return this.accessRepresentation(valueType, accessType)
     }
 
-    this.errorHandler.throw(
-      'Access operator cannot be used on values of type ' +
-      `'${valueType.toString()}'`,
-      this.node
+    throw new TypeError(
+      null,
+      valueType,
+      'The access operator may only be used on objects or values of a list, ' +
+      'tuple or map type.'
     )
   }
 
   private accessList = (valueType: ParametricType, accessType: Type): Type => {
-    try {
-      accessType.unify(new ParametricType(NUMBER_TYPE), this.typeConstraints)
-      return valueType.parameters[0]
-    } catch (error) {
-      this.errorHandler.throw(
-        `Type '${accessType.toString()}' not assignable to type ` +
-        `'${NUMBER_TYPE}'.\n\n${error.message}`,
-        this.node
-      )
-    }
+    new ParametricType(NUMBER_TYPE).unify(accessType, this.typeConstraints)
+
+    return valueType.parameters[0]
   }
 
   private accessMap = (valueType: ParametricType, accessType: Type): Type => {
-    try {
-      accessType.unify(valueType.parameters[0], this.typeConstraints)
-      return valueType.parameters[1]
-    } catch (error) {
-      this.errorHandler.throw(
-        `Type '${accessType.toString()}' not assignable to type ` +
-        `'${valueType.parameters[0]}'.\n\n${error.message}`,
-        this.node
-      )
-    }
+    valueType.parameters[0].unify(accessType, this.typeConstraints)
+
+    return valueType.parameters[1]
   }
 
   private accessTuple = (valueType: ParametricType, accessType: Type): Type => {
+    new ParametricType(NUMBER_TYPE).unify(accessType, this.typeConstraints)
+
     // TODO: implement dynamic access with union types
-    try {
-      accessType.unify(new ParametricType(NUMBER_TYPE), this.typeConstraints)
+    if (this.node.namedChild(1).type === 'shorthand_access_identifier') {
+      const shorthandAccessIdentifier = this.node.namedChild(1)
+      const index = parseInt(shorthandAccessIdentifier.text)
 
-      if (this.node.namedChild(1).type === 'shorthand_access_identifier') {
-        const shorthandAccessIdentifier = this.node.namedChild(1)
-        const index = parseInt(shorthandAccessIdentifier.text)
-
-        return valueType.parameters[index]
-      } else assert(false, 'Dynamic tuple access has not been implemented yet.')
-    } catch (error) {
-      this.errorHandler.throw(
-        `Type '${accessType.toString()}' not assignable to type ` +
-        `'${NUMBER_TYPE}'.\n\n${error.message}`,
-        this.node
-      )
-    }
+      return valueType.parameters[index]
+    } else throw new InternalError(
+      'Dynamic tuple access has not been implemented yet.'
+    )
   }
 
   private accessRepresentation = (
     valueType: ParametricType,
     accessType: Type
   ): Type => {
+    new ParametricType(STRING_TYPE).unify(accessType, this.typeConstraints)
+
     // TODO: implement dynamic access with union types
-    try {
-      accessType.unify(new ParametricType(STRING_TYPE), this.typeConstraints)
+    if (this.node.namedChild(1).type === 'shorthand_access_identifier') {
+      const shorthandAccessIdentifier = this.node.namedChild(1)
+      const propertyName = shorthandAccessIdentifier.text
 
-      if (this.node.namedChild(1).type === 'shorthand_access_identifier') {
-        const shorthandAccessIdentifier = this.node.namedChild(1)
-        const propertyName = shorthandAccessIdentifier.text
-
-        const binding = this.buildSymbolTable
-          .resolveBinding(valueType.name, this.node)
-        assert(binding instanceof TypeBinding, 'Should be a type binding.')
-        assert(
-          binding.representation,
-          `Object representation of ${valueType.toString()} should be present.`
-        )
-
-        const property = binding.representation.findProperty(propertyName)
-        if (property) return property.type
-        else this.errorHandler.throw(
-          `Property '${propertyName}' does not exist on object with ` +
-          `representation '${binding.representation.toString()}'.`,
-          this.node
-        )
-      } else
-        assert(false, 'Dynamic object access has not been implemented yet.')
-    } catch (error) {
-      this.errorHandler.throw(
-        `Type '${accessType.toString()}' not assignable to type ` +
-        `'${STRING_TYPE}'.\n\n${error.message}`,
-        this.node
+      const binding = this.buildSymbolTable.resolveBinding(valueType.name)
+      assert(binding instanceof TypeBinding, 'Should be a type binding.')
+      assert(
+        binding.representation,
+        `Object representation of ${valueType.toString()} should be present.`
       )
-    }
+
+      const property = binding.representation.findProperty(propertyName)
+      if (property) return property.type
+      else throw new MissingBindingError(
+        propertyName, binding.type.toString(), binding.representation.toString()
+      )
+    } else throw new InternalError(
+      'Dynamic object access has not been implemented yet.'
+    )
   }
 }

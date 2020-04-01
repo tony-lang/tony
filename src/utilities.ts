@@ -30,12 +30,3 @@ export const getFilePath = (file: string): string => {
 
 export const getOutFile = (file: string): string =>
   file.replace(FILE_EXTENSION, TARGET_FILE_EXTENSION)
-
-export function assert(
-  value: any,
-  message: string
-): asserts value {
-  if (value) return
-
-  throw new Error(message)
-}
