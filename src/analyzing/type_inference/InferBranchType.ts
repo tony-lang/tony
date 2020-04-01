@@ -9,4 +9,5 @@ export class InferBranchType {
 
   perform = (branchTypes: Type[]): Type => branchTypes
     .reduce((type, branchType) => type.unify(branchType, this.typeConstraints))
+    ._reduce(this.typeConstraints)
 }

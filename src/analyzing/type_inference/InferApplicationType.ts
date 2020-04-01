@@ -55,9 +55,9 @@ export class InferApplicationType {
       }, [])
 
     if (parameterTypes.length == 1)
-      return parameterTypes[0]
+      return parameterTypes[0]._reduce(typeConstraints)
     else
-      return new CurriedType(parameterTypes)
+      return new CurriedType(parameterTypes)._reduce(typeConstraints)
   }
 
   private handleVoidParameterType = (valueType: CurriedType): void => {
