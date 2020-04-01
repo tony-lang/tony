@@ -1,119 +1,106 @@
 import childProcess from 'child_process'
 import path from 'path'
-import rimraf from 'rimraf'
 import Parser from 'tree-sitter'
 
-import Tony from './Tony'
-import parser from './parser'
-import { Analyze } from './analyzing'
+import { Analyze, SymbolTable } from './analyzing'
 import { GenerateCode } from './code_generation'
+import { parse } from './parse'
 import {
+  assert,
+  getFilePath,
+  getOutFile,
   readFile,
-  writeFile,
-  getEntryFilePath,
-  getOutputPathForFile,
-  copyFile,
-  assert
+  writeFile
 } from './utilities'
-import { FILE_EXTENSION } from './constants'
 
 export const compile = async (
-  tony: Tony,
-  project: string,
-  mode: string,
-  outFile: string,
-  outDir: string,
-  retainOutDir: boolean
+  file: string,
+  { outFile, webpackMode = 'production', verbose = false }: {
+    outFile: string;
+    webpackMode: string;
+    verbose: boolean;
+  }
 ): Promise<string> => {
-  if (tony.debug) console.log('Compiling...')
+  const filePath = getFilePath(file)
+  const outFilePath = getFilePath(outFile || getOutFile(file))
+  if (verbose) console.log(`Compiling ${filePath} to ${outFilePath}...`)
 
-  const entryFilePath = getEntryFilePath(project)
-  const files = [entryFilePath]
+  const files = [filePath]
   const compiledFiles: string[] = []
-  const outputDirPath = path.join(process.cwd(), outDir)
-  const outputFilePath = path.join(process.cwd(), outFile)
 
   while (files.length > 0) {
     const file = files.pop()
     if (compiledFiles.includes(file)) continue
 
-    await compileFile(tony, files, file, outputDirPath)
+    await compileFile(files, file, verbose)
     compiledFiles.push(file)
   }
 
-  webpackCompile(tony, outputFilePath, outputDirPath, entryFilePath, mode)
-  if (!retainOutDir) await cleanup(tony, outputDirPath)
-  return outputFilePath
+  await webpackCompile(outFilePath, webpackMode, verbose)
+  return outFilePath
 }
 
 const compileFile = (
-  tony: Tony,
   files: string[],
-  file: string,
-  outputDirPath: string
-): Promise<void> => {
-  if (!file.endsWith(FILE_EXTENSION))
-    return copyFile(file, getOutputPathForFile(outputDirPath, file))
+  filePath: string,
+  verbose: boolean
+): Promise<void> => readFile(filePath)
+  .then(source => parse(source, { verbose }))
+  .then(tree => analyze(files, filePath, tree, verbose))
+  .then(([tree, symbolTable]) =>
+    generateCode(filePath, tree, symbolTable, verbose)
+  )
+  .then(source => writeFile(getOutFile(filePath), source))
 
-  return readFile(file).then((sourceCode: string) => {
-    if (tony.debug) console.log(`Parsing ${file}...`)
-    const tree = parser.parse(sourceCode.toString())
-    assert(
-      !tree.rootNode.hasError(),
-      `Error while parsing ${file}...\n${tree.rootNode.toString()}`
-    )
-    if (tony.debug) console.log(tree.rootNode.toString())
+const analyze = (
+  files: string[],
+  filePath: string,
+  tree: Parser.Tree,
+  verbose: boolean
+): [Parser.Tree, SymbolTable] => {
+  if (verbose) console.log(`Analyzing ${filePath}...`)
 
-    return tree.rootNode
-  }).then((node: Parser.SyntaxNode) => {
-    if (tony.debug) console.log(`Analyzing ${file}...`)
-    const analyzer = new Analyze(file, outputDirPath)
-    const symbolTable = analyzer.perform(node)
-    files.push(...symbolTable.importedFiles)
-    if (tony.debug) console.dir(symbolTable, { depth: null })
+  const symbolTable = new Analyze(filePath)
+    .perform(tree.rootNode)
+  files.push(...symbolTable.importedFiles)
 
-    if (tony.debug) console.log(`Compiling ${file}...`)
-    const codeGenerator = new GenerateCode(symbolTable)
-    return writeFile(
-      getOutputPathForFile(outputDirPath, file),
-      codeGenerator.generate(node)
-    )
-  })
+  return [tree, symbolTable]
+}
+
+const generateCode = (
+  filePath: string,
+  tree: Parser.Tree,
+  symbolTable: SymbolTable,
+  verbose: boolean
+): string => {
+  if (verbose) console.log(`Generating code for ${filePath}...`)
+
+  return new GenerateCode(symbolTable).generate(tree.rootNode)
 }
 
 const webpackCompile = (
-  tony: Tony,
-  outputFilePath: string,
-  outputDirPath: string,
-  entryFilePath: string,
-  mode: string
-): void => {
-  if (tony.debug) console.log('Compiling with Webpack...')
-
-  const p = childProcess.spawnSync(
-    path.join(__dirname, '..', 'node_modules', '.bin', 'webpack-cli'),
-    [
-      getOutputPathForFile(outputDirPath, entryFilePath),
-      '-o', outputFilePath,
-      '--mode', mode
-    ],
-    { stdio: tony.debug ? 'inherit' : null }
-  )
-
-  assert(
-    p.status == 0,
-    () => `${p.stdout.toString()}\n\n` +
-    `Oh noes! Tony wasn't able to compile ${entryFilePath}.\nPlease report ` +
-    'the file you tried to compile as well as the printed output at ' +
-    'https://github.com/tony-lang/tony/issues'
-  )
-}
-
-const cleanup = (
-  tony: Tony,
-  outputDirPath: string
+  filePath: string,
+  mode: string,
+  verbose: boolean
 ): Promise<void> => {
-  if (tony.debug) console.log('Cleaning up temporary files...')
+  if (verbose) console.log('Compiling with Webpack...')
 
-  return new Promise(resolve => rimraf(outputDirPath, () => resolve()))
+  return new Promise(resolve => {
+    childProcess
+      .spawn(
+        path.join(__dirname, '..', 'node_modules', '.bin', 'webpack-cli'),
+        [filePath, '-o', filePath, '--mode', mode],
+        { stdio: verbose ? 'inherit' : null }
+      )
+      .on('close', resolve)
+      .on('error', (error) => {
+        assert(
+          false,
+          `${error.name}: ${error.message}\n\n` +
+          `Oh noes! Tony wasn't able to compile ${filePath}.\nPlease report ` +
+          'the file you tried to compile as well as the printed output at ' +
+          'https://github.com/tony-lang/tony/issues'
+        )
+      })
+  })
 }

@@ -3,7 +3,7 @@ import Parser from 'tree-sitter'
 
 import { ErrorHandler } from '../../error_handling'
 import { FILE_EXTENSION, TARGET_FILE_EXTENSION } from '../../constants'
-import { getOutputPathForFile, assert } from '../../utilities'
+import { assert, getOutFile } from '../../utilities'
 
 import { Analyze } from '../Analyze'
 
@@ -14,18 +14,15 @@ export class ResolveImport {
   private analyzer: Analyze
   private errorHandler: ErrorHandler
   private file: string
-  private outputPath: string
 
   constructor(
     analyzer: Analyze,
     errorHandler: ErrorHandler,
-    file: string,
-    outputPath: string
+    file: string
   ) {
     this.analyzer = analyzer
     this.errorHandler = errorHandler
     this.file = file
-    this.outputPath = outputPath
   }
 
   performImport = (node: Parser.SyntaxNode): Import => {
@@ -129,7 +126,7 @@ export class ResolveImport {
       return { fullPath, relativePath, bindings, isExternal }
 
     const relativePathAfterCompilation = path.join(
-      getOutputPathForFile(this.outputPath, this.file),
+      getOutFile(this.file),
       '..',
       relativePath.replace(FILE_EXTENSION, TARGET_FILE_EXTENSION)
     )
