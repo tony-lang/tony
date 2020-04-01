@@ -127,6 +127,7 @@ export class ResolveImport {
 
     const relativePathAfterCompilation = path.join(
       getOutFile(this.file),
+      '..',
       relativePath.replace(FILE_EXTENSION, TARGET_FILE_EXTENSION)
     )
     return {
