@@ -70,18 +70,19 @@ const runExample = async (
 
 const runTests = async (examples: Example[]): Promise<void> => {
   examples.forEach(({ name, source, expectedOutput }) => {
-    test(name, async t => {
-      // TODO: remove this check when errors have been improved
-      if (expectedOutput.startsWith(COMPILE_ERROR_PREFIX))
-        return t.pass('Temporarily skip tests expecting errors.')
+    test.serial(name, async t => {
+      // TODO: remove this check in error handling ticket, run concurrently
+      if (expectedOutput.startsWith(COMPILE_ERROR_PREFIX)) {
+        t.pass('Temporarily skip tests expecting compile errors.')
+      } else {
+        const output = await runExample(`${name}.tn`, `${STDLIB}\n${source}`)
 
-      const output = await runExample(`${name}.tn`, `${STDLIB}\n${source}`)
-
-      if (expectedOutput.startsWith(RUNTIME_ERROR_PREFIX) &&
-          output.includes(expectedOutput.substring(RUNTIME_ERROR_PREFIX.length)
-            .trim()))
-        t.pass(name)
-      else t.is(expectedOutput.trim(), output.trim())
+        if (expectedOutput.startsWith(RUNTIME_ERROR_PREFIX) &&
+            output.includes(expectedOutput.substring(RUNTIME_ERROR_PREFIX.length)
+              .trim()))
+          t.pass(name)
+        else t.is(expectedOutput.trim(), output.trim())
+      }
     })
   })
 }
