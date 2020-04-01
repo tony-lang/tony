@@ -78,7 +78,8 @@ const runTests = async (examples: Example[]): Promise<void> => {
       const output = await runExample(`${name}.tn`, `${STDLIB}\n${source}`)
 
       if (expectedOutput.startsWith(RUNTIME_ERROR_PREFIX) &&
-          output.includes(expectedOutput.substring(RUNTIME_ERROR_PREFIX.length).trim()))
+          output.includes(expectedOutput.substring(RUNTIME_ERROR_PREFIX.length)
+            .trim()))
         t.pass(name)
       else t.is(expectedOutput.trim(), output.trim())
     })

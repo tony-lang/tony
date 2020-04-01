@@ -60,7 +60,7 @@ const analyze = (
 ): [Parser.Tree, SymbolTable] => {
   if (verbose) console.log(`Analyzing ${filePath}...`)
 
-  let symbolTable = new Analyze(filePath).perform(tree.rootNode)
+  const symbolTable = new Analyze(filePath).perform(tree.rootNode)
   files.push(...symbolTable.importedFiles)
 
   return [tree, symbolTable]
