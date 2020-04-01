@@ -1,1 +1,1 @@
-ERROR: Non-exhaustive patterns
+RUNTIME_ERROR: Non-exhaustive patterns

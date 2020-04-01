@@ -11,4 +11,4 @@ import extern {
   geq: >= :: Number -> Number -> Boolean,
   gt: > :: Number -> Number -> Boolean,
   eq: == :: Number -> Number -> Boolean
-} from '../../stdlib.js'
+} from '../stdlib.js'

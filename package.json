@@ -2,12 +2,13 @@
   "name": "tony-lang",
   "version": "0.1.4",
   "description": "The Tony programming language",
-  "main": "lib/index.js",
+  "main": "dist/src/index.js",
+  "types": "tony-lang.d.ts",
   "scripts": {
-    "build": "babel src --out-dir lib --extensions .ts && babel test --out-dir tmp --extensions .ts",
+    "build": "babel . --ignore dist,node_modules --out-dir dist --extensions .ts",
     "start": "yarn link && nodemon --watch src --watch test --exec 'yarn build' -e ts",
     "eslint": "eslint src test --ext .ts",
-    "test": "ava"
+    "test": "ava dist/test/index.test.js"
   },
   "engines": {
     "node": ">=12.0"
@@ -26,20 +27,15 @@
   },
   "homepage": "https://github.com/tony-lang/tony#readme",
   "dependencies": {
-    "commander": "^5.0.0",
     "core-js": "^3.6.4",
     "deep-equal": "^2.0.1",
     "inquirer": "^7.1.0",
     "mkdirp": "^1.0.3",
     "outdent": "^0.7.1",
-    "rimraf": "^3.0.2",
     "tree-sitter": "^0.16.0",
     "tree-sitter-tony": "0.2.0-alpha.9",
     "webpack": "^4.42.1",
     "webpack-cli": "^3.3.11"
-  },
-  "bin": {
-    "tony": "lib/index.js"
   },
   "devDependencies": {
     "@babel/cli": "^7.8.4",
@@ -50,7 +46,6 @@
     "@types/deep-equal": "^1.0.1",
     "@types/inquirer": "^6.5.0",
     "@types/mkdirp": "^1.0.0",
-    "@types/rimraf": "^3.0.0",
     "@typescript-eslint/eslint-plugin": "^2.25.0",
     "@typescript-eslint/parser": "^2.25.0",
     "ava": "^3.5.1",

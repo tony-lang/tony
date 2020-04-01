@@ -1,1 +1,1 @@
-ERROR: Property 'internal' does not exist on object
+COMPILE_ERROR: Property 'internal' does not exist on object

@@ -1,6 +1,5 @@
 build
-lib
-tmp
+dist
 node_modules
 
 *.log

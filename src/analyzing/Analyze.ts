@@ -58,12 +58,12 @@ export class Analyze {
   // used to prevent looking up types when declaring them
   private isDeclaration = false
 
-  constructor(file: string, outputPath: string) {
+  constructor(file: string) {
     this.errorHandler = new ErrorHandler(file)
 
     this.buildSymbolTable = new BuildSymbolTable(this.errorHandler)
     this.resolveImport =
-      new ResolveImport(this, this.errorHandler, file, outputPath)
+      new ResolveImport(this, this.errorHandler, file)
     this.typeConstraints = new TypeConstraints
   }
 
