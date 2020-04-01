@@ -1,16 +1,14 @@
 import Parser from 'tree-sitter'
 
-import { ErrorHandler } from '../../error_handling'
+import { MissingBindingError } from '../../errors'
 
 import { Binding } from './Binding'
 
 export class UnifyPatternBindings {
-  private errorHandler: ErrorHandler
   private node: Parser.SyntaxNode
 
-  constructor(node: Parser.SyntaxNode, errorHandler: ErrorHandler) {
+  constructor(node: Parser.SyntaxNode) {
     this.node = node
-    this.errorHandler = errorHandler
   }
 
   perform = (bindings: Binding[][]): Binding[] => {
@@ -26,10 +24,6 @@ export class UnifyPatternBindings {
                            b.find(binding => !a.includes(binding))
     if (!missingBinding) return
 
-    this.errorHandler.throw(
-      `The binding '${missingBinding.name}' is missing from one of the ` +
-      'patterns.',
-      this.node
-    )
+    throw new MissingBindingError(missingBinding.name)
   }
 }

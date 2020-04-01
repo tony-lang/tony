@@ -7,7 +7,7 @@ import childProcess from 'child_process'
 import { compile } from '../src'
 import { FILE_EXTENSION, TARGET_FILE_EXTENSION } from '../src/constants'
 
-type Example = { name: string; source: string; expectedOutput: string }
+type Example = { name: string; source: string; expected: string }
 
 const COMPILE_ERROR_PREFIX = Object.freeze('COMPILE_ERROR:')
 const RUNTIME_ERROR_PREFIX = Object.freeze('RUNTIME_ERROR:')
@@ -18,6 +18,22 @@ const STDLIB = fs.readFileSync(path.join(TEST_DIR_PATH, 'stdlib.tn')).toString()
 
 const getTestFilePath = (file: string): string =>
   file.replace(FILE_EXTENSION, `.test${FILE_EXTENSION}`)
+
+const matchesError = (expected: string, actual: string): boolean =>
+  matchesCompileError(expected, actual) || matchesRuntimeError(expected, actual)
+
+const matchesCompileError = (expected: string, actual: string): boolean => {
+  const expectedError = expected.substring(COMPILE_ERROR_PREFIX.length).trim()
+
+  return expected.startsWith(COMPILE_ERROR_PREFIX) && actual === expectedError
+}
+
+const matchesRuntimeError = (expected: string, actual: string): boolean => {
+  const expectedError = expected.substring(RUNTIME_ERROR_PREFIX.length).trim()
+
+  return expected.startsWith(RUNTIME_ERROR_PREFIX) &&
+         actual.includes(expectedError)
+}
 
 const findExamples = (): Example[] => {
   const examples = fs.readdirSync(TEST_DIR_PATH)
@@ -37,7 +53,7 @@ const findExamples = (): Example[] => {
 
       acc[name] = {
         name,
-        [ext === 'tn' ? 'source' : 'expectedOutput']: content,
+        [ext === 'tn' ? 'source' : 'expected']: content,
         ...acc[name]
       }
       return acc
@@ -58,7 +74,7 @@ const runExample = async (
   try {
     await compile(sourcePath, {})
   } catch (error) {
-    return error.message
+    return error.name
   }
 
   const result = childProcess.spawnSync(
@@ -69,19 +85,13 @@ const runExample = async (
 }
 
 const runTests = async (examples: Example[]): Promise<void> => {
-  examples.forEach(({ name, source, expectedOutput }) => {
+  examples.forEach(({ name, source, expected }) => {
     test.serial(name, async t => {
-      // TODO: remove this check in error handling ticket, run concurrently
-      if (expectedOutput.startsWith(COMPILE_ERROR_PREFIX))
-        return t.pass('Temporarily skip tests expecting compile errors.')
+      const actual = await runExample(`${name}.tn`, `${STDLIB}\n${source}`)
 
-      const output = await runExample(`${name}.tn`, `${STDLIB}\n${source}`)
-
-      if (expectedOutput.startsWith(RUNTIME_ERROR_PREFIX) &&
-          output.includes(expectedOutput.substring(RUNTIME_ERROR_PREFIX.length)
-            .trim()))
+      if (matchesError(expected, actual))
         t.pass(name)
-      else t.is(expectedOutput.trim(), output.trim())
+      else t.is(expected.trim(), actual.trim())
     })
   })
 }

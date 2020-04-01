@@ -1,6 +1,4 @@
-import Parser from 'tree-sitter'
-
-import { ErrorHandler } from '../../error_handling'
+import { UnificationError } from '../../errors'
 
 import {
   CurriedType,
@@ -13,24 +11,30 @@ import {
 } from '../types'
 
 export class InferApplicationType {
-  private errorHandler: ErrorHandler
-  private node: Parser.SyntaxNode
+  private typeConstraints: TypeConstraints
 
-  constructor(node: Parser.SyntaxNode, errorHandler: ErrorHandler) {
-    this.node = node
-    this.errorHandler = errorHandler
+  constructor(typeConstraints: TypeConstraints) {
+    this.typeConstraints = typeConstraints
   }
 
   perform = (valueType: Type, argumentTypes: CurriedType): Type => {
-    const inferredValueType = this.inferValueType(valueType, argumentTypes)
+    if (valueType instanceof TypeVariable) {
+      valueType.unify(
+        argumentTypes.concat(new TypeVariable),
+        this.typeConstraints
+      )
 
-    this.handleVoidParameterType(inferredValueType)
+      return new TypeVariable
+    }
+
+    this.checkAppledToNonCurriedType(valueType)
+    this.handleVoidParameterType(valueType)
     this.checkAppliedTooManyArguments(
-      inferredValueType,
+      valueType,
       argumentTypes.parameters.length
     )
 
-    return this.inferType(inferredValueType, argumentTypes)
+    return this.inferType(valueType, argumentTypes)
   }
 
   private inferType = (
@@ -45,11 +49,8 @@ export class InferApplicationType {
             this.isPlaceholderArgument(argumentType))
           return parameterTypes.concat([parameterType])
 
-        this.checkArgumentTypeMismatch(
-          parameterType,
-          argumentType,
-          typeConstraints
-        )
+        parameterType.unify(argumentType, typeConstraints)
+
         return parameterTypes
       }, [])
 
@@ -66,17 +67,13 @@ export class InferApplicationType {
     valueType.parameters.pop()
   }
 
-  private inferValueType(
-    valueType: Type,
-    argumentTypes: CurriedType
-  ): CurriedType {
-    if (valueType instanceof CurriedType) return valueType
-    if (valueType instanceof TypeVariable)
-      return argumentTypes.concat(new TypeVariable)
+  private checkAppledToNonCurriedType(
+    valueType: Type
+  ): asserts valueType is CurriedType {
+    if (valueType instanceof CurriedType) return
 
-    this.errorHandler.throw(
-      `Cannot apply to the non-curried type '${valueType.toString()}'.`,
-      this.node
+    throw new UnificationError(
+      null, valueType, 'Cannot apply to a non-curried type.'
     )
   }
 
@@ -86,28 +83,12 @@ export class InferApplicationType {
   ): void => {
     if (valueType.parameters.length > argumentTypeCount) return
 
-    this.errorHandler.throw(
-      `Applied ${argumentTypeCount} arguments to type ` +
-      `'${valueType.toString()}' accepting at most ` +
-      `${valueType.parameters.length - 1} arguments.`,
-      this.node
+    throw new UnificationError(
+      null,
+      valueType,
+      `Applied ${argumentTypeCount} arguments to a type accepting at most ` +
+      `${valueType.parameters.length - 1} arguments.`
     )
-  }
-
-  private checkArgumentTypeMismatch = (
-    parameterType: Type,
-    argumentType: Type,
-    typeConstraints: TypeConstraints
-  ): void => {
-    try {
-      parameterType.unify(argumentType, typeConstraints)
-    } catch (error) {
-      this.errorHandler.throw(
-        `Argument of type '${argumentType.toString()}' not assignable to ` +
-        `type '${parameterType.toString()}'.\n\n${error.message}`,
-        this.node
-      )
-    }
   }
 
   private isPlaceholderArgument = (argumentType: Type): boolean =>

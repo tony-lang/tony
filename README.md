@@ -1,20 +1,27 @@
 # The Tony programming language
 
-Listen to changes and make them accessible through `tony` from the command line:
+Tony is a strongly typed, high level, general purpose programming language built for parallelism.
 
-    $ yarn start
+[Documentation](https://tony-lang.github.io/)
 
-Run ESLint:
+This repository is home to the compiler and the type inference algorithm of Tony. Other core components of Tony can be found here:
 
-    $ yarn eslint
+* [Parser](https://github.com/tony-lang/tree-sitter-tony)
+* [CLI](https://github.com/tony-lang/cli)
 
-Run TypeScript compiler checks:
+## API
 
-    $ yarn tsc
+tbc
 
-Run tests:
+### `compile`
 
-    $ yarn test
+### `exec`
+
+### `run`
+
+### `parse`
+
+### Errors
 
 ## Release
 

@@ -1,8 +1,9 @@
+import { assert, UnificationError } from '../../errors'
+
 import { CurriedType } from './CurriedType'
 import { Type } from './Type'
 import { TypeConstraints } from './TypeConstraints'
 import { TypeVariable } from './TypeVariable'
-import { UnificationError } from './UnificationError'
 
 export class ParametricType extends Type {
   private _name: string
@@ -29,20 +30,30 @@ export class ParametricType extends Type {
     return new CurriedType([this, type])
   }
 
-  unify = (type: Type, constraints: TypeConstraints): Type => {
-    if (type instanceof TypeVariable) {
-      constraints.add(type, this)
+  unify = (actual: Type, constraints: TypeConstraints): ParametricType => {
+    if (actual instanceof TypeVariable) {
+      constraints.add(actual, this)
       return this
-    } else if (type instanceof ParametricType && this.name === type.name &&
-               this.parameters.length == type.parameters.length) {
+    } else if (actual instanceof ParametricType && this.name === actual.name &&
+               this.parameters.length == actual.parameters.length) {
       const parameters = this.parameters.map((parameter, i) => {
-        return parameter.unify(type.parameters[i], constraints)
+        try {
+          return parameter.unify(actual.parameters[i], constraints)
+        } catch (error) {
+          assert(
+            error instanceof UnificationError,
+            'Should be UnificationError.'
+          )
+
+          error.addTypeMismatch(this, actual)
+          throw error
+        }
       })
 
       return new ParametricType(this.name, parameters)
     }
 
-    throw new UnificationError(this, type, 'Non-variable types do not match')
+    throw new UnificationError(this, actual, 'Non-variable types do not match')
   }
 
   applyConstraints = (constraints: TypeConstraints): Type => {

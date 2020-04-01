@@ -1,5 +1,3 @@
-import childProcess from 'child_process'
-import path from 'path'
 import Parser from 'tree-sitter'
 
 import { Analyze, SymbolTable } from './analyzing'
@@ -7,11 +5,11 @@ import { GenerateCode } from './code_generation'
 import { FILE_EXTENSION } from './constants'
 import { parse } from './parse'
 import {
-  assert,
   getFilePath,
   getOutFile,
   writeFile
 } from './utilities'
+import { compile as webpackCompile } from './webpack'
 
 export const compile = async (
   file: string,
@@ -75,31 +73,4 @@ const generateCode = (
   if (verbose) console.log(`Generating code for ${filePath}...`)
 
   return new GenerateCode(symbolTable).generate(tree.rootNode)
-}
-
-const webpackCompile = (
-  filePath: string,
-  mode: string,
-  verbose: boolean
-): Promise<void> => {
-  if (verbose) console.log('Compiling with Webpack...')
-
-  return new Promise(resolve => {
-    childProcess
-      .spawn(
-        path.join(__dirname, '..', '..', 'node_modules', '.bin', 'webpack-cli'),
-        [filePath, '-o', filePath, '--mode', mode],
-        { stdio: verbose ? 'inherit' : null }
-      )
-      .on('close', resolve)
-      .on('error', (error) => {
-        assert(
-          false,
-          `${error.name}: ${error.message}\n\n` +
-          `Oh noes! Tony wasn't able to compile ${filePath}.\nPlease report ` +
-          'the file you tried to compile as well as the printed output at ' +
-          'https://github.com/tony-lang/tony/issues'
-        )
-      })
-  })
 }

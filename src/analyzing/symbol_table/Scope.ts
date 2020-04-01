@@ -1,4 +1,4 @@
-import { assert } from '../../utilities'
+import { assert } from '../../errors'
 
 import { Binding } from './Binding'
 
