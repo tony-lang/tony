@@ -11,8 +11,8 @@ export class InferSpreadType {
       return valueType
 
     throw new TypeError(
-      null,
       valueType,
+      undefined,
       'The spread operator may only be used on values of a list or map type.'
     )
   }

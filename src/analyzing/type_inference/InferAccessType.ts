@@ -47,8 +47,8 @@ export class InferAccessType {
     }
 
     throw new TypeError(
-      null,
       valueType,
+      undefined,
       'The access operator may only be used on objects or values of a list, ' +
       'tuple or map type.'
     )

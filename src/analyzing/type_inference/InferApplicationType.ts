@@ -27,12 +27,9 @@ export class InferApplicationType {
       return new TypeVariable
     }
 
-    this.checkAppledToNonCurriedType(valueType)
+    this.checkAppledToNonCurriedType(valueType, argumentTypes)
     this.handleVoidParameterType(valueType)
-    this.checkAppliedTooManyArguments(
-      valueType,
-      argumentTypes.parameters.length
-    )
+    this.checkAppliedTooManyArguments(valueType, argumentTypes)
 
     return this.inferType(valueType, argumentTypes)
   }
@@ -49,7 +46,16 @@ export class InferApplicationType {
             this.isPlaceholderArgument(argumentType))
           return parameterTypes.concat([parameterType])
 
-        parameterType.unify(argumentType, typeConstraints)
+        try {
+          parameterType.unify(argumentType, typeConstraints)
+        } catch (error) {
+          if (error instanceof TypeError)
+            error.addTypeMismatch(
+              new CurriedType(valueType.parameters.slice(0, -1)),
+              argumentTypes
+            )
+          throw error
+        }
 
         return parameterTypes
       }, [])
@@ -68,26 +74,27 @@ export class InferApplicationType {
   }
 
   private checkAppledToNonCurriedType(
-    valueType: Type
+    valueType: Type,
+    argumentTypes: CurriedType
   ): asserts valueType is CurriedType {
     if (valueType instanceof CurriedType) return
 
     throw new TypeError(
-      null, valueType, 'Cannot apply to a non-curried type.'
+      valueType, argumentTypes, 'Cannot apply to a non-curried type.'
     )
   }
 
   private checkAppliedTooManyArguments = (
     valueType: CurriedType,
-    argumentTypeCount: number
+    argumentTypes: CurriedType
   ): void => {
-    if (valueType.parameters.length > argumentTypeCount) return
+    if (valueType.parameters.length > argumentTypes.parameters.length) return
 
     throw new TypeError(
-      null,
-      valueType,
-      `Applied ${argumentTypeCount} arguments to a type accepting at most ` +
-      `${valueType.parameters.length - 1} arguments.`
+      new CurriedType(valueType.parameters.slice(0, -1)),
+      argumentTypes,
+      `Applied ${argumentTypes.parameters.length} arguments to a curried ` +
+      `type accepting at most ${valueType.parameters.length - 1} arguments.`
     )
   }
 
