@@ -63,8 +63,6 @@ export class GenerateCode {
       return ''
     case 'generator':
       return this.generateGenerator(node)
-    case 'generator_condition':
-      return this.generateGeneratorCondition(node)
     case 'generators':
       return this.generateGenerators(node)
     case 'identifier':
@@ -285,17 +283,11 @@ export class GenerateCode {
   generateGenerator = (node: Parser.SyntaxNode): string => {
     const name = this.generate(node.namedChild(0))
     const value = this.generate(node.namedChild(1))
-    if (!GenerateCode.nodeHasChild(node, 'generator_condition'))
+    if (node.namedChildCount == 2)
       return `${value}.map((${name})=>`
 
     const condition = this.generate(node.namedChild(2))
     return `${value}.map((${name})=>!${condition} ? "${INTERNAL_TEMP_TOKEN}" : `
-  }
-
-  generateGeneratorCondition = (node: Parser.SyntaxNode): string => {
-    const expression = this.generate(node.namedChild(0))
-
-    return expression
   }
 
   generateGenerators = (node: Parser.SyntaxNode): string => {
