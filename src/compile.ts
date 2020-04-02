@@ -13,8 +13,9 @@ import { compile as webpackCompile } from './webpack'
 
 export const compile = async (
   file: string,
-  { outFile, webpackMode = 'production', verbose = false }: {
+  { outFile, noEmit = false, webpackMode = 'production', verbose = false }: {
     outFile?: string;
+    noEmit?: boolean;
     webpackMode?: string;
     verbose?: boolean;
   }
@@ -30,24 +31,23 @@ export const compile = async (
     const file = files.pop()
     if (compiledFiles.includes(file) || !file.includes(FILE_EXTENSION)) continue
 
-    await compileFile(files, file, verbose)
+    const [tree, symbolTable] = await analyzeFile(files, file, verbose)
+    if (!noEmit) await compileFile(file, tree, symbolTable, verbose)
     compiledFiles.push(file)
   }
+
+  if (noEmit) return
 
   await webpackCompile(outFilePath, webpackMode, verbose)
   return outFilePath
 }
 
-const compileFile = (
+const analyzeFile = (
   files: string[],
   filePath: string,
   verbose: boolean
-): Promise<void> => parse(filePath, { verbose })
+): Promise<[Parser.Tree, SymbolTable]> => parse(filePath, { verbose })
   .then(tree => analyze(files, filePath, tree, verbose))
-  .then(([tree, symbolTable]) =>
-    generateCode(filePath, tree, symbolTable, verbose)
-  )
-  .then(source => writeFile(getOutFile(filePath), source))
 
 const analyze = (
   files: string[],
@@ -61,6 +61,17 @@ const analyze = (
   files.push(...symbolTable.importedFiles)
 
   return [tree, symbolTable]
+}
+
+const compileFile = (
+  filePath: string,
+  tree: Parser.Tree,
+  symbolTable: SymbolTable,
+  verbose: boolean
+): Promise<void> => {
+  const source = generateCode(filePath, tree, symbolTable, verbose)
+
+  return writeFile(getOutFile(filePath), source)
 }
 
 const generateCode = (
