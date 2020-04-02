@@ -281,7 +281,7 @@ export class GenerateCode {
   }
 
   generateGenerator = (node: Parser.SyntaxNode): string => {
-    const name = this.generate(node.namedChild(0))
+    const name = this.transformIdentifier.perform(node.namedChild(0).text)
     const value = this.generate(node.namedChild(1))
     if (node.namedChildCount == 2)
       return `${value}.map((${name})=>`
