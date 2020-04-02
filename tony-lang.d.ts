@@ -6,9 +6,9 @@ import { TypeMismatch } from './src/errors/TypeError'
 declare module 'tony-lang' {
   export function compile(
     file: string,
-    { outFile, noEmit, webpackMode, verbose }: {
+    { outFile, emit, webpackMode, verbose }: {
       outFile?: string;
-      noEmit?: boolean;
+      emit?: boolean;
       webpackMode?: string;
       verbose?: boolean;
     }
