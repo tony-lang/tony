@@ -1,10 +1,9 @@
-import Parser from 'tree-sitter'
-
-import { GenerateCode } from './GenerateCode'
 import {
   DESTRUCTURING_PATTERN_NODE_TYPES,
-  NODE_TYPES_WITH_DEFAULT_VALUES
+  NODE_TYPES_WITH_DEFAULT_VALUES,
 } from '../constants'
+import { GenerateCode } from './GenerateCode'
+import Parser from 'tree-sitter'
 
 export class CollectDefaultValues {
   private codeGenerator: GenerateCode
@@ -25,8 +24,7 @@ export class CollectDefaultValues {
         return this.rec(node.namedChild(0)!)
       else if (node.namedChild(0)!.type === 'identifier_pattern')
         return [undefined]
-      else
-        return []
+      else return []
     else
       return node.namedChildren
         .map(this.rec)

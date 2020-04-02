@@ -1,7 +1,7 @@
 import {
   DuplicateBindingError,
   MissingBindingError,
-  assert
+  assert,
 } from '../../errors'
 
 import { Binding } from './Binding'
@@ -35,7 +35,7 @@ export class BuildSymbolTable {
   leaveBlock = (): void => {
     assert(
       this._currentScope.parentScope !== undefined,
-      'Cannot leave top-level scope.'
+      'Cannot leave top-level scope.',
     )
 
     this._currentScope = this._currentScope.parentScope

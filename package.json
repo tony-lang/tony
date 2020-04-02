@@ -8,6 +8,7 @@
     "build": "babel . --ignore dist,node_modules --out-dir dist --extensions .ts",
     "start": "yarn link && nodemon --watch src --watch test --exec 'yarn build' -e ts",
     "eslint": "eslint src test --ext .ts",
+    "prettier": "prettier --write src test",
     "test": "ava dist/test/index.test.js"
   },
   "engines": {
@@ -50,8 +51,10 @@
     "@typescript-eslint/parser": "^2.25.0",
     "ava": "^3.5.1",
     "eslint": "^6.8.0",
+    "eslint-config-prettier": "^6.10.1",
+    "eslint-plugin-prettier": "^3.1.2",
     "nodemon": "^2.0.2",
-    "prettier": "2.0.2",
+    "prettier": "^2.0.2",
     "typescript": "^3.8.3"
   }
 }

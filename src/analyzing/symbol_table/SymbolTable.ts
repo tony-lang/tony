@@ -23,7 +23,7 @@ export class SymbolTable extends Scope {
   addImport = (imp: Import): void => {
     this._imports = [imp, ...this.imports]
 
-    imp.bindings.forEach(binding => {
+    imp.bindings.forEach((binding) => {
       binding.import = imp
 
       this.addBinding(binding)
@@ -32,11 +32,11 @@ export class SymbolTable extends Scope {
 
   resolveBinding = (name: string): Binding | undefined => {
     // TODO: remove this when basic types are implemented in Tony
-    const matchingBasicType = BASIC_TYPES.find(type => type === name)
+    const matchingBasicType = BASIC_TYPES.find((type) => type === name)
     if (matchingBasicType)
       return new TypeBinding(new ParametricType(matchingBasicType))
 
-    const binding = this.bindings.find(binding => binding.name === name)
+    const binding = this.bindings.find((binding) => binding.name === name)
     if (binding) return binding
   }
 }

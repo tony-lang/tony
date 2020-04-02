@@ -1,12 +1,10 @@
-import Parser from 'tree-sitter'
-
+import { BuildSymbolTable, TypeBinding } from '../symbol_table'
 import {
   InternalError,
   MissingBindingError,
   TypeError,
-  assert
+  assert,
 } from '../../errors'
-
 import {
   LIST_TYPE,
   MAP_TYPE,
@@ -15,9 +13,9 @@ import {
   STRING_TYPE,
   TUPLE_TYPE,
   Type,
-  TypeConstraints
+  TypeConstraints,
 } from '../types'
-import { BuildSymbolTable, TypeBinding } from '../symbol_table'
+import Parser from 'tree-sitter'
 
 export class InferAccessType {
   private buildSymbolTable: BuildSymbolTable
@@ -27,7 +25,7 @@ export class InferAccessType {
   constructor(
     node: Parser.SyntaxNode,
     buildSymbolTable: BuildSymbolTable,
-    typeConstraints: TypeConstraints
+    typeConstraints: TypeConstraints,
   ) {
     this.node = node
     this.buildSymbolTable = buildSymbolTable
@@ -42,21 +40,20 @@ export class InferAccessType {
         return this.accessTuple(valueType, accessorType)
       else if (valueType.name === MAP_TYPE)
         return this.accessMap(valueType, accessorType)
-      else
-        return this.accessRepresentation(valueType, accessorType)
+      else return this.accessRepresentation(valueType, accessorType)
     }
 
     throw new TypeError(
       valueType,
       undefined,
       'The access operator may only be used on objects or values of a list, ' +
-      'tuple or map type.'
+        'tuple or map type.',
     )
   }
 
   private accessList = (
     valueType: ParametricType,
-    accessorType: Type
+    accessorType: Type,
   ): Type => {
     new ParametricType(NUMBER_TYPE).unify(accessorType, this.typeConstraints)
 
@@ -71,7 +68,7 @@ export class InferAccessType {
 
   private accessTuple = (
     valueType: ParametricType,
-    accessorType: Type
+    accessorType: Type,
   ): Type => {
     new ParametricType(NUMBER_TYPE).unify(accessorType, this.typeConstraints)
 
@@ -81,14 +78,15 @@ export class InferAccessType {
       const index = parseInt(shorthandAccessIdentifier.text)
 
       return valueType.parameters[index]
-    } else throw new InternalError(
-      'Dynamic tuple access has not been implemented yet.'
-    )
+    } else
+      throw new InternalError(
+        'Dynamic tuple access has not been implemented yet.',
+      )
   }
 
   private accessRepresentation = (
     valueType: ParametricType,
-    accessorType: Type
+    accessorType: Type,
   ): Type => {
     new ParametricType(STRING_TYPE).unify(accessorType, this.typeConstraints)
 
@@ -100,17 +98,21 @@ export class InferAccessType {
       const binding = this.buildSymbolTable.resolveBinding(valueType.name)
       assert(binding instanceof TypeBinding, 'Should be a type binding.')
       assert(
-        binding.representation,
-        `Object representation of ${valueType.toString()} should be present.`
+        binding.representation !== undefined,
+        `Object representation of ${valueType.toString()} should be present.`,
       )
 
       const property = binding.representation.findProperty(propertyName)
       if (property) return property.type
-      else throw new MissingBindingError(
-        propertyName, binding.type.toString(), binding.representation.toString()
+      else
+        throw new MissingBindingError(
+          propertyName,
+          binding.type.toString(),
+          binding.representation.toString(),
+        )
+    } else
+      throw new InternalError(
+        'Dynamic object access has not been implemented yet.',
       )
-    } else throw new InternalError(
-      'Dynamic object access has not been implemented yet.'
-    )
   }
 }

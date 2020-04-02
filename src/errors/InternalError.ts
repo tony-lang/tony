@@ -13,7 +13,7 @@ export class InternalError extends Error {
   }
 }
 
-export function assert(value: any, message: string): asserts value {
+export function assert(value: boolean, message: string): asserts value {
   if (value) return
 
   throw new InternalError(message)

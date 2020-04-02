@@ -5,11 +5,7 @@ export class MissingBindingError extends CompileError {
   private _representation: string | undefined
   private _type: string | undefined
 
-  constructor(
-    binding: string,
-    type?: string,
-    representation?: string
-  ) {
+  constructor(binding: string, type?: string, representation?: string) {
     super(undefined)
     this.name = this.constructor.name
 

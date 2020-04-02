@@ -9,5 +9,5 @@ export {
   InternalError,
   MissingBindingError,
   SyntaxError,
-  TypeError
+  TypeError,
 } from './errors'

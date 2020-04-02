@@ -10,11 +10,14 @@ export class Curry {
   }
 
   private static getActualArgs = (args: any[]): any[] =>
-    args.filter(arg => arg !== TRANSFORM_PLACEHOLDER_ARGUMENT)
+    args.filter((arg) => arg !== TRANSFORM_PLACEHOLDER_ARGUMENT)
 
-  private static addNewArgs = (args: any[], newArgs: any[]): any[] => args
-    .map(arg => arg === TRANSFORM_PLACEHOLDER_ARGUMENT ? newArgs.pop() : arg)
-    .concat(newArgs)
+  private static addNewArgs = (args: any[], newArgs: any[]): any[] =>
+    args
+      .map((arg) =>
+        arg === TRANSFORM_PLACEHOLDER_ARGUMENT ? newArgs.pop() : arg,
+      )
+      .concat(newArgs)
 
   static external = (fn: any, ...cache: any[]) => (...args: any[]): any => {
     const all = cache.concat(args)

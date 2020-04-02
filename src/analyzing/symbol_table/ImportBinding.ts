@@ -8,7 +8,7 @@ export class ImportBinding extends Binding {
   private _import: Import | undefined
 
   constructor(name: string, originalName: string, type?: Type) {
-    super(name, type || new TypeVariable, true, false)
+    super(name, type || new TypeVariable(), true, false)
 
     this._originalName = originalName
   }

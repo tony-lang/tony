@@ -1,8 +1,6 @@
-import Parser from 'tree-sitter'
-
-import { MissingBindingError } from '../../errors'
-
 import { Binding } from './Binding'
+import { MissingBindingError } from '../../errors'
+import Parser from 'tree-sitter'
 
 export class UnifyPatternBindings {
   private node: Parser.SyntaxNode
@@ -20,8 +18,9 @@ export class UnifyPatternBindings {
   }
 
   checkBindingMissing = (a: Binding[], b: Binding[]): void => {
-    const missingBinding = a.find(binding => !b.includes(binding)) ||
-                           b.find(binding => !a.includes(binding))
+    const missingBinding =
+      a.find((binding) => !b.includes(binding)) ||
+      b.find((binding) => !a.includes(binding))
     if (!missingBinding) return
 
     throw new MissingBindingError(missingBinding.name)

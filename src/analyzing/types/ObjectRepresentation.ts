@@ -1,9 +1,9 @@
 import { Type } from './Type'
 
 type Property = {
-  name: string;
-  type: Type;
-  representation?: ObjectRepresentation;
+  name: string
+  type: Type
+  representation?: ObjectRepresentation
 }
 
 export class ObjectRepresentation {
@@ -23,17 +23,18 @@ export class ObjectRepresentation {
   concat = (representation: ObjectRepresentation): ObjectRepresentation =>
     new ObjectRepresentation([...this.properties, ...representation.properties])
 
-  isComplete = (): boolean => this.properties
-    .every(({ type, representation }) => {
-      return type.isComplete() &&
-             (representation === undefined || representation.isComplete())
+  isComplete = (): boolean =>
+    this.properties.every(({ type, representation }) => {
+      return (
+        type.isComplete() &&
+        (representation === undefined || representation.isComplete())
+      )
     })
 
   toString = (): string => {
     const properties = this.properties
       .map(({ name, type, representation }) => {
-        if (representation === undefined)
-          return `${name}: ${type.toString()}`
+        if (representation === undefined) return `${name}: ${type.toString()}`
 
         return `${type.toString()}: ${representation.toString()}`
       })

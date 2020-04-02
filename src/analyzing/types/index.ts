@@ -24,5 +24,5 @@ export const BASIC_TYPES = Object.freeze([
   REGULAR_EXPRESSION_TYPE,
   LIST_TYPE,
   MAP_TYPE,
-  TUPLE_TYPE
+  TUPLE_TYPE,
 ])

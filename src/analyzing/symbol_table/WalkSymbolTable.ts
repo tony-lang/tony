@@ -19,8 +19,9 @@ export class WalkSymbolTable {
 
   enterBlock = (): void => {
     this._nestedScopesIndexStack.push(this._currentNestedScopeIndex + 1)
-    this._currentScope =
-      this.currentScope.nestedScope(this._currentNestedScopeIndex + 1)
+    this._currentScope = this.currentScope.nestedScope(
+      this._currentNestedScopeIndex + 1,
+    )
     this._currentNestedScopeIndex = -1
   }
 
@@ -32,7 +33,7 @@ export class WalkSymbolTable {
     const nestedScopeIndex = this._nestedScopesIndexStack.pop()
     assert(
       nestedScopeIndex !== undefined,
-      'Do not leave a block without entring it.'
+      'Do not leave a block without entring it.',
     )
     this._currentNestedScopeIndex = nestedScopeIndex
   }

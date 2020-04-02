@@ -9,7 +9,7 @@ export class TypeBinding extends Binding {
     type: ParametricType,
     representation?: ObjectRepresentation,
     isImplicit = false,
-    isExported = false
+    isExported = false,
   ) {
     super(type.name, type, isImplicit, isExported)
 

@@ -3,7 +3,7 @@ import {
   ParametricType,
   Type,
   TypeConstraints,
-  TypeVariable
+  TypeVariable,
 } from '../types'
 
 export class InferListType {
@@ -13,11 +13,11 @@ export class InferListType {
     this.typeConstraints = typeConstraints
   }
 
-  perform = (valueTypes: Type[]): ParametricType => valueTypes
-    .reduce((valueType: ParametricType, otherValueType) => {
+  perform = (valueTypes: Type[]): ParametricType =>
+    valueTypes.reduce((valueType: ParametricType, otherValueType) => {
       return valueType.unify(
         new ParametricType(LIST_TYPE, [otherValueType]),
-        this.typeConstraints
+        this.typeConstraints,
       )
-    }, new ParametricType(LIST_TYPE, [new TypeVariable]))
+    }, new ParametricType(LIST_TYPE, [new TypeVariable()]))
 }

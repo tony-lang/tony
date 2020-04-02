@@ -1,13 +1,13 @@
 import Parser from 'tree-sitter'
 
 type Position = {
-  row: number;
-  column: number;
+  row: number
+  column: number
 }
 
 export type Context = {
-  start: Position;
-  end: Position;
+  start: Position
+  end: Position
 }
 
 export abstract class CompileError extends Error {
@@ -33,7 +33,7 @@ export abstract class CompileError extends Error {
   addContext = (node: Parser.SyntaxNode): void => {
     this._context = {
       start: node.startPosition,
-      end: node.endPosition
+      end: node.endPosition,
     }
   }
 }

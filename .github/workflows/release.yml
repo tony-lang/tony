@@ -9,35 +9,35 @@ jobs:
     runs-on: ubuntu-latest
     name: GPR
     steps:
-    - uses: actions/checkout@master
-    - uses: actions/setup-node@v1
-      with:
-        node-version: 13
-        registry-url: https://npm.pkg.github.com/
-        scope: '@jonhue'
-    - name: Install dependencies
-      run: yarn install
-    - name: Build
-      run: yarn build
-    - name: Publish
-      run: npm publish
-      env:
-        NODE_AUTH_TOKEN: ${{ secrets.GPR_AUTH_TOKEN }}
+      - uses: actions/checkout@master
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 13
+          registry-url: https://npm.pkg.github.com/
+          scope: '@jonhue'
+      - name: Install dependencies
+        run: yarn install
+      - name: Build
+        run: yarn build
+      - name: Publish
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GPR_AUTH_TOKEN }}
 
   publish-npm:
     runs-on: ubuntu-latest
     name: NPM
     steps:
-    - uses: actions/checkout@master
-    - uses: actions/setup-node@v1
-      with:
-        node-version: 12
-        registry-url: https://registry.npmjs.org/
-    - name: Install dependencies
-      run: yarn install
-    - name: Build
-      run: yarn build
-    - name: Publish
-      run: npm publish
-      env:
-        NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
+      - uses: actions/checkout@master
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12
+          registry-url: https://registry.npmjs.org/
+      - name: Install dependencies
+        run: yarn install
+      - name: Build
+        run: yarn build
+      - name: Publish
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}

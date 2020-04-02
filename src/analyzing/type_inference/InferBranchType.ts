@@ -7,7 +7,10 @@ export class InferBranchType {
     this.typeConstraints = typeConstraints
   }
 
-  perform = (branchTypes: Type[]): Type => branchTypes
-    .reduce((type, branchType) => type.unify(branchType, this.typeConstraints))
-    ._reduce(this.typeConstraints)
+  perform = (branchTypes: Type[]): Type =>
+    branchTypes
+      .reduce((type, branchType) =>
+        type.unify(branchType, this.typeConstraints),
+      )
+      ._reduce(this.typeConstraints)
 }

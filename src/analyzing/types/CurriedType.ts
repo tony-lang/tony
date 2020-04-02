@@ -27,16 +27,15 @@ export class CurriedType extends Type {
     if (actual instanceof TypeVariable) {
       constraints.add(actual, this)
       return this
-    } else if (actual instanceof CurriedType &&
-               this.parameters.length == actual.parameters.length) {
+    } else if (
+      actual instanceof CurriedType &&
+      this.parameters.length == actual.parameters.length
+    ) {
       const parameters = this.parameters.map((parameter, i) => {
         try {
           return parameter._unify(actual.parameters[i], constraints)
         } catch (error) {
-          assert(
-            error instanceof TypeError,
-            'Should be TypeError.'
-          )
+          assert(error instanceof TypeError, 'Should be TypeError.')
 
           error.addTypeMismatch(this, actual)
           throw error
@@ -50,18 +49,19 @@ export class CurriedType extends Type {
   }
 
   _reduce = (constraints: TypeConstraints): CurriedType => {
-    const parameters = this.parameters
-      .map(parameter => parameter._reduce(constraints))
+    const parameters = this.parameters.map((parameter) =>
+      parameter._reduce(constraints),
+    )
 
     return new CurriedType(parameters)
   }
 
   isComplete = (): boolean =>
-    this.parameters.every(parameter => parameter.isComplete())
+    this.parameters.every((parameter) => parameter.isComplete())
 
   toString = (): string => {
     const parameters = this.parameters
-      .map(parameter => parameter.toString())
+      .map((parameter) => parameter.toString())
       .join(' -> ')
 
     return `(${parameters})`
