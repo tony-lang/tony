@@ -5,7 +5,7 @@ type Position = {
   column: number;
 }
 
-type Context = {
+export type Context = {
   start: Position;
   end: Position;
 }
