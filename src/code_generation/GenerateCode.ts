@@ -611,10 +611,4 @@ export class GenerateCode {
 
     return clauses
   }
-
-  private static nodeHasChild = (
-    node: Parser.SyntaxNode, type: string
-  ): boolean => {
-    return node.children.map(child => child.type).includes(type)
-  }
 }
