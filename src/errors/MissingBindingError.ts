@@ -10,7 +10,7 @@ export class MissingBindingError extends CompileError {
     type?: string,
     representation?: string
   ) {
-    super(null)
+    super(undefined)
     this.name = this.constructor.name
 
     this._binding = binding

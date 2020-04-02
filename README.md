@@ -73,7 +73,7 @@ There are three separate classes of errors that the Tony compiler may throw:
 
 Is thrown when the [Tree-sitter](https://tree-sitter.github.io/tree-sitter/) parser is unable to parse a file.
 
-Contains attributes `filePath: string` and `tree: Parser.Tree`. `message` is set to `null`.
+Contains attributes `filePath: string` and `tree: Parser.Tree`. `message` is set to `undefined`.
 
 ### `CompileError`
 
@@ -85,19 +85,19 @@ Contains `filePath: string` and `context: { start: { row: number; column: number
 
 Is thrown when an identifier or type is assigned to/declared multiple times.
 
-Contains `binding: string` representing the duplicate identifier/type.
+Contains `binding: string` representing the duplicate identifier/type. `message` is set to `undefined`.
 
 #### `MissingBindingError`
 
 Is thrown when the value of an unassigned/undeclared identifier/type is attempted to be used.
 
-Contains `binding: string` representing the missing identifier/type and in the case of an erroneous property access `representation: string` (i.e. the representation of the accessed object) and `type: string` (i.e. the type of the accessed object).
+Contains `binding: string` representing the missing identifier/type and in the case of an erroneous property access `representation: string` (i.e. the representation of the accessed object) and `type: string` (i.e. the type of the accessed object). `message` is set to `undefined`.
 
 #### `TypeError`
 
 Is thrown when two types cannot be unified.
 
-Contains `typeTrace: [string, string][]` representing a trace of mismatches from broadest to narrowest.
+Contains `typeTrace: [string, string][]` representing a trace of mismatches from narrowest to broadest.
 
 ### `InternalError`
 

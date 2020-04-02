@@ -11,17 +11,19 @@ export class TypeError extends CompileError {
     super(message)
     this.name = this.constructor.name
 
-    this._typeTrace = [[expected.toString(), actual.toString()]]
+    this._typeTrace = [
+      [expected.toString(), actual ? actual.toString() : undefined]
+    ]
   }
 
   get typeTrace(): TypeMismatch[] {
     return this._typeTrace
   }
 
-  addTypeMismatch = (expected: Type, actual: Type): void => {
+  addTypeMismatch = (expected: Type, actual?: Type): void => {
     this._typeTrace = [
-      [expected.toString(), actual.toString()],
-      ...this.typeTrace
+      ...this.typeTrace,
+      [expected.toString(), actual ? actual.toString() : undefined]
     ]
   }
 }

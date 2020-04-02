@@ -195,7 +195,7 @@ export class Analyze {
         )
       }
     } catch (error) {
-      if (error instanceof TypeError && error.context === undefined)
+      if (error instanceof CompileError && error.context === undefined)
         error.addContext(node)
       throw error
     }

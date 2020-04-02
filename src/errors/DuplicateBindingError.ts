@@ -4,7 +4,7 @@ export class DuplicateBindingError extends CompileError {
   private _binding: string
 
   constructor(binding: string) {
-    super(null)
+    super(undefined)
     this.name = this.constructor.name
 
     this._binding = binding

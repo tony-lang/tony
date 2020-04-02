@@ -5,7 +5,7 @@ export class SyntaxError extends Error {
   private _tree: Parser.Tree
 
   constructor(filePath: string, tree: Parser.Tree) {
-    super(null)
+    super(undefined)
     this.name = this.constructor.name
 
     this._filePath = filePath

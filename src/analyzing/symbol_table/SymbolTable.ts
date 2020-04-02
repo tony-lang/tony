@@ -9,7 +9,7 @@ export class SymbolTable extends Scope {
   private _imports: Import[] = []
 
   constructor() {
-    super(null)
+    super(undefined)
   }
 
   get imports(): Import[] {

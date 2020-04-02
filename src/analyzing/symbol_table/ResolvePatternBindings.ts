@@ -146,8 +146,8 @@ export class ResolvePatternBindings {
       })
 
     throw new TypeError(
-      null,
       type,
+      undefined,
       'Only values of a tuple type may be pattern matched against a tuple.'
     )
   }
