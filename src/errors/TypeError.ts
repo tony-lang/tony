@@ -1,18 +1,17 @@
+import { CompileError } from './CompileError'
 import { Type } from '../analyzing/types'
 
-import { CompileError } from './CompileError'
-
-export type TypeMismatch = [string, string]
+export type TypeMismatch = [string, string | undefined]
 
 export class TypeError extends CompileError {
   private _typeTrace: TypeMismatch[]
 
-  constructor(expected: Type, actual: Type, message: string) {
+  constructor(expected: Type, actual: Type | undefined, message: string) {
     super(message)
     this.name = this.constructor.name
 
     this._typeTrace = [
-      [expected.toString(), actual ? actual.toString() : undefined]
+      [expected.toString(), actual ? actual.toString() : undefined],
     ]
   }
 
@@ -23,7 +22,7 @@ export class TypeError extends CompileError {
   addTypeMismatch = (expected: Type, actual?: Type): void => {
     this._typeTrace = [
       ...this.typeTrace,
-      [expected.toString(), actual ? actual.toString() : undefined]
+      [expected.toString(), actual ? actual.toString() : undefined],
     ]
   }
 }

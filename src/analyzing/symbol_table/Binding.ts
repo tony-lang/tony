@@ -10,7 +10,7 @@ export class Binding {
     name: string,
     type: Type,
     isImplicit: boolean,
-    isExported: boolean
+    isExported: boolean,
   ) {
     this._name = name
     this._type = type

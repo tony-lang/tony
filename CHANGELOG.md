@@ -6,8 +6,8 @@ Tony follows Semantic Versioning 2.0 as defined at http://semver.org.
 
 ### Breaking Changes
 
-* None
+- None
 
 ### Deprecated
 
-* None
+- None

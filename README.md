@@ -33,10 +33,10 @@ function compile(
     webpackMode?: string;
     verbose?: boolean;
   }
-): Promise<string>
+): Promise<string | undefined>
 ```
 
-Resolves imports, infers and checks types, and compiles the given file to JavaScript.
+Resolves imports, infers and checks types, and compiles the given file to JavaScript. Returns the path to compiled Javascript entry.
 
 ### `exec`
 

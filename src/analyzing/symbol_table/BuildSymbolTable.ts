@@ -1,4 +1,8 @@
-import { DuplicateBindingError, MissingBindingError } from '../../errors'
+import {
+  DuplicateBindingError,
+  MissingBindingError,
+  assert,
+} from '../../errors'
 
 import { Binding } from './Binding'
 import { Scope } from './Scope'
@@ -11,6 +15,11 @@ export class BuildSymbolTable {
   // tracks if the next added bindings should be exported
   private _exportBindings = false
 
+  constructor() {
+    this._symbolTable = new SymbolTable()
+    this._currentScope = this.symbolTable
+  }
+
   get symbolTable(): SymbolTable {
     return this._symbolTable
   }
@@ -19,16 +28,16 @@ export class BuildSymbolTable {
     return this._currentScope
   }
 
-  initializeProgram = (): void => {
-    this._symbolTable = new SymbolTable()
-    this._currentScope = this.symbolTable
-  }
-
   enterBlock = (): void => {
     this._currentScope = this._currentScope.createScope()
   }
 
   leaveBlock = (): void => {
+    assert(
+      this._currentScope.parentScope !== undefined,
+      'Cannot leave top-level scope.',
+    )
+
     this._currentScope = this._currentScope.parentScope
   }
 

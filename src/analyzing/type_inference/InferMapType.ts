@@ -1,9 +1,9 @@
 import {
+  MAP_TYPE,
   ParametricType,
   Type,
   TypeConstraints,
   TypeVariable,
-  MAP_TYPE
 } from '../types'
 
 export class InferMapType {
@@ -13,8 +13,8 @@ export class InferMapType {
     this.typeConstraints = typeConstraints
   }
 
-  perform = (mapTypes: Type[]): ParametricType => mapTypes
-    .reduce((mapType: ParametricType, otherMapType) => {
+  perform = (mapTypes: Type[]): ParametricType =>
+    mapTypes.reduce((mapType: ParametricType, otherMapType) => {
       return mapType.unify(otherMapType, this.typeConstraints)
-    }, new ParametricType(MAP_TYPE, [new TypeVariable, new TypeVariable]))
+    }, new ParametricType(MAP_TYPE, [new TypeVariable(), new TypeVariable()]))
 }

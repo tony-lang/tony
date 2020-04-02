@@ -13,17 +13,17 @@ jobs:
 
     name: Node ${{ matrix.node }}
     steps:
-    - uses: actions/checkout@master
-    - uses: actions/setup-node@v1
-      with:
-        node-version: ${{ matrix.node }}
-    - name: Install dependencies
-      run: yarn install
-    - name: Build
-      run: yarn build
-    - name: ESLint
-      run: yarn eslint
-    - name: TypeScript
-      run: yarn tsc
-    - name: Tests
-      run: sudo yarn test
+      - uses: actions/checkout@master
+      - uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Install dependencies
+        run: yarn install
+      - name: Build
+        run: yarn build
+      - name: ESLint
+        run: yarn eslint
+      - name: TypeScript
+        run: yarn tsc
+      - name: Tests
+        run: sudo yarn test

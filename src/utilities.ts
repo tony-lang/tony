@@ -1,8 +1,7 @@
+import { FILE_EXTENSION, TARGET_FILE_EXTENSION } from './constants'
 import fs from 'fs'
 import mkdirp from 'mkdirp'
 import path from 'path'
-
-import { FILE_EXTENSION, TARGET_FILE_EXTENSION } from './constants'
 
 export const readFile = (filePath: string): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -15,7 +14,7 @@ export const readFile = (filePath: string): Promise<string> => {
 export const writeFile = (filePath: string, data = ''): Promise<void> => {
   return mkdirp(path.dirname(filePath)).then(() => {
     return new Promise((resolve, reject) => {
-      fs.writeFile(filePath, data, error => {
+      fs.writeFile(filePath, data, (error) => {
         !error ? resolve() : reject(error)
       })
     })
@@ -30,3 +29,6 @@ export const getFilePath = (file: string): string => {
 
 export const getOutFile = (file: string): string =>
   file.replace(FILE_EXTENSION, TARGET_FILE_EXTENSION)
+
+export const isNotUndefined = <T>(value: T | undefined): value is T =>
+  value !== undefined

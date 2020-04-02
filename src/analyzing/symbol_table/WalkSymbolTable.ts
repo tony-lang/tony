@@ -1,5 +1,6 @@
 import { Scope } from './Scope'
 import { SymbolTable } from './SymbolTable'
+import { assert } from '../../errors'
 
 export class WalkSymbolTable {
   private _currentScope: Scope
@@ -18,13 +19,22 @@ export class WalkSymbolTable {
 
   enterBlock = (): void => {
     this._nestedScopesIndexStack.push(this._currentNestedScopeIndex + 1)
-    this._currentScope =
-      this.currentScope.nestedScope(this._currentNestedScopeIndex + 1)
+    this._currentScope = this.currentScope.nestedScope(
+      this._currentNestedScopeIndex + 1,
+    )
     this._currentNestedScopeIndex = -1
   }
 
   leaveBlock = (): void => {
-    this._currentScope = this.currentScope.parentScope
-    this._currentNestedScopeIndex = this._nestedScopesIndexStack.pop()
+    const currentScope = this.currentScope.parentScope
+    assert(currentScope !== undefined, 'Cannot leave top-level block.')
+    this._currentScope = currentScope
+
+    const nestedScopeIndex = this._nestedScopesIndexStack.pop()
+    assert(
+      nestedScopeIndex !== undefined,
+      'Do not leave a block without entring it.',
+    )
+    this._currentNestedScopeIndex = nestedScopeIndex
   }
 }

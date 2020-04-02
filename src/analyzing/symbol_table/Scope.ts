@@ -1,13 +1,12 @@
-import { assert } from '../../errors'
-
 import { Binding } from './Binding'
+import { assert } from '../../errors'
 
 export class Scope {
   private _bindings: Binding[] = []
-  private _parentScope: Scope
+  private _parentScope: Scope | undefined
   private _scopes: Scope[] = []
 
-  constructor(parentScope: Scope) {
+  constructor(parentScope: Scope | undefined) {
     this._parentScope = parentScope
   }
 
@@ -15,7 +14,7 @@ export class Scope {
     return this._bindings
   }
 
-  get parentScope(): Scope {
+  get parentScope(): Scope | undefined {
     return this._parentScope
   }
 
@@ -26,12 +25,17 @@ export class Scope {
     return scope
   }
 
-  resolveBinding = (name: string, depth?: number): Binding => {
-    const binding = this.bindings.find(binding => binding.name === name)
+  resolveBinding = (name: string, depth?: number): Binding | undefined => {
+    const binding = this.bindings.find((binding) => binding.name === name)
     if (binding) return binding
 
-    if (depth > 0) return this._parentScope.resolveBinding(name, depth - 1)
-    else if (depth === undefined) return this._parentScope.resolveBinding(name)
+    assert(
+      this._parentScope !== undefined,
+      'Parent scope not allowed to be undefined in nested scope.',
+    )
+
+    if (depth === undefined) return this._parentScope.resolveBinding(name)
+    else if (depth > 0) return this._parentScope.resolveBinding(name, depth - 1)
   }
 
   addBinding = (binding: Binding): void => {
@@ -39,7 +43,7 @@ export class Scope {
   }
 
   get exportedBindings(): Binding[] {
-    return this.bindings.filter(binding => binding.isExported)
+    return this.bindings.filter((binding) => binding.isExported)
   }
 
   // takes the last nested scope and merges it with the current scope
@@ -47,11 +51,11 @@ export class Scope {
     assert(
       this._scopes.length == 1,
       'Scopes may only be reduced when the parent only has a single nested ' +
-      'scope.'
+        'scope.',
     )
 
-    const mergingScope = this._scopes.pop()
-    mergingScope._scopes.map(scope => scope._parentScope = this)
+    const mergingScope = this._scopes.pop()!
+    mergingScope._scopes.map((scope) => (scope._parentScope = this))
 
     this._bindings = [...this.bindings, ...mergingScope.bindings]
     this._scopes = [...this._scopes, ...mergingScope._scopes]

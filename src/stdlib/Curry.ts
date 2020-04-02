@@ -6,15 +6,18 @@ export class Curry {
     const actualArgs = Curry.getActualArgs(newArgs)
 
     const result = fn(...actualArgs)
-    return result === null ? Curry.perform(fn, ...newArgs) : result
+    return result === undefined ? Curry.perform(fn, ...newArgs) : result
   }
 
   private static getActualArgs = (args: any[]): any[] =>
-    args.filter(arg => arg !== TRANSFORM_PLACEHOLDER_ARGUMENT)
+    args.filter((arg) => arg !== TRANSFORM_PLACEHOLDER_ARGUMENT)
 
-  private static addNewArgs = (args: any[], newArgs: any[]): any[] => args
-    .map(arg => arg === TRANSFORM_PLACEHOLDER_ARGUMENT ? newArgs.pop() : arg)
-    .concat(newArgs)
+  private static addNewArgs = (args: any[], newArgs: any[]): any[] =>
+    args
+      .map((arg) =>
+        arg === TRANSFORM_PLACEHOLDER_ARGUMENT ? newArgs.pop() : arg,
+      )
+      .concat(newArgs)
 
   static external = (fn: any, ...cache: any[]) => (...args: any[]): any => {
     const all = cache.concat(args)

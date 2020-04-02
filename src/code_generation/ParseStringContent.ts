@@ -7,6 +7,6 @@ export class ParseStringContent {
     return text
       .slice(1, -1)
       .replace(new RegExp(qt, 'g'), `\\${qt}`)
-      .replace(regex, s => s.substring(1))
+      .replace(regex, (s) => s.substring(1))
   }
 }

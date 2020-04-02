@@ -1,4 +1,4 @@
-import { assert, TypeError } from '../../errors'
+import { TypeError, assert } from '../../errors'
 
 import { CurriedType } from './CurriedType'
 import { Type } from './Type'
@@ -37,16 +37,16 @@ export class ParametricType extends Type {
     if (actual instanceof TypeVariable) {
       constraints.add(actual, this)
       return this
-    } else if (actual instanceof ParametricType && this.name === actual.name &&
-               this.parameters.length == actual.parameters.length) {
+    } else if (
+      actual instanceof ParametricType &&
+      this.name === actual.name &&
+      this.parameters.length == actual.parameters.length
+    ) {
       const parameters = this.parameters.map((parameter, i) => {
         try {
           return parameter._unify(actual.parameters[i], constraints)
         } catch (error) {
-          assert(
-            error instanceof TypeError,
-            'Should be TypeError.'
-          )
+          assert(error instanceof TypeError, 'Should be TypeError.')
 
           error.addTypeMismatch(this, actual)
           throw error
@@ -60,18 +60,18 @@ export class ParametricType extends Type {
   }
 
   _reduce = (constraints: TypeConstraints): ParametricType => {
-    const parameters = this.parameters
-      .map(parameter => parameter._reduce(constraints))
+    const parameters = this.parameters.map((parameter) =>
+      parameter._reduce(constraints),
+    )
 
     return new ParametricType(this.name, parameters)
   }
 
   isComplete = (): boolean =>
-    this.parameters.every(parameter => parameter.isComplete())
+    this.parameters.every((parameter) => parameter.isComplete())
 
   toString = (): string => {
-    const parameters = this.parameters
-      .map(parameter => parameter.toString())
+    const parameters = this.parameters.map((parameter) => parameter.toString())
     const combinedParameters =
       parameters.length > 0 ? `<${parameters.join(', ')}>` : ''
 
