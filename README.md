@@ -27,8 +27,9 @@ import * as Tony from 'tony-lang'
 ```ts
 function compile(
   file: string,
-  { outFile, webpackMode, verbose }: {
+  { outFile, noEmit, webpackMode, verbose }: {
     outFile?: string;
+    noEmit?: boolean;
     webpackMode?: string;
     verbose?: boolean;
   }
