@@ -28,7 +28,7 @@
   "dependencies": {
     "commander": "^5.0.0",
     "core-js": "^3.6.4",
-    "deep-equal": "^2.0.1",
+    "deep-equal": "^2.0.2",
     "inquirer": "^7.1.0",
     "mkdirp": "^1.0.3",
     "outdent": "^0.7.1",
