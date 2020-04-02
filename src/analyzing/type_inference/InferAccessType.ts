@@ -34,16 +34,16 @@ export class InferAccessType {
     this.typeConstraints = typeConstraints
   }
 
-  perform = (valueType: Type, accessType: Type): Type => {
+  perform = (valueType: Type, accessorType: Type): Type => {
     if (valueType instanceof ParametricType) {
       if (valueType.name === LIST_TYPE)
-        return this.accessList(valueType, accessType)
+        return this.accessList(valueType, accessorType)
       else if (valueType.name === TUPLE_TYPE)
-        return this.accessTuple(valueType, accessType)
+        return this.accessTuple(valueType, accessorType)
       else if (valueType.name === MAP_TYPE)
-        return this.accessMap(valueType, accessType)
+        return this.accessMap(valueType, accessorType)
       else
-        return this.accessRepresentation(valueType, accessType)
+        return this.accessRepresentation(valueType, accessorType)
     }
 
     throw new TypeError(
@@ -54,20 +54,26 @@ export class InferAccessType {
     )
   }
 
-  private accessList = (valueType: ParametricType, accessType: Type): Type => {
-    new ParametricType(NUMBER_TYPE).unify(accessType, this.typeConstraints)
+  private accessList = (
+    valueType: ParametricType,
+    accessorType: Type
+  ): Type => {
+    new ParametricType(NUMBER_TYPE).unify(accessorType, this.typeConstraints)
 
     return valueType.parameters[0]
   }
 
-  private accessMap = (valueType: ParametricType, accessType: Type): Type => {
-    valueType.parameters[0].unify(accessType, this.typeConstraints)
+  private accessMap = (valueType: ParametricType, accessorType: Type): Type => {
+    valueType.parameters[0].unify(accessorType, this.typeConstraints)
 
     return valueType.parameters[1]
   }
 
-  private accessTuple = (valueType: ParametricType, accessType: Type): Type => {
-    new ParametricType(NUMBER_TYPE).unify(accessType, this.typeConstraints)
+  private accessTuple = (
+    valueType: ParametricType,
+    accessorType: Type
+  ): Type => {
+    new ParametricType(NUMBER_TYPE).unify(accessorType, this.typeConstraints)
 
     // TODO: implement dynamic access with union types
     if (this.node.namedChild(1).type === 'shorthand_access_identifier') {
@@ -82,9 +88,9 @@ export class InferAccessType {
 
   private accessRepresentation = (
     valueType: ParametricType,
-    accessType: Type
+    accessorType: Type
   ): Type => {
-    new ParametricType(STRING_TYPE).unify(accessType, this.typeConstraints)
+    new ParametricType(STRING_TYPE).unify(accessorType, this.typeConstraints)
 
     // TODO: implement dynamic access with union types
     if (this.node.namedChild(1).type === 'shorthand_access_identifier') {

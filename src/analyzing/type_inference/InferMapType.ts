@@ -13,8 +13,8 @@ export class InferMapType {
     this.typeConstraints = typeConstraints
   }
 
-  perform = (mapTypes: Type[]): Type => mapTypes
-    .reduce((mapType, otherMapType) => {
+  perform = (mapTypes: Type[]): ParametricType => mapTypes
+    .reduce((mapType: ParametricType, otherMapType) => {
       return mapType.unify(otherMapType, this.typeConstraints)
     }, new ParametricType(MAP_TYPE, [new TypeVariable, new TypeVariable]))
 }

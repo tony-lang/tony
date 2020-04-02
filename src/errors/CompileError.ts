@@ -1,6 +1,14 @@
 import Parser from 'tree-sitter'
 
-import { Context } from './Context'
+type Position = {
+  row: number;
+  column: number;
+}
+
+export type Context = {
+  start: Position;
+  end: Position;
+}
 
 export abstract class CompileError extends Error {
   private _context: Context

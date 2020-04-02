@@ -2,7 +2,7 @@ import { Type } from '../analyzing/types'
 
 import { CompileError } from './CompileError'
 
-type TypeMismatch = [string, string]
+export type TypeMismatch = [string, string]
 
 export class TypeError extends CompileError {
   private _typeTrace: TypeMismatch[]

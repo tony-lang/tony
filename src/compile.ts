@@ -13,9 +13,9 @@ import { compile as webpackCompile } from './webpack'
 
 export const compile = async (
   file: string,
-  { outFile, noEmit = false, webpackMode = 'production', verbose = false }: {
+  { outFile, emit = true, webpackMode = 'production', verbose = false }: {
     outFile?: string;
-    noEmit?: boolean;
+    emit?: boolean;
     webpackMode?: string;
     verbose?: boolean;
   }
@@ -32,11 +32,11 @@ export const compile = async (
     if (compiledFiles.includes(file) || !file.includes(FILE_EXTENSION)) continue
 
     const [tree, symbolTable] = await analyzeFile(files, file, verbose)
-    if (!noEmit) await compileFile(file, tree, symbolTable, verbose)
+    if (emit) await compileFile(file, tree, symbolTable, verbose)
     compiledFiles.push(file)
   }
 
-  if (noEmit) return
+  if (!emit) return
 
   await webpackCompile(outFilePath, webpackMode, verbose)
   return outFilePath

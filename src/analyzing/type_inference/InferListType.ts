@@ -13,8 +13,8 @@ export class InferListType {
     this.typeConstraints = typeConstraints
   }
 
-  perform = (valueTypes: Type[]): Type => valueTypes
-    .reduce((valueType, otherValueType) => {
+  perform = (valueTypes: Type[]): ParametricType => valueTypes
+    .reduce((valueType: ParametricType, otherValueType) => {
       return valueType.unify(
         new ParametricType(LIST_TYPE, [otherValueType]),
         this.typeConstraints
