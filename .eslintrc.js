@@ -24,7 +24,9 @@ module.exports = {
       SwitchCase: 1,
     }],
     'linebreak-style': ['error', 'unix'],
-    quotes: ['error', 'single'],
+    quotes: ['error', 'single', {
+      avoidEscape: true
+    }],
     semi: ['error', 'never'],
     'max-len': 'error',
     'sort-imports': 'error',
