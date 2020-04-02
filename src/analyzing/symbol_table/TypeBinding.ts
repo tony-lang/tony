@@ -3,7 +3,7 @@ import { ObjectRepresentation, ParametricType } from '../types'
 import { Binding } from './Binding'
 
 export class TypeBinding extends Binding {
-  private _representation: ObjectRepresentation
+  private _representation: ObjectRepresentation | undefined
 
   constructor(
     type: ParametricType,
@@ -16,7 +16,7 @@ export class TypeBinding extends Binding {
     this._representation = representation
   }
 
-  get representation(): ObjectRepresentation {
+  get representation(): ObjectRepresentation | undefined {
     return this._representation
   }
 }

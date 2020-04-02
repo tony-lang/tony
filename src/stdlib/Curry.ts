@@ -6,7 +6,7 @@ export class Curry {
     const actualArgs = Curry.getActualArgs(newArgs)
 
     const result = fn(...actualArgs)
-    return result === null ? Curry.perform(fn, ...newArgs) : result
+    return result === undefined ? Curry.perform(fn, ...newArgs) : result
   }
 
   private static getActualArgs = (args: any[]): any[] =>

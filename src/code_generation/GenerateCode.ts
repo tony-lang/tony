@@ -6,7 +6,7 @@ import {
   TRANSFORM_PLACEHOLDER_ARGUMENT,
   TRANSFORM_REST_PATTERN
 } from '../constants'
-import { assert, InternalError } from '../errors'
+import { InternalError, assert } from '../errors'
 
 import { CollectDefaultValues } from './CollectDefaultValues'
 import { ParseStringContent } from './ParseStringContent'
@@ -157,25 +157,25 @@ export class GenerateCode {
   }
 
   generateAbstractionBranch = (node: Parser.SyntaxNode): string => {
-    const parameters = this.generate(node.namedChild(0))
-    const body = this.generate(node.namedChild(1))
+    const parameters = this.generate(node.namedChild(0)!)
+    const body = this.generate(node.namedChild(1)!)
     const [pattern, identifiers] = ResolvePattern.perform(parameters)
-    const defaults = new CollectDefaultValues(this).perform(node.namedChild(0))
+    const defaults = new CollectDefaultValues(this).perform(node.namedChild(0)!)
 
     return `[${pattern},${defaults},(match)=>{` +
            `const [${identifiers.join(',')}]=match;return ${body}}]`
   }
 
   generateAccess = (node: Parser.SyntaxNode): string => {
-    const left = this.generate(node.namedChild(0))
-    const right = this.generate(node.namedChild(1))
+    const left = this.generate(node.namedChild(0)!)
+    const right = this.generate(node.namedChild(1)!)
 
     return `${left}[${right}]`
   }
 
   generateApplication = (node: Parser.SyntaxNode): string => {
-    const abstraction = this.generate(node.namedChild(0))
-    const args = this.generate(node.namedChild(1))
+    const abstraction = this.generate(node.namedChild(0)!)
+    const args = this.generate(node.namedChild(1)!)
 
     return `${abstraction}(${args})`
   }
@@ -183,7 +183,7 @@ export class GenerateCode {
   generateArgument = (node: Parser.SyntaxNode): string => {
     if (node.namedChildCount == 0) return `"${TRANSFORM_PLACEHOLDER_ARGUMENT}"`
 
-    const expression = this.generate(node.namedChild(0))
+    const expression = this.generate(node.namedChild(0)!)
     return expression
   }
 
@@ -196,10 +196,10 @@ export class GenerateCode {
   }
 
   generateAssignment = (node: Parser.SyntaxNode): string => {
-    const left = this.generate(node.namedChild(0))
-    const right = this.generate(node.namedChild(1))
+    const left = this.generate(node.namedChild(0)!)
+    const right = this.generate(node.namedChild(1)!)
     const [pattern, identifiers] = ResolvePattern.perform(left)
-    const defaults = new CollectDefaultValues(this).perform(node.namedChild(0))
+    const defaults = new CollectDefaultValues(this).perform(node.namedChild(0)!)
 
     return `(()=>{const value=${right};[${identifiers.join(',')}]=new stdlib.` +
            `PatternMatch({defaults:${defaults},overmatching:true}).perform(` +
@@ -230,7 +230,7 @@ export class GenerateCode {
     const returnValue =
       isDeclaration ? `{${returnedDeclarations}}` : expressions.pop()
     const explicitReturn =
-      !isDeclaration && node.lastNamedChild.type === 'return' ? '' : 'return '
+      !isDeclaration && node.lastNamedChild!.type === 'return' ? '' : 'return '
 
     this.walkSymbolTable.leaveBlock()
     return `(()=>{${combinedDeclarations};` +
@@ -242,19 +242,19 @@ export class GenerateCode {
   }
 
   generateCase = (node: Parser.SyntaxNode): string => {
-    const value = this.generate(node.namedChild(0))
-    const branches = this.generate(node.namedChild(1))
+    const value = this.generate(node.namedChild(0)!)
+    const branches = this.generate(node.namedChild(1)!)
     if (node.namedChildCount == 2)
       return `stdlib.ResolveAbstractionBranch.perform(${value},[${branches}])`
 
-    const defaultValue = this.generate(node.namedChild(2))
+    const defaultValue = this.generate(node.namedChild(2)!)
     return `stdlib.ResolveAbstractionBranch.perform(${value},[${branches}],` +
            `()=>${defaultValue},false)`
   }
 
   generateElseIfClause = (node: Parser.SyntaxNode): string => {
-    const condition = this.generate(node.namedChild(0))
-    const consequence = this.generate(node.namedChild(1))
+    const condition = this.generate(node.namedChild(0)!)
+    const consequence = this.generate(node.namedChild(1)!)
 
     return `else if(${condition}){return ${consequence}}`
   }
@@ -268,25 +268,25 @@ export class GenerateCode {
   }
 
   generateExport = (node: Parser.SyntaxNode): string => {
-    const declaration = this.generate(node.namedChild(0))
+    const declaration = this.generate(node.namedChild(0)!)
 
     return declaration
   }
 
   generateExpressionPair = (node: Parser.SyntaxNode): string => {
-    const left = this.generate(node.namedChild(0))
-    const right = this.generate(node.namedChild(1))
+    const left = this.generate(node.namedChild(0)!)
+    const right = this.generate(node.namedChild(1)!)
 
     return `[${left}]:${right}`
   }
 
   generateGenerator = (node: Parser.SyntaxNode): string => {
-    const name = this.transformIdentifier.perform(node.namedChild(0).text)
-    const value = this.generate(node.namedChild(1))
+    const name = this.transformIdentifier.perform(node.namedChild(0)!.text)
+    const value = this.generate(node.namedChild(1)!)
     if (node.namedChildCount == 2)
       return `${value}.map((${name})=>`
 
-    const condition = this.generate(node.namedChild(2))
+    const condition = this.generate(node.namedChild(2)!)
     return `${value}.map((${name})=>!${condition} ? "${INTERNAL_TEMP_TOKEN}" : `
   }
 
@@ -304,7 +304,7 @@ export class GenerateCode {
   }
 
   generateIdentifierPattern = (node: Parser.SyntaxNode): string => {
-    return this.generate(node.namedChild(0))
+    return this.generate(node.namedChild(0)!)
   }
 
   generateIdentifierPatternName = (node: Parser.SyntaxNode): string => {
@@ -314,23 +314,23 @@ export class GenerateCode {
   }
 
   generateIf = (node: Parser.SyntaxNode): string => {
-    const condition = this.generate(node.namedChild(0))
-    const consequence = this.generate(node.namedChild(1))
+    const condition = this.generate(node.namedChild(0)!)
+    const consequence = this.generate(node.namedChild(1)!)
     if (node.namedChildCount == 2)
       return `(()=>{if(${condition}){return ${consequence}}})()`
 
-    if (node.namedChild(node.namedChildCount - 1).type === 'else_if_clauses') {
-      const clauses = this.generate(node.namedChild(2))
+    if (node.namedChild(node.namedChildCount - 1)!.type === 'else_if_clauses') {
+      const clauses = this.generate(node.namedChild(2)!)
 
       return `(()=>{if(${condition}){return ${consequence}}${clauses}})()`
     } else if (node.namedChildCount == 3) {
-      const alternative = this.generate(node.namedChild(2))
+      const alternative = this.generate(node.namedChild(2)!)
 
       return `(()=>{if(${condition}){return ${consequence}}` +
              `else{return ${alternative}}})()`
-    } else if (node.namedChildCount == 4) {
-      const clauses = this.generate(node.namedChild(2))
-      const alternative = this.generate(node.namedChild(3))
+    } else {
+      const clauses = this.generate(node.namedChild(2)!)
+      const alternative = this.generate(node.namedChild(3)!)
 
       return `(()=>{if(${condition}){return ${consequence}}${clauses}` +
              `else{return ${alternative}}})()`
@@ -338,15 +338,15 @@ export class GenerateCode {
   }
 
   generateInfixApplication = (node: Parser.SyntaxNode): string => {
-    const abstraction = this.generate(node.namedChild(1))
-    const left = this.generate(node.namedChild(0))
-    const right = this.generate(node.namedChild(2))
+    const abstraction = this.generate(node.namedChild(1)!)
+    const left = this.generate(node.namedChild(0)!)
+    const right = this.generate(node.namedChild(2)!)
 
     return `${abstraction}(${left},${right})`
   }
 
   generateInterpolation = (node: Parser.SyntaxNode): string => {
-    return this.generate(node.namedChild(0))
+    return this.generate(node.namedChild(0)!)
   }
 
   generateList = (node: Parser.SyntaxNode): string => {
@@ -358,8 +358,8 @@ export class GenerateCode {
   }
 
   generateListComprehension = (node: Parser.SyntaxNode): string => {
-    const body = this.generate(node.namedChild(0))
-    const generators = this.generate(node.namedChild(1))
+    const body = this.generate(node.namedChild(0)!)
+    const generators = this.generate(node.namedChild(1)!)
     const generatorCount = this.listComprehensionGeneratorCountStack.pop()
 
     return `${generators}${body}${')'.repeat(generatorCount)}.flat(` +
@@ -391,9 +391,9 @@ export class GenerateCode {
   }
 
   generateModule = (node: Parser.SyntaxNode): string => {
-    const name = this.generate(node.namedChild(0))
+    const name = this.generate(node.namedChild(0)!)
     this.declarationBlock = true
-    const body = this.generate(node.namedChild(1))
+    const body = this.generate(node.namedChild(1)!)
 
     return `(()=>{${name}=${body};return ${name}})()`
   }
@@ -411,7 +411,7 @@ export class GenerateCode {
   }
 
   generatePattern = (node: Parser.SyntaxNode): string => {
-    return this.generate(node.namedChild(0))
+    return this.generate(node.namedChild(0)!)
   }
 
   generatePatternList = (node: Parser.SyntaxNode): string => {
@@ -423,22 +423,22 @@ export class GenerateCode {
   }
 
   generatePatternPair = (node: Parser.SyntaxNode): string => {
-    const left = this.generate(node.namedChild(0))
-    const right = this.generate(node.namedChild(1))
+    const left = this.generate(node.namedChild(0)!)
+    const right = this.generate(node.namedChild(1)!)
 
     return `"[${left}]":${right}`
   }
 
   generatePipeline = (node: Parser.SyntaxNode): string => {
-    const left = this.generate(node.namedChild(0))
-    const right = this.generate(node.namedChild(1))
+    const left = this.generate(node.namedChild(0)!)
+    const right = this.generate(node.namedChild(1)!)
 
     return `${right}(${left})`
   }
 
   generatePrefixApplication = (node: Parser.SyntaxNode): string => {
-    const abstraction = this.generate(node.namedChild(0))
-    const argument = this.generate(node.namedChild(1))
+    const abstraction = this.generate(node.namedChild(0)!)
+    const argument = this.generate(node.namedChild(1)!)
 
     return `${abstraction}(${argument})`
   }
@@ -474,9 +474,10 @@ export class GenerateCode {
       }).join(';')
     const externalImports = this.walkSymbolTable.currentScope.imports
       .filter(imp => imp.isExternal)
-      .reduce((bindings, imp) => {
-        return bindings.concat(imp.bindings)
-      }, [])
+      .map(imp => imp.bindings)
+      .reduce((bindings, otherBindings) => {
+        return bindings.concat(otherBindings)
+      })
       .map(binding => {
         const tmpName = `${this.transformIdentifier.perform(binding.name)}EXT`
         const name = this.transformIdentifier
@@ -503,19 +504,19 @@ export class GenerateCode {
   }
 
   generateRestList = (node: Parser.SyntaxNode): string => {
-    const name = this.generate(node.namedChild(0)).slice(1, -1)
+    const name = this.generate(node.namedChild(0)!).slice(1, -1)
 
     return `"${INTERNAL_TEMP_TOKEN}${name}"`
   }
 
   generateRestMap = (node: Parser.SyntaxNode): string => {
-    const name = this.generate(node.namedChild(0)).slice(1, -1)
+    const name = this.generate(node.namedChild(0)!).slice(1, -1)
 
     return `"['${TRANSFORM_REST_PATTERN}']":"${name}"`
   }
 
   generateRestTuple = (node: Parser.SyntaxNode): string => {
-    const name = this.generate(node.namedChild(0)).slice(1, -1)
+    const name = this.generate(node.namedChild(0)!).slice(1, -1)
 
     return `"${INTERNAL_TEMP_TOKEN}${name}"`
   }
@@ -523,7 +524,7 @@ export class GenerateCode {
   generateReturn = (node: Parser.SyntaxNode): string => {
     if (node.namedChildCount == 0) return 'return'
 
-    const value = this.generate(node.namedChild(0))
+    const value = this.generate(node.namedChild(0)!)
     return `return ${value}`
   }
 
@@ -540,14 +541,14 @@ export class GenerateCode {
   generateShorthandPairIdentifierPattern = (
     node: Parser.SyntaxNode
   ): string => {
-    const identifierPattern = this.generate(node.namedChild(0))
+    const identifierPattern = this.generate(node.namedChild(0)!)
 
     return `"${identifierPattern.substring(INTERNAL_TEMP_TOKEN.length + 1)}` +
            `:${identifierPattern}`
   }
 
   generateSpread = (node: Parser.SyntaxNode): string => {
-    const expression = this.generate(node.namedChild(0))
+    const expression = this.generate(node.namedChild(0)!)
 
     return `...${expression}`
   }
@@ -558,7 +559,7 @@ export class GenerateCode {
       .map(child => this.generate(child))
     const content = ParseStringContent.perform(node.text)
       .replace(/(?<!\\){/g, '${')
-      .replace(/(?<=\${).+?(?=})/g, () => interpolations.shift())
+      .replace(/(?<=\${).+?(?=})/g, () => interpolations.shift()!)
 
     return `\`${content}\``
   }
@@ -592,10 +593,10 @@ export class GenerateCode {
   }
 
   generateWhenClause = (node: Parser.SyntaxNode): string => {
-    const patterns = this.generate(node.namedChild(0)).split(';')
+    const patterns = this.generate(node.namedChild(0)!).split(';')
       .map(pattern => ResolvePattern.perform(pattern))
-    const body = this.generate(node.namedChild(1))
-    const defaults = node.namedChild(0).namedChildren
+    const body = this.generate(node.namedChild(1)!)
+    const defaults = node.namedChild(0)!.namedChildren
       .map(pattern => new CollectDefaultValues(this).perform(pattern))
 
     return patterns.map(([pattern, identifiers], i) => {

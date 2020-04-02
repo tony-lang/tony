@@ -4,10 +4,10 @@ import { Binding } from './Binding'
 
 export class Scope {
   private _bindings: Binding[] = []
-  private _parentScope: Scope
+  private _parentScope: Scope | undefined
   private _scopes: Scope[] = []
 
-  constructor(parentScope: Scope) {
+  constructor(parentScope: Scope | undefined) {
     this._parentScope = parentScope
   }
 
@@ -15,7 +15,7 @@ export class Scope {
     return this._bindings
   }
 
-  get parentScope(): Scope {
+  get parentScope(): Scope | undefined {
     return this._parentScope
   }
 
@@ -26,12 +26,17 @@ export class Scope {
     return scope
   }
 
-  resolveBinding = (name: string, depth?: number): Binding => {
+  resolveBinding = (name: string, depth?: number): Binding | undefined => {
     const binding = this.bindings.find(binding => binding.name === name)
     if (binding) return binding
 
-    if (depth > 0) return this._parentScope.resolveBinding(name, depth - 1)
-    else if (depth === undefined) return this._parentScope.resolveBinding(name)
+    assert(
+      this._parentScope !== undefined,
+      'Parent scope not allowed to be undefined in nested scope.'
+    )
+
+    if (depth === undefined) return this._parentScope.resolveBinding(name)
+    else if (depth > 0) return this._parentScope.resolveBinding(name, depth - 1)
   }
 
   addBinding = (binding: Binding): void => {
@@ -50,7 +55,7 @@ export class Scope {
       'scope.'
     )
 
-    const mergingScope = this._scopes.pop()
+    const mergingScope = this._scopes.pop()!
     mergingScope._scopes.map(scope => scope._parentScope = this)
 
     this._bindings = [...this.bindings, ...mergingScope.bindings]

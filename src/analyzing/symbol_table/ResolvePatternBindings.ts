@@ -1,16 +1,16 @@
 import Parser from 'tree-sitter'
 
-import { assert, InternalError, TypeError } from '../../errors'
+import { InternalError, TypeError, assert } from '../../errors'
 
 import {
   CurriedType,
-  ParametricType,
-  Type,
   LIST_TYPE,
   MAP_TYPE,
+  ParametricType,
   TUPLE_TYPE,
-  TypeVariable,
-  TypeConstraints
+  Type,
+  TypeConstraints,
+  TypeVariable
 } from '../types'
 
 import { Binding } from './Binding'
@@ -74,7 +74,7 @@ export class ResolvePatternBindings {
     pattern: Parser.SyntaxNode,
     type: Type
   ): void => {
-    const identifierPatternName = pattern.namedChild(0)
+    const identifierPatternName = pattern.namedChild(0)!
     const name = identifierPatternName.text
 
     this.bindings = [
@@ -106,24 +106,24 @@ export class ResolvePatternBindings {
   }
 
   private matchPattern = (pattern: Parser.SyntaxNode, type: Type): void =>
-    this.match(pattern.namedChild(0), type)
+    this.match(pattern.namedChild(0)!, type)
 
   private matchPatternPair = (pattern: Parser.SyntaxNode, type: Type): void => {
     const unifiedType =
       new ParametricType(MAP_TYPE, [new TypeVariable, new TypeVariable])
         .unify(type, this.typeConstraints)
 
-    return this.match(pattern.namedChild(1), unifiedType.parameters[1])
+    return this.match(pattern.namedChild(1)!, unifiedType.parameters[1])
   }
 
   private matchRestList = (pattern: Parser.SyntaxNode, type: Type): void =>
-    this.match(pattern.namedChild(0), new ParametricType(LIST_TYPE, [type]))
+    this.match(pattern.namedChild(0)!, new ParametricType(LIST_TYPE, [type]))
 
   private matchRestMap = (pattern: Parser.SyntaxNode,type: Type): void =>
-    this.match(pattern.namedChild(0), type)
+    this.match(pattern.namedChild(0)!, type)
 
   private matchRestTuple = (pattern: Parser.SyntaxNode, type: Type): void =>
-    this.match(pattern.namedChild(0), type)
+    this.match(pattern.namedChild(0)!, type)
 
   private matchShorthandPairIdentifierPattern = (
     pattern: Parser.SyntaxNode,
@@ -133,7 +133,7 @@ export class ResolvePatternBindings {
       new ParametricType(MAP_TYPE, [new TypeVariable, new TypeVariable])
         .unify(type, this.typeConstraints)
 
-    return this.match(pattern.namedChild(0), unifiedType.parameters[1])
+    return this.match(pattern.namedChild(0)!, unifiedType.parameters[1])
   }
 
   private matchTuplePattern = (

@@ -37,7 +37,7 @@ export class TypeVariable extends Type {
   }
 
   _reduce = (constraints: TypeConstraints): Type => {
-    if (constraints.has(this)) return constraints.resolve(this)
+    if (constraints.has(this)) return constraints.resolve(this)!
 
     return this
   }

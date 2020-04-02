@@ -1,4 +1,4 @@
-import { ParametricType, BASIC_TYPES } from '../types'
+import { BASIC_TYPES, ParametricType } from '../types'
 
 import { Binding } from './Binding'
 import { Import } from './Import'
@@ -30,7 +30,7 @@ export class SymbolTable extends Scope {
     })
   }
 
-  resolveBinding = (name: string): Binding => {
+  resolveBinding = (name: string): Binding | undefined => {
     // TODO: remove this when basic types are implemented in Tony
     const matchingBasicType = BASIC_TYPES.find(type => type === name)
     if (matchingBasicType)

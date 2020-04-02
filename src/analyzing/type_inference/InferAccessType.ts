@@ -1,21 +1,21 @@
 import Parser from 'tree-sitter'
 
 import {
-  assert,
   InternalError,
   MissingBindingError,
-  TypeError
+  TypeError,
+  assert
 } from '../../errors'
 
 import {
-  ParametricType,
-  Type,
-  TypeConstraints,
-  NUMBER_TYPE,
-  STRING_TYPE,
   LIST_TYPE,
   MAP_TYPE,
-  TUPLE_TYPE
+  NUMBER_TYPE,
+  ParametricType,
+  STRING_TYPE,
+  TUPLE_TYPE,
+  Type,
+  TypeConstraints
 } from '../types'
 import { BuildSymbolTable, TypeBinding } from '../symbol_table'
 
@@ -76,8 +76,8 @@ export class InferAccessType {
     new ParametricType(NUMBER_TYPE).unify(accessorType, this.typeConstraints)
 
     // TODO: implement dynamic access with union types
-    if (this.node.namedChild(1).type === 'shorthand_access_identifier') {
-      const shorthandAccessIdentifier = this.node.namedChild(1)
+    if (this.node.namedChild(1)!.type === 'shorthand_access_identifier') {
+      const shorthandAccessIdentifier = this.node.namedChild(1)!
       const index = parseInt(shorthandAccessIdentifier.text)
 
       return valueType.parameters[index]
@@ -93,8 +93,8 @@ export class InferAccessType {
     new ParametricType(STRING_TYPE).unify(accessorType, this.typeConstraints)
 
     // TODO: implement dynamic access with union types
-    if (this.node.namedChild(1).type === 'shorthand_access_identifier') {
-      const shorthandAccessIdentifier = this.node.namedChild(1)
+    if (this.node.namedChild(1)!.type === 'shorthand_access_identifier') {
+      const shorthandAccessIdentifier = this.node.namedChild(1)!
       const propertyName = shorthandAccessIdentifier.text
 
       const binding = this.buildSymbolTable.resolveBinding(valueType.name)

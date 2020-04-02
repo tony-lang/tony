@@ -2,12 +2,12 @@ import { Type } from '../analyzing/types'
 
 import { CompileError } from './CompileError'
 
-export type TypeMismatch = [string, string]
+export type TypeMismatch = [string, string | undefined]
 
 export class TypeError extends CompileError {
   private _typeTrace: TypeMismatch[]
 
-  constructor(expected: Type, actual: Type, message: string) {
+  constructor(expected: Type, actual: Type | undefined, message: string) {
     super(message)
     this.name = this.constructor.name
 

@@ -57,11 +57,11 @@ export class ResolvePattern {
 
   private static representObject = (obj: any): [string, string[]] => {
     const [patterns, identifiers] = Object.entries(obj)
-      .reduce(([patterns, identifiers], [key, value]) => {
+      .reduce(([patterns, identifiers]: [string[], string[]], [key, value]) => {
         const [newPattern, newIdentifiers] = ResolvePattern.rec(value)
 
         return [
-          patterns.concat(`${key}:${newPattern}`),
+          patterns.concat([`${key}:${newPattern}`]),
           identifiers.concat(newIdentifiers)
         ]
       }, [[], []])

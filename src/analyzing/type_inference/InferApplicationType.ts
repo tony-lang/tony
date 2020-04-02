@@ -2,11 +2,11 @@ import { TypeError } from '../../errors'
 
 import {
   CurriedType,
+  INTERNAL_PARTIAL_APPLICATION_TYPE_NAME,
   ParametricType,
   Type,
   TypeConstraints,
   TypeVariable,
-  INTERNAL_PARTIAL_APPLICATION_TYPE_NAME,
   VOID_TYPE
 } from '../types'
 
@@ -39,8 +39,8 @@ export class InferApplicationType {
     argumentTypes: CurriedType
   ): Type => {
     const typeConstraints = new TypeConstraints
-    const parameterTypes =
-      valueType.parameters.reduce((parameterTypes, parameterType, i) => {
+    const parameterTypes = valueType.parameters
+      .reduce((parameterTypes: Type[], parameterType, i) => {
         const argumentType = argumentTypes.parameters[i]
         if (argumentType === undefined ||
             this.isPlaceholderArgument(argumentType))

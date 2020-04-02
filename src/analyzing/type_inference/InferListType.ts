@@ -1,9 +1,9 @@
 import {
+  LIST_TYPE,
   ParametricType,
   Type,
   TypeConstraints,
-  TypeVariable,
-  LIST_TYPE
+  TypeVariable
 } from '../types'
 
 export class InferListType {

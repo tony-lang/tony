@@ -1,8 +1,8 @@
 import deepEqual from 'deep-equal'
 
 import {
-  TRANSFORM_REST_PATTERN,
-  TRANSFORM_IDENTIFIER_PATTERN
+  TRANSFORM_IDENTIFIER_PATTERN,
+  TRANSFORM_REST_PATTERN
 } from '../constants'
 
 export class PatternNotMatching extends Error {}
@@ -85,7 +85,7 @@ export class PatternMatch {
 
     const tmpObj = {...obj}
     return Object.entries(patterns)
-      .reduce((acc, [key, pattern], i, tmp) => {
+      .reduce((acc: any[], [key, pattern], i, tmp) => {
         if (key === TRANSFORM_REST_PATTERN) {
           tmp.splice(i - 1)
           return acc.concat([tmpObj])

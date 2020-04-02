@@ -11,22 +11,22 @@ export type Context = {
 }
 
 export abstract class CompileError extends Error {
-  private _context: Context
-  private _filePath: string
+  private _context: Context | undefined
+  private _filePath: string | undefined
 
-  constructor(message: string) {
+  constructor(message: string | undefined) {
     super(message)
   }
 
-  get context(): Context {
+  get context(): Context | undefined {
     return this._context
   }
 
-  get filePath(): string {
+  get filePath(): string | undefined {
     return this._filePath
   }
 
-  set filePath(value: string) {
+  set filePath(value: string | undefined) {
     this._filePath = value
   }
 

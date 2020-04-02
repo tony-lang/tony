@@ -1,9 +1,9 @@
 import path from 'path'
 import Parser from 'tree-sitter'
 
-import { assert, DuplicateBindingError, InternalError } from '../../errors'
+import { DuplicateBindingError, InternalError, assert } from '../../errors'
 import { FILE_EXTENSION, TARGET_FILE_EXTENSION } from '../../constants'
-import { getOutFile } from '../../utilities'
+import { getOutFile, isNotUndefined } from '../../utilities'
 
 import { Analyze } from '../Analyze'
 
@@ -22,10 +22,11 @@ export class ResolveImport {
   performImport = (node: Parser.SyntaxNode): Import => {
     assert(node.type === 'import', 'Node must be of type `import`.')
 
-    const importClause = node.namedChild(0)
-    const source = node.namedChild(1).text.slice(1, -1)
-    const bindings =
-      importClause.namedChildren.map(this.resolveImportClauseEntry)
+    const importClause = node.namedChild(0)!
+    const source = node.namedChild(1)!.text.slice(1, -1)
+    const bindings = importClause.namedChildren
+      .map(this.resolveImportClauseEntry)
+      .filter(isNotUndefined)
 
     this.checkDuplicateIdentifiers(bindings, node)
     return this.buildImport(source, bindings, false)
@@ -37,11 +38,11 @@ export class ResolveImport {
       'Node must be of type `external_import`.'
     )
 
-    const importClause = node.namedChild(0)
-    const source = node.namedChild(1).text.slice(1, -1)
+    const importClause = node.namedChild(0)!
+    const source = node.namedChild(1)!.text.slice(1, -1)
     const bindings = importClause.namedChildren
       .map(this.resolveImportClauseEntry)
-      .filter(binding => binding !== undefined)
+      .filter(isNotUndefined)
 
     this.checkDuplicateIdentifiers(bindings, node)
     return this.buildImport(source, bindings, true)
@@ -49,7 +50,7 @@ export class ResolveImport {
 
   private resolveImportClauseEntry = (
     node: Parser.SyntaxNode
-  ): ImportBinding => {
+  ): ImportBinding | undefined => {
     switch (node.type) {
     case 'comment':
       return
@@ -72,11 +73,11 @@ export class ResolveImport {
   private resolveExternalImportClauseIdentifierPair = (
     node: Parser.SyntaxNode
   ): ImportBinding => {
-    const originalIdentifierPatternNameNode = node.namedChild(0)
+    const originalIdentifierPatternNameNode = node.namedChild(0)!
     const originalName = originalIdentifierPatternNameNode.text
 
-    const identifierPatternNode = node.namedChild(1)
-    const identifierPatternNameNode = identifierPatternNode.namedChild(0)
+    const identifierPatternNode = node.namedChild(1)!
+    const identifierPatternNameNode = identifierPatternNode.namedChild(0)!
     const name = identifierPatternNameNode.text
 
     const type = this.analyzer.generate(identifierPatternNode)
@@ -87,7 +88,7 @@ export class ResolveImport {
   private resolveIdentifierPattern = (
     node: Parser.SyntaxNode
   ): ImportBinding => {
-    const identifierPatternNameNode = node.namedChild(0)
+    const identifierPatternNameNode = node.namedChild(0)!
     const name = identifierPatternNameNode.text
 
     const type = this.analyzer.generate(node)
@@ -103,8 +104,8 @@ export class ResolveImport {
   private resolveImportClauseIdentifierPair = (
     node: Parser.SyntaxNode
   ): ImportBinding => {
-    const originalName = node.namedChild(0).text
-    const name = node.namedChild(1).text
+    const originalName = node.namedChild(0)!.text
+    const name = node.namedChild(1)!.text
 
     return new ImportBinding(name, originalName)
   }

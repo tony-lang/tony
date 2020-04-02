@@ -1,7 +1,6 @@
+import { InternalError } from './errors'
 import childProcess from 'child_process'
 import path from 'path'
-
-import { InternalError } from './errors'
 
 export const compile = (
   filePath: string,
@@ -15,7 +14,7 @@ export const compile = (
       .spawn(
         path.join(__dirname, '..', '..', 'node_modules', '.bin', 'webpack-cli'),
         [filePath, '-o', filePath, '--mode', mode],
-        { stdio: verbose ? 'inherit' : null }
+        { stdio: verbose ? 'inherit' : undefined }
       )
       .on('close', resolve)
       .on('error', (error) => {

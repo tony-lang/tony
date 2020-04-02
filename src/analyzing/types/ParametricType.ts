@@ -1,4 +1,4 @@
-import { assert, TypeError } from '../../errors'
+import { TypeError, assert } from '../../errors'
 
 import { CurriedType } from './CurriedType'
 import { Type } from './Type'

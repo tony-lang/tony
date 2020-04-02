@@ -6,7 +6,7 @@ export class TypeConstraints {
 
   has = (variable: TypeVariable): boolean => this._map.has(variable.name)
 
-  resolve = (variable: TypeVariable): Type => {
+  resolve = (variable: TypeVariable): Type | undefined => {
     const type = this._map.get(variable.name)
 
     if (type instanceof TypeVariable && this.has(type))
@@ -17,11 +17,11 @@ export class TypeConstraints {
 
   add = (variable: TypeVariable, type: Type): void => {
     if (this.has(variable)) {
-      this.resolve(variable).unify(type, this)
+      this.resolve(variable)!.unify(type, this)
       return
     }
     if (type instanceof TypeVariable && this.has(type)) {
-      this.resolve(type).unify(variable, this)
+      this.resolve(type)!.unify(variable, this)
       return
     }
 

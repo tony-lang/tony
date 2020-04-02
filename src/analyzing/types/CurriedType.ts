@@ -1,4 +1,4 @@
-import { assert, TypeError } from '../../errors'
+import { TypeError, assert } from '../../errors'
 
 import { Type } from './Type'
 import { TypeConstraints } from './TypeConstraints'

@@ -1,9 +1,9 @@
 import {
+  MAP_TYPE,
   ParametricType,
   Type,
   TypeConstraints,
-  TypeVariable,
-  MAP_TYPE
+  TypeVariable
 } from '../types'
 
 export class InferMapType {

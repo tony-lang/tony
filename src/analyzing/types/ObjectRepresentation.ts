@@ -17,7 +17,7 @@ export class ObjectRepresentation {
     return this._properties
   }
 
-  findProperty = (name: string): Property =>
+  findProperty = (name: string): Property | undefined =>
     this.properties.find(({ name: propertyName }) => propertyName === name)
 
   concat = (representation: ObjectRepresentation): ObjectRepresentation =>

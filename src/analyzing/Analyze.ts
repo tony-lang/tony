@@ -1,11 +1,11 @@
 import Parser from 'tree-sitter'
 
 import {
-  assert,
   CompileError,
   InternalError,
-  TypeError
+  assert
 } from '../errors'
+import { isNotUndefined } from '../utilities'
 
 import {
   Binding,
@@ -25,21 +25,21 @@ import {
   InferSpreadType
 } from './type_inference'
 import {
+  BOOLEAN_TYPE,
   CurriedType,
+  INTERNAL_PARTIAL_APPLICATION_TYPE_NAME,
+  LIST_TYPE,
+  MAP_TYPE,
+  NUMBER_TYPE,
   ObjectRepresentation,
   ParametricType,
+  REGULAR_EXPRESSION_TYPE,
+  STRING_TYPE,
+  TUPLE_TYPE,
   Type,
   TypeConstraints,
   TypeVariable,
-  INTERNAL_PARTIAL_APPLICATION_TYPE_NAME,
-  VOID_TYPE,
-  BOOLEAN_TYPE,
-  NUMBER_TYPE,
-  STRING_TYPE,
-  REGULAR_EXPRESSION_TYPE,
-  MAP_TYPE,
-  LIST_TYPE,
-  TUPLE_TYPE
+  VOID_TYPE
 } from './types'
 
 export class Analyze {
@@ -49,7 +49,7 @@ export class Analyze {
   private typeConstraints: TypeConstraints
 
   // used to communicate type of provided value to when branches
-  private caseValueType: Type
+  private caseValueType: Type | undefined
   // used to prevent looking up types when declaring them
   private isDeclaration = false
 
@@ -72,7 +72,7 @@ export class Analyze {
     }
   }
 
-  generate = (node: Parser.SyntaxNode): Type => {
+  generate = (node: Parser.SyntaxNode): Type | undefined => {
     try {
       switch (node.type) {
       case 'abstraction':
@@ -204,7 +204,7 @@ export class Analyze {
   private generateAbstraction = (node: Parser.SyntaxNode): Type => {
     const abstractionBranchTypes = node.namedChildren
       .map(child => this.generate(child))
-      .filter(type => type !== undefined)
+      .filter(isNotUndefined)
 
     return new InferBranchType(this.typeConstraints)
       .perform(abstractionBranchTypes)
@@ -214,16 +214,20 @@ export class Analyze {
     node: Parser.SyntaxNode
   ): CurriedType => {
     this.buildSymbolTable.enterAbstraction()
-    const parameterTypes = this.generate(node.namedChild(0))
-    const bodyType = this.generate(node.namedChild(1))
+    const parameterTypes = this.generate(node.namedChild(0)!)
+    assert(isNotUndefined(parameterTypes), 'Should be a Type.')
+    const bodyType = this.generate(node.namedChild(1)!)
+    assert(isNotUndefined(bodyType), 'Should be a Type.')
 
     this.buildSymbolTable.leaveAbstraction()
     return parameterTypes.concat(bodyType)
   }
 
   private generateAccess = (node: Parser.SyntaxNode): Type => {
-    const valueType = this.generate(node.namedChild(0))
-    const accessorType = this.generate(node.namedChild(1))
+    const valueType = this.generate(node.namedChild(0)!)
+    assert(isNotUndefined(valueType), 'Should be a Type.')
+    const accessorType = this.generate(node.namedChild(1)!)
+    assert(isNotUndefined(accessorType), 'Should be a Type.')
 
     return new InferAccessType(
       node, this.buildSymbolTable, this.typeConstraints
@@ -231,8 +235,9 @@ export class Analyze {
   }
 
   private generateApplication = (node: Parser.SyntaxNode): Type => {
-    const valueType = this.generate(node.namedChild(0))
-    const argumentTypes = this.generateArguments(node.namedChild(1))
+    const valueType = this.generate(node.namedChild(0)!)
+    assert(isNotUndefined(valueType), 'Should be a Type.')
+    const argumentTypes = this.generateArguments(node.namedChild(1)!)
 
     return new InferApplicationType(this.typeConstraints)
       .perform(valueType, argumentTypes)
@@ -242,30 +247,34 @@ export class Analyze {
     if (node.namedChildCount == 0)
       return new TypeVariable(INTERNAL_PARTIAL_APPLICATION_TYPE_NAME)
 
-    return this.generate(node.namedChild(0))
+    const type = this.generate(node.namedChild(0)!)
+    assert(isNotUndefined(type), 'Should be a Type.')
+    return type
   }
 
   private generateArguments = (node: Parser.SyntaxNode): CurriedType => {
     if (node.namedChildCount == 0)
       return new CurriedType([new ParametricType(VOID_TYPE)])
 
-    const argTypes = node.namedChildren
+    const argumentTypes = node.namedChildren
       .map(child => this.generate(child))
-      .filter(type => type !== undefined)
-    return new CurriedType(argTypes)
+      .filter(isNotUndefined)
+    return new CurriedType(argumentTypes)
   }
 
   private generateAssignment = (node: Parser.SyntaxNode): Type => {
     const isExported = this.buildSymbolTable.disableExports()
 
-    const pattern = node.namedChild(0)
+    const pattern = node.namedChild(0)!
     const patternType = this.generate(pattern)
+    assert(isNotUndefined(patternType), 'Should be a Type.')
     const presumedBindings =
       new ResolvePatternBindings(this.typeConstraints, false, isExported)
         .perform(pattern, patternType)
     this.buildSymbolTable.addBindings(presumedBindings)
 
-    const valueType = this.generate(node.namedChild(1))
+    const valueType = this.generate(node.namedChild(1)!)
+    assert(isNotUndefined(valueType), 'Should be a Type.')
 
     const bindings =
       new ResolvePatternBindings(this.typeConstraints, false, isExported)
@@ -282,25 +291,27 @@ export class Analyze {
     this.buildSymbolTable.enterBlock()
     const expressionTypes = node.namedChildren
       .map(child => this.generate(child))
-      .filter(type => type !== undefined)
+      .filter(isNotUndefined)
     this.buildSymbolTable.leaveBlock()
 
     return expressionTypes[expressionTypes.length - 1]
   }
 
   private generateCase = (node: Parser.SyntaxNode): Type => {
-    this.caseValueType = this.generate(node.namedChild(0))
+    this.caseValueType = this.generate(node.namedChild(0)!)
     const branchTypes = node.namedChildren
       .slice(1)
       .map(child => this.generate(child))
-      .filter(type => type !== undefined)
+      .filter(isNotUndefined)
 
     return new InferBranchType(this.typeConstraints).perform(branchTypes)
   }
 
   private generateElseIfClause = (node: Parser.SyntaxNode): Type => {
-    const conditionType = this.generate(node.namedChild(0))
-    const type = this.generate(node.namedChild(1))
+    const conditionType = this.generate(node.namedChild(0)!)
+    assert(isNotUndefined(conditionType), 'Should be a Type.')
+    const type = this.generate(node.namedChild(1)!)
+    assert(isNotUndefined(type), 'Should be a Type.')
 
     new ParametricType(BOOLEAN_TYPE).unify(conditionType, this.typeConstraints)
 
@@ -310,7 +321,7 @@ export class Analyze {
   private generateElseIfClauses = (node: Parser.SyntaxNode): Type => {
     const branchTypes = node.namedChildren
       .map(child => this.generate(child))
-      .filter(type => type !== undefined)
+      .filter(isNotUndefined)
 
     return new InferBranchType(this.typeConstraints).perform(branchTypes)
   }
@@ -318,15 +329,18 @@ export class Analyze {
   private generateExport = (node: Parser.SyntaxNode): Type => {
     this.buildSymbolTable.enableExports()
 
-    const declarationType = this.generate(node.namedChild(0))
+    const declarationType = this.generate(node.namedChild(0)!)
+    assert(isNotUndefined(declarationType), 'Should be a Type.')
     return declarationType
   }
 
   private generateExpressionPair = (
     node: Parser.SyntaxNode
   ): ParametricType => {
-    const keyType = this.generate(node.namedChild(0))
-    const valueType = this.generate(node.namedChild(1))
+    const keyType = this.generate(node.namedChild(0)!)
+    assert(isNotUndefined(keyType), 'Should be a Type.')
+    const valueType = this.generate(node.namedChild(1)!)
+    assert(isNotUndefined(valueType), 'Should be a Type.')
 
     return new ParametricType(MAP_TYPE, [keyType, valueType])
   }
@@ -340,8 +354,9 @@ export class Analyze {
   }
 
   private generateGenerator = (node: Parser.SyntaxNode): undefined => {
-    const name = node.namedChild(0).text
-    const valueType = this.generate(node.namedChild(1))
+    const name = node.namedChild(0)!.text
+    const valueType = this.generate(node.namedChild(1)!)
+    assert(isNotUndefined(valueType), 'Should be a Type.')
 
     const type = new ParametricType(LIST_TYPE, [new TypeVariable])
       .unify(valueType, this.typeConstraints)
@@ -349,13 +364,14 @@ export class Analyze {
     const binding = new Binding(name, type, true, false)
     this.buildSymbolTable.addBinding(binding)
 
-    if (node.namedChildCount == 3) this.generate(node.namedChild(2))
+    if (node.namedChildCount == 3) this.generate(node.namedChild(2)!)
 
     return
   }
 
   private generateGeneratorCondition = (node: Parser.SyntaxNode): undefined => {
-    const type = this.generate(node.namedChild(0))
+    const type = this.generate(node.namedChild(0)!)
+    assert(isNotUndefined(type), 'Should be a Type.')
 
     new ParametricType(BOOLEAN_TYPE).unify(type, this.typeConstraints)
 
@@ -377,13 +393,15 @@ export class Analyze {
   private generateIdentifierPattern = (node: Parser.SyntaxNode): Type => {
     if (node.namedChildCount == 1) return new TypeVariable
 
-    return this.generate(node.namedChild(1))
+    const type = this.generate(node.namedChild(1)!)
+    assert(isNotUndefined(type), 'Should be a Type.')
+    return type
   }
 
   private generateIf = (node: Parser.SyntaxNode): Type => {
     const [conditionType, ...branchTypes] = node.namedChildren
       .map(child => this.generate(child))
-      .filter(type => type !== undefined)
+      .filter(isNotUndefined)
 
     new ParametricType(BOOLEAN_TYPE).unify(conditionType, this.typeConstraints)
 
@@ -399,9 +417,12 @@ export class Analyze {
   }
 
   private generateInfixApplication = (node: Parser.SyntaxNode): Type => {
-    const leftType = this.generate(node.namedChild(0))
-    const valueType = this.generate(node.namedChild(1))
-    const rightType = this.generate(node.namedChild(2))
+    const leftType = this.generate(node.namedChild(0)!)
+    assert(isNotUndefined(leftType), 'Should be a Type.')
+    const valueType = this.generate(node.namedChild(1)!)
+    assert(isNotUndefined(valueType), 'Should be a Type.')
+    const rightType = this.generate(node.namedChild(2)!)
+    assert(isNotUndefined(rightType), 'Should be a Type.')
     const argumentTypes = new CurriedType([leftType, rightType])
 
     return new InferApplicationType(this.typeConstraints)
@@ -409,7 +430,8 @@ export class Analyze {
   }
 
   private generateInterpolation = (node: Parser.SyntaxNode): Type => {
-    const type = this.generate(node.namedChild(0))
+    const type = this.generate(node.namedChild(0)!)
+    assert(isNotUndefined(type), 'Should be a Type.')
 
     new ParametricType(STRING_TYPE).unify(type, this.typeConstraints)
 
@@ -419,7 +441,7 @@ export class Analyze {
   private generateList = (node: Parser.SyntaxNode): ParametricType => {
     const valueTypes = node.namedChildren
       .map(child => this.generate(child))
-      .filter(type => type !== undefined)
+      .filter(isNotUndefined)
 
     return new InferListType(this.typeConstraints).perform(valueTypes)
   }
@@ -428,8 +450,9 @@ export class Analyze {
     node: Parser.SyntaxNode
   ): ParametricType => {
     this.buildSymbolTable.enterAbstraction()
-    this.generate(node.namedChild(1))
-    const bodyType = this.generate(node.namedChild(0))
+    this.generate(node.namedChild(1)!)
+    const bodyType = this.generate(node.namedChild(0)!)
+    assert(isNotUndefined(bodyType), 'Should be a Type.')
 
     this.buildSymbolTable.leaveAbstraction()
     return new ParametricType(LIST_TYPE, [bodyType])
@@ -438,13 +461,14 @@ export class Analyze {
   private generateListPattern = (node: Parser.SyntaxNode): ParametricType => {
     const valueTypes = node.namedChildren
       .map(child => this.generate(child))
-      .filter(type => type !== undefined)
+      .filter(isNotUndefined)
 
     return new InferListType(this.typeConstraints).perform(valueTypes)
   }
 
   private generateListType = (node: Parser.SyntaxNode): ParametricType => {
-    const valueType = this.generate(node.namedChild(0))
+    const valueType = this.generate(node.namedChild(0)!)
+    assert(isNotUndefined(valueType), 'Should be a Type.')
 
     return new ParametricType(LIST_TYPE, [valueType])
   }
@@ -452,7 +476,7 @@ export class Analyze {
   private generateMap = (node: Parser.SyntaxNode): ParametricType => {
     const mapTypes = node.namedChildren
       .map(child => this.generate(child))
-      .filter(type => type !== undefined)
+      .filter(isNotUndefined)
 
     return new InferMapType(this.typeConstraints).perform(mapTypes)
   }
@@ -460,14 +484,16 @@ export class Analyze {
   private generateMapPattern = (node: Parser.SyntaxNode): ParametricType => {
     const mapTypes = node.namedChildren
       .map(child => this.generate(child))
-      .filter(type => type !== undefined)
+      .filter(isNotUndefined)
 
     return new InferMapType(this.typeConstraints).perform(mapTypes)
   }
 
   private generateMapType = (node: Parser.SyntaxNode): ParametricType => {
-    const keyType = this.generate(node.namedChild(0))
-    const valueType = this.generate(node.namedChild(1))
+    const keyType = this.generate(node.namedChild(0)!)
+    assert(isNotUndefined(keyType), 'Should be a Type.')
+    const valueType = this.generate(node.namedChild(1)!)
+    assert(isNotUndefined(valueType), 'Should be a Type.')
 
     return new ParametricType(MAP_TYPE, [keyType, valueType])
   }
@@ -476,9 +502,9 @@ export class Analyze {
     const isExported = this.buildSymbolTable.disableExports()
 
     this.isDeclaration = true
-    const type = this.generate(node.namedChild(0))
+    const type = this.generate(node.namedChild(0)!)
     this.isDeclaration = false
-    const body = node.namedChild(1)
+    const body = node.namedChild(1)!
 
     assert(
       type instanceof ParametricType,
@@ -511,7 +537,7 @@ export class Analyze {
     const parameterTypes = new CurriedType(
       node.namedChildren
         .map(parameterNode => this.generate(parameterNode))
-        .filter(type => type !== undefined)
+        .filter(isNotUndefined)
     )
     const bindings = new ResolvePatternBindings(this.typeConstraints, true)
       .perform(node, parameterTypes)
@@ -521,10 +547,12 @@ export class Analyze {
   }
 
   private generatePattern = (node: Parser.SyntaxNode): Type => {
-    const type = this.generate(node.namedChild(0))
+    const type = this.generate(node.namedChild(0)!)
+    assert(isNotUndefined(type), 'Should be a Type.')
 
     if (node.namedChildCount == 2) {
-      const defaultValueType = this.generate(node.namedChild(1))
+      const defaultValueType = this.generate(node.namedChild(1)!)
+      assert(isNotUndefined(defaultValueType), 'Should be a Type.')
 
       return type.unify(defaultValueType, this.typeConstraints)
     }
@@ -535,8 +563,9 @@ export class Analyze {
   private generatePatternList = (node: Parser.SyntaxNode): undefined => {
     const bindings = node.namedChildren.map(pattern => {
       const patternType = this.generate(pattern)
+      assert(isNotUndefined(patternType), 'Should be a Type.')
       const inferredPatternType =
-        patternType.unify(this.caseValueType, this.typeConstraints)
+        patternType.unify(this.caseValueType as Type, this.typeConstraints)
 
       return new ResolvePatternBindings(this.typeConstraints, true)
         .perform(pattern, inferredPatternType)
@@ -549,15 +578,19 @@ export class Analyze {
   }
 
   private generatePatternPair = (node: Parser.SyntaxNode): ParametricType => {
-    const keyType = this.generate(node.namedChild(0))
-    const valueType = this.generate(node.namedChild(1))
+    const keyType = this.generate(node.namedChild(0)!)
+    assert(isNotUndefined(keyType), 'Should be a Type.')
+    const valueType = this.generate(node.namedChild(1)!)
+    assert(isNotUndefined(valueType), 'Should be a Type.')
 
     return new ParametricType(MAP_TYPE, [keyType, valueType])
   }
 
   private generatePipeline = (node: Parser.SyntaxNode): Type => {
-    const argumentType = this.generate(node.namedChild(0))
-    const valueType = this.generate(node.namedChild(1))
+    const argumentType = this.generate(node.namedChild(0)!)
+    assert(isNotUndefined(argumentType), 'Should be a Type.')
+    const valueType = this.generate(node.namedChild(1)!)
+    assert(isNotUndefined(valueType), 'Should be a Type.')
     const argumentTypes = new CurriedType([argumentType])
 
     return new InferApplicationType(this.typeConstraints)
@@ -565,8 +598,10 @@ export class Analyze {
   }
 
   private generatePrefixApplication = (node: Parser.SyntaxNode): Type => {
-    const valueType = this.generate(node.namedChild(0))
-    const argumentType = this.generate(node.namedChild(1))
+    const valueType = this.generate(node.namedChild(0)!)
+    assert(isNotUndefined(valueType), 'Should be a Type.')
+    const argumentType = this.generate(node.namedChild(1)!)
+    assert(isNotUndefined(argumentType), 'Should be a Type.')
     const argumentTypes = new CurriedType([argumentType])
 
     return new InferApplicationType(this.typeConstraints)
@@ -574,15 +609,14 @@ export class Analyze {
   }
 
   private generateProgram = (node: Parser.SyntaxNode): undefined => {
-    this.buildSymbolTable.initializeProgram()
-
     node.namedChildren.forEach(child => this.generate(child))
 
     return
   }
 
   private generateRestList = (node: Parser.SyntaxNode): Type => {
-    const type = this.generate(node.namedChild(0))
+    const type = this.generate(node.namedChild(0)!)
+    assert(isNotUndefined(type), 'Should be a Type.')
 
     return new ParametricType(LIST_TYPE, [new TypeVariable])
       .unify(type, this.typeConstraints)
@@ -590,22 +624,29 @@ export class Analyze {
   }
 
   private generateRestMap = (node: Parser.SyntaxNode): ParametricType => {
-    const type = this.generate(node.namedChild(0))
+    const type = this.generate(node.namedChild(0)!)
+    assert(isNotUndefined(type), 'Should be a Type.')
 
     return new ParametricType(MAP_TYPE, [new TypeVariable, new TypeVariable])
       .unify(type, this.typeConstraints)
   }
 
-  private generateReturn = (node: Parser.SyntaxNode): Type =>
-    this.generate(node.namedChild(0))
+  private generateReturn = (node: Parser.SyntaxNode): Type => {
+    const type = this.generate(node.namedChild(0)!)
+    assert(isNotUndefined(type), 'Should be a Type.')
+
+    return type
+  }
 
   private generateShorthandPairIdentifierPattern = (
     node: Parser.SyntaxNode
   ): ParametricType => {
-    const type = this.generate(node.namedChild(0))
+    const type = this.generate(node.namedChild(0)!)
+    assert(isNotUndefined(type), 'Should be a Type.')
 
     if (node.namedChildCount == 2) {
-      const defaultValueType = this.generate(node.namedChild(1))
+      const defaultValueType = this.generate(node.namedChild(1)!)
+      assert(isNotUndefined(defaultValueType), 'Should be a Type.')
 
       return new ParametricType(MAP_TYPE, [
         new ParametricType(STRING_TYPE),
@@ -617,7 +658,8 @@ export class Analyze {
   }
 
   private generateSpread = (node: Parser.SyntaxNode): Type => {
-    const valueType = this.generate(node.namedChild(0))
+    const valueType = this.generate(node.namedChild(0)!)
+    assert(isNotUndefined(valueType), 'Should be a Type.')
 
     return new InferSpreadType().perform(valueType)
   }
@@ -631,7 +673,7 @@ export class Analyze {
   private generateTuple = (node: Parser.SyntaxNode): ParametricType => {
     const valueTypes = node.namedChildren
       .map(child => this.generate(child))
-      .filter(type => type !== undefined)
+      .filter(isNotUndefined)
 
     return new ParametricType(TUPLE_TYPE, valueTypes)
   }
@@ -639,7 +681,7 @@ export class Analyze {
   private generateTuplePattern = (node: Parser.SyntaxNode): ParametricType => {
     const valueTypes = node.namedChildren
       .map(child => this.generate(child))
-      .filter(type => type !== undefined)
+      .filter(isNotUndefined)
 
     return new ParametricType(TUPLE_TYPE, valueTypes)
   }
@@ -647,7 +689,7 @@ export class Analyze {
   private generateTupleType = (node: Parser.SyntaxNode): ParametricType => {
     const valueTypes = node.namedChildren
       .map(child => this.generate(child))
-      .filter(type => type !== undefined)
+      .filter(isNotUndefined)
 
     return new ParametricType(TUPLE_TYPE, valueTypes)
   }
@@ -660,18 +702,24 @@ export class Analyze {
   }
 
   private generateTypeConstructor = (node: Parser.SyntaxNode): Type => {
-    if (node.namedChildCount == 1) return this.generate(node.namedChild(0))
+    if (node.namedChildCount == 1) {
+      const type = this.generate(node.namedChild(0)!)
+      assert(isNotUndefined(type), 'Should be a Type.')
+
+      return type
+    }
 
     const types = node.namedChildren
       .map(childNode => this.generate(childNode))
-      .filter(type => type !== undefined)
+      .filter(isNotUndefined)
     return new CurriedType(types)
   }
 
   private generateWhenClause = (node: Parser.SyntaxNode): Type => {
     this.buildSymbolTable.enterAbstraction()
-    this.generate(node.namedChild(0))
-    const type = this.generate(node.namedChild(1))
+    this.generate(node.namedChild(0)!)
+    const type = this.generate(node.namedChild(1)!)
+    assert(isNotUndefined(type), 'Should be a Type.')
 
     this.buildSymbolTable.leaveAbstraction()
     return type
@@ -680,7 +728,7 @@ export class Analyze {
   private generateWhenClauses = (node: Parser.SyntaxNode): Type => {
     const branchTypes = node.namedChildren
       .map(child => this.generate(child))
-      .filter(type => type !== undefined)
+      .filter(isNotUndefined)
 
     return new InferBranchType(this.typeConstraints).perform(branchTypes)
   }

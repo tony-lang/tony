@@ -19,7 +19,7 @@ export const compile = async (
     webpackMode?: string;
     verbose?: boolean;
   }
-): Promise<string> => {
+): Promise<string | undefined> => {
   const filePath = getFilePath(file)
   const outFilePath = getFilePath(outFile || getOutFile(file))
   if (verbose) console.log(`Compiling ${filePath} to ${outFilePath}...`)
@@ -28,7 +28,7 @@ export const compile = async (
   const compiledFiles: string[] = []
 
   while (files.length > 0) {
-    const file = files.pop()
+    const file = files.pop()!
     if (compiledFiles.includes(file) || !file.includes(FILE_EXTENSION)) continue
 
     const [tree, symbolTable] = await analyzeFile(files, file, verbose)

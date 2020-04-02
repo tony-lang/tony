@@ -30,3 +30,6 @@ export const getFilePath = (file: string): string => {
 
 export const getOutFile = (file: string): string =>
   file.replace(FILE_EXTENSION, TARGET_FILE_EXTENSION)
+
+export const isNotUndefined = <T>(value: T | undefined): value is T =>
+  value !== undefined

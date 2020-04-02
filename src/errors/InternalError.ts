@@ -1,5 +1,5 @@
 export class InternalError extends Error {
-  private _context: string
+  private _context: string | undefined
 
   constructor(message: string, context?: string) {
     super(message)
@@ -8,7 +8,7 @@ export class InternalError extends Error {
     this._context = context
   }
 
-  get context(): string {
+  get context(): string | undefined {
     return this._context
   }
 }

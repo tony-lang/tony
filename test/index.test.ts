@@ -1,12 +1,11 @@
-import test from 'ava'
+import { FILE_EXTENSION, TARGET_FILE_EXTENSION } from '../src/constants'
+import childProcess from 'child_process'
+import { compile } from '../src'
 import fs from 'fs'
+import { InternalError } from '../src/errors'
 import mkdirp from 'mkdirp'
 import path from 'path'
-import childProcess from 'child_process'
-
-import { compile } from '../src'
-import { FILE_EXTENSION, TARGET_FILE_EXTENSION } from '../src/constants'
-import { InternalError } from '../src/errors'
+import test from 'ava'
 
 type Example = { name: string; source: string; expected: string }
 

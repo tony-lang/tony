@@ -12,7 +12,7 @@ declare module 'tony-lang' {
       webpackMode?: string;
       verbose?: boolean;
     }
-  ): Promise<string>
+  ): Promise<string | undefined>
 
   export function exec(
     file: string,
@@ -28,8 +28,8 @@ declare module 'tony-lang' {
   export const VERSION: string
 
   export class CompileError extends Error {
-    get context(): Context
-    get filePath(): string
+    get context(): Context | undefined
+    get filePath(): string | undefined
   }
 
   export class DuplicateBindingError extends CompileError {
@@ -37,13 +37,13 @@ declare module 'tony-lang' {
   }
 
   export class InternalError extends Error {
-    get context(): string
+    get context(): string | undefined
   }
 
   export class MissingBindingError extends CompileError {
     get binding(): string
-    get representation(): string
-    get type(): string
+    get representation(): string | undefined
+    get type(): string | undefined
   }
 
   export class SyntaxError extends Error {

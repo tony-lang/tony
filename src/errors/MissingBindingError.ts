@@ -2,8 +2,8 @@ import { CompileError } from './CompileError'
 
 export class MissingBindingError extends CompileError {
   private _binding: string
-  private _representation: string
-  private _type: string
+  private _representation: string | undefined
+  private _type: string | undefined
 
   constructor(
     binding: string,
@@ -22,11 +22,11 @@ export class MissingBindingError extends CompileError {
     return this._binding
   }
 
-  get representation(): string {
+  get representation(): string | undefined {
     return this._representation
   }
 
-  get type(): string {
+  get type(): string | undefined {
     return this._type
   }
 }

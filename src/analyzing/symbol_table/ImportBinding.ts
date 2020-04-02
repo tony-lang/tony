@@ -5,7 +5,7 @@ import { Import } from './Import'
 
 export class ImportBinding extends Binding {
   private _originalName: string
-  private _import: Import
+  private _import: Import | undefined
 
   constructor(name: string, originalName: string, type?: Type) {
     super(name, type || new TypeVariable, true, false)
@@ -17,11 +17,11 @@ export class ImportBinding extends Binding {
     return this._originalName
   }
 
-  get import(): Import {
+  get import(): Import | undefined {
     return this._import
   }
 
-  set import(value: Import) {
+  set import(value: Import | undefined) {
     this._import = value
   }
 }
