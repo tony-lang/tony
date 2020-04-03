@@ -7,7 +7,7 @@
   "scripts": {
     "build": "babel . --ignore dist,node_modules --out-dir dist --extensions .ts",
     "start": "yarn link && nodemon --watch src --watch test --exec 'yarn build' -e ts",
-    "eslint": "eslint src test --ext .ts",
+    "lint": "prettier --check src test && eslint src test --ext .ts",
     "prettier": "prettier --write src test",
     "test": "ava dist/test/index.test.js"
   },

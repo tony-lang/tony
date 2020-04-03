@@ -20,15 +20,7 @@ module.exports = {
   },
   plugins: ['@typescript-eslint'],
   rules: {
-    indent: ['error', 2, {
-      SwitchCase: 1,
-    }],
     'linebreak-style': ['error', 'unix'],
-    quotes: ['error', 'single', {
-      avoidEscape: true
-    }],
-    semi: ['error', 'never'],
-    'max-len': 'error',
     'sort-imports': 'error',
     '@typescript-eslint/explicit-function-return-type': 'error',
     '@typescript-eslint/no-use-before-define': 'off',
