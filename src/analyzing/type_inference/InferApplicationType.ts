@@ -26,7 +26,7 @@ export class InferApplicationType {
       return new TypeVariable()
     }
 
-    this.checkAppledToNonCurriedType(valueType, argumentTypes)
+    this.checkAppliedToNonCurriedType(valueType, argumentTypes)
     this.handleVoidParameterType(valueType)
     this.checkAppliedTooManyArguments(valueType, argumentTypes)
 
@@ -75,7 +75,7 @@ export class InferApplicationType {
     valueType.parameters.pop()
   }
 
-  private checkAppledToNonCurriedType(
+  private checkAppliedToNonCurriedType(
     valueType: Type,
     argumentTypes: CurriedType,
   ): asserts valueType is CurriedType {
