@@ -30,7 +30,7 @@
     "core-js": "^3.6.4",
     "deep-equal": "^2.0.2",
     "inquirer": "^7.1.0",
-    "mkdirp": "^1.0.3",
+    "mkdirp": "^1.0.4",
     "outdent": "^0.7.1",
     "rimraf": "^3.0.2",
     "tree-sitter": "^0.16.0",
