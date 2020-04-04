@@ -1,5 +1,8 @@
 export { CompileError } from './CompileError'
+export { CyclicDependenciesError } from './CyclicDependenciesError'
 export { DuplicateBindingError } from './DuplicateBindingError'
+export { ExportOutsideModuleScopeError } from './ExportOutsideModuleScopeError'
+export { ImportOutsideFileModuleScopeError } from './ImportOutsideFileModuleScopeError'
 export { assert, InternalError } from './InternalError'
 export { MissingBindingError } from './MissingBindingError'
 export { SyntaxError } from './SyntaxError'

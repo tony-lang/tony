@@ -20,7 +20,8 @@ module.exports = {
   },
   plugins: ['@typescript-eslint'],
   rules: {
-    'linebreak-style': ['error', 'unix'],
+    'max-lines-per-function': ['error', 15],
+    'max-params': ['error', 5],
     'sort-imports': 'error',
     '@typescript-eslint/explicit-function-return-type': 'error',
     '@typescript-eslint/no-use-before-define': 'off',
