@@ -34,7 +34,7 @@
     "mkdirp": "^1.0.3",
     "outdent": "^0.7.1",
     "tree-sitter": "^0.16.0",
-    "tree-sitter-tony": "file:.yalc/tree-sitter-tony",
+    "tree-sitter-tony": "0.2.0-alpha.10",
     "webpack": "^4.42.1",
     "webpack-cli": "^3.3.11"
   },
