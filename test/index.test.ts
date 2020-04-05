@@ -15,6 +15,9 @@ const TEST_OUT_DIR_PATH = Object.freeze(
 const STDLIB = fs.readFileSync(path.join(TEST_DIR_PATH, 'stdlib.tn')).toString()
 
 type Example = { name: string; source: string; expected: string }
+type ExampleSet = {
+  [key: string]: Example
+}
 
 const getTestFilePath = (file: string): string =>
   file.replace(FILE_EXTENSION, `.test${FILE_EXTENSION}`)
@@ -46,26 +49,22 @@ const findExamples = (): Example[] => {
         .map((file) => path.join(directory, file))
     })
     .reduce((acc, files) => acc.concat(files), [])
-    .reduce(accumulateExamples, new Map())
+    .reduce(accumulateExamples, {})
 
   return Object.values(examples)
 }
 
-const accumulateExamples = (
-  acc: Map<string, Example>,
-  file: string,
-): Map<string, Example> => {
+const accumulateExamples = (acc: ExampleSet, file: string): ExampleSet => {
   const content = fs.readFileSync(path.join(TEST_DIR_PATH, file)).toString()
   const [name, ext] = file.split('.')
   if (!['tn', 'txt'].includes(ext)) return acc
 
-  const example = {
+  acc[name] = {
     name,
     [ext === 'tn' ? 'source' : 'expected']: content,
-    ...acc.get(name),
+    ...acc[name],
   }
 
-  acc.set(name, example)
   return acc
 }
 
