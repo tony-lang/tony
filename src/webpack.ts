@@ -24,5 +24,7 @@ export const compile = (
 }
 
 const handleError = (output: string): void => {
-  throw new InternalError('Webpack compilation failed unexpectedly.', output)
+  throw new InternalError(
+    `${output}\n\nWebpack compilation failed unexpectedly.`,
+  )
 }

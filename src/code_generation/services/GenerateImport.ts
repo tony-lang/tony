@@ -1,6 +1,8 @@
 import {
   FILE_EXTENSION_REGEX,
   JAVASCRIPT_FILE_EXTENSION_REGEX,
+  FILE_EXTENSION,
+  TARGET_FILE_EXTENSION,
 } from '../../constants'
 import { ImportBinding } from '../../symbol_table/models'
 import { InternalError } from '../../errors'
@@ -31,6 +33,10 @@ export class GenerateImport {
     bindings: ImportBinding[],
     suffix?: string,
   ): string => {
+    const compiledSourcePath = sourcePath.replace(
+      FILE_EXTENSION,
+      TARGET_FILE_EXTENSION,
+    )
     const aliases = bindings
       .map((binding) => {
         const originalName = this._transformIdentifier.perform(
@@ -42,7 +48,7 @@ export class GenerateImport {
       })
       .join(',')
 
-    return `import {${aliases}} from '${sourcePath}'`
+    return `import {${aliases}} from '${compiledSourcePath}'`
   }
 
   // eslint-disable-next-line max-lines-per-function
