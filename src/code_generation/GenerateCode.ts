@@ -150,8 +150,6 @@ export class GenerateCode {
         return this.handleTuplePattern(node)
       case 'type':
         return this.handleType(node)
-      case 'type_name':
-        return this.handleTypeName(node)
       case 'when_clause':
         return this.handleWhenClause(node)
       case 'when_clauses':
@@ -590,12 +588,6 @@ export class GenerateCode {
   }
 
   private handleType = (node: Parser.SyntaxNode): string => {
-    const name = node.text
-
-    return this._transformIdentifier.perform(name)
-  }
-
-  private handleTypeName = (node: Parser.SyntaxNode): string => {
     const name = node.text
 
     return this._transformIdentifier.perform(name)

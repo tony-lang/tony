@@ -189,7 +189,7 @@ export class BuildFileModuleScope {
       exportedBindings,
     )
 
-    const type = new BuildType().handleTypeName(node.namedChild(0)!)
+    const type = new BuildType().handleType(node.namedChild(0)!)
     const binding = new TypeBinding(type, representation, { isExported })
     this.addBinding(binding)
   }

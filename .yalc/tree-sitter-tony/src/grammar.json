@@ -2190,13 +2190,8 @@
                   "name": "import_clause_identifier_pair"
                 },
                 {
-                  "type": "ALIAS",
-                  "content": {
-                    "type": "SYMBOL",
-                    "name": "type"
-                  },
-                  "named": true,
-                  "value": "type_name"
+                  "type": "SYMBOL",
+                  "name": "type"
                 },
                 {
                   "type": "SYMBOL",
@@ -2225,13 +2220,8 @@
                         "name": "import_clause_identifier_pair"
                       },
                       {
-                        "type": "ALIAS",
-                        "content": {
-                          "type": "SYMBOL",
-                          "name": "type"
-                        },
-                        "named": true,
-                        "value": "type_name"
+                        "type": "SYMBOL",
+                        "name": "type"
                       },
                       {
                         "type": "SYMBOL",
@@ -2287,13 +2277,8 @@
           "type": "FIELD",
           "name": "name",
           "content": {
-            "type": "ALIAS",
-            "content": {
-              "type": "SYMBOL",
-              "name": "type"
-            },
-            "named": true,
-            "value": "type_name"
+            "type": "SYMBOL",
+            "name": "type"
           }
         },
         {
@@ -2304,13 +2289,8 @@
           "type": "FIELD",
           "name": "as",
           "content": {
-            "type": "ALIAS",
-            "content": {
-              "type": "SYMBOL",
-              "name": "type"
-            },
-            "named": true,
-            "value": "type_name"
+            "type": "SYMBOL",
+            "name": "type"
           }
         }
       ]
@@ -2696,13 +2676,8 @@
           "type": "FIELD",
           "name": "name",
           "content": {
-            "type": "ALIAS",
-            "content": {
-              "type": "SYMBOL",
-              "name": "type"
-            },
-            "named": true,
-            "value": "type_name"
+            "type": "SYMBOL",
+            "name": "type"
           }
         },
         {

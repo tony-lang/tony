@@ -284,7 +284,7 @@ module.exports = grammar({
       commaSep1(choice(
         $.identifier_pattern,
         $.import_clause_identifier_pair,
-        alias($.type,  $.type_name),
+        $.type,
         $.import_clause_type_pair
       )),
       '}'
@@ -295,9 +295,9 @@ module.exports = grammar({
       field('as', $.identifier_pattern)
     ),
     import_clause_type_pair: $ => seq(
-      field('name', alias($.type,  $.type_name)),
+      field('name', $.type),
       ':',
-      field('as', alias($.type,  $.type_name))
+      field('as', $.type)
     ),
 
     simple_export: $ => seq(
@@ -352,7 +352,7 @@ module.exports = grammar({
 
     module: $ => seq(
       'module',
-      field('name', alias($.type,  $.type_name)),
+      field('name', $.type),
       optional('where'),
       field('body', $.block)
     ),

@@ -16,8 +16,6 @@ export class BuildType {
         return this.handleTypeConstructor(node)
       case 'type':
         return this.handleType(node)
-      case 'type_name':
-        return this.handleTypeName(node)
       default:
         throw new InternalError(
           `ParseType: Could not find generator for AST node '${node.type}'.`,
@@ -62,14 +60,6 @@ export class BuildType {
 
   handleType = (node: Parser.SyntaxNode): ParametricType => {
     assert(node.type === 'type', 'Should be `type` node.')
-
-    const name = node.text
-
-    return new ParametricType(name)
-  }
-
-  handleTypeName = (node: Parser.SyntaxNode): ParametricType => {
-    assert(node.type === 'type_name', 'Should be `type_name` node.')
 
     const name = node.text
 

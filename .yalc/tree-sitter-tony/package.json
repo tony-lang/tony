@@ -1,6 +1,6 @@
 {
   "name": "tree-sitter-tony",
-  "version": "0.2.0-alpha.10-71b4016c",
+  "version": "0.2.0-alpha.10-33dacfd6",
   "description": "Tony grammar for tree-sitter",
   "main": "index.js",
   "types": "tree-sitter-tony.d.ts",

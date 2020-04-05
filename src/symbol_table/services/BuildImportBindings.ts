@@ -40,8 +40,8 @@ export class BuildImportBindings {
         return this.handleImportClauseIdentifierPair(node)
       case 'import_clause_type_pair':
         return this.handleImportClauseTypePair(node)
-      case 'type_name':
-        return this.handleTypeName(node)
+      case 'type':
+        return this.handleType(node)
       default:
         throw new InternalError(
           `ResolveImportBindings: Could not find generator for AST node '${node.type}'.`,
@@ -75,16 +75,16 @@ export class BuildImportBindings {
   private handleImportClauseTypePair = (
     node: Parser.SyntaxNode,
   ): ImportTypeBinding => {
-    const originalType = this.handleTypeName(node.namedChild(0)!)
-    const binding = this.handleTypeName(node.namedChild(1)!)
+    const originalType = this.handleType(node.namedChild(0)!)
+    const binding = this.handleType(node.namedChild(1)!)
 
     binding.originalType = originalType.type
 
     return binding
   }
 
-  private handleTypeName = (node: Parser.SyntaxNode): ImportTypeBinding => {
-    const type = new BuildType().handleTypeName(node)
+  private handleType = (node: Parser.SyntaxNode): ImportTypeBinding => {
+    const type = new BuildType().handleType(node)
 
     return new ImportTypeBinding(this._filePath, type, type)
   }

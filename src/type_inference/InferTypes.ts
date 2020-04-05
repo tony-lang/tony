@@ -388,7 +388,7 @@ export class InferTypes {
   }
 
   private handleModule = (node: Parser.SyntaxNode): ParametricType => {
-    const type = new BuildType().handleTypeName(node.namedChild(0)!)
+    const type = new BuildType().handleType(node.namedChild(0)!)
 
     this.traverse(node.namedChild(1)!)
 

@@ -1648,7 +1648,7 @@
           "named": true
         },
         {
-          "type": "type_name",
+          "type": "type",
           "named": true
         }
       ]
@@ -1689,7 +1689,7 @@
         "required": true,
         "types": [
           {
-            "type": "type_name",
+            "type": "type",
             "named": true
           }
         ]
@@ -1699,7 +1699,7 @@
         "required": true,
         "types": [
           {
-            "type": "type_name",
+            "type": "type",
             "named": true
           }
         ]
@@ -2273,7 +2273,7 @@
         "required": true,
         "types": [
           {
-            "type": "type_name",
+            "type": "type",
             "named": true
           }
         ]
@@ -3773,10 +3773,6 @@
   },
   {
     "type": "type",
-    "named": true
-  },
-  {
-    "type": "type_name",
     "named": true
   },
   {
