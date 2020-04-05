@@ -6,7 +6,7 @@ import { ImportBinding } from '../../symbol_table/models'
 import { InternalError } from '../../errors'
 import { TransformIdentifier } from './TransformIdentifier'
 
-export class TransformImport {
+export class GenerateImport {
   protected _transformIdentifier: TransformIdentifier
 
   constructor(transformIdentifier: TransformIdentifier) {

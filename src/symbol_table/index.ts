@@ -2,6 +2,8 @@ export {
   Binding,
   FileModuleScope,
   IdentifierBinding,
+  ImportBinding,
+  ModuleScope,
   NestedScope,
   TypeBinding,
 } from './models'

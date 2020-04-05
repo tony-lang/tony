@@ -7,6 +7,7 @@ import {
 export class NonExhaustivePatterns extends Error {}
 
 export class ResolveAbstractionBranch {
+  // eslint-disable-next-line max-lines-per-function
   static perform = (
     args: any,
     branches: [string, any[], (match: any[]) => any][],

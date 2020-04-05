@@ -20,7 +20,11 @@ module.exports = {
   },
   plugins: ['@typescript-eslint'],
   rules: {
-    'max-lines-per-function': ['error', 20],
+    'max-lines-per-function': ['error', {
+      max: 20,
+      skipBlankLines: true,
+      skipComments: true,
+    }],
     'max-params': ['error', 5],
     'sort-imports': 'error',
     '@typescript-eslint/explicit-function-return-type': 'error',

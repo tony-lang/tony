@@ -4,6 +4,7 @@ import { GenerateCode } from './code_generation'
 import { InferTypes } from './type_inference'
 import { compile as webpackCompile } from './webpack'
 
+// eslint-disable-next-line max-lines-per-function
 export const compile = async (
   file: string,
   {

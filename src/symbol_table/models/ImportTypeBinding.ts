@@ -1,7 +1,7 @@
+import { Representation, RepresentationKind } from '../../types/models'
 import { ImportBinding } from './ImportBinding'
 import { ParametricType } from '../../types'
 import { TypeBinding } from './TypeBinding'
-import { Representation, RepresentationKind } from '../../types/models'
 
 export class ImportTypeBinding extends TypeBinding implements ImportBinding {
   private _filePath: string

@@ -1,19 +1,19 @@
 import {
   CollectDefaultValues,
+  GenerateBlock,
+  GenerateProgram,
   ParseStringContent,
   ResolvePattern,
   TransformIdentifier,
-  TransformImport,
 } from './services'
 import { CompileError, InternalError, assert } from '../errors'
+import { FileModuleScope, WalkFileModuleScope } from '../symbol_table'
 import {
-  DEFAULT_IMPORTS,
   TRANSFORM_PLACEHOLDER_ARGUMENT,
   TRANSFORM_REST_PATTERN,
 } from '../constants'
-import { FileModuleScope, WalkFileModuleScope } from '../symbol_table'
-import { ImportBinding, ModuleScope } from '../symbol_table/models'
 import Parser from 'tree-sitter'
+import { isNotUndefined } from '../utilities'
 
 export const INTERNAL_TEMP_TOKEN = Object.freeze('#TONY_INTERNAL_TEMP')
 
@@ -230,37 +230,17 @@ export class GenerateCode {
 
   private handleBlock = (node: Parser.SyntaxNode): string => {
     this._walkFileModuleScope.enterBlock()
-
-    const isDeclaration = this._walkFileModuleScope instanceof ModuleScope
-
-    const expressions = node.namedChildren.map((expression) =>
-      this.traverse(expression),
-    )
-
-    const bindings = this._walkFileModuleScope.scope.bindings.filter(
-      (binding) => !binding.isImplicit,
-    )
-    const declarations = bindings.map((binding) =>
-      this._transformIdentifier.perform(binding.name),
-    )
-    const combinedDeclarations =
-      declarations.length > 0 ? `let ${declarations.join(',')}` : ''
-    const returnedDeclarations = bindings
-      .filter((binding) => binding.isExported)
-      .map((binding) => this._transformIdentifier.perform(binding.name))
-      .join(',')
-
-    const returnValue = isDeclaration
-      ? `{${returnedDeclarations}}`
-      : expressions.pop()
-    const explicitReturn =
-      !isDeclaration && node.lastNamedChild!.type === 'return' ? '' : 'return '
-
+    const expressions = node.namedChildren
+      .map((expression) => this.traverse(expression))
+      .filter(isNotUndefined)
+    const endsWithReturn = node.lastNamedChild!.type === 'return'
+    const block = new GenerateBlock(
+      this._walkFileModuleScope.scope,
+      this._transformIdentifier,
+    ).perform(expressions, endsWithReturn)
     this._walkFileModuleScope.leaveBlock()
-    return (
-      `(()=>{${combinedDeclarations};` +
-      `${expressions.join(';')};${explicitReturn}${returnValue}})()`
-    )
+
+    return block
   }
 
   private handleCase = (node: Parser.SyntaxNode): string => {
@@ -334,6 +314,7 @@ export class GenerateCode {
     return `"${INTERNAL_TEMP_TOKEN}${name}"`
   }
 
+  // eslint-disable-next-line max-lines-per-function
   private handleIf = (node: Parser.SyntaxNode): string => {
     const condition = this.traverse(node.namedChild(0)!)
     const consequence = this.traverse(node.namedChild(1)!)
@@ -470,41 +451,17 @@ export class GenerateCode {
   private handleProgram = (node: Parser.SyntaxNode): string => {
     const expressions = node.namedChildren
       .map((expression) => this.traverse(expression))
-      .join(';')
-
-    const declarations = this._walkFileModuleScope.scope.bindings
-      .filter((binding) => !binding.isImplicit)
-      .map((binding) => this._transformIdentifier.perform(binding.name))
-    const combinedDeclarations =
-      declarations.length > 0 ? `let ${declarations.join(',')}` : ''
+      .filter(isNotUndefined)
 
     assert(
       this._walkFileModuleScope.scope instanceof FileModuleScope,
       'File module scope walker should end up at file-level scope.',
     )
 
-    const importBindings = this._walkFileModuleScope.scope.bindings.filter(
-      (binding) => binding.isImported,
-    ) as ImportBinding[]
-    const imports = this._walkFileModuleScope.scope.dependencies
-      .map((sourcePath) => {
-        return new TransformImport(this._transformIdentifier).perform(
-          sourcePath,
-          importBindings,
-        )
-      })
-      .join(';')
-
-    const exports = this._walkFileModuleScope.scope.bindings
-      .filter((binding) => binding.isExported)
-      .map((binding) => this._transformIdentifier.perform(binding.name))
-    const combinedExports =
-      exports.length > 0 ? `export {${exports.join(',')}}` : ''
-
-    return (
-      `${DEFAULT_IMPORTS};${imports};` +
-      `${combinedDeclarations};${expressions};${combinedExports}`
-    )
+    return new GenerateProgram(
+      this._walkFileModuleScope.scope,
+      this._transformIdentifier,
+    ).perform(expressions)
   }
 
   private handleRestList = (node: Parser.SyntaxNode): string => {

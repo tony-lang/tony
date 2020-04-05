@@ -286,6 +286,7 @@ export class InferTypes {
     return new ParametricType(MAP_TYPE, [keyType, valueType])
   }
 
+  // eslint-disable-next-line max-lines-per-function
   private handleGenerator = (node: Parser.SyntaxNode): undefined => {
     const name = node.namedChild(0)!.text
     const valueType = this.traverse(node.namedChild(1)!)!

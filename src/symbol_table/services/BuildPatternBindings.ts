@@ -18,24 +18,29 @@ export class BuildPatternBindings {
   }
 
   perform = (node: Parser.SyntaxNode): IdentifierBinding[] => {
-    if (node.type === 'identifier_pattern') {
-      const name = node.namedChild(0)!.text
-      const type =
-        node.namedChildCount == 2
-          ? new BuildType().handleTypeConstructor(node.namedChild(1)!)!
-          : new TypeVariable()
-
-      return [
-        new IdentifierBinding(name, type, {
-          isExported: this._isExported,
-          isImplicit: this._isImplicit,
-        }),
-      ]
-    }
+    if (node.type === 'identifier_pattern')
+      return this.handleIdentifierPattern(node)
 
     return node.namedChildren.reduce(
       (names: IdentifierBinding[], child) => names.concat(this.perform(child)),
       [],
     )
+  }
+
+  private handleIdentifierPattern = (
+    node: Parser.SyntaxNode,
+  ): IdentifierBinding[] => {
+    const name = node.namedChild(0)!.text
+    const type =
+      node.namedChildCount == 2
+        ? new BuildType().handleTypeConstructor(node.namedChild(1)!)!
+        : new TypeVariable()
+
+    return [
+      new IdentifierBinding(name, type, {
+        isExported: this._isExported,
+        isImplicit: this._isImplicit,
+      }),
+    ]
   }
 }
