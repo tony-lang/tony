@@ -1,7 +1,7 @@
 import {
+  FILE_EXTENSION,
   FILE_EXTENSION_REGEX,
   JAVASCRIPT_FILE_EXTENSION_REGEX,
-  FILE_EXTENSION,
   TARGET_FILE_EXTENSION,
 } from '../../constants'
 import { ImportBinding } from '../../symbol_table/models'
