@@ -5,8 +5,12 @@ export { VERSION } from './version'
 
 export {
   CompileError,
+  CyclicDependenciesError,
   DuplicateBindingError,
+  ExportOutsideModuleScopeError,
+  ImportOutsideFileModuleScopeError,
   InternalError,
+  InvalidPropertyAccessError,
   MissingBindingError,
   SyntaxError,
   TypeError,

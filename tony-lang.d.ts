@@ -36,9 +36,7 @@ declare module 'tony-lang' {
     get binding(): string
   }
 
-  export class InternalError extends Error {
-    get context(): string | undefined
-  }
+  export class InternalError extends Error {}
 
   export class MissingBindingError extends CompileError {
     get binding(): string

@@ -1,6 +1,6 @@
 import {
   InternalError,
-  MissingBindingError,
+  InvalidPropertyAccessError,
   TypeError,
   assert,
 } from '../../errors'
@@ -112,7 +112,7 @@ export class InferAccessType {
 
     if (property) return property.type
     else
-      throw new MissingBindingError(
+      throw new InvalidPropertyAccessError(
         propertyName,
         binding.type.toString(),
         binding.representation.toString(),
