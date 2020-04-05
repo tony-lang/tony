@@ -1,10 +1,10 @@
-import { FILE_EXTENSION_REGEX, IMPORT_FILE_EXTENSIONS } from '../constants'
 import {
   TopologicalSort,
   TopologicalSortError,
 } from '../services/TopologicalSort'
 import { BuildFileModuleScope } from './BuildFileModuleScope'
 import { CyclicDependenciesError } from '../errors/CyclicDependenciesError'
+import { FILE_EXTENSION_REGEX } from '../constants'
 import { FileModuleScope } from './models/FileModuleScope'
 import { GlobalScope } from './models/GlobalScope'
 import { GraphSearch } from '../services/GraphSearch'
@@ -20,7 +20,7 @@ export class BuildSymbolTable extends GraphSearch<string, GlobalScope> {
 
     if (verbose) console.log('Building symbol table...')
 
-    if (!IMPORT_FILE_EXTENSIONS.find((regex) => regex.test(entryPath)))
+    if (!FILE_EXTENSION_REGEX.test(entryPath))
       throw new UnknownImportError(entryPath)
 
     this._scope = new GlobalScope()
@@ -29,12 +29,14 @@ export class BuildSymbolTable extends GraphSearch<string, GlobalScope> {
 
   protected success = (): GlobalScope => {
     const dependencyGraph = this.buildDependencyGraph()
+    if (this._verbose) console.log('Built dependency graph', dependencyGraph)
 
     try {
-      this._scope.scopes = new TopologicalSort(dependencyGraph)
-        .perform()
-        .map((i) => this._fileScopes[i])
+      const topologicalSort = new TopologicalSort(dependencyGraph).perform()
+      if (this._verbose)
+        console.log('Topological sort of dependency graph', topologicalSort)
 
+      this._scope.scopes = topologicalSort.map((i) => this._fileScopes[i])
       return this._scope
     } catch (error) {
       if (error instanceof TopologicalSortError)
@@ -64,10 +66,12 @@ export class BuildSymbolTable extends GraphSearch<string, GlobalScope> {
   // builds an adjacency list where numbers represent indices in fileScopes
   private buildDependencyGraph = (): number[][] =>
     this._fileScopes.map((fileScope) =>
-      fileScope.dependencies.map((filePath) =>
-        this._fileScopes.findIndex(
-          (fileScope) => fileScope.filePath === filePath,
-        ),
-      ),
+      fileScope.dependencies
+        .map((filePath) =>
+          this._fileScopes.findIndex(
+            (fileScope) => fileScope.filePath === filePath,
+          ),
+        )
+        .filter((i) => i != -1),
     )
 }

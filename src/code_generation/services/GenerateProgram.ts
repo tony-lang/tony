@@ -37,7 +37,10 @@ export class GenerateProgram {
 
     return this._scope.dependencies
       .map((sourcePath) => {
-        return this._generateImport.perform(sourcePath, importBindings)
+        return this._generateImport.perform(
+          sourcePath,
+          importBindings.filter((binding) => binding.filePath === sourcePath),
+        )
       })
       .join(';')
   }

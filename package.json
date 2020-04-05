@@ -6,7 +6,7 @@
   "types": "tony-lang.d.ts",
   "scripts": {
     "build": "babel . --ignore dist,node_modules --out-dir dist --extensions .ts",
-    "start": "yarn link && nodemon --watch src --watch test --exec 'yarn build' -e ts",
+    "start": "nodemon --watch src --watch test --exec 'yarn build' -e ts",
     "lint": "prettier --check src test && eslint src test --ext .ts",
     "prettier": "prettier --write src test",
     "test": "ava dist/test/index.test.js"

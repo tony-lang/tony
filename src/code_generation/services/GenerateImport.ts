@@ -6,6 +6,8 @@ import { ImportBinding } from '../../symbol_table/models'
 import { InternalError } from '../../errors'
 import { TransformIdentifier } from './TransformIdentifier'
 
+const EXTERNAL_IMPORT_SUFFIX = Object.freeze('EXT_')
+
 export class GenerateImport {
   protected _transformIdentifier: TransformIdentifier
 
@@ -30,7 +32,6 @@ export class GenerateImport {
     suffix?: string,
   ): string => {
     const aliases = bindings
-      .filter((binding) => binding.filePath === sourcePath)
       .map((binding) => {
         const originalName = this._transformIdentifier.perform(
           binding.originalName,
@@ -44,14 +45,21 @@ export class GenerateImport {
     return `import {${aliases}} from '${sourcePath}'`
   }
 
+  // eslint-disable-next-line max-lines-per-function
   private handleJavaScript = (
     sourcePath: string,
     bindings: ImportBinding[],
   ): string => {
-    const importStatement = this.handleInternal(sourcePath, bindings, 'EXT')
+    const importStatement = this.handleInternal(
+      sourcePath,
+      bindings,
+      EXTERNAL_IMPORT_SUFFIX,
+    )
     const currying = bindings
       .map((binding) => {
-        const tmpName = `${this._transformIdentifier.perform(binding.name)}EXT`
+        const tmpName = `${this._transformIdentifier.perform(
+          binding.name,
+        )}${EXTERNAL_IMPORT_SUFFIX}`
         const name = this._transformIdentifier.perform(binding.name)
 
         return `${name}=stdlib.Curry.external(${tmpName})`

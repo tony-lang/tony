@@ -15,19 +15,49 @@ import {
 } from '../../types'
 import { CompileError, InternalError, TypeError, assert } from '../../errors'
 import { IdentifierBinding, NestedScope } from '../../symbol_table'
+import { InferListType } from './InferListType'
+import { InferMapType } from './InferMapType'
+import { InferTypes } from '../InferTypes'
 import Parser from 'tree-sitter'
 
 export class InferPatternBindingTypes {
+  private _inferTypes: InferTypes
   private _scope: NestedScope
   private _typeConstraints: TypeConstraints
 
-  constructor(scope: NestedScope, typeConstraints: TypeConstraints) {
+  constructor(
+    inferTypes: InferTypes,
+    scope: NestedScope,
+    typeConstraints: TypeConstraints,
+  ) {
+    this._inferTypes = inferTypes
     this._scope = scope
     this._typeConstraints = typeConstraints
   }
 
+  perform = (patternNode: Parser.SyntaxNode, type: Type): Type => {
+    const patternType = this.traverse(patternNode, type)
+
+    assert(patternType !== undefined, 'Should not be undefined.')
+
+    return patternType
+  }
+
+  performParameters = (patternNode: Parser.SyntaxNode): CurriedType => {
+    assert(patternNode.type === 'parameters', 'Should be `parameters` type.')
+
+    return new CurriedType(
+      patternNode.namedChildren.map((child) =>
+        this.perform(child, new TypeVariable()),
+      ),
+    )
+  }
+
   // eslint-disable-next-line max-lines-per-function
-  perform = (patternNode: Parser.SyntaxNode, type: Type): void => {
+  private traverse = (
+    patternNode: Parser.SyntaxNode,
+    type: Type,
+  ): Type | undefined => {
     try {
       switch (patternNode.type) {
         case 'boolean':
@@ -42,8 +72,6 @@ export class InferPatternBindingTypes {
           return this.handleMapPattern(patternNode, type)
         case 'number':
           return this.handleNumber(patternNode, type)
-        case 'parameters':
-          return this.handleParameters(patternNode, type)
         case 'pattern':
           return this.handlePattern(patternNode, type)
         case 'pattern_pair':
@@ -80,14 +108,13 @@ export class InferPatternBindingTypes {
   private handleBoolean = (
     patternNode: Parser.SyntaxNode,
     type: Type,
-  ): void => {
+  ): ParametricType =>
     new ParametricType(BOOLEAN_TYPE).unify(type, this._typeConstraints)
-  }
 
   private handleIdentifierPattern = (
     patternNode: Parser.SyntaxNode,
     type: Type,
-  ): void => {
+  ): Type => {
     const name = patternNode.namedChild(0)!.text
     const binding = this._scope.resolveBinding(name, 0)
 
@@ -97,94 +124,137 @@ export class InferPatternBindingTypes {
     )
 
     binding.type = binding.type.unify(type, this._typeConstraints)
+
+    return binding.type
   }
 
   private handleListPattern = (
-    pattern: Parser.SyntaxNode,
+    patternNode: Parser.SyntaxNode,
     type: Type,
-  ): void => {
+  ): ParametricType => {
     const unifiedType = new ParametricType(LIST_TYPE, [
       new TypeVariable(),
     ]).unify(type, this._typeConstraints)
-
-    pattern.namedChildren.forEach((child) =>
+    const valueTypes = patternNode.namedChildren.map((child) =>
       this.perform(child, unifiedType.parameters[0]),
     )
+
+    return new InferListType(this._typeConstraints).perform(valueTypes)
   }
 
-  private handleMapPattern = (pattern: Parser.SyntaxNode, type: Type): void =>
-    pattern.namedChildren.forEach((child) => this.perform(child, type))
-
-  private handleNumber = (patternNode: Parser.SyntaxNode, type: Type): void => {
-    new ParametricType(NUMBER_TYPE).unify(type, this._typeConstraints)
-  }
-
-  private handleParameters = (pattern: Parser.SyntaxNode, type: Type): void => {
-    assert(
-      type instanceof CurriedType,
-      'Parameters are expected to be curried.',
+  private handleMapPattern = (
+    patternNode: Parser.SyntaxNode,
+    type: Type,
+  ): ParametricType => {
+    const mapTypes = patternNode.namedChildren.map((child) =>
+      this.perform(child, type),
     )
 
-    pattern.namedChildren.forEach((child, i) => {
-      this.perform(child, type.parameters[i])
-    })
+    return new InferMapType(this._typeConstraints).perform(mapTypes)
   }
 
-  private handlePattern = (pattern: Parser.SyntaxNode, type: Type): void =>
-    this.perform(pattern.namedChild(0)!, type)
+  private handleNumber = (
+    patternNode: Parser.SyntaxNode,
+    type: Type,
+  ): ParametricType =>
+    new ParametricType(NUMBER_TYPE).unify(type, this._typeConstraints)
+
+  private handlePattern = (
+    patternNode: Parser.SyntaxNode,
+    type: Type,
+  ): Type => {
+    if (patternNode.namedChildCount == 1)
+      return this.perform(patternNode.namedChild(0)!, type)
+
+    const defaultType = this._inferTypes.traverse(patternNode.namedChild(1)!)!
+
+    return this.perform(
+      patternNode.namedChild(0)!,
+      type.unify(defaultType, this._typeConstraints),
+    )
+  }
 
   private handlePatternPair = (
-    pattern: Parser.SyntaxNode,
+    patternNode: Parser.SyntaxNode,
     type: Type,
-  ): void => {
+  ): Type => {
+    const keyType = this._inferTypes.traverse(patternNode.namedChild(0)!)!
     const unifiedType = new ParametricType(MAP_TYPE, [
-      new TypeVariable(),
+      keyType,
       new TypeVariable(),
     ]).unify(type, this._typeConstraints)
+    const valueType = this.perform(
+      patternNode.namedChild(1)!,
+      unifiedType.parameters[1],
+    )
 
-    this.perform(pattern.namedChild(1)!, unifiedType.parameters[1])
+    return new ParametricType(MAP_TYPE, [keyType, valueType])
   }
 
-  private handleRegex = (patternNode: Parser.SyntaxNode, type: Type): void => {
+  private handleRegex = (
+    patternNode: Parser.SyntaxNode,
+    type: Type,
+  ): ParametricType =>
     new ParametricType(REGULAR_EXPRESSION_TYPE).unify(
       type,
       this._typeConstraints,
     )
+
+  private handleRestList = (
+    patternNode: Parser.SyntaxNode,
+    type: Type,
+  ): Type => {
+    const valueType = this.perform(
+      patternNode.namedChild(0)!,
+      new ParametricType(LIST_TYPE, [type]),
+    )
+
+    assert(valueType instanceof ParametricType, 'Should be parametric type.')
+
+    return valueType.parameters[0]
   }
 
-  private handleRestList = (pattern: Parser.SyntaxNode, type: Type): void =>
-    this.perform(pattern.namedChild(0)!, new ParametricType(LIST_TYPE, [type]))
-
-  private handleRestMap = (pattern: Parser.SyntaxNode, type: Type): void =>
-    this.perform(pattern.namedChild(0)!, type)
+  private handleRestMap = (patternNode: Parser.SyntaxNode, type: Type): Type =>
+    this.perform(patternNode.namedChild(0)!, type)
 
   private handleShorthandPairIdentifierPattern = (
-    pattern: Parser.SyntaxNode,
+    patternNode: Parser.SyntaxNode,
     type: Type,
-  ): void => {
+  ): ParametricType => {
+    const keyType = new ParametricType(STRING_TYPE)
+    const valueType =
+      patternNode.namedChildCount == 2
+        ? this._inferTypes.traverse(patternNode.namedChild(1)!)!
+        : new TypeVariable()
     const unifiedType = new ParametricType(MAP_TYPE, [
-      new TypeVariable(),
-      new TypeVariable(),
+      keyType,
+      valueType,
     ]).unify(type, this._typeConstraints)
+    const unifiedValueType = this.perform(
+      patternNode.namedChild(0)!,
+      unifiedType.parameters[1],
+    )
 
-    return this.perform(pattern.namedChild(0)!, unifiedType.parameters[1])
+    return new ParametricType(MAP_TYPE, [keyType, unifiedValueType])
   }
 
   private handleStringPattern = (
     patternNode: Parser.SyntaxNode,
     type: Type,
-  ): void => {
+  ): ParametricType =>
     new ParametricType(STRING_TYPE).unify(type, this._typeConstraints)
-  }
 
   private handleTuplePattern = (
-    pattern: Parser.SyntaxNode,
+    patternNode: Parser.SyntaxNode,
     type: Type,
-  ): void => {
+  ): ParametricType => {
     if (type instanceof ParametricType && type.name === TUPLE_TYPE)
-      return pattern.namedChildren.forEach((child, i) => {
-        this.perform(child, type.parameters[i])
-      })
+      return new ParametricType(
+        TUPLE_TYPE,
+        patternNode.namedChildren.map((child, i) =>
+          this.perform(child, type.parameters[i]),
+        ),
+      )
 
     throw new TypeError(
       type,
@@ -193,7 +263,6 @@ export class InferPatternBindingTypes {
     )
   }
 
-  private handleType = (patternNode: Parser.SyntaxNode, type: Type): void => {
+  private handleType = (patternNode: Parser.SyntaxNode, type: Type): Type =>
     new BuildType().handleType(patternNode).unify(type, this._typeConstraints)
-  }
 }

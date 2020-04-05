@@ -13,7 +13,7 @@ export class ImportIdentifierBinding extends IdentifierBinding
     originalName: string,
     type: Type,
   ) {
-    super(name, type)
+    super(name, type, { isImplicit: true })
 
     this._filePath = filePath
     this._originalName = originalName

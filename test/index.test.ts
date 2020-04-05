@@ -74,14 +74,16 @@ const runExample = async (
 ): Promise<string> => {
   const sourcePath = await copyExample(outputFile, source)
 
+  let entryPath: string
   try {
-    const entryPath = await compile(sourcePath, {})
-    const nodeProcess = childProcess.spawnSync('node', [entryPath])
-    return nodeProcess.stdout.toString() || nodeProcess.stderr.toString()
+    entryPath = await compile(sourcePath, {})
   } catch (error) {
     if (error instanceof InternalError) return error.message
     return error.name
   }
+
+  const nodeProcess = childProcess.spawnSync('node', [entryPath])
+  return nodeProcess.stdout.toString() || nodeProcess.stderr.toString()
 }
 
 const copyExample = async (

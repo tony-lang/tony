@@ -22,6 +22,10 @@ export class ImportTypeBinding extends TypeBinding implements ImportBinding {
     return this._filePath
   }
 
+  get isImplicit(): boolean {
+    return true
+  }
+
   get isImported(): boolean {
     return true
   }

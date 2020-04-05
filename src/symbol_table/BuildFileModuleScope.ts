@@ -72,9 +72,7 @@ export class BuildFileModuleScope {
     try {
       switch (node.type) {
         case 'abstraction_branch':
-        case 'list_comprehension':
-        case 'when_clause':
-          return this.handleAbstraction(node)
+          return this.handleAbstractionBranch(node)
         case 'assignment':
           return this.handleAssignment(node)
         case 'block':
@@ -87,12 +85,16 @@ export class BuildFileModuleScope {
           return this.handleIdentifier(node)
         case 'import':
           return this.handleImport(node)
+        case 'list_comprehension':
+          return this.handleListComprehension(node)
         case 'module':
           return this.handleModule(node)
         case 'parameters':
           return this.handleParameters(node)
         case 'pattern_list':
           return this.handlePatternList(node)
+        case 'when_clause':
+          return this.handleWhenClause(node)
         default:
           node.namedChildren.forEach((child) => this.traverse(child))
       }
@@ -103,10 +105,11 @@ export class BuildFileModuleScope {
     }
   }
 
-  private handleAbstraction = (node: Parser.SyntaxNode): void => {
+  private handleAbstractionBranch = (node: Parser.SyntaxNode): void => {
     this.enterBlock()
 
-    node.namedChildren.forEach((child) => this.traverse(child))
+    this.traverse(node.namedChild(0)!)
+    this.traverse(node.namedChild(1)!)
 
     this._scope.reduce()
     this.leaveBlock()
@@ -165,7 +168,7 @@ export class BuildFileModuleScope {
       throw new ImportOutsideFileModuleScopeError()
 
     const source = node.namedChild(1)!.text.slice(1, -1)
-    const sourcePath = path.join(this._filePath, source)
+    const sourcePath = path.join(this._filePath, '..', source)
     if (!IMPORT_FILE_EXTENSIONS.find((regex) => regex.test(sourcePath)))
       throw new UnknownImportError(sourcePath)
     this._fileScope.addDependency(sourcePath)
@@ -173,6 +176,16 @@ export class BuildFileModuleScope {
     new BuildImportBindings(sourcePath)
       .perform(node)
       .forEach((binding) => this.addBinding(binding))
+  }
+
+  private handleListComprehension = (node: Parser.SyntaxNode): void => {
+    this.enterBlock()
+
+    this.traverse(node.namedChild(1)!)
+    this.traverse(node.namedChild(0)!)
+
+    this._scope.reduce()
+    this.leaveBlock()
   }
 
   private handleModule = (node: Parser.SyntaxNode): void => {
@@ -197,7 +210,7 @@ export class BuildFileModuleScope {
 
   private handleParameters = (node: Parser.SyntaxNode): void => {
     new BuildPatternBindings({ isExported: false, isImplicit: true })
-      .perform(node.namedChild(0)!)
+      .perform(node)
       .forEach((binding) => this.addBinding(binding))
   }
 
@@ -212,6 +225,16 @@ export class BuildFileModuleScope {
     new UnifyPatternBindings()
       .perform(bindings)
       .forEach((binding) => this.addBinding(binding))
+  }
+
+  private handleWhenClause = (node: Parser.SyntaxNode): void => {
+    this.enterBlock()
+
+    this.traverse(node.namedChild(0)!)
+    this.traverse(node.namedChild(1)!)
+
+    this._scope.reduce()
+    this.leaveBlock()
   }
 
   private enterBlock = (): void => {

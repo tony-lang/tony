@@ -69,7 +69,7 @@ export class InferTypes {
   }
 
   // eslint-disable-next-line max-lines-per-function
-  private traverse = (node: Parser.SyntaxNode): Type | undefined => {
+  traverse = (node: Parser.SyntaxNode): Type | undefined => {
     try {
       switch (node.type) {
         case 'abstraction':
@@ -158,7 +158,7 @@ export class InferTypes {
           return this.handleWhenClauses(node)
         default:
           throw new InternalError(
-            `Analyze: Could not find generator for AST node '${node.type}'.`,
+            `InferTypes: Could not find generator for AST node '${node.type}'.`,
           )
       }
     } catch (error) {
@@ -230,12 +230,11 @@ export class InferTypes {
     const patternNode = node.namedChild(0)!
     const valueType = this.traverse(node.namedChild(1)!)!
 
-    new InferPatternBindingTypes(
+    return new InferPatternBindingTypes(
+      this,
       this._walkFileModuleScope.scope,
       this._typeConstraints,
     ).perform(patternNode, valueType)
-
-    return valueType
   }
 
   private handleBlock = (node: Parser.SyntaxNode): Type => {
@@ -401,15 +400,11 @@ export class InferTypes {
     if (node.namedChildCount == 0)
       return new CurriedType([new ParametricType(VOID_TYPE)])
 
-    const parameterTypes = new CurriedType(
-      node.namedChildren
-        .map((parameterNode) => this.traverse(parameterNode))
-        .filter(isNotUndefined),
-    )
-    new InferPatternBindingTypes(
+    const parameterTypes = new InferPatternBindingTypes(
+      this,
       this._walkFileModuleScope.scope,
       this._typeConstraints,
-    ).perform(node, parameterTypes)
+    ).performParameters(node)
 
     return parameterTypes
   }
@@ -417,6 +412,7 @@ export class InferTypes {
   private handlePatternList = (node: Parser.SyntaxNode): undefined => {
     node.namedChildren.forEach((patternNode) => {
       new InferPatternBindingTypes(
+        this,
         this._walkFileModuleScope.scope,
         this._typeConstraints,
       ).perform(patternNode, this.caseValueType!)

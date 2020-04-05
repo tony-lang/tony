@@ -8,6 +8,10 @@ export class GlobalScope extends Scope {
     this._scopes = scopes
   }
 
+  get scopes(): FileModuleScope[] {
+    return this._scopes as FileModuleScope[]
+  }
+
   set scopes(value: FileModuleScope[]) {
     this._scopes = value
   }

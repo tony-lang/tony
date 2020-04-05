@@ -24,7 +24,7 @@ export class GenerateBlock {
     const returnValue = isDeclaration
       ? `{${returnedDeclarations}}`
       : expressions.pop()
-    const explicitReturn = !isDeclaration || endsWithReturn ? '' : 'return '
+    const explicitReturn = isDeclaration || !endsWithReturn ? 'return ' : ''
 
     return (
       `(()=>{${this.generateDeclarations(bindings)};` +
