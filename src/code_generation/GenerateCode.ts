@@ -166,6 +166,7 @@ export class GenerateCode {
   private handleAbstraction = (node: Parser.SyntaxNode): string => {
     const branches = node.namedChildren
       .map((element) => this.traverse(element))
+      .filter(isNotUndefined)
       .join(',')
 
     return (
@@ -210,6 +211,7 @@ export class GenerateCode {
   private handleArguments = (node: Parser.SyntaxNode): string => {
     const args = node.namedChildren
       .map((argument) => this.traverse(argument))
+      .filter(isNotUndefined)
       .join(',')
 
     return args
@@ -266,6 +268,7 @@ export class GenerateCode {
   private handleElseIfClauses = (node: Parser.SyntaxNode): string => {
     const clauses = node.namedChildren
       .map((clause) => this.traverse(clause))
+      .filter(isNotUndefined)
       .join('')
 
     return clauses
@@ -296,6 +299,7 @@ export class GenerateCode {
   private handleGenerators = (node: Parser.SyntaxNode): string => {
     const generators = node.namedChildren
       .map((generator) => this.traverse(generator))
+      .filter(isNotUndefined)
       .join('')
 
     this._listComprehensionGeneratorCountStack.push(node.namedChildCount)
@@ -357,6 +361,7 @@ export class GenerateCode {
   private handleList = (node: Parser.SyntaxNode): string => {
     const elements = node.namedChildren
       .map((element) => this.traverse(element))
+      .filter(isNotUndefined)
       .join(',')
 
     return `[${elements}]`
@@ -380,6 +385,7 @@ export class GenerateCode {
   private handleListPattern = (node: Parser.SyntaxNode): string => {
     const elements = node.namedChildren
       .map((element) => this.traverse(element))
+      .filter(isNotUndefined)
       .join(',')
 
     return `[${elements}]`
@@ -388,6 +394,7 @@ export class GenerateCode {
   private handleMap = (node: Parser.SyntaxNode): string => {
     const elements = node.namedChildren
       .map((element) => this.traverse(element))
+      .filter(isNotUndefined)
       .join(',')
 
     return `{${elements}}`
@@ -396,6 +403,7 @@ export class GenerateCode {
   private handleMapPattern = (node: Parser.SyntaxNode): string => {
     const elements = node.namedChildren
       .map((element) => this.traverse(element))
+      .filter(isNotUndefined)
       .join(',')
 
     return `{${elements}}`
@@ -411,6 +419,7 @@ export class GenerateCode {
   private handleParameters = (node: Parser.SyntaxNode): string => {
     const parameters = node.namedChildren
       .map((parameter) => this.traverse(parameter))
+      .filter(isNotUndefined)
       .join(',')
 
     return `[${parameters}]`
@@ -422,6 +431,7 @@ export class GenerateCode {
   private handlePatternList = (node: Parser.SyntaxNode): string => {
     const patterns = node.namedChildren
       .map((pattern) => this.traverse(pattern))
+      .filter(isNotUndefined)
       .join(';')
 
     return patterns
@@ -515,7 +525,7 @@ export class GenerateCode {
   private handleString = (node: Parser.SyntaxNode): string => {
     const interpolations = node.namedChildren
       .filter((child) => child.type === 'interpolation')
-      .map((child) => this.traverse(child))
+      .map((child) => this.handleInterpolation(child))
     const content = ParseStringContent.perform(node.text)
       .replace(/(?<!\\){/g, '${')
       .replace(/(?<=\${).+?(?=})/g, () => interpolations.shift()!)
@@ -532,6 +542,7 @@ export class GenerateCode {
   private handleTuple = (node: Parser.SyntaxNode): string => {
     const elements = node.namedChildren
       .map((element) => this.traverse(element))
+      .filter(isNotUndefined)
       .join(',')
 
     return `[${elements}]`
@@ -540,6 +551,7 @@ export class GenerateCode {
   private handleTuplePattern = (node: Parser.SyntaxNode): string => {
     const elements = node.namedChildren
       .map((element) => this.traverse(element))
+      .filter(isNotUndefined)
       .join(',')
 
     return `[${elements}]`
@@ -575,6 +587,7 @@ export class GenerateCode {
   private handleWhenClauses = (node: Parser.SyntaxNode): string => {
     const clauses = node.namedChildren
       .map((clause) => this.traverse(clause))
+      .filter(isNotUndefined)
       .join(',')
 
     return clauses

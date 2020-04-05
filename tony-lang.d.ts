@@ -41,7 +41,7 @@ declare module 'tony-lang' {
 
   export class ExportOutsideModuleScopeError extends CompileError {}
 
-  export class ImportOutsideFileModuleScope extends CompileError {}
+  export class ImportOutsideFileModuleScopeError extends CompileError {}
 
   export class InternalError extends Error {}
 
