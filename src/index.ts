@@ -14,5 +14,5 @@ export {
   MissingBindingError,
   SyntaxError,
   TypeError,
-  UnknownImportError
+  UnknownImportError,
 } from './errors'
