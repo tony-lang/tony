@@ -38,35 +38,47 @@ export class InferApplicationType {
     argumentTypes: CurriedType,
   ): Type => {
     const typeConstraints = new TypeConstraints()
-    const parameterTypes = valueType.parameters.reduce(
-      (parameterTypes: Type[], parameterType, i) => {
-        const argumentType = argumentTypes.parameters[i]
-        if (
-          argumentType === undefined ||
-          this.isPlaceholderArgument(argumentType)
-        )
-          return parameterTypes.concat([parameterType])
-
-        try {
-          parameterType.unify(argumentType, typeConstraints)
-        } catch (error) {
-          if (error instanceof TypeError)
-            error.addTypeMismatch(
-              new CurriedType(valueType.parameters.slice(0, -1)),
-              argumentTypes,
-            )
-          throw error
-        }
-
-        return parameterTypes
-      },
-      [],
+    const inferParameterType = this.inferParameterTypeFactory(
+      typeConstraints,
+      valueType,
+      argumentTypes,
     )
+    const parameterTypes = valueType.parameters.reduce(inferParameterType, [])
 
     if (parameterTypes.length == 1)
       return parameterTypes[0]._reduce(typeConstraints)
     else return new CurriedType(parameterTypes)._reduce(typeConstraints)
   }
+
+  private inferParameterTypeFactory = (
+    typeConstraints: TypeConstraints,
+    valueType: CurriedType,
+    argumentTypes: CurriedType,
+  ) => (parameterTypes: Type[], parameterType: Type, i: number): Type[] => {
+    const argumentType = argumentTypes.parameters[i]
+    if (argumentType === undefined || this.isPlaceholderArgument(argumentType))
+      return parameterTypes.concat([parameterType])
+
+    try {
+      parameterType.unify(argumentType, typeConstraints)
+    } catch (error) {
+      if (error instanceof TypeError)
+        this.handleArgumentTypeMismatch(error, valueType, argumentTypes)
+      throw error
+    }
+
+    return parameterTypes
+  }
+
+  private handleArgumentTypeMismatch = (
+    error: TypeError,
+    valueType: CurriedType,
+    argumentTypes: CurriedType,
+  ): void =>
+    error.addTypeMismatch(
+      new CurriedType(valueType.parameters.slice(0, -1)),
+      argumentTypes,
+    )
 
   private handleVoidParameterType = (valueType: CurriedType): void => {
     if (!(valueType instanceof ParametricType && valueType.name === VOID_TYPE))

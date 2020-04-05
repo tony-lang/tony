@@ -1,4 +1,4 @@
-import { NestedScope, FileModuleScope } from './models'
+import { FileModuleScope, NestedScope } from './models'
 import { assert } from '../errors'
 
 export class WalkFileModuleScope {

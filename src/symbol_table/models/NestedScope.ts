@@ -1,8 +1,8 @@
-import { Scope } from './Scope'
-import { assert } from '../../errors'
-import { Binding } from './Binding'
 import { BASIC_TYPES, ParametricType } from '../../types'
 import { BasicTypeBinding } from './BasicTypeBinding'
+import { Binding } from './Binding'
+import { Scope } from './Scope'
+import { assert } from '../../errors'
 
 export class NestedScope extends Scope {
   private _bindings: Binding[] = []

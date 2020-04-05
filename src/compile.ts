@@ -1,8 +1,8 @@
 import { BuildSymbolTable, FileModuleScope } from './symbol_table'
+import { getFilePath, getOutFile, writeFile } from './utilities'
 import { GenerateCode } from './code_generation'
 import { InferTypes } from './type_inference'
 import { compile as webpackCompile } from './webpack'
-import { getFilePath, getOutFile, writeFile } from './utilities'
 
 export const compile = async (
   file: string,

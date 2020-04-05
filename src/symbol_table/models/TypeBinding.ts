@@ -4,12 +4,12 @@ import { Representation } from '../../types/models/Representation'
 
 export class TypeBinding implements Binding {
   private _isExported: boolean
-  private _representation: Representation | undefined
+  private _representation: Representation
   private _type: ParametricType
 
   constructor(
     type: ParametricType,
-    representation?: Representation,
+    representation: Representation,
     { isExported = false }: { isExported?: boolean } = { isExported: false },
   ) {
     this._isExported = isExported
@@ -33,7 +33,7 @@ export class TypeBinding implements Binding {
     return this.type.name
   }
 
-  get representation(): Representation | undefined {
+  get representation(): Representation {
     return this._representation
   }
 

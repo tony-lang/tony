@@ -1,5 +1,5 @@
+import { LIST_TYPE, MAP_TYPE, ParametricType, Type } from '../../types'
 import { TypeError } from '../../errors'
-import { Type, ParametricType, LIST_TYPE, MAP_TYPE } from '../../types'
 
 export class InferSpreadType {
   perform = (valueType: Type): Type => {

@@ -1,10 +1,10 @@
-import { ImportBinding } from '../../symbol_table/models'
-import { TransformIdentifier } from './TransformIdentifier'
 import {
   FILE_EXTENSION_REGEX,
   JAVASCRIPT_FILE_EXTENSION_REGEX,
 } from '../../constants'
+import { ImportBinding } from '../../symbol_table/models'
 import { InternalError } from '../../errors'
+import { TransformIdentifier } from './TransformIdentifier'
 
 export class TransformImport {
   protected _transformIdentifier: TransformIdentifier

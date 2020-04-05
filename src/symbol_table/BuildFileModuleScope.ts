@@ -1,38 +1,38 @@
 import {
-  BuildImportBindings,
-  BuildPatternBindings,
-  UnifyPatternBindings,
-} from './services'
-import {
+  Binding,
   FileModuleScope,
   GlobalScope,
   IdentifierBinding,
   ModuleScope,
   NestedScope,
   TypeBinding,
-  Binding,
 } from './models'
-import Parser from 'tree-sitter'
 import {
-  ExportOutsideModuleScopeError,
-  ImportOutsideFileModuleScopeError,
-  CompileError,
-  MissingBindingError,
-  assert,
-  DuplicateBindingError,
-} from '../errors'
+  BuildImportBindings,
+  BuildPatternBindings,
+  UnifyPatternBindings,
+} from './services'
 import {
   BuildRepresentation,
   BuildType,
-  ParametricType,
   LIST_TYPE,
+  ParametricType,
   RepresentationKind,
   TypeVariable,
 } from '../types'
+import {
+  CompileError,
+  DuplicateBindingError,
+  ExportOutsideModuleScopeError,
+  ImportOutsideFileModuleScopeError,
+  MissingBindingError,
+  assert,
+} from '../errors'
+import { IMPORT_FILE_EXTENSIONS } from '../constants'
+import Parser from 'tree-sitter'
+import { UnknownImportError } from '../errors/UnknownImportError'
 import { parse } from '../parse'
 import path from 'path'
-import { IMPORT_FILE_EXTENSIONS } from '../constants'
-import { UnknownImportError } from '../errors/UnknownImportError'
 
 export class BuildFileModuleScope {
   private _fileScope: FileModuleScope

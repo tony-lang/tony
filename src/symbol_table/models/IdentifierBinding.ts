@@ -1,5 +1,5 @@
-import { Type } from '../../types'
 import { Binding } from './Binding'
+import { Type } from '../../types'
 
 export class IdentifierBinding implements Binding {
   private _isExported: boolean

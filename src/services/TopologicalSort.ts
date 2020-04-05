@@ -17,7 +17,11 @@ export class TopologicalSort {
     return this._sorted
   }
 
-  visit = (i: number, dependencies: number[], ancestors: number[] = []) => {
+  visit = (
+    i: number,
+    dependencies: number[],
+    ancestors: number[] = [],
+  ): void => {
     if (this._visited.includes(i)) return
 
     ancestors = [...ancestors, i]

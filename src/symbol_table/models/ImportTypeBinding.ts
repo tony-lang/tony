@@ -1,6 +1,7 @@
-import { TypeBinding } from './TypeBinding'
-import { ParametricType } from '../../types'
 import { ImportBinding } from './ImportBinding'
+import { ParametricType } from '../../types'
+import { TypeBinding } from './TypeBinding'
+import { Representation, RepresentationKind } from '../../types/models'
 
 export class ImportTypeBinding extends TypeBinding implements ImportBinding {
   private _filePath: string
@@ -11,7 +12,7 @@ export class ImportTypeBinding extends TypeBinding implements ImportBinding {
     type: ParametricType,
     originalType: ParametricType,
   ) {
-    super(type)
+    super(type, new Representation(RepresentationKind.Unknown, []))
 
     this._filePath = filePath
     this._originalType = originalType

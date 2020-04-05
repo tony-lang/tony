@@ -1,6 +1,6 @@
-import { Type } from '../../types'
 import { IdentifierBinding } from './IdentifierBinding'
 import { ImportBinding } from './ImportBinding'
+import { Type } from '../../types'
 
 export class ImportIdentifierBinding extends IdentifierBinding
   implements ImportBinding {

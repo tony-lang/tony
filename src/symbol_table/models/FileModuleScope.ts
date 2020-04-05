@@ -1,6 +1,6 @@
 import { ModuleScope } from './ModuleScope'
-import { Scope } from './Scope'
 import Parser from 'tree-sitter'
+import { Scope } from './Scope'
 
 export class FileModuleScope extends ModuleScope {
   private _dependencies: string[] = []

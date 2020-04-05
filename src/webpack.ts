@@ -17,11 +17,13 @@ export const compile = (
         { stdio: verbose ? 'inherit' : undefined },
       )
       .on('close', resolve)
-      .on('error', (error) => {
-        throw new InternalError(
-          'Webpack compilation failed unexpectedly.',
-          error.message,
-        )
-      })
+      .on('error', handleError)
   })
+}
+
+const handleError = (error: Error): void => {
+  throw new InternalError(
+    'Webpack compilation failed unexpectedly.',
+    error.message,
+  )
 }

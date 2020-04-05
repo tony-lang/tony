@@ -1,4 +1,4 @@
-import { TARGET_FILE_EXTENSION, FILE_EXTENSION } from './constants'
+import { FILE_EXTENSION, TARGET_FILE_EXTENSION } from './constants'
 import fs from 'fs'
 import mkdirp from 'mkdirp'
 import path from 'path'

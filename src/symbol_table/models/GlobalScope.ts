@@ -1,5 +1,5 @@
-import { Scope } from './Scope'
 import { FileModuleScope } from './FileModuleScope'
+import { Scope } from './Scope'
 
 export class GlobalScope extends Scope {
   constructor(scopes: FileModuleScope[] = []) {

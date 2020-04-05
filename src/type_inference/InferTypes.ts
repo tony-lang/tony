@@ -1,43 +1,43 @@
 import {
+  BOOLEAN_TYPE,
+  BuildType,
+  CurriedType,
+  INTERNAL_PARTIAL_APPLICATION_TYPE_NAME,
+  LIST_TYPE,
+  MAP_TYPE,
+  NUMBER_TYPE,
+  ParametricType,
+  REGULAR_EXPRESSION_TYPE,
+  STRING_TYPE,
+  TUPLE_TYPE,
+  Type,
+  TypeConstraints,
+  TypeVariable,
+  VOID_TYPE,
+} from '../types'
+import {
   CompileError,
   InternalError,
-  assert,
   MissingBindingError,
+  assert,
 } from '../errors'
+import {
+  FileModuleScope,
+  IdentifierBinding,
+  TypeBinding,
+  WalkFileModuleScope,
+} from '../symbol_table'
 import {
   InferAccessType,
   InferApplicationType,
   InferBranchType,
   InferListType,
   InferMapType,
-  InferSpreadType,
   InferPatternBindingTypes,
+  InferSpreadType,
 } from './services'
 import Parser from 'tree-sitter'
 import { isNotUndefined } from '../utilities'
-import {
-  FileModuleScope,
-  WalkFileModuleScope,
-  IdentifierBinding,
-  TypeBinding,
-} from '../symbol_table'
-import {
-  TypeConstraints,
-  Type,
-  ParametricType,
-  BOOLEAN_TYPE,
-  STRING_TYPE,
-  NUMBER_TYPE,
-  REGULAR_EXPRESSION_TYPE,
-  CurriedType,
-  TypeVariable,
-  INTERNAL_PARTIAL_APPLICATION_TYPE_NAME,
-  VOID_TYPE,
-  MAP_TYPE,
-  LIST_TYPE,
-  BuildType,
-  TUPLE_TYPE,
-} from '../types'
 
 export class InferTypes {
   private _fileScope: FileModuleScope
@@ -68,6 +68,7 @@ export class InferTypes {
     }
   }
 
+  // eslint-disable-next-line max-lines-per-function
   private traverse = (node: Parser.SyntaxNode): Type | undefined => {
     try {
       switch (node.type) {

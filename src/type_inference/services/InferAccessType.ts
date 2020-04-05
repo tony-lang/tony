@@ -14,8 +14,8 @@ import {
   Type,
   TypeConstraints,
 } from '../../types'
-import Parser from 'tree-sitter'
 import { NestedScope, TypeBinding } from '../../symbol_table'
+import Parser from 'tree-sitter'
 
 export class InferAccessType {
   private _node: Parser.SyntaxNode
@@ -92,27 +92,30 @@ export class InferAccessType {
 
     // TODO: implement dynamic access with union types
     if (this._node.namedChild(1)!.type === 'shorthand_access_identifier') {
-      const shorthandAccessIdentifier = this._node.namedChild(1)!
-      const propertyName = shorthandAccessIdentifier.text
+      const propertyName = this._node.namedChild(1)!.text
 
       const binding = this._scope.resolveBinding(valueType.name)
       assert(binding instanceof TypeBinding, 'Should be a type binding.')
-      assert(
-        binding.representation !== undefined,
-        `Object representation of ${valueType.toString()} should be present.`,
-      )
 
-      const property = binding.representation.findProperty(propertyName)
-      if (property) return property.type
-      else
-        throw new MissingBindingError(
-          propertyName,
-          binding.type.toString(),
-          binding.representation.toString(),
-        )
+      return this.accessRepresentationProperty(binding, propertyName)
     } else
       throw new InternalError(
         'Dynamic object access has not been implemented yet.',
+      )
+  }
+
+  private accessRepresentationProperty = (
+    binding: TypeBinding,
+    propertyName: string,
+  ): Type => {
+    const property = binding.representation.findProperty(propertyName)
+
+    if (property) return property.type
+    else
+      throw new MissingBindingError(
+        propertyName,
+        binding.type.toString(),
+        binding.representation.toString(),
       )
   }
 }

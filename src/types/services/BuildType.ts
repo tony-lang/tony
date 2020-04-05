@@ -1,7 +1,7 @@
-import Parser from 'tree-sitter'
 import { CurriedType, ParametricType, Type } from '../models'
 import { InternalError, assert } from '../../errors'
 import { LIST_TYPE, MAP_TYPE, TUPLE_TYPE } from '..'
+import Parser from 'tree-sitter'
 
 export class BuildType {
   perform = (node: Parser.SyntaxNode): Type => {

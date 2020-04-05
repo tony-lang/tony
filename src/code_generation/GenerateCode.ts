@@ -1,19 +1,19 @@
 import {
-  DEFAULT_IMPORTS,
-  TRANSFORM_PLACEHOLDER_ARGUMENT,
-  TRANSFORM_REST_PATTERN,
-} from '../constants'
-import { InternalError, assert, CompileError } from '../errors'
-import {
   CollectDefaultValues,
   ParseStringContent,
   ResolvePattern,
   TransformIdentifier,
   TransformImport,
 } from './services'
+import { CompileError, InternalError, assert } from '../errors'
+import {
+  DEFAULT_IMPORTS,
+  TRANSFORM_PLACEHOLDER_ARGUMENT,
+  TRANSFORM_REST_PATTERN,
+} from '../constants'
+import { FileModuleScope, WalkFileModuleScope } from '../symbol_table'
+import { ImportBinding, ModuleScope } from '../symbol_table/models'
 import Parser from 'tree-sitter'
-import { WalkFileModuleScope, FileModuleScope } from '../symbol_table'
-import { ModuleScope, ImportBinding } from '../symbol_table/models'
 
 export const INTERNAL_TEMP_TOKEN = Object.freeze('#TONY_INTERNAL_TEMP')
 
@@ -46,6 +46,7 @@ export class GenerateCode {
     }
   }
 
+  // eslint-disable-next-line max-lines-per-function
   traverse = (node: Parser.SyntaxNode): string | undefined => {
     switch (node.type) {
       case 'abstraction':

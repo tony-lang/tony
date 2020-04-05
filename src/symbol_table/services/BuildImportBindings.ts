@@ -1,12 +1,12 @@
-import Parser from 'tree-sitter'
+import { BuildType, TypeVariable } from '../../types'
+import { DuplicateBindingError, InternalError } from '../../errors'
 import {
   ImportBinding,
   ImportIdentifierBinding,
   ImportTypeBinding,
 } from '../models'
+import Parser from 'tree-sitter'
 import { isNotUndefined } from '../../utilities'
-import { InternalError, DuplicateBindingError, assert } from '../../errors'
-import { BuildType, TypeVariable, ParametricType } from '../../types'
 
 export class BuildImportBindings {
   private _filePath: string

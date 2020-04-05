@@ -1,5 +1,5 @@
-import { Property } from './Property'
 import { ParametricType } from './ParametricType'
+import { Property } from './Property'
 import { Representation } from './Representation'
 
 export class TypeProperty implements Property {

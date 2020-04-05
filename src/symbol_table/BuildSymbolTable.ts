@@ -1,13 +1,13 @@
-import { GlobalScope } from './models/GlobalScope'
-import { GraphSearch } from '../services/GraphSearch'
-import { BuildFileModuleScope } from './BuildFileModuleScope'
 import { FILE_EXTENSION_REGEX, IMPORT_FILE_EXTENSIONS } from '../constants'
 import {
   TopologicalSort,
   TopologicalSortError,
 } from '../services/TopologicalSort'
+import { BuildFileModuleScope } from './BuildFileModuleScope'
 import { CyclicDependenciesError } from '../errors/CyclicDependenciesError'
 import { FileModuleScope } from './models/FileModuleScope'
+import { GlobalScope } from './models/GlobalScope'
+import { GraphSearch } from '../services/GraphSearch'
 import { UnknownImportError } from '../errors/UnknownImportError'
 
 export class BuildSymbolTable extends GraphSearch<string, GlobalScope> {

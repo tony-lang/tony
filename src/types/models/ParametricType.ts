@@ -41,22 +41,29 @@ export class ParametricType extends Type {
       this.name === actual.name &&
       this.parameters.length == actual.parameters.length
     ) {
-      const parameters = this.parameters.map((parameter, i) => {
-        try {
-          return parameter._unify(actual.parameters[i], constraints)
-        } catch (error) {
-          assert(error instanceof TypeError, 'Should be TypeError.')
-
-          error.addTypeMismatch(this, actual)
-          throw error
-        }
-      })
-
-      return new ParametricType(this.name, parameters)
+      return new ParametricType(
+        this.name,
+        this.unifyParameters(actual, constraints),
+      )
     }
 
     throw new TypeError(this, actual, 'Non-variable types do not match')
   }
+
+  private unifyParameters = (
+    actual: ParametricType,
+    constraints: TypeConstraints,
+  ): Type[] =>
+    this.parameters.map((parameter, i) => {
+      try {
+        return parameter._unify(actual.parameters[i], constraints)
+      } catch (error) {
+        assert(error instanceof TypeError, 'Should be TypeError.')
+
+        error.addTypeMismatch(this, actual)
+        throw error
+      }
+    })
 
   _reduce = (constraints: TypeConstraints): ParametricType => {
     const parameters = this.parameters.map((parameter) =>

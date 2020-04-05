@@ -20,7 +20,7 @@ module.exports = {
   },
   plugins: ['@typescript-eslint'],
   rules: {
-    'max-lines-per-function': ['error', 15],
+    'max-lines-per-function': ['error', 20],
     'max-params': ['error', 5],
     'sort-imports': 'error',
     '@typescript-eslint/explicit-function-return-type': 'error',
@@ -44,7 +44,7 @@ module.exports = {
       },
     },
     {
-      files: ['src/code_generation/ResolvePattern.ts'],
+      files: ['src/code_generation/services/ResolvePattern.ts'],
       rules: {
         '@typescript-eslint/no-explicit-any': 'warn',
       },

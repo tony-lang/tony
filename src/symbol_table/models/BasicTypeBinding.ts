@@ -1,5 +1,5 @@
-import { ParametricType } from '../../types'
 import { Binding } from './Binding'
+import { ParametricType } from '../../types'
 
 export class BasicTypeBinding implements Binding {
   private _type: ParametricType

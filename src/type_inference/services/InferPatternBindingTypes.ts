@@ -1,21 +1,21 @@
-import Parser from 'tree-sitter'
 import {
-  TypeConstraints,
-  Type,
-  ParametricType,
   BOOLEAN_TYPE,
-  LIST_TYPE,
-  TypeVariable,
+  BuildType,
   CurriedType,
+  LIST_TYPE,
   MAP_TYPE,
-  TUPLE_TYPE,
   NUMBER_TYPE,
+  ParametricType,
   REGULAR_EXPRESSION_TYPE,
   STRING_TYPE,
-  BuildType,
+  TUPLE_TYPE,
+  Type,
+  TypeConstraints,
+  TypeVariable,
 } from '../../types'
-import { NestedScope, IdentifierBinding } from '../../symbol_table'
-import { CompileError, InternalError, assert, TypeError } from '../../errors'
+import { CompileError, InternalError, TypeError, assert } from '../../errors'
+import { IdentifierBinding, NestedScope } from '../../symbol_table'
+import Parser from 'tree-sitter'
 
 export class InferPatternBindingTypes {
   private _scope: NestedScope
@@ -26,6 +26,7 @@ export class InferPatternBindingTypes {
     this._typeConstraints = typeConstraints
   }
 
+  // eslint-disable-next-line max-lines-per-function
   perform = (patternNode: Parser.SyntaxNode, type: Type): void => {
     try {
       switch (patternNode.type) {

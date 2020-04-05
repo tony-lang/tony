@@ -1,5 +1,5 @@
-import { Type } from './Type'
 import { Property } from './Property'
+import { Type } from './Type'
 
 export class IdentifierProperty implements Property {
   private _name: string
