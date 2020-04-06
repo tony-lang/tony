@@ -1,6 +1,0 @@
-export { InferAccessType } from './InferAccessType'
-export { InferApplicationType } from './InferApplicationType'
-export { InferBranchType } from './InferBranchType'
-export { InferListType } from './InferListType'
-export { InferMapType } from './InferMapType'
-export { InferSpreadType } from './InferSpreadType'

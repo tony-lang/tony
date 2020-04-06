@@ -10,18 +10,21 @@ export const compile = (
   if (verbose) console.log('Compiling with Webpack...')
 
   return new Promise((resolve) => {
-    childProcess
-      .spawn(
-        path.join(__dirname, '..', '..', 'node_modules', '.bin', 'webpack-cli'),
-        [filePath, '-o', filePath, '--mode', mode],
-        { stdio: verbose ? 'inherit' : undefined },
-      )
-      .on('close', resolve)
-      .on('error', (error) => {
-        throw new InternalError(
-          'Webpack compilation failed unexpectedly.',
-          error.message,
-        )
-      })
+    let output = ''
+
+    const child = childProcess.spawn(
+      path.join(__dirname, '..', '..', 'node_modules', '.bin', 'webpack-cli'),
+      [filePath, '-o', filePath, '--mode', mode],
+      { stdio: verbose ? 'inherit' : undefined },
+    )
+    if (child.stdout)
+      child.stdout.on('data', (data) => (output += data.toString()))
+    child.on('close', (code) => (code ? handleError(output) : resolve()))
   })
+}
+
+const handleError = (output: string): void => {
+  throw new InternalError(
+    `${output}\n\nWebpack compilation failed unexpectedly.`,
+  )
 }

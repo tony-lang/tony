@@ -1,5 +1,5 @@
 import { CompileError } from './CompileError'
-import { Type } from '../analyzing/types'
+import { Type } from '../types'
 
 export type TypeMismatch = [string, string | undefined]
 

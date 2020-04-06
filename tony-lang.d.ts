@@ -1,8 +1,5 @@
 import Parser from 'tree-sitter'
 
-import { Context } from './src/errors/CompileError'
-import { TypeMismatch } from './src/errors/TypeError'
-
 declare module 'tony-lang' {
   export function compile(
     file: string,
@@ -27,23 +24,35 @@ declare module 'tony-lang' {
 
   export const VERSION: string
 
+  type Position = { row: number; column: number }
+
   export class CompileError extends Error {
-    get context(): Context | undefined
+    get context(): { start: Position; end: Position } | undefined
     get filePath(): string | undefined
+  }
+
+  export class CyclicDependenciesError extends CompileError {
+    get cycilcDependency(): [string, string]
   }
 
   export class DuplicateBindingError extends CompileError {
     get binding(): string
   }
 
-  export class InternalError extends Error {
-    get context(): string | undefined
+  export class ExportOutsideModuleScopeError extends CompileError {}
+
+  export class ImportOutsideFileModuleScopeError extends CompileError {}
+
+  export class InternalError extends Error {}
+
+  export class InvalidPropertyAccessError extends CompileError {
+    get property(): string
+    get representation(): string
+    get type(): string
   }
 
   export class MissingBindingError extends CompileError {
     get binding(): string
-    get representation(): string | undefined
-    get type(): string | undefined
   }
 
   export class SyntaxError extends Error {
@@ -52,6 +61,10 @@ declare module 'tony-lang' {
   }
 
   export class TypeError extends CompileError {
-    get typeTrace(): TypeMismatch[]
+    get typeTrace(): [string, string][]
+  }
+
+  export class UnknownImportError extends CompileError {
+    get sourcePath(): string
   }
 }

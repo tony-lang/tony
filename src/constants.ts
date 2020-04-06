@@ -2,19 +2,22 @@ import path from 'path'
 
 export const FILE_EXTENSION = Object.freeze('.tn')
 export const TARGET_FILE_EXTENSION = Object.freeze('.js')
+export const FILE_EXTENSION_REGEX = Object.freeze(
+  new RegExp(`^(.+\\${FILE_EXTENSION}|[^.]+)$`),
+)
+export const JAVASCRIPT_FILE_EXTENSION_REGEX = Object.freeze(/^.+\.js$/)
+export const IMPORT_FILE_EXTENSIONS = Object.freeze([
+  FILE_EXTENSION_REGEX,
+  JAVASCRIPT_FILE_EXTENSION_REGEX,
+])
 
 // parser
 export const OPERATOR_REGEX = Object.freeze(
   /(==|[!@$%^&*|<>~*\\\-+/.])[!@$%^&*|<>~*\\\-+/.=]*/,
 )
 export const NODE_TYPES_WITH_DEFAULT_VALUES = Object.freeze([
-  'pattern',
+  'identifier_pattern',
   'shorthand_pair_identifier_pattern',
-])
-export const DESTRUCTURING_PATTERN_NODE_TYPES = Object.freeze([
-  'list_pattern',
-  'tuple_pattern',
-  'map_pattern',
 ])
 
 // standard library

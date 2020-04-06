@@ -81,23 +81,53 @@ Contains attributes `filePath: string` and `tree: Parser.Tree`. `message` is set
 
 Contains `filePath: string` and `context: { start: { row: number; column: number }; end: { row: number; column: number } }`.
 
+#### `CycilcDependenciesError`
+
+Is thrown when the dependency graph is not acyclic.
+
+Contains `cyclicDependency: [string, string]` representing file Paths where the latter one is a dependency to the first one. `message` is set to `undefined`.
+
 #### `DuplicateBindingError`
 
 Is thrown when an identifier or type is assigned to/declared multiple times.
 
 Contains `binding: string` representing the duplicate identifier/type. `message` is set to `undefined`.
 
+#### `ExportOutsideModuleScopeError`
+
+Is thrown when the `export` expression is used outside of a module scope.
+
+`message` is set to `undefined`.
+
+#### `ImportOutsideFileModuleScopeError`
+
+Is thrown when `import` is used outside of a file-level module scope.
+
+`message` is set to `undefined`.
+
+#### `InvalidPropertyAccessError`
+
+Is thrown when a property is accessed that does not exist on the accessed value type.
+
+Contains `property: string` representing the accessed property, `representation: string` (i.e. the representation of the accessed value), and `type: string` (i.e. the type of the accessed value). `message` is set to `undefined`.
+
 #### `MissingBindingError`
 
 Is thrown when the value of an unassigned/undeclared identifier/type is attempted to be used.
 
-Contains `binding: string` representing the missing identifier/type and in the case of an erroneous property access `representation: string` (i.e. the representation of the accessed object) and `type: string` (i.e. the type of the accessed object). `message` is set to `undefined`.
+Contains `binding: string` representing the missing identifier/type. `message` is set to `undefined`.
 
 #### `TypeError`
 
 Is thrown when two types cannot be unified.
 
 Contains `typeTrace: [string, string][]` representing a trace of mismatches from narrowest to broadest.
+
+#### `UnknownImportError`
+
+Is thrown when the extension of an imported file cannot be handled by Tony.
+
+Contains `sourcePath: string` representing the file that could not be imprted. `message` is set to `undefined`.
 
 ### `InternalError`
 

@@ -1,4 +1,4 @@
-import extern {
+import {
   print :: String -> Void,
   to_str :: Number -> String,
   neg: ! :: Number -> Number,

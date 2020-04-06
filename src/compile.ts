@@ -1,11 +1,10 @@
-import { Analyze, SymbolTable } from './analyzing'
+import { BuildSymbolTable, FileModuleScope } from './symbol_table'
 import { getFilePath, getOutFile, writeFile } from './utilities'
-import { FILE_EXTENSION } from './constants'
 import { GenerateCode } from './code_generation'
-import Parser from 'tree-sitter'
-import { parse } from './parse'
+import { InferTypes } from './type_inference'
 import { compile as webpackCompile } from './webpack'
 
+// eslint-disable-next-line max-lines-per-function
 export const compile = async (
   file: string,
   {
@@ -24,65 +23,35 @@ export const compile = async (
   const outFilePath = getFilePath(outFile || getOutFile(file))
   if (verbose) console.log(`Compiling ${filePath} to ${outFilePath}...`)
 
-  const files = [filePath]
-  const compiledFiles: string[] = []
-
-  while (files.length > 0) {
-    const file = files.pop()!
-    if (compiledFiles.includes(file) || !file.includes(FILE_EXTENSION)) continue
-
-    const [tree, symbolTable] = await analyzeFile(files, file, verbose)
-    if (emit) await compileFile(file, tree, symbolTable, verbose)
-    compiledFiles.push(file)
-  }
+  const globalScope = await new BuildSymbolTable(filePath, verbose).perform()
+  inferTypes(globalScope.scopes, verbose)
 
   if (!emit) return
 
+  await generateCode(globalScope.scopes, verbose)
   await webpackCompile(outFilePath, webpackMode, verbose)
+
   return outFilePath
 }
 
-const analyzeFile = (
-  files: string[],
-  filePath: string,
-  verbose: boolean,
-): Promise<[Parser.Tree, SymbolTable]> =>
-  parse(filePath, { verbose }).then((tree) =>
-    analyze(files, filePath, tree, verbose),
-  )
+const inferTypes = (fileScopes: FileModuleScope[], verbose: boolean): void =>
+  fileScopes.forEach((fileScope) => {
+    if (verbose)
+      console.log(`Running type inference on ${fileScope.filePath}...`)
 
-const analyze = (
-  files: string[],
-  filePath: string,
-  tree: Parser.Tree,
-  verbose: boolean,
-): [Parser.Tree, SymbolTable] => {
-  if (verbose) console.log(`Analyzing ${filePath}...`)
+    new InferTypes(fileScope).perform()
+  })
 
-  const symbolTable = new Analyze(filePath).perform(tree.rootNode)
-  files.push(...symbolTable.importedFiles)
-
-  return [tree, symbolTable]
-}
-
-const compileFile = (
-  filePath: string,
-  tree: Parser.Tree,
-  symbolTable: SymbolTable,
+const generateCode = async (
+  fileScopes: FileModuleScope[],
   verbose: boolean,
 ): Promise<void> => {
-  const source = generateCode(filePath, tree, symbolTable, verbose)
+  await Promise.all(
+    fileScopes.map(async (fileScope) => {
+      if (verbose) console.log(`Generating code for ${fileScope.filePath}...`)
 
-  return writeFile(getOutFile(filePath), source)
-}
-
-const generateCode = (
-  filePath: string,
-  tree: Parser.Tree,
-  symbolTable: SymbolTable,
-  verbose: boolean,
-): string => {
-  if (verbose) console.log(`Generating code for ${filePath}...`)
-
-  return new GenerateCode(symbolTable).generate(tree.rootNode)
+      const source = new GenerateCode(fileScope).perform()
+      await writeFile(getOutFile(fileScope.filePath), source)
+    }),
+  )
 }

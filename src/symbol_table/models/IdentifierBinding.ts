@@ -1,0 +1,50 @@
+import { Binding } from './Binding'
+import { Type } from '../../types'
+
+export class IdentifierBinding implements Binding {
+  private _isExported: boolean
+  private _isImplicit: boolean
+  private _name: string
+  protected _type: Type
+
+  constructor(
+    name: string,
+    type: Type,
+    {
+      isExported = false,
+      isImplicit = false,
+    }: { isExported?: boolean; isImplicit?: boolean } = {
+      isExported: false,
+      isImplicit: false,
+    },
+  ) {
+    this._isExported = isExported
+    this._isImplicit = isImplicit
+    this._name = name
+    this._type = type
+  }
+
+  get isExported(): boolean {
+    return this._isExported
+  }
+
+  get isImplicit(): boolean {
+    return this._isImplicit
+  }
+
+  get isImported(): boolean {
+    return false
+  }
+
+  get name(): string {
+    return this._name
+  }
+
+  get type(): Type {
+    return this._type
+  }
+
+  set type(value: Type) {
+    this._type = value
+  }
+}

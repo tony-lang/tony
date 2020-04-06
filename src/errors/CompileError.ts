@@ -14,7 +14,7 @@ export abstract class CompileError extends Error {
   private _context: Context | undefined
   private _filePath: string | undefined
 
-  constructor(message: string | undefined) {
+  constructor(message?: string) {
     super(message)
   }
 
