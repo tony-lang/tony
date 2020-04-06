@@ -115,8 +115,10 @@ export class InferPatternBindingTypes {
     type: Type,
   ): Type => {
     const name = patternNode.namedChild(0)!.text
+    // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
     // @ts-ignore
     const typeHint = patternNode.typeNode ? new BuildType().perform(patternNode.typeNode) : new TypeVariable()
+    // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
     // @ts-ignore
     const defaultType = patternNode.defaultNode ? this._inferTypes.traverse(patternNode.defaultNode)! : new TypeVariable()
     const binding = this._scope.resolveBinding(name, 0)
@@ -212,8 +214,10 @@ export class InferPatternBindingTypes {
     patternNode: Parser.SyntaxNode,
     type: Type,
   ): ParametricType => {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
     // @ts-ignore
     const typeHint = patternNode.typeNode ? new BuildType().perform(patternNode.typeNode) : new TypeVariable()
+    // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
     // @ts-ignore
     const defaultType = patternNode.defaultNode ? this._inferTypes.traverse(patternNode.defaultNode)! : new TypeVariable()
     const valueType = typeHint.unify(defaultType, this._typeConstraints)

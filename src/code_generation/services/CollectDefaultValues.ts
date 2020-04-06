@@ -1,8 +1,5 @@
-import {
-  DESTRUCTURING_PATTERN_NODE_TYPES,
-  NODE_TYPES_WITH_DEFAULT_VALUES,
-} from '../../constants'
 import { GenerateCode } from '../GenerateCode'
+import { NODE_TYPES_WITH_DEFAULT_VALUES } from '../../constants'
 import Parser from 'tree-sitter'
 
 export class CollectDefaultValues {
@@ -17,6 +14,7 @@ export class CollectDefaultValues {
   rec = (node: Parser.SyntaxNode): (string | undefined)[] => {
     // prettier-ignore
     if (NODE_TYPES_WITH_DEFAULT_VALUES.includes(node.type))
+      // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
       // @ts-ignore
       if (node.defaultNode) return [this.codeGenerator.traverse(node.defaultNode)]
       else return [undefined]
