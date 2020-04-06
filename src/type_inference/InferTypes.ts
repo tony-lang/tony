@@ -144,8 +144,10 @@ export class InferTypes {
           return new ParametricType(STRING_TYPE)
         case 'shorthand_pair_identifier':
           return this.handleShorthandPairIdentifier(node)
-        case 'spread':
-          return this.handleSpread(node)
+        case 'spread_list':
+          return this.handleSpreadList(node)
+        case 'spread_map':
+          return this.handleSpreadMap(node)
         case 'string':
           return this.handleString(node)
         case 'tuple':
@@ -459,7 +461,13 @@ export class InferTypes {
     return new ParametricType(MAP_TYPE, [keyType, valueType])
   }
 
-  private handleSpread = (node: Parser.SyntaxNode): Type => {
+  private handleSpreadList = (node: Parser.SyntaxNode): Type => {
+    const valueType = this.traverse(node.namedChild(0)!)!
+
+    return new InferSpreadType().perform(valueType)
+  }
+
+  private handleSpreadMap = (node: Parser.SyntaxNode): Type => {
     const valueType = this.traverse(node.namedChild(0)!)!
 
     return new InferSpreadType().perform(valueType)

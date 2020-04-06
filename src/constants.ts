@@ -16,7 +16,7 @@ export const OPERATOR_REGEX = Object.freeze(
   /(==|[!@$%^&*|<>~*\\\-+/.])[!@$%^&*|<>~*\\\-+/.=]*/,
 )
 export const NODE_TYPES_WITH_DEFAULT_VALUES = Object.freeze([
-  'pattern',
+  'identifier_pattern',
   'shorthand_pair_identifier_pattern',
 ])
 export const DESTRUCTURING_PATTERN_NODE_TYPES = Object.freeze([

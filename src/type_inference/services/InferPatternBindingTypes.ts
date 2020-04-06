@@ -72,8 +72,6 @@ export class InferPatternBindingTypes {
           return this.handleMapPattern(patternNode, type)
         case 'number':
           return this.handleNumber(patternNode, type)
-        case 'pattern':
-          return this.handlePattern(patternNode, type)
         case 'pattern_pair':
           return this.handlePatternPair(patternNode, type)
         case 'regex':
@@ -111,11 +109,16 @@ export class InferPatternBindingTypes {
   ): ParametricType =>
     new ParametricType(BOOLEAN_TYPE).unify(type, this._typeConstraints)
 
+  // prettier-ignore
   private handleIdentifierPattern = (
     patternNode: Parser.SyntaxNode,
     type: Type,
   ): Type => {
     const name = patternNode.namedChild(0)!.text
+    // @ts-ignore
+    const typeHint = patternNode.typeNode ? new BuildType().perform(patternNode.typeNode) : new TypeVariable()
+    // @ts-ignore
+    const defaultType = patternNode.defaultNode ? this._inferTypes.traverse(patternNode.defaultNode)! : new TypeVariable()
     const binding = this._scope.resolveBinding(name, 0)
 
     assert(
@@ -123,6 +126,8 @@ export class InferPatternBindingTypes {
       'Pattern identifier binding should be found in current scope.',
     )
 
+    type = typeHint.unify(type, this._typeConstraints)
+    type = defaultType.unify(type, this._typeConstraints)
     binding.type = binding.type.unify(type, this._typeConstraints)
 
     return binding.type
@@ -158,21 +163,6 @@ export class InferPatternBindingTypes {
     type: Type,
   ): ParametricType =>
     new ParametricType(NUMBER_TYPE).unify(type, this._typeConstraints)
-
-  private handlePattern = (
-    patternNode: Parser.SyntaxNode,
-    type: Type,
-  ): Type => {
-    if (patternNode.namedChildCount == 1)
-      return this.perform(patternNode.namedChild(0)!, type)
-
-    const defaultType = this._inferTypes.traverse(patternNode.namedChild(1)!)!
-
-    return this.perform(
-      patternNode.namedChild(0)!,
-      type.unify(defaultType, this._typeConstraints),
-    )
-  }
 
   private handlePatternPair = (
     patternNode: Parser.SyntaxNode,
@@ -217,25 +207,22 @@ export class InferPatternBindingTypes {
   private handleRestMap = (patternNode: Parser.SyntaxNode, type: Type): Type =>
     this.perform(patternNode.namedChild(0)!, type)
 
+  // prettier-ignore
   private handleShorthandPairIdentifierPattern = (
     patternNode: Parser.SyntaxNode,
     type: Type,
   ): ParametricType => {
+    // @ts-ignore
+    const typeHint = patternNode.typeNode ? new BuildType().perform(patternNode.typeNode) : new TypeVariable()
+    // @ts-ignore
+    const defaultType = patternNode.defaultNode ? this._inferTypes.traverse(patternNode.defaultNode)! : new TypeVariable()
+    const valueType = typeHint.unify(defaultType, this._typeConstraints)
     const keyType = new ParametricType(STRING_TYPE)
-    const valueType =
-      patternNode.namedChildCount == 2
-        ? this._inferTypes.traverse(patternNode.namedChild(1)!)!
-        : new TypeVariable()
-    const unifiedType = new ParametricType(MAP_TYPE, [
-      keyType,
-      valueType,
-    ]).unify(type, this._typeConstraints)
-    const unifiedValueType = this.perform(
-      patternNode.namedChild(0)!,
-      unifiedType.parameters[1],
-    )
 
-    return new ParametricType(MAP_TYPE, [keyType, unifiedValueType])
+    return new ParametricType(MAP_TYPE, [keyType, valueType]).unify(
+      type,
+      this._typeConstraints,
+    )
   }
 
   private handleStringPattern = (

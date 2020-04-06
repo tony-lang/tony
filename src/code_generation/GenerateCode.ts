@@ -113,8 +113,6 @@ export class GenerateCode {
         return node.text
       case 'parameters':
         return this.handleParameters(node)
-      case 'pattern':
-        return this.handlePattern(node)
       case 'pattern_list':
         return this.handlePatternList(node)
       case 'pattern_pair':
@@ -139,8 +137,10 @@ export class GenerateCode {
         return this.handleShorthandPairIdentifier(node)
       case 'shorthand_pair_identifier_pattern':
         return this.handleShorthandPairIdentifierPattern(node)
-      case 'spread':
-        return this.handleSpread(node)
+      case 'spread_list':
+        return this.handleSpreadList(node)
+      case 'spread_map':
+        return this.handleSpreadMap(node)
       case 'string':
         return this.handleString(node)
       case 'string_pattern':
@@ -425,9 +425,6 @@ export class GenerateCode {
     return `[${parameters}]`
   }
 
-  private handlePattern = (node: Parser.SyntaxNode): string =>
-    this.traverse(node.namedChild(0)!)!
-
   private handlePatternList = (node: Parser.SyntaxNode): string => {
     const patterns = node.namedChildren
       .map((pattern) => this.traverse(pattern))
@@ -508,15 +505,21 @@ export class GenerateCode {
   private handleShorthandPairIdentifierPattern = (
     node: Parser.SyntaxNode,
   ): string => {
-    const identifierPattern = this.traverse(node.namedChild(0)!)!
+    const identifierPatternName = this.traverse(node.namedChild(0)!)!
 
     return (
-      `"${identifierPattern.substring(INTERNAL_TEMP_TOKEN.length + 1)}` +
-      `:${identifierPattern}`
+      `"${identifierPatternName.substring(INTERNAL_TEMP_TOKEN.length + 1)}` +
+      `:${identifierPatternName}`
     )
   }
 
-  private handleSpread = (node: Parser.SyntaxNode): string => {
+  private handleSpreadList = (node: Parser.SyntaxNode): string => {
+    const expression = this.traverse(node.namedChild(0)!)
+
+    return `...${expression}`
+  }
+
+  private handleSpreadMap = (node: Parser.SyntaxNode): string => {
     const expression = this.traverse(node.namedChild(0)!)
 
     return `...${expression}`
