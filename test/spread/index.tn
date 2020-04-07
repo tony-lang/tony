@@ -3,10 +3,10 @@ print(list[0].to_str)
 print(list[1].to_str)
 print(list[2].to_str)
 
-# tuple := ('Tony', ...('Hoare', 86))
-# print(tuple[0])
-# print(tuple[1])
-# print(tuple[2].to_str)
+tuple :: (String, String, Number) := ('Tony', ...('Hoare', 86))
+print(tuple[0])
+print(tuple[1])
+print(tuple[2].to_str)
 
 map := { a: 1, b: 2, ...{ b: 3, c: 4 } }
 print(map->a.to_str)

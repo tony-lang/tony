@@ -73,9 +73,9 @@ export class InferAccessType {
     new ParametricType(NUMBER_TYPE).unify(accessorType, this._typeConstraints)
 
     // TODO: implement dynamic access with union types
-    if (this._node.namedChild(1)!.type === 'shorthand_access_identifier') {
-      const shorthandAccessIdentifier = this._node.namedChild(1)!
-      const index = parseInt(shorthandAccessIdentifier.text)
+    if (this._node.namedChild(1)!.type === 'number') {
+      const numberNode = this._node.namedChild(1)!
+      const index = parseInt(numberNode.text)
 
       return valueType.parameters[index]
     } else

@@ -138,9 +138,9 @@ export class GenerateCode {
       case 'shorthand_pair_identifier_pattern':
         return this.handleShorthandPairIdentifierPattern(node)
       case 'spread_list':
-        return this.handleSpreadList(node)
       case 'spread_map':
-        return this.handleSpreadMap(node)
+      case 'spread_tuple':
+        return this.handleSpread(node)
       case 'string':
         return this.handleString(node)
       case 'string_pattern':
@@ -513,13 +513,7 @@ export class GenerateCode {
     )
   }
 
-  private handleSpreadList = (node: Parser.SyntaxNode): string => {
-    const expression = this.traverse(node.namedChild(0)!)
-
-    return `...${expression}`
-  }
-
-  private handleSpreadMap = (node: Parser.SyntaxNode): string => {
+  private handleSpread = (node: Parser.SyntaxNode): string => {
     const expression = this.traverse(node.namedChild(0)!)
 
     return `...${expression}`

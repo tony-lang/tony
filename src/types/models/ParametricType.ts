@@ -5,14 +5,24 @@ import { TypeConstraints } from './TypeConstraints'
 import { TypeVariable } from './TypeVariable'
 
 export class ParametricType extends Type {
+  private _isSpread: boolean
   private _name: string
   private _parameters: Type[]
 
-  constructor(name: string, parameters: Type[] = []) {
+  constructor(
+    name: string,
+    parameters: Type[] = [],
+    { isSpread = false }: { isSpread?: boolean } = { isSpread: false },
+  ) {
     super()
 
     this._name = name
     this._parameters = parameters
+    this._isSpread = isSpread
+  }
+
+  get isSpread(): boolean {
+    return this._isSpread
   }
 
   get name(): string {
@@ -29,23 +39,34 @@ export class ParametricType extends Type {
     return new CurriedType([this, type])
   }
 
-  unify = (actual: Type, constraints: TypeConstraints): ParametricType =>
-    this._unify(actual, constraints)._reduce(constraints)
+  unify = (
+    actual: Type,
+    constraints: TypeConstraints,
+    useActualParameters = false,
+  ): ParametricType =>
+    this._unify(actual, constraints, useActualParameters)._reduce(constraints)
 
-  _unify = (actual: Type, constraints: TypeConstraints): ParametricType => {
+  _unify = (
+    actual: Type,
+    constraints: TypeConstraints,
+    useActualParameters = false,
+  ): ParametricType => {
     if (actual instanceof TypeVariable) {
       constraints.add(actual, this)
       return this
     } else if (
       actual instanceof ParametricType &&
       this.name === actual.name &&
-      this.parameters.length == actual.parameters.length
-    ) {
+      (useActualParameters ||
+        this.parameters.length == actual.parameters.length)
+    )
       return new ParametricType(
         this.name,
-        this.unifyParameters(actual, constraints),
+        useActualParameters
+          ? actual.parameters
+          : this.unifyParameters(actual, constraints),
+        { isSpread: this.isSpread || actual.isSpread },
       )
-    }
 
     throw new TypeError(this, actual, 'Non-variable types do not match')
   }
@@ -70,14 +91,17 @@ export class ParametricType extends Type {
       parameter._reduce(constraints),
     )
 
-    return new ParametricType(this.name, parameters)
+    return new ParametricType(this.name, parameters, {
+      isSpread: this.isSpread,
+    })
   }
 
   toString = (): string => {
     const parameters = this.parameters.map((parameter) => parameter.toString())
     const combinedParameters =
       parameters.length > 0 ? `<${parameters.join(', ')}>` : ''
+    const isSpread = this.isSpread ? '...' : ''
 
-    return `${this.name}${combinedParameters}`
+    return `${isSpread}${this.name}${combinedParameters}`
   }
 }
