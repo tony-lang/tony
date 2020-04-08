@@ -14,7 +14,6 @@ import {
 } from '../../types'
 import { CompileError, InternalError, assert } from '../../errors'
 import { IdentifierBinding, NestedScope } from '../../symbol_table'
-import { InferListType } from './InferListType'
 import { InferMapType } from './InferMapType'
 import { InferTypes } from '../InferTypes'
 import Parser from 'tree-sitter'
@@ -139,7 +138,12 @@ export class InferPatternBindingTypes {
       this.perform(child, unifiedType.parameters[0]),
     )
 
-    return new InferListType(this._typeConstraints).perform(valueTypes)
+    return valueTypes.reduce((valueType: ParametricType, otherValueType) => {
+      return valueType.unify(
+        new ParametricType(LIST_TYPE, [otherValueType]),
+        this._typeConstraints,
+      )
+    }, new ParametricType(LIST_TYPE, [new TypeVariable()]))
   }
 
   private handleMapPattern = (
