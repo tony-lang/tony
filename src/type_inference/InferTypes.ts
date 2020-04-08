@@ -408,9 +408,10 @@ export class InferTypes {
       this,
       this._walkFileModuleScope.scope,
       this._typeConstraints,
-    ).performParameters(node)
+    ).perform(node)
+    assert(parameterTypes instanceof ParametricType, 'Should be tuple type.')
 
-    return parameterTypes
+    return new CurriedType(parameterTypes.parameters)
   }
 
   private handlePatternList = (node: Parser.SyntaxNode): undefined => {

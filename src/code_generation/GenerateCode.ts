@@ -129,6 +129,8 @@ export class GenerateCode {
         return this.handleRestList(node)
       case 'rest_map':
         return this.handleRestMap(node)
+      case 'rest_tuple':
+        return this.handleRestTuple(node)
       case 'return':
         return this.handleReturn(node)
       case 'shorthand_access_identifier':
@@ -481,6 +483,12 @@ export class GenerateCode {
     const name = this.traverse(node.namedChild(0)!)!.slice(1, -1)
 
     return `"['${TRANSFORM_REST_PATTERN}']":"${name}"`
+  }
+
+  private handleRestTuple = (node: Parser.SyntaxNode): string => {
+    const name = this.traverse(node.namedChild(0)!)!.slice(1, -1)
+
+    return `"${INTERNAL_TEMP_TOKEN}${name}"`
   }
 
   private handleReturn = (node: Parser.SyntaxNode): string => {

@@ -35,22 +35,15 @@ export class InferPatternBindingTypes {
     this._typeConstraints = typeConstraints
   }
 
-  perform = (patternNode: Parser.SyntaxNode, type: Type): Type => {
+  perform = (
+    patternNode: Parser.SyntaxNode,
+    type: Type = new TypeVariable(),
+  ): Type => {
     const patternType = this.traverse(patternNode, type)
 
     assert(patternType !== undefined, 'Should not be undefined.')
 
     return patternType
-  }
-
-  performParameters = (patternNode: Parser.SyntaxNode): CurriedType => {
-    assert(patternNode.type === 'parameters', 'Should be `parameters` type.')
-
-    return new CurriedType(
-      patternNode.namedChildren.map((child) =>
-        this.perform(child, new TypeVariable()),
-      ),
-    )
   }
 
   // eslint-disable-next-line max-lines-per-function
@@ -81,11 +74,12 @@ export class InferPatternBindingTypes {
         case 'rest_map':
           return this.handleRestMap(patternNode, type)
         case 'rest_tuple':
-          return this.handleRestList(patternNode, type)
+          return this.handleRestTuple(patternNode, type)
         case 'shorthand_pair_identifier_pattern':
           return this.handleShorthandPairIdentifierPattern(patternNode, type)
         case 'string_pattern':
           return this.handleStringPattern(patternNode, type)
+        case 'parameters':
         case 'tuple_pattern':
           return this.handleTuplePattern(patternNode, type)
         case 'type':
@@ -209,6 +203,17 @@ export class InferPatternBindingTypes {
   private handleRestMap = (patternNode: Parser.SyntaxNode, type: Type): Type =>
     this.perform(patternNode.namedChild(0)!, type)
 
+  private handleRestTuple = (
+    patternNode: Parser.SyntaxNode,
+    type: Type,
+  ): ParametricType => {
+    const valueType = this.perform(patternNode.namedChild(0)!, type)
+
+    assert(valueType instanceof ParametricType, 'Should be parametric type.')
+
+    return valueType
+  }
+
   // prettier-ignore
   private handleShorthandPairIdentifierPattern = (
     patternNode: Parser.SyntaxNode,
@@ -239,19 +244,28 @@ export class InferPatternBindingTypes {
     patternNode: Parser.SyntaxNode,
     type: Type,
   ): ParametricType => {
-    if (type instanceof ParametricType && type.name === TUPLE_TYPE)
-      return new ParametricType(
-        TUPLE_TYPE,
-        patternNode.namedChildren.map((child, i) =>
-          this.perform(child, type.parameters[i]),
-        ),
-      )
-
-    throw new TypeError(
+    const tupleType = new ParametricType(TUPLE_TYPE, []).unify(
       type,
-      undefined,
-      'Only values of a tuple type may be pattern matched against a tuple.',
+      this._typeConstraints,
+      true,
     )
+    const parameters = patternNode.namedChildren.reduce(
+      (parameters: Type[], child, i) => {
+        if (child.type === 'rest_tuple')
+          return [
+            ...parameters,
+            ...this.handleRestTuple(
+              child,
+              new ParametricType(TUPLE_TYPE, tupleType.parameters.slice(i)),
+            ).parameters,
+          ]
+
+        return [...parameters, this.perform(child, tupleType.parameters[i])]
+      },
+      [],
+    )
+
+    return new ParametricType(TUPLE_TYPE, parameters)
   }
 
   private handleType = (patternNode: Parser.SyntaxNode, type: Type): Type =>
