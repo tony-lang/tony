@@ -12,9 +12,6 @@ export const IMPORT_FILE_EXTENSIONS = Object.freeze([
 ])
 
 // parser
-export const OPERATOR_REGEX = Object.freeze(
-  /(==|[!@$%^&*|<>~*\\\-+/.])[!@$%^&*|<>~*\\\-+/.=]*/,
-)
 export const NODE_TYPES_WITH_DEFAULT_VALUES = Object.freeze([
   'identifier_pattern',
   'shorthand_pair_identifier_pattern',
