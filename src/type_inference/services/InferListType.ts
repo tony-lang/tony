@@ -15,6 +15,9 @@ export class InferListType {
 
   perform = (valueTypes: Type[]): ParametricType =>
     valueTypes.reduce((valueType: ParametricType, otherValueType) => {
+      if (otherValueType instanceof ParametricType && otherValueType.isSpread)
+        return valueType.unify(otherValueType, this._typeConstraints)
+
       return valueType.unify(
         new ParametricType(LIST_TYPE, [otherValueType]),
         this._typeConstraints,

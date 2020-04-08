@@ -129,6 +129,8 @@ export class GenerateCode {
         return this.handleRestList(node)
       case 'rest_map':
         return this.handleRestMap(node)
+      case 'rest_tuple':
+        return this.handleRestTuple(node)
       case 'return':
         return this.handleReturn(node)
       case 'shorthand_access_identifier':
@@ -138,9 +140,9 @@ export class GenerateCode {
       case 'shorthand_pair_identifier_pattern':
         return this.handleShorthandPairIdentifierPattern(node)
       case 'spread_list':
-        return this.handleSpreadList(node)
       case 'spread_map':
-        return this.handleSpreadMap(node)
+      case 'spread_tuple':
+        return this.handleSpread(node)
       case 'string':
         return this.handleString(node)
       case 'string_pattern':
@@ -483,6 +485,12 @@ export class GenerateCode {
     return `"['${TRANSFORM_REST_PATTERN}']":"${name}"`
   }
 
+  private handleRestTuple = (node: Parser.SyntaxNode): string => {
+    const name = this.traverse(node.namedChild(0)!)!.slice(1, -1)
+
+    return `"${INTERNAL_TEMP_TOKEN}${name}"`
+  }
+
   private handleReturn = (node: Parser.SyntaxNode): string => {
     if (node.namedChildCount == 0) return 'return'
 
@@ -513,13 +521,7 @@ export class GenerateCode {
     )
   }
 
-  private handleSpreadList = (node: Parser.SyntaxNode): string => {
-    const expression = this.traverse(node.namedChild(0)!)
-
-    return `...${expression}`
-  }
-
-  private handleSpreadMap = (node: Parser.SyntaxNode): string => {
+  private handleSpread = (node: Parser.SyntaxNode): string => {
     const expression = this.traverse(node.namedChild(0)!)
 
     return `...${expression}`
