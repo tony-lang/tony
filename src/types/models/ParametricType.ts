@@ -60,16 +60,23 @@ export class ParametricType extends Type {
       (useActualParameters ||
         this.parameters.length == actual.parameters.length)
     )
-      return new ParametricType(
-        this.name,
-        useActualParameters
-          ? actual.parameters
-          : this.unifyParameters(actual, constraints),
-        { isSpread: this.isSpread || actual.isSpread },
-      )
+      return this.buildUnifiedType(actual, constraints, useActualParameters)
 
     throw new TypeError(this, actual, 'Non-variable types do not match')
   }
+
+  private buildUnifiedType = (
+    actual: ParametricType,
+    constraints: TypeConstraints,
+    useActualParameters = false,
+  ): ParametricType =>
+    new ParametricType(
+      this.name,
+      useActualParameters
+        ? actual.parameters
+        : this.unifyParameters(actual, constraints),
+      { isSpread: this.isSpread || actual.isSpread },
+    )
 
   private unifyParameters = (
     actual: ParametricType,

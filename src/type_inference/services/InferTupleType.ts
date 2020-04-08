@@ -1,4 +1,4 @@
-import { ParametricType, Type, TUPLE_TYPE } from '../../types'
+import { ParametricType, TUPLE_TYPE, Type } from '../../types'
 import { TypeError } from '../../errors'
 
 export class InferTupleType {

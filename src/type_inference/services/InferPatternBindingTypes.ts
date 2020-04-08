@@ -1,7 +1,6 @@
 import {
   BOOLEAN_TYPE,
   BuildType,
-  CurriedType,
   LIST_TYPE,
   MAP_TYPE,
   NUMBER_TYPE,
@@ -13,7 +12,7 @@ import {
   TypeConstraints,
   TypeVariable,
 } from '../../types'
-import { CompileError, InternalError, TypeError, assert } from '../../errors'
+import { CompileError, InternalError, assert } from '../../errors'
 import { IdentifierBinding, NestedScope } from '../../symbol_table'
 import { InferListType } from './InferListType'
 import { InferMapType } from './InferMapType'
@@ -250,22 +249,28 @@ export class InferPatternBindingTypes {
       true,
     )
     const parameters = patternNode.namedChildren.reduce(
-      (parameters: Type[], child, i) => {
-        if (child.type === 'rest_tuple')
-          return [
-            ...parameters,
-            ...this.handleRestTuple(
-              child,
-              new ParametricType(TUPLE_TYPE, tupleType.parameters.slice(i)),
-            ).parameters,
-          ]
-
-        return [...parameters, this.perform(child, tupleType.parameters[i])]
-      },
+      this.handleTuplePatternValues(tupleType),
       [],
     )
 
     return new ParametricType(TUPLE_TYPE, parameters)
+  }
+
+  private handleTuplePatternValues = (type: ParametricType) => (
+    parameters: Type[],
+    patternNode: Parser.SyntaxNode,
+    i: number,
+  ): Type[] => {
+    if (patternNode.type === 'rest_tuple')
+      return [
+        ...parameters,
+        ...this.handleRestTuple(
+          patternNode,
+          new ParametricType(TUPLE_TYPE, type.parameters.slice(i)),
+        ).parameters,
+      ]
+
+    return [...parameters, this.perform(patternNode, type.parameters[i])]
   }
 
   private handleType = (patternNode: Parser.SyntaxNode, type: Type): Type =>
