@@ -147,11 +147,9 @@ export class BuildFileModuleScope {
     this.traverse(node.namedChild(1)!)
 
     const name = node.namedChild(0)!.text
-    const binding = new IdentifierBinding(
-      name,
-      new TypeVariable,
-      { isImplicit: true },
-    )
+    const binding = new IdentifierBinding(name, new TypeVariable(), {
+      isImplicit: true,
+    })
     this.addIdentifierBinding(binding)
 
     if (node.namedChildCount == 3) this.traverse(node.namedChild(2)!)
@@ -174,12 +172,11 @@ export class BuildFileModuleScope {
       throw new UnknownImportError(sourcePath)
     this._fileScope.addDependency(sourcePath)
 
-    new BuildImportBindings(sourcePath)
-      .perform(node)
-      .forEach((binding) => {
-        if (binding instanceof IdentifierBinding) this.addIdentifierBinding(binding)
-        else if (binding instanceof TypeBinding) this.addTypeBinding(binding)
-      })
+    new BuildImportBindings(sourcePath).perform(node).forEach((binding) => {
+      if (binding instanceof IdentifierBinding)
+        this.addIdentifierBinding(binding)
+      else if (binding instanceof TypeBinding) this.addTypeBinding(binding)
+    })
   }
 
   private handleListComprehension = (node: Parser.SyntaxNode): void => {

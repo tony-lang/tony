@@ -10,7 +10,10 @@ export class UnionType extends Type {
   constructor(parameters: Type[]) {
     super()
 
-    assert(parameters.length > 1, 'Union type should have at least two type parameters.')
+    assert(
+      parameters.length > 1,
+      'Union type should have at least two type parameters.',
+    )
 
     this._parameters = parameters
   }
@@ -25,15 +28,20 @@ export class UnionType extends Type {
     return new CurriedType([this, type])
   }
 
-  disj = (type: Type, constraints: TypeConstraints): Type => {
+  disj = (type: Type, constraints?: TypeConstraints): Type => {
     if (type instanceof UnionType)
       return new UnionType(this.mergeParameters(type.parameters, constraints))
-    else
-      return new UnionType(this.mergeParameters([type], constraints))
+    else return new UnionType(this.mergeParameters([type], constraints))
   }
 
-  private mergeParameters = (parameters: Type[], constraints: TypeConstraints): Type[] =>
-    [...this.parameters, ...parameters].reduce((parameters: Type[], parameter) => {
+  private mergeParameters = (
+    parameters: Type[],
+    constraints?: TypeConstraints,
+  ): Type[] => {
+    const combinedParameters = [...this.parameters, ...parameters]
+    if (constraints === undefined) return combinedParameters
+
+    return combinedParameters.reduce((parameters: Type[], parameter) => {
       for (const [i, otherParameter] of parameters.entries())
         try {
           parameters[i] = parameter.unify(otherParameter, constraints)
@@ -44,6 +52,7 @@ export class UnionType extends Type {
 
       return [...parameters, parameter]
     }, [])
+  }
 
   apply = (argumentTypes: CurriedType, constraints: TypeConstraints): Type => {
     for (const parameter of this.parameters)
@@ -53,7 +62,11 @@ export class UnionType extends Type {
         if (!(error instanceof TypeError)) throw error
       }
 
-    throw new TypeError(this, argumentTypes, 'Cannot apply to a non-curried union type.')
+    throw new TypeError(
+      this,
+      argumentTypes,
+      'Cannot apply to a non-curried union type.',
+    )
   }
 
   unify = (actual: Type, constraints: TypeConstraints): Type =>

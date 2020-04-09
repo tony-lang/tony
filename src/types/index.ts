@@ -1,5 +1,6 @@
 export {
   CurriedType,
+  INTERNAL_PARTIAL_APPLICATION_TYPE_NAME,
   IdentifierProperty,
   ParametricType,
   RepresentationKind,
@@ -9,8 +10,6 @@ export {
   TypeVariable,
 } from './models'
 export { BuildRepresentation, BuildType } from './services'
-
-export const INTERNAL_PARTIAL_APPLICATION_TYPE_NAME = Object.freeze('?')
 
 export const VOID_TYPE = Object.freeze('Void')
 export const BOOLEAN_TYPE = Object.freeze('Boolean')

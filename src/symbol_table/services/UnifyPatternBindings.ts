@@ -10,7 +10,10 @@ export class UnifyPatternBindings {
     })
   }
 
-  checkBindingMissing = (a: IdentifierBinding[], b: IdentifierBinding[]): void => {
+  checkBindingMissing = (
+    a: IdentifierBinding[],
+    b: IdentifierBinding[],
+  ): void => {
     const missingBinding =
       a.find((binding) => !b.includes(binding)) ||
       b.find((binding) => !a.includes(binding))

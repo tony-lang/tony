@@ -1,4 +1,7 @@
-export { CurriedType } from './CurriedType'
+export {
+  CurriedType,
+  INTERNAL_PARTIAL_APPLICATION_TYPE_NAME,
+} from './CurriedType'
 export { IdentifierProperty } from './IdentifierProperty'
 export { ParametricType } from './ParametricType'
 export { Representation, RepresentationKind } from './Representation'

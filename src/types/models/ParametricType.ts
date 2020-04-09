@@ -30,19 +30,24 @@ export class ParametricType extends Type {
     return new CurriedType([this, type])
   }
 
-  disj = (type: Type, constraints: TypeConstraints): Type => {
-    try {
-      return this.unify(type, constraints)
-    } catch (error) {
-      if (!(error instanceof TypeError)) throw error
-    }
+  disj = (type: Type, constraints?: TypeConstraints): Type => {
+    if (constraints)
+      try {
+        return this.unify(type, constraints)
+      } catch (error) {
+        if (!(error instanceof TypeError)) throw error
+      }
 
     if (type instanceof UnionType) return type.disj(this, constraints)
     else return new UnionType([this, type])
   }
 
   apply = (argumentTypes: CurriedType, constraints: TypeConstraints): Type => {
-    throw new TypeError(this, argumentTypes, 'Cannot apply to a non-curried type.')
+    throw new TypeError(
+      this,
+      argumentTypes,
+      'Cannot apply to a non-curried type.',
+    )
   }
 
   unify = (

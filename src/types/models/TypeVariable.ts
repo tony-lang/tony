@@ -24,24 +24,22 @@ export class TypeVariable extends Type {
     return new CurriedType([this, type])
   }
 
-  disj = (type: Type, constraints: TypeConstraints): Type => {
-    try {
-      return this.unify(type, constraints)
-    } catch (error) {
-      if (!(error instanceof TypeError)) throw error
-    }
+  disj = (type: Type, constraints?: TypeConstraints): Type => {
+    if (constraints)
+      try {
+        return this.unify(type, constraints)
+      } catch (error) {
+        if (!(error instanceof TypeError)) throw error
+      }
 
     if (type instanceof UnionType) return type.disj(this, constraints)
     else return new UnionType([this, type])
   }
 
   apply = (argumentTypes: CurriedType, constraints: TypeConstraints): Type => {
-    const returnType = new TypeVariable
+    const returnType = new TypeVariable()
 
-    this.unify(
-      argumentTypes.concat(returnType),
-      constraints,
-    )
+    this.unify(argumentTypes.concat(returnType), constraints)
 
     return returnType
   }
