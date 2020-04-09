@@ -1,6 +1,5 @@
 import { Binding } from './Binding'
 import { Type } from '../../types'
-import { UnionType } from '../../types/models/UnionType'
 
 const INTERNAL_IDENTIFIER_PREFIX = Object.freeze('tony_internal_')
 

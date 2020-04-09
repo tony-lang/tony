@@ -42,7 +42,7 @@ export class ParametricType extends Type {
     else return new UnionType([this, type])
   }
 
-  apply = (argumentTypes: CurriedType, constraints: TypeConstraints): Type => {
+  apply = (argumentTypes: CurriedType): Type => {
     throw new TypeError(
       this,
       argumentTypes,

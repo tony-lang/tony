@@ -17,7 +17,6 @@ import { IdentifierBinding, NestedScope } from '../../symbol_table'
 import { InferMapType } from './InferMapType'
 import { InferTypes } from '../InferTypes'
 import Parser from 'tree-sitter'
-import { UnionType } from '../../types/models/UnionType'
 
 export class InferPatternBindingTypes {
   private _inferTypes: InferTypes

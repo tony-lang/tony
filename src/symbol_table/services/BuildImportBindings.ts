@@ -1,10 +1,10 @@
 import { BuildType, TypeVariable } from '../../types'
-import { DuplicateBindingError, InternalError } from '../../errors'
 import {
   ImportBinding,
   ImportIdentifierBinding,
   ImportTypeBinding,
 } from '../models'
+import { InternalError } from '../../errors'
 import Parser from 'tree-sitter'
 import { isNotUndefined } from '../../utilities'
 

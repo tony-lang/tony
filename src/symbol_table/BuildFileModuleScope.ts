@@ -1,13 +1,4 @@
 import {
-  Binding,
-  FileModuleScope,
-  GlobalScope,
-  IdentifierBinding,
-  ModuleScope,
-  NestedScope,
-  TypeBinding,
-} from './models'
-import {
   BuildImportBindings,
   BuildPatternBindings,
   UnifyPatternBindings,
@@ -15,8 +6,6 @@ import {
 import {
   BuildRepresentation,
   BuildType,
-  LIST_TYPE,
-  ParametricType,
   RepresentationKind,
   TypeVariable,
 } from '../types'
@@ -28,12 +17,19 @@ import {
   MissingBindingError,
   assert,
 } from '../errors'
+import {
+  FileModuleScope,
+  GlobalScope,
+  IdentifierBinding,
+  ModuleScope,
+  NestedScope,
+  TypeBinding,
+} from './models'
 import { IMPORT_FILE_EXTENSIONS } from '../constants'
 import Parser from 'tree-sitter'
 import { UnknownImportError } from '../errors/UnknownImportError'
 import { parse } from '../parse'
 import path from 'path'
-import { UnionType } from '../types/models/UnionType'
 
 export class BuildFileModuleScope {
   private _fileScope: FileModuleScope

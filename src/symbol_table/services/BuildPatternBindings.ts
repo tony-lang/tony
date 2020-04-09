@@ -1,7 +1,6 @@
 import { BuildType, TypeVariable } from '../../types'
 import { IdentifierBinding } from '../models'
 import Parser from 'tree-sitter'
-import { UnionType } from '../../types/models/UnionType'
 
 export class BuildPatternBindings {
   private _isExported: boolean
