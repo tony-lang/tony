@@ -168,7 +168,7 @@ export class BuildFileModuleScope {
       throw new ImportOutsideFileModuleScopeError()
 
     const source = node.namedChild(1)!.text.slice(1, -1)
-    const sourcePath = path.join(this._filePath, '..', source)
+    const sourcePath = path.resolve(this._filePath, '..', source)
     if (!IMPORT_FILE_EXTENSIONS.find((regex) => regex.test(sourcePath)))
       throw new UnknownImportError(sourcePath)
     this._fileScope.addDependency(sourcePath)

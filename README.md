@@ -27,9 +27,10 @@ import * as Tony from 'tony-lang'
 ```ts
 function compile(
   file: string,
-  { outFile, emit, webpackMode, verbose }: {
+  { outFile, emit, webpack, webpackMode, verbose }: {
     outFile?: string;
     emit?: boolean;
+    webpack?: boolean;
     webpackMode?: string;
     verbose?: boolean;
   }

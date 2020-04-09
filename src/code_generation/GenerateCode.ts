@@ -4,7 +4,6 @@ import {
   GenerateProgram,
   ParseStringContent,
   ResolvePattern,
-  TransformIdentifier,
 } from './services'
 import { CompileError, InternalError, assert } from '../errors'
 import { FileModuleScope, WalkFileModuleScope } from '../symbol_table'
@@ -21,13 +20,11 @@ export class GenerateCode {
   private _fileScope: FileModuleScope
   private _listComprehensionGeneratorCountStack: number[] = []
 
-  private _transformIdentifier: TransformIdentifier
   private _walkFileModuleScope: WalkFileModuleScope
 
   constructor(fileScope: FileModuleScope) {
     this._fileScope = fileScope
 
-    this._transformIdentifier = new TransformIdentifier()
     this._walkFileModuleScope = new WalkFileModuleScope(fileScope)
   }
 
@@ -178,7 +175,10 @@ export class GenerateCode {
   }
 
   private handleAbstractionBranch = (node: Parser.SyntaxNode): string => {
+    this._walkFileModuleScope.peekBlock()
     const parameters = this.traverse(node.namedChild(0)!)!
+    this._walkFileModuleScope.leaveBlock()
+
     const body = this.traverse(node.namedChild(1)!)
     const [pattern, identifiers] = ResolvePattern.perform(parameters)
     const defaults = new CollectDefaultValues(this).perform(node.namedChild(0)!)
@@ -238,10 +238,10 @@ export class GenerateCode {
       .map((expression) => this.traverse(expression))
       .filter(isNotUndefined)
     const endsWithReturn = node.lastNamedChild!.type === 'return'
-    const block = new GenerateBlock(
-      this._walkFileModuleScope.scope,
-      this._transformIdentifier,
-    ).perform(expressions, endsWithReturn)
+    const block = new GenerateBlock(this._walkFileModuleScope.scope).perform(
+      expressions,
+      endsWithReturn,
+    )
     this._walkFileModuleScope.leaveBlock()
 
     return block
@@ -290,12 +290,15 @@ export class GenerateCode {
   }
 
   private handleGenerator = (node: Parser.SyntaxNode): string => {
-    const name = this._transformIdentifier.perform(node.namedChild(0)!.text)
+    const name = node.namedChild(0)!.text
+    const binding = this._walkFileModuleScope.scope.resolveBinding(name)
+    assert(binding !== undefined, 'Binding should not be undefined.')
     const value = this.traverse(node.namedChild(1)!)
-    if (node.namedChildCount == 2) return `${value}.map((${name})=>`
+    if (node.namedChildCount == 2)
+      return `${value}.map((${binding.transformedName})=>`
 
     const condition = this.traverse(node.namedChild(2)!)
-    return `${value}.map((${name})=>!${condition} ? "${INTERNAL_TEMP_TOKEN}" : `
+    return `${value}.map((${binding.transformedName})=>!${condition} ? "${INTERNAL_TEMP_TOKEN}" : `
   }
 
   private handleGenerators = (node: Parser.SyntaxNode): string => {
@@ -308,16 +311,25 @@ export class GenerateCode {
     return generators
   }
 
-  private handleIdentifier = (node: Parser.SyntaxNode): string =>
-    this._transformIdentifier.perform(node.text)
+  private handleIdentifier = (node: Parser.SyntaxNode): string => {
+    const name = node.text
+    const binding = this._walkFileModuleScope.scope.resolveBinding(name)
+
+    assert(binding !== undefined, 'Binding should not be undefined.')
+
+    return binding.transformedName
+  }
 
   private handleIdentifierPattern = (node: Parser.SyntaxNode): string =>
     this.traverse(node.namedChild(0)!)!
 
   private handleIdentifierPatternName = (node: Parser.SyntaxNode): string => {
-    const name = this._transformIdentifier.perform(node.text)
+    const name = node.text
+    const binding = this._walkFileModuleScope.scope.resolveBinding(name)
 
-    return `"${INTERNAL_TEMP_TOKEN}${name}"`
+    assert(binding !== undefined, 'Binding should not be undefined.')
+
+    return `"${INTERNAL_TEMP_TOKEN}${binding.transformedName}"`
   }
 
   // eslint-disable-next-line max-lines-per-function
@@ -370,8 +382,11 @@ export class GenerateCode {
   }
 
   private handleListComprehension = (node: Parser.SyntaxNode): string => {
-    const body = this.traverse(node.namedChild(0)!)
+    this._walkFileModuleScope.peekBlock()
     const generators = this.traverse(node.namedChild(1)!)
+    this._walkFileModuleScope.leaveBlock()
+
+    const body = this.traverse(node.namedChild(0)!)
     const generatorCount = this._listComprehensionGeneratorCountStack.pop()
     assert(
       generatorCount !== undefined,
@@ -467,10 +482,9 @@ export class GenerateCode {
       'File module scope walker should end up at file-level scope.',
     )
 
-    return new GenerateProgram(
-      this._walkFileModuleScope.scope,
-      this._transformIdentifier,
-    ).perform(expressions)
+    return new GenerateProgram(this._walkFileModuleScope.scope).perform(
+      expressions,
+    )
   }
 
   private handleRestList = (node: Parser.SyntaxNode): string => {
@@ -501,24 +515,27 @@ export class GenerateCode {
   private handleShorthandAccessIdentifier = (
     node: Parser.SyntaxNode,
   ): string => {
-    const name = this._transformIdentifier.perform(node.text)
+    const name = node.text
 
     return `'${name}'`
   }
 
   private handleShorthandPairIdentifier = (node: Parser.SyntaxNode): string => {
-    return this._transformIdentifier.perform(node.text)
+    const name = node.text
+    const binding = this._walkFileModuleScope.scope.resolveBinding(name)
+
+    assert(binding !== undefined, 'Binding should not be undefined.')
+
+    return `${name}:${binding.transformedName}`
   }
 
   private handleShorthandPairIdentifierPattern = (
     node: Parser.SyntaxNode,
   ): string => {
-    const identifierPatternName = this.traverse(node.namedChild(0)!)!
+    const name = node.namedChild(0)!.text
+    const identifierPattern = this.traverse(node.namedChild(0)!)!
 
-    return (
-      `"${identifierPatternName.substring(INTERNAL_TEMP_TOKEN.length + 1)}` +
-      `:${identifierPatternName}`
-    )
+    return `"${name}":${identifierPattern}`
   }
 
   private handleSpread = (node: Parser.SyntaxNode): string => {
@@ -562,16 +579,16 @@ export class GenerateCode {
     return `[${elements}]`
   }
 
-  private handleType = (node: Parser.SyntaxNode): string => {
-    const name = node.text
+  private handleType = (node: Parser.SyntaxNode): string => node.text
 
-    return this._transformIdentifier.perform(name)
-  }
-
+  // eslint-disable-next-line max-lines-per-function
   private handleWhenClause = (node: Parser.SyntaxNode): string => {
+    this._walkFileModuleScope.peekBlock()
     const patterns = this.traverse(node.namedChild(0)!)!
       .split(';')
       .map((pattern) => ResolvePattern.perform(pattern))
+    this._walkFileModuleScope.leaveBlock()
+
     const body = this.traverse(node.namedChild(1)!)
     const defaults = node
       .namedChild(0)!

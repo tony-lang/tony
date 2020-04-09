@@ -1,20 +1,14 @@
 import { FileModuleScope, ImportBinding } from '../../symbol_table'
 import { DEFAULT_IMPORTS } from '../../constants'
 import { GenerateImport } from './GenerateImport'
-import { TransformIdentifier } from './TransformIdentifier'
 
 export class GenerateProgram {
   private _generateImport: GenerateImport
   private _scope: FileModuleScope
-  private _transformIdentifier: TransformIdentifier
 
-  constructor(
-    scope: FileModuleScope,
-    transformIdentifier: TransformIdentifier,
-  ) {
-    this._generateImport = new GenerateImport(transformIdentifier)
+  constructor(scope: FileModuleScope) {
+    this._generateImport = new GenerateImport()
     this._scope = scope
-    this._transformIdentifier = transformIdentifier
   }
 
   perform = (expressions: string[]): string =>
@@ -25,7 +19,7 @@ export class GenerateProgram {
   private generateDeclarations = (): string => {
     const declarations = this._scope.bindings
       .filter((binding) => !binding.isImplicit)
-      .map((binding) => this._transformIdentifier.perform(binding.name))
+      .map((binding) => binding.transformedName)
 
     return declarations.length > 0 ? `let ${declarations.join(',')}` : ''
   }
@@ -48,7 +42,7 @@ export class GenerateProgram {
   private generateExports = (): string => {
     const exports = this._scope.bindings
       .filter((binding) => binding.isExported)
-      .map((binding) => this._transformIdentifier.perform(binding.name))
+      .map((binding) => `${binding.transformedName} as ${binding.name}`)
 
     return exports.length > 0 ? `export {${exports.join(',')}}` : ''
   }

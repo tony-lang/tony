@@ -56,7 +56,7 @@ export class BuildImportBindings {
     const name = node.namedChild(0)!.text
     // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
     // @ts-ignore
-    const type = node.typeNode ? new BuildType().handleTypeConstructor(node.typeNode) : new TypeVariable()
+    const type = node.typeNode ? new BuildType().handleTypeConstructor(node.typeNode) : new TypeVariable
 
     return new ImportIdentifierBinding(this._filePath, name, name, type)
   }

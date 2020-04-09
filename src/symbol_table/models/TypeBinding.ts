@@ -40,4 +40,8 @@ export class TypeBinding implements Binding {
   get type(): ParametricType {
     return this._type
   }
+
+  get transformedName(): string {
+    return this.name
+  }
 }

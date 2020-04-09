@@ -6,20 +6,13 @@ import {
 } from '../../constants'
 import { ImportBinding } from '../../symbol_table/models'
 import { InternalError } from '../../errors'
-import { TransformIdentifier } from './TransformIdentifier'
 
-const EXTERNAL_IMPORT_SUFFIX = Object.freeze('EXT_')
+const EXTERNAL_IMPORT_SUFFIX = Object.freeze('_EXT')
 
 export class GenerateImport {
-  protected _transformIdentifier: TransformIdentifier
-
-  constructor(transformIdentifier: TransformIdentifier) {
-    this._transformIdentifier = transformIdentifier
-  }
-
   perform = (sourcePath: string, bindings: ImportBinding[]): string => {
     if (FILE_EXTENSION_REGEX.test(sourcePath))
-      return this.handleInternal(sourcePath, bindings)
+      return this.handleImport(sourcePath, bindings)
     else if (JAVASCRIPT_FILE_EXTENSION_REGEX.test(sourcePath))
       return this.handleJavaScript(sourcePath, bindings)
 
@@ -28,21 +21,19 @@ export class GenerateImport {
     )
   }
 
-  private handleInternal = (
+  private handleImport = (
     sourcePath: string,
     bindings: ImportBinding[],
     suffix?: string,
+    transformOriginalName = true,
   ): string => {
-    const compiledSourcePath = sourcePath.replace(
-      FILE_EXTENSION,
-      TARGET_FILE_EXTENSION,
-    )
+    const compiledSourcePath = GenerateImport.getCompiledSourcePath(sourcePath)
     const aliases = bindings
       .map((binding) => {
-        const originalName = this._transformIdentifier.perform(
-          binding.originalName,
-        )
-        const name = this._transformIdentifier.perform(binding.name)
+        const originalName = transformOriginalName
+          ? binding.transformedOriginalName
+          : binding.originalName
+        const name = binding.transformedName
 
         return `${originalName} as ${name}${suffix ? suffix : ''}`
       })
@@ -56,17 +47,16 @@ export class GenerateImport {
     sourcePath: string,
     bindings: ImportBinding[],
   ): string => {
-    const importStatement = this.handleInternal(
+    const importStatement = this.handleImport(
       sourcePath,
       bindings,
       EXTERNAL_IMPORT_SUFFIX,
+      false,
     )
     const currying = bindings
       .map((binding) => {
-        const tmpName = `${this._transformIdentifier.perform(
-          binding.name,
-        )}${EXTERNAL_IMPORT_SUFFIX}`
-        const name = this._transformIdentifier.perform(binding.name)
+        const tmpName = `${binding.transformedName}${EXTERNAL_IMPORT_SUFFIX}`
+        const name = binding.transformedName
 
         return `${name}=stdlib.Curry.external(${tmpName})`
       })
@@ -75,4 +65,7 @@ export class GenerateImport {
 
     return `${importStatement};${combinedCurrying}`
   }
+
+  private static getCompiledSourcePath = (sourcePath: string): string =>
+    sourcePath.replace(FILE_EXTENSION, TARGET_FILE_EXTENSION)
 }

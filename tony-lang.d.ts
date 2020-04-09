@@ -3,9 +3,10 @@ import Parser from 'tree-sitter'
 declare module 'tony-lang' {
   export function compile(
     file: string,
-    { outFile, emit, webpackMode, verbose }: {
+    { outFile, emit, webpack, webpackMode, verbose }: {
       outFile?: string;
       emit?: boolean;
+      webpack?: boolean;
       webpackMode?: string;
       verbose?: boolean;
     }
