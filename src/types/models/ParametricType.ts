@@ -5,24 +5,14 @@ import { TypeConstraints } from './TypeConstraints'
 import { TypeVariable } from './TypeVariable'
 
 export class ParametricType extends Type {
-  private _isSpread: boolean
   private _name: string
   private _parameters: Type[]
 
-  constructor(
-    name: string,
-    parameters: Type[] = [],
-    { isSpread = false }: { isSpread?: boolean } = { isSpread: false },
-  ) {
+  constructor(name: string, parameters: Type[] = []) {
     super()
 
     this._name = name
     this._parameters = parameters
-    this._isSpread = isSpread
-  }
-
-  get isSpread(): boolean {
-    return this._isSpread
   }
 
   get name(): string {
@@ -75,7 +65,6 @@ export class ParametricType extends Type {
       useActualParameters
         ? actual.parameters
         : this.unifyParameters(actual, constraints),
-      { isSpread: this.isSpread || actual.isSpread },
     )
 
   private unifyParameters = (
@@ -98,17 +87,14 @@ export class ParametricType extends Type {
       parameter._reduce(constraints),
     )
 
-    return new ParametricType(this.name, parameters, {
-      isSpread: this.isSpread,
-    })
+    return new ParametricType(this.name, parameters)
   }
 
   toString = (): string => {
     const parameters = this.parameters.map((parameter) => parameter.toString())
     const combinedParameters =
       parameters.length > 0 ? `<${parameters.join(', ')}>` : ''
-    const isSpread = this.isSpread ? '...' : ''
 
-    return `${isSpread}${this.name}${combinedParameters}`
+    return `${this.name}${combinedParameters}`
   }
 }

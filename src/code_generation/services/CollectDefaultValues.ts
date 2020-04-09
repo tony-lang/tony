@@ -11,7 +11,7 @@ export class CollectDefaultValues {
 
   perform = (node: Parser.SyntaxNode): string => `[${this.rec(node).join(',')}]`
 
-  rec = (node: Parser.SyntaxNode): (string | undefined)[] => {
+  private rec = (node: Parser.SyntaxNode): (string | undefined)[] => {
     // prettier-ignore
     if (NODE_TYPES_WITH_DEFAULT_VALUES.includes(node.type))
       // eslint-disable-next-line @typescript-eslint/ban-ts-ignore

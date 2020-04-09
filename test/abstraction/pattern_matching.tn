@@ -1,6 +1,5 @@
 fn := (a, b, 1, { c = 10 }, [d = 20, ...e]) => [a, b, c, d, ...e]
 
-# Default values
 # fn1 := fn(0, 1, 1, {})
 # print(fn1[0].to_str)
 # print(fn1[1].to_str)
