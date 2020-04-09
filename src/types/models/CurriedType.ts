@@ -52,39 +52,76 @@ export class CurriedType extends Type {
     argumentTypes: CurriedType,
     constraints: TypeConstraints,
   ): Type[] => {
-    // handle too many arguments
-    if (parameterTypes.length <= argumentTypes.parameters.length)
-      throw new TypeError(
-        new CurriedType(parameterTypes.slice(0, -1)),
-        argumentTypes,
-        `Applied ${argumentTypes.parameters.length} arguments to a curried ` +
-          `type accepting at most ${parameterTypes.length - 1} arguments.`,
-      )
+    this.checkAppliedTooManyArguments(parameterTypes, argumentTypes)
 
     return parameterTypes.reduce(
       (parameterTypes: Type[], parameterType: Type, i: number): Type[] => {
         const argumentType = argumentTypes.parameters[i]
-        if (
-          argumentType === undefined ||
-          CurriedType.isPlaceholderArgument(argumentType)
+
+        return this.applyArgument(
+          parameterTypes,
+          argumentTypes,
+          parameterType,
+          argumentType,
+          constraints,
         )
-          return parameterTypes.concat([parameterType])
-
-        try {
-          parameterType.unify(argumentType, constraints)
-        } catch (error) {
-          if (error instanceof TypeError)
-            error.addTypeMismatch(
-              new CurriedType(parameterTypes.slice(0, -1)),
-              argumentTypes,
-            )
-          throw error
-        }
-
-        return parameterTypes
       },
       [],
     )
+  }
+
+  private applyArgument = (
+    parameterTypes: Type[],
+    argumentTypes: CurriedType,
+    parameterType: Type,
+    argumentType: Type,
+    constraints: TypeConstraints,
+  ): Type[] => {
+    if (CurriedType.isSkippedArgument(argumentType))
+      return parameterTypes.concat([parameterType])
+
+    this.checkArgumentTypeMismatch(
+      parameterTypes,
+      argumentTypes,
+      parameterType,
+      argumentType,
+      constraints,
+    )
+
+    return parameterTypes
+  }
+
+  private checkAppliedTooManyArguments = (
+    parameterTypes: Type[],
+    argumentTypes: CurriedType,
+  ): void => {
+    if (parameterTypes.length > argumentTypes.parameters.length) return
+
+    throw new TypeError(
+      new CurriedType(parameterTypes.slice(0, -1)),
+      argumentTypes,
+      `Applied ${argumentTypes.parameters.length} arguments to a curried ` +
+        `type accepting at most ${parameterTypes.length - 1} arguments.`,
+    )
+  }
+
+  private checkArgumentTypeMismatch = (
+    parameterTypes: Type[],
+    argumentTypes: CurriedType,
+    parameterType: Type,
+    argumentType: Type,
+    constraints: TypeConstraints,
+  ): void => {
+    try {
+      parameterType.unify(argumentType, constraints)
+    } catch (error) {
+      if (error instanceof TypeError)
+        error.addTypeMismatch(
+          new CurriedType(parameterTypes.slice(0, -1)),
+          argumentTypes,
+        )
+      throw error
+    }
   }
 
   unify = (actual: Type, constraints: TypeConstraints): CurriedType =>
@@ -134,6 +171,10 @@ export class CurriedType extends Type {
 
     return `(${parameters})`
   }
+
+  private static isSkippedArgument = (argumentType: Type): boolean =>
+    argumentType === undefined ||
+    CurriedType.isPlaceholderArgument(argumentType)
 
   private static isPlaceholderArgument = (argumentType: Type): boolean =>
     argumentType instanceof TypeVariable &&
