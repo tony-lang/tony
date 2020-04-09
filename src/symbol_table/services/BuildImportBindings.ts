@@ -17,17 +17,14 @@ export class BuildImportBindings {
 
   perform = (node: Parser.SyntaxNode): ImportBinding[] => {
     const importClauseNode = node.namedChild(0)!
-    const bindings = importClauseNode.namedChildren.reduce(
+
+    return importClauseNode.namedChildren.reduce(
       (bindings: ImportBinding[], child) =>
         [...bindings, this.handleImportClauseEntry(child)].filter(
           isNotUndefined,
         ),
       [],
     )
-
-    this.checkDuplicateIdentifiers(bindings)
-
-    return bindings
   }
 
   private handleImportClauseEntry = (
@@ -87,15 +84,5 @@ export class BuildImportBindings {
     const type = new BuildType().handleType(node)
 
     return new ImportTypeBinding(this._filePath, type, type)
-  }
-
-  private checkDuplicateIdentifiers = (bindings: ImportBinding[]): void => {
-    const identifiers = bindings.map((binding) => binding.name)
-    const duplicateIdentifier = identifiers.find((identifier, i) =>
-      identifiers.slice(i, i).includes(identifier),
-    )
-    if (!duplicateIdentifier) return
-
-    throw new DuplicateBindingError(duplicateIdentifier)
   }
 }

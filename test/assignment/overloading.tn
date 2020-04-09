@@ -1,0 +1,5 @@
+print :: Number -> Void := (n) => n.to_str.print
+# puts :: String -> Void := print
+
+# print('hello')
+# print(0)

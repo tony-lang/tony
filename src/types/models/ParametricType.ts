@@ -3,6 +3,7 @@ import { CurriedType } from './CurriedType'
 import { Type } from './Type'
 import { TypeConstraints } from './TypeConstraints'
 import { TypeVariable } from './TypeVariable'
+import { UnionType } from './UnionType'
 
 export class ParametricType extends Type {
   private _name: string
@@ -27,6 +28,21 @@ export class ParametricType extends Type {
     if (type instanceof CurriedType) return type.concat(this)
 
     return new CurriedType([this, type])
+  }
+
+  disj = (type: Type, constraints: TypeConstraints): Type => {
+    try {
+      return this.unify(type, constraints)
+    } catch (error) {
+      if (!(error instanceof TypeError)) throw error
+    }
+
+    if (type instanceof UnionType) return type.disj(this, constraints)
+    else return new UnionType([this, type])
+  }
+
+  apply = (argumentTypes: CurriedType, constraints: TypeConstraints): Type => {
+    throw new TypeError(this, argumentTypes, 'Cannot apply to a non-curried type.')
   }
 
   unify = (

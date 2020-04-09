@@ -1,6 +1,7 @@
 import { BuildType, TypeVariable } from '../../types'
 import { IdentifierBinding } from '../models'
 import Parser from 'tree-sitter'
+import { UnionType } from '../../types/models/UnionType'
 
 export class BuildPatternBindings {
   private _isExported: boolean
@@ -37,7 +38,7 @@ export class BuildPatternBindings {
     const name = node.namedChild(0)!.text
     // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
     // @ts-ignore
-    const type = node.typeNode ? new BuildType().handleTypeConstructor(node.typeNode) : new TypeVariable()
+    const type = node.typeNode ? new BuildType().handleTypeConstructor(node.typeNode) : new TypeVariable
 
     return [
       new IdentifierBinding(name, type, {

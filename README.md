@@ -54,7 +54,7 @@ Executes a compiled JavaScript file with the provided arguments.
 ### `parse`
 
 ```ts
-export function parse(
+function parse(
   file: string,
   { verbose }: { verbose?: boolean }
 ): Promise<Parser.Tree>
@@ -82,7 +82,7 @@ Contains attributes `filePath: string` and `tree: Parser.Tree`. `message` is set
 
 Contains `filePath: string` and `context: { start: { row: number; column: number }; end: { row: number; column: number } }`.
 
-#### `CycilcDependenciesError`
+#### `CyclicDependenciesError`
 
 Is thrown when the dependency graph is not acyclic.
 

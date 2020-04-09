@@ -1,6 +1,7 @@
 import { CurriedType } from './CurriedType'
 import { Type } from './Type'
 import { TypeConstraints } from './TypeConstraints'
+import { UnionType } from './UnionType'
 
 export class TypeVariable extends Type {
   private static unnamedVariableCount = 0
@@ -21,6 +22,28 @@ export class TypeVariable extends Type {
     if (type instanceof CurriedType) return type.concat(this)
 
     return new CurriedType([this, type])
+  }
+
+  disj = (type: Type, constraints: TypeConstraints): Type => {
+    try {
+      return this.unify(type, constraints)
+    } catch (error) {
+      if (!(error instanceof TypeError)) throw error
+    }
+
+    if (type instanceof UnionType) return type.disj(this, constraints)
+    else return new UnionType([this, type])
+  }
+
+  apply = (argumentTypes: CurriedType, constraints: TypeConstraints): Type => {
+    const returnType = new TypeVariable
+
+    this.unify(
+      argumentTypes.concat(returnType),
+      constraints,
+    )
+
+    return returnType
   }
 
   unify = (actual: Type, constraints: TypeConstraints): Type =>

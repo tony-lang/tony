@@ -3,7 +3,7 @@ quicksort :=
   ([pivot, ...rest]) =>
     l := quicksort([n | n in rest if n <= pivot])
     r := quicksort([n | n in rest if n > pivot])
-    l ++ [pivot] ++ r
+    l + [pivot] + r
 
 list := quicksort([5, 7, 2, 0, 4, 3])
 print(list[0].to_str)

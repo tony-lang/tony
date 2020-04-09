@@ -29,7 +29,6 @@ import {
 } from '../symbol_table'
 import {
   InferAccessType,
-  InferApplicationType,
   InferBranchType,
   InferListType,
   InferMapType,
@@ -207,10 +206,7 @@ export class InferTypes {
     const valueType = this.traverse(node.namedChild(0)!)!
     const argumentTypes = this.handleArguments(node.namedChild(1)!)
 
-    return new InferApplicationType(this._typeConstraints).perform(
-      valueType,
-      argumentTypes,
-    )
+    return valueType.apply(argumentTypes, this._typeConstraints)
   }
 
   private handleArgument = (node: Parser.SyntaxNode): Type => {
@@ -300,11 +296,10 @@ export class InferTypes {
       'Generator binding should be found in current scope.',
     )
 
-    const type = new ParametricType(LIST_TYPE, [new TypeVariable()]).unify(
+    binding.type = new ParametricType(LIST_TYPE, [new TypeVariable()]).unify(
       valueType,
       this._typeConstraints,
     ).parameters[0]
-    binding.type = type
 
     if (node.namedChildCount == 3) {
       const conditionType = this.traverse(node.namedChild(2)!)!
@@ -352,10 +347,7 @@ export class InferTypes {
     const rightType = this.traverse(node.namedChild(2)!)!
     const argumentTypes = new CurriedType([leftType, rightType])
 
-    return new InferApplicationType(this._typeConstraints).perform(
-      valueType,
-      argumentTypes,
-    )
+    return valueType.apply(argumentTypes, this._typeConstraints)
   }
 
   private handleInterpolation = (node: Parser.SyntaxNode): Type => {
@@ -429,10 +421,7 @@ export class InferTypes {
     const valueType = this.traverse(node.namedChild(1)!)!
     const argumentTypes = new CurriedType([argumentType])
 
-    return new InferApplicationType(this._typeConstraints).perform(
-      valueType,
-      argumentTypes,
-    )
+    return valueType.apply(argumentTypes, this._typeConstraints)
   }
 
   private handlePrefixApplication = (node: Parser.SyntaxNode): Type => {
@@ -440,10 +429,7 @@ export class InferTypes {
     const argumentType = this.traverse(node.namedChild(1)!)!
     const argumentTypes = new CurriedType([argumentType])
 
-    return new InferApplicationType(this._typeConstraints).perform(
-      valueType,
-      argumentTypes,
-    )
+    return valueType.apply(argumentTypes, this._typeConstraints)
   }
 
   private handleProgram = (node: Parser.SyntaxNode): void => {

@@ -78,6 +78,7 @@ const runExample = async (
   try {
     entryPath = await compile(sourcePath, {})
   } catch (error) {
+    console.log(error)
     if (error instanceof InternalError) return error.message
     return error.name
   }

@@ -33,6 +33,7 @@ import Parser from 'tree-sitter'
 import { UnknownImportError } from '../errors/UnknownImportError'
 import { parse } from '../parse'
 import path from 'path'
+import { UnionType } from '../types/models/UnionType'
 
 export class BuildFileModuleScope {
   private _fileScope: FileModuleScope
@@ -121,7 +122,7 @@ export class BuildFileModuleScope {
     this.traverse(node.namedChild(0)!)
     new BuildPatternBindings({ isExported, isImplicit: false })
       .perform(node.namedChild(0)!)
-      .forEach((binding) => this.addBinding(binding))
+      .forEach((binding) => this.addIdentifierBinding(binding))
 
     this.traverse(node.namedChild(1)!)
   }
@@ -148,10 +149,10 @@ export class BuildFileModuleScope {
     const name = node.namedChild(0)!.text
     const binding = new IdentifierBinding(
       name,
-      new ParametricType(LIST_TYPE, [new TypeVariable()]),
+      new TypeVariable,
       { isImplicit: true },
     )
-    this.addBinding(binding)
+    this.addIdentifierBinding(binding)
 
     if (node.namedChildCount == 3) this.traverse(node.namedChild(2)!)
   }
@@ -175,7 +176,10 @@ export class BuildFileModuleScope {
 
     new BuildImportBindings(sourcePath)
       .perform(node)
-      .forEach((binding) => this.addBinding(binding))
+      .forEach((binding) => {
+        if (binding instanceof IdentifierBinding) this.addIdentifierBinding(binding)
+        else if (binding instanceof TypeBinding) this.addTypeBinding(binding)
+      })
   }
 
   private handleListComprehension = (node: Parser.SyntaxNode): void => {
@@ -205,13 +209,13 @@ export class BuildFileModuleScope {
 
     const type = new BuildType().handleType(node.namedChild(0)!)
     const binding = new TypeBinding(type, representation, { isExported })
-    this.addBinding(binding)
+    this.addTypeBinding(binding)
   }
 
   private handleParameters = (node: Parser.SyntaxNode): void => {
     new BuildPatternBindings({ isExported: false, isImplicit: true })
       .perform(node)
-      .forEach((binding) => this.addBinding(binding))
+      .forEach((binding) => this.addIdentifierBinding(binding))
   }
 
   private handlePatternList = (node: Parser.SyntaxNode): void => {
@@ -224,7 +228,7 @@ export class BuildFileModuleScope {
 
     new UnifyPatternBindings()
       .perform(bindings)
-      .forEach((binding) => this.addBinding(binding))
+      .forEach((binding) => this.addIdentifierBinding(binding))
   }
 
   private handleWhenClause = (node: Parser.SyntaxNode): void => {
@@ -274,9 +278,17 @@ export class BuildFileModuleScope {
     return value
   }
 
-  private addBinding = (binding: Binding): void => {
-    const matchingBinding = this._scope.resolveBinding(binding.name, 0)
+  private addTypeBinding = (binding: TypeBinding): void => {
+    const matchingBinding = this._scope.resolveBinding(binding.name)
     if (matchingBinding) throw new DuplicateBindingError(matchingBinding.name)
+
+    this._scope.addBinding(binding)
+  }
+
+  private addIdentifierBinding = (binding: IdentifierBinding): void => {
+    const matchingBinding = this._scope.resolveBinding(binding.name)
+    if (matchingBinding instanceof IdentifierBinding)
+      matchingBinding.type = matchingBinding.type.disj(binding.type)
 
     this._scope.addBinding(binding)
   }

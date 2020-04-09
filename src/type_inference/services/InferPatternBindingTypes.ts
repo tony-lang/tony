@@ -17,6 +17,7 @@ import { IdentifierBinding, NestedScope } from '../../symbol_table'
 import { InferMapType } from './InferMapType'
 import { InferTypes } from '../InferTypes'
 import Parser from 'tree-sitter'
+import { UnionType } from '../../types/models/UnionType'
 
 export class InferPatternBindingTypes {
   private _inferTypes: InferTypes
@@ -122,9 +123,10 @@ export class InferPatternBindingTypes {
 
     type = typeHint.unify(type, this._typeConstraints)
     type = defaultType.unify(type, this._typeConstraints)
-    binding.type = binding.type.unify(type, this._typeConstraints)
+    type = binding.type.disj(type, this._typeConstraints)
 
-    return binding.type
+    binding.type = type
+    return type
   }
 
   private handleListPattern = (
