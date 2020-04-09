@@ -509,7 +509,7 @@ export class GenerateCode {
   private handleShorthandPairIdentifier = (node: Parser.SyntaxNode): string => {
     const name = node.text
 
-    return `[${name}]:${this._transformIdentifier.perform(name)}`
+    return `${name}:${this._transformIdentifier.perform(name)}`
   }
 
   private handleShorthandPairIdentifierPattern = (
