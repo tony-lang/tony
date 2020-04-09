@@ -581,6 +581,7 @@ export class GenerateCode {
 
   private handleType = (node: Parser.SyntaxNode): string => node.text
 
+  // eslint-disable-next-line max-lines-per-function
   private handleWhenClause = (node: Parser.SyntaxNode): string => {
     this._walkFileModuleScope.peekBlock()
     const patterns = this.traverse(node.namedChild(0)!)!

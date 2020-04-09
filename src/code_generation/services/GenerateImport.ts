@@ -27,10 +27,7 @@ export class GenerateImport {
     suffix?: string,
     transformOriginalName = true,
   ): string => {
-    const compiledSourcePath = sourcePath.replace(
-      FILE_EXTENSION,
-      TARGET_FILE_EXTENSION,
-    )
+    const compiledSourcePath = GenerateImport.getCompiledSourcePath(sourcePath)
     const aliases = bindings
       .map((binding) => {
         const originalName = transformOriginalName
@@ -68,4 +65,7 @@ export class GenerateImport {
 
     return `${importStatement};${combinedCurrying}`
   }
+
+  private static getCompiledSourcePath = (sourcePath: string): string =>
+    sourcePath.replace(FILE_EXTENSION, TARGET_FILE_EXTENSION)
 }
