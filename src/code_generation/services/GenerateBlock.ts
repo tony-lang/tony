@@ -1,13 +1,10 @@
 import { Binding, ModuleScope, NestedScope } from '../../symbol_table'
-import { TransformIdentifier } from './TransformIdentifier'
 
 export class GenerateBlock {
   private _scope: NestedScope
-  private _transformIdentifier: TransformIdentifier
 
-  constructor(scope: NestedScope, transformIdentifier: TransformIdentifier) {
+  constructor(scope: NestedScope) {
     this._scope = scope
-    this._transformIdentifier = transformIdentifier
   }
 
   perform = (expressions: string[], endsWithReturn: boolean): string => {
@@ -18,7 +15,7 @@ export class GenerateBlock {
     )
     const returnedDeclarations = bindings
       .filter((binding) => binding.isExported)
-      .map((binding) => this._transformIdentifier.perform(binding.name))
+      .map((binding) => `${binding.name}:${binding.transformedName}`)
       .join(',')
 
     const returnValue = isDeclaration
@@ -33,9 +30,7 @@ export class GenerateBlock {
   }
 
   private generateDeclarations = (bindings: Binding[]): string => {
-    const declarations = bindings.map((binding) =>
-      this._transformIdentifier.perform(binding.name),
-    )
+    const declarations = bindings.map((binding) => binding.transformedName)
 
     return declarations.length > 0 ? `let ${declarations.join(',')}` : ''
   }

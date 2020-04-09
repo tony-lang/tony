@@ -23,4 +23,8 @@ export class BasicTypeBinding implements Binding {
   get name(): string {
     return this._type.name
   }
+
+  get transformedName(): string {
+    return this.name
+  }
 }

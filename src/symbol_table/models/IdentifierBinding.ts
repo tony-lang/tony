@@ -1,7 +1,12 @@
 import { Binding } from './Binding'
 import { Type } from '../../types'
 
+const INTERNAL_IDENTIFIER_PREFIX = Object.freeze('tony_internal_')
+
 export class IdentifierBinding implements Binding {
+  private static count = 0
+
+  private _id: number
   private _isExported: boolean
   private _isImplicit: boolean
   private _name: string
@@ -22,6 +27,8 @@ export class IdentifierBinding implements Binding {
     this._isImplicit = isImplicit
     this._name = name
     this._type = type
+
+    this._id = IdentifierBinding.count += 1
   }
 
   get isExported(): boolean {
@@ -46,5 +53,9 @@ export class IdentifierBinding implements Binding {
 
   set type(value: Type) {
     this._type = value
+  }
+
+  get transformedName(): string {
+    return `${INTERNAL_IDENTIFIER_PREFIX}${this._id}`
   }
 }

@@ -10,11 +10,13 @@ export const compile = async (
   {
     outFile,
     emit = true,
+    webpack = true,
     webpackMode = 'production',
     verbose = false,
   }: {
     outFile?: string
     emit?: boolean
+    webpack?: boolean
     webpackMode?: string
     verbose?: boolean
   },
@@ -29,7 +31,7 @@ export const compile = async (
   if (!emit) return
 
   await generateCode(globalScope.scopes, verbose)
-  await webpackCompile(outFilePath, webpackMode, verbose)
+  if (webpack) await webpackCompile(outFilePath, webpackMode, verbose)
 
   return outFilePath
 }

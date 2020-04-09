@@ -9,6 +9,7 @@ import { FileModuleScope } from './models/FileModuleScope'
 import { GlobalScope } from './models/GlobalScope'
 import { GraphSearch } from '../services/GraphSearch'
 import { UnknownImportError } from '../errors/UnknownImportError'
+import path from 'path'
 
 export class BuildSymbolTable extends GraphSearch<string, GlobalScope> {
   private _fileScopes: FileModuleScope[] = []
@@ -16,7 +17,7 @@ export class BuildSymbolTable extends GraphSearch<string, GlobalScope> {
   private _verbose: boolean
 
   constructor(entryPath: string, verbose: boolean) {
-    super(entryPath)
+    super(path.resolve(entryPath))
 
     if (verbose) console.log('Building symbol table...')
 

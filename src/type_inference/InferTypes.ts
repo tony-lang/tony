@@ -456,8 +456,16 @@ export class InferTypes {
   private handleShorthandPairIdentifier = (
     node: Parser.SyntaxNode,
   ): ParametricType => {
+    const name = node.text
+    const binding = this._walkFileModuleScope.scope.resolveBinding(name)
+
+    assert(
+      binding instanceof IdentifierBinding,
+      'Identifier binding should be found in scope.',
+    )
+
     const keyType = new ParametricType(STRING_TYPE)
-    const valueType = this.traverse(node.namedChild(0)!)!
+    const valueType = binding.type
 
     return new ParametricType(MAP_TYPE, [keyType, valueType])
   }
