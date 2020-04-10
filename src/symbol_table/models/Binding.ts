@@ -3,5 +3,4 @@ export interface Binding {
   isImplicit: boolean
   isImported: boolean
   name: string
-  transformedName: string
 }

@@ -21,4 +21,19 @@ export abstract class Type {
   abstract _reduce: (constraints: TypeConstraints) => Type
 
   abstract toString: () => string
+
+  static attemptWithTmpConstraints = <T>(
+    fn: (actual: T, constraints: TypeConstraints) => Type,
+    actual: T,
+    constraints: TypeConstraints,
+  ): Type | undefined => {
+    try {
+      const tmpConstraints = constraints.dup()
+      const result = fn(actual, tmpConstraints)
+      constraints.replace(tmpConstraints)
+      return result
+    } catch (error) {
+      if (!(error instanceof TypeError)) throw error
+    }
+  }
 }

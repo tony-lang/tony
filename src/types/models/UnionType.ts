@@ -41,32 +41,45 @@ export class UnionType extends Type {
     const combinedParameters = [...this.parameters, ...parameters]
     if (constraints === undefined) return combinedParameters
 
-    return combinedParameters.reduce((parameters: Type[], parameter) => {
-      for (const [i, otherParameter] of parameters.entries())
-        try {
-          parameters[i] = parameter.unify(otherParameter, constraints)
-          return parameters
-        } catch (error) {
-          if (!(error instanceof TypeError)) throw error
-        }
+    return combinedParameters.reduce(
+      (parameters: Type[], parameter) =>
+        parameters.reduce((parameters: Type[], otherParameter) => {
+          const unifiedParameter = Type.attemptWithTmpConstraints(
+            parameter.unify,
+            otherParameter,
+            constraints,
+          )
+          if (unifiedParameter) return [...parameters, unifiedParameter]
 
-      return [...parameters, parameter]
-    }, [])
+          return [...parameters, otherParameter, parameter]
+        }, []),
+      [],
+    )
   }
 
   apply = (argumentTypes: CurriedType, constraints: TypeConstraints): Type => {
-    for (const parameter of this.parameters)
-      try {
-        return parameter.apply(argumentTypes, constraints)
-      } catch (error) {
-        if (!(error instanceof TypeError)) throw error
-      }
+    const parameters = this.parameters.reduce(
+      (parameters: Type[], parameter) => {
+        const appliedType = Type.attemptWithTmpConstraints(
+          parameter.apply,
+          argumentTypes,
+          constraints,
+        )
+        if (appliedType) return [...parameters, appliedType]
 
-    throw new TypeError(
-      this,
-      argumentTypes,
-      'Cannot apply to a non-curried union type.',
+        return parameters
+      },
+      [],
     )
+
+    if (parameters.length > 1) return new UnionType(parameters)
+    else if (parameters.length == 1) return parameters[0]
+    else
+      throw new TypeError(
+        this,
+        argumentTypes,
+        'Cannot apply to a non-curried union type.',
+      )
   }
 
   unify = (actual: Type, constraints: TypeConstraints): Type =>
@@ -76,15 +89,24 @@ export class UnionType extends Type {
     if (actual instanceof TypeVariable) {
       constraints.add(actual, this)
       return this
-    } else if (actual instanceof Type)
-      for (const parameter of this.parameters)
-        try {
-          return parameter.unify(actual, constraints)
-        } catch (error) {
-          if (!(error instanceof TypeError)) throw error
-        }
+    }
+    const parameters = this.parameters.reduce(
+      (parameters: Type[], parameter) => {
+        const unifiedParameter = Type.attemptWithTmpConstraints(
+          parameter.unify,
+          actual,
+          constraints,
+        )
+        if (unifiedParameter) return [...parameters, unifiedParameter]
 
-    throw new TypeError(this, actual, 'Does not match union type')
+        return parameters
+      },
+      [],
+    )
+
+    if (parameters.length > 1) return new UnionType(parameters)
+    else if (parameters.length == 1) return parameters[0]
+    else throw new TypeError(this, actual, 'Does not match union type')
   }
 
   _reduce = (constraints: TypeConstraints): Type => {
@@ -92,8 +114,7 @@ export class UnionType extends Type {
       parameter._reduce(constraints),
     )
 
-    if (parameters.length == 1) return parameters[0]
-    else return new UnionType(parameters)
+    return new UnionType(parameters)
   }
 
   toString = (): string => {

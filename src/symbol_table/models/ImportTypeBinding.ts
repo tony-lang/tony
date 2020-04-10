@@ -37,8 +37,4 @@ export class ImportTypeBinding extends TypeBinding implements ImportBinding {
   set originalType(value: ParametricType) {
     this._originalType = value
   }
-
-  get transformedOriginalName(): string {
-    return this.originalName
-  }
 }

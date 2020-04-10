@@ -25,14 +25,11 @@ export class GenerateImport {
     sourcePath: string,
     bindings: ImportBinding[],
     suffix?: string,
-    transformOriginalName = true,
   ): string => {
     const compiledSourcePath = GenerateImport.getCompiledSourcePath(sourcePath)
     const aliases = bindings
       .map((binding) => {
-        const originalName = transformOriginalName
-          ? binding.transformedOriginalName
-          : binding.originalName
+        const originalName = binding.originalName
         const name = binding.transformedName
 
         return `${originalName} as ${name}${suffix ? suffix : ''}`
@@ -51,7 +48,6 @@ export class GenerateImport {
       sourcePath,
       bindings,
       EXTERNAL_IMPORT_SUFFIX,
-      false,
     )
     const currying = bindings
       .map((binding) => {

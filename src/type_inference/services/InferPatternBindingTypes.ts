@@ -122,9 +122,9 @@ export class InferPatternBindingTypes {
 
     type = typeHint.unify(type, this._typeConstraints)
     type = defaultType.unify(type, this._typeConstraints)
-    type = binding.type.disj(type, this._typeConstraints)
 
-    binding.type = type
+    binding.type = binding.type.disj(type, this._typeConstraints)
+
     return type
   }
 

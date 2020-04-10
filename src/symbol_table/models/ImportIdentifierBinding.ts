@@ -34,8 +34,4 @@ export class ImportIdentifierBinding extends IdentifierBinding
   set originalName(value: string) {
     this._originalName = value
   }
-
-  get transformedOriginalName(): string {
-    return this.originalName
-  }
 }

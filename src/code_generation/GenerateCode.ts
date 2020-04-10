@@ -17,13 +17,15 @@ import { isNotUndefined } from '../utilities'
 export const INTERNAL_TEMP_TOKEN = Object.freeze('#TONY_INTERNAL_TEMP')
 
 export class GenerateCode {
+  private _bindingTransformedNames: Map<Parser.SyntaxNode, string>
   private _fileScope: FileModuleScope
   private _listComprehensionGeneratorCountStack: number[] = []
 
   private _walkFileModuleScope: WalkFileModuleScope
 
-  constructor(fileScope: FileModuleScope) {
+  constructor(fileScope: FileModuleScope, bindingTransformedNames: Map<Parser.SyntaxNode, string>) {
     this._fileScope = fileScope
+    this._bindingTransformedNames = bindingTransformedNames
 
     this._walkFileModuleScope = new WalkFileModuleScope(fileScope)
   }

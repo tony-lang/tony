@@ -27,4 +27,16 @@ export class TypeConstraints {
 
     this._map.set(variable.name, type)
   }
+
+  dup = (): TypeConstraints => {
+    const constraints = new TypeConstraints()
+
+    constraints._map = this._map
+
+    return constraints
+  }
+
+  replace = (constraints: TypeConstraints): void => {
+    this._map = constraints._map
+  }
 }

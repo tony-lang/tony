@@ -44,7 +44,10 @@ export class InferTypes {
   private _walkFileModuleScope: WalkFileModuleScope
 
   // used to communicate type of provided value to when branches
-  private caseValueType: Type | undefined
+  private _caseValueType: Type | undefined
+
+  // used to store information on which implementation is used of overloaded bindings
+  private _bindingTransformedNames = new Map<Parser.SyntaxNode, string>()
 
   constructor(fileScope: FileModuleScope) {
     this._fileScope = fileScope
@@ -52,7 +55,7 @@ export class InferTypes {
     this._walkFileModuleScope = new WalkFileModuleScope(fileScope)
   }
 
-  perform = (): void => {
+  perform = (): Map<Parser.SyntaxNode, string> => {
     assert(
       this._fileScope.tree !== undefined,
       'Syntax tree of file scope should be present.',
@@ -65,6 +68,8 @@ export class InferTypes {
         error.filePath = this._fileScope.filePath
       throw error
     }
+
+    return this._bindingTransformedNames
   }
 
   // eslint-disable-next-line max-lines-per-function
@@ -248,7 +253,7 @@ export class InferTypes {
   }
 
   private handleCase = (node: Parser.SyntaxNode): Type => {
-    this.caseValueType = this.traverse(node.namedChild(0)!)
+    this._caseValueType = this.traverse(node.namedChild(0)!)
     const branchTypes = node.namedChildren
       .slice(1)
       .map((child) => this.traverse(child))
@@ -410,7 +415,7 @@ export class InferTypes {
         this,
         this._walkFileModuleScope.scope,
         this._typeConstraints,
-      ).perform(patternNode, this.caseValueType!)
+      ).perform(patternNode, this._caseValueType!)
     })
 
     return

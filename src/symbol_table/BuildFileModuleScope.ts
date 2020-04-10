@@ -281,7 +281,7 @@ export class BuildFileModuleScope {
   private addIdentifierBinding = (binding: IdentifierBinding): void => {
     const matchingBinding = this._scope.resolveBinding(binding.name)
     if (matchingBinding instanceof IdentifierBinding)
-      matchingBinding.type = matchingBinding.type.disj(binding.type)
+      matchingBinding.addImplementation(binding.type)
 
     this._scope.addBinding(binding)
   }
