@@ -28,7 +28,7 @@
   },
   "homepage": "https://github.com/tony-lang/tony#readme",
   "dependencies": {
-    "core-js": "^3.6.4",
+    "core-js": "^3.6.5",
     "deep-equal": "^2.0.1",
     "inquirer": "^7.1.0",
     "mkdirp": "^1.0.3",
