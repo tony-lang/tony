@@ -46,7 +46,7 @@
     "@babel/preset-typescript": "^7.10.1",
     "@types/deep-equal": "^1.0.1",
     "@types/inquirer": "^6.5.0",
-    "@types/mkdirp": "^1.0.0",
+    "@types/mkdirp": "^1.0.1",
     "@typescript-eslint/eslint-plugin": "^2.34.0",
     "@typescript-eslint/parser": "^3.1.0",
     "ava": "^3.8.2",
