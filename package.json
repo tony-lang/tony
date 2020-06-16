@@ -30,7 +30,7 @@
   "dependencies": {
     "core-js": "^3.6.5",
     "deep-equal": "^2.0.3",
-    "inquirer": "^7.1.0",
+    "inquirer": "^7.2.0",
     "mkdirp": "^1.0.3",
     "outdent": "^0.7.1",
     "tree-sitter": "^0.16.1",
