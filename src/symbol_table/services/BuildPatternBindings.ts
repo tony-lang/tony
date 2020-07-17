@@ -35,7 +35,7 @@ export class BuildPatternBindings {
     node: Parser.SyntaxNode,
   ): IdentifierBinding[] => {
     const name = node.namedChild(0)!.text
-    // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     const type = node.typeNode ? new BuildType().handleTypeConstructor(node.typeNode) : new TypeVariable()
 
