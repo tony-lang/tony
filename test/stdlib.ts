@@ -1,5 +1,4 @@
 export const print = console.log
-// eslint-disable-next-line @typescript-eslint/camelcase
 export const to_str = (n: number): string => String(n)
 
 export const neg = (n: number): number => -n
