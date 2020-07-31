@@ -35,7 +35,7 @@
     "outdent": "^0.7.1",
     "tree-sitter": "^0.16.1",
     "tree-sitter-tony": "0.2.0-alpha.12",
-    "webpack": "^4.44.0",
+    "webpack": "^4.44.1",
     "webpack-cli": "^3.3.12"
   },
   "devDependencies": {
