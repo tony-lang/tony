@@ -5842,10 +5842,10 @@ tree-sitter-tony@0.2.0-alpha.12:
     nan "^2.14.0"
     prebuild-install "^5.3.3"
 
-tree-sitter@^0.16.1:
-  version "0.16.2"
-  resolved "https://registry.yarnpkg.com/tree-sitter/-/tree-sitter-0.16.2.tgz#5a24015520237738bfe5bee7758667217786f3ad"
-  integrity sha512-1d9oNXVUWJGzpPyTwI7qBHoGZYLD4BU04bHSxj9PqRgR3URY8fXqk2LhFCu7AFBDQHifcinMxss5CqYXCTGcLQ==
+tree-sitter@^0.17.0:
+  version "0.17.0"
+  resolved "https://registry.yarnpkg.com/tree-sitter/-/tree-sitter-0.17.0.tgz#c3bcfcafeb3d4a30ee717a6cf3ffb5c8c6257816"
+  integrity sha512-LAzch94k5tLIQFCWKnpW29+K5rbODM9nfxARame7sKOD2P0MRRIdGC/ps0FIu+odKKowWC8YOKZ63St+uxEw1A==
   dependencies:
     nan "^2.14.0"
     prebuild-install "^5.0.0"
