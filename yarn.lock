@@ -2,6 +2,13 @@
 # yarn lockfile v1
 
 
+"@asgerf/dts-tree-sitter@^0.1.0":
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/@asgerf/dts-tree-sitter/-/dts-tree-sitter-0.1.0.tgz#d4b77cb5f03a0b1e5141bf4e6fab98f388fc061e"
+  integrity sha512-L1SaiDRbBXLIOxwaW/S3H/LvevCdRLrQh48gFqMX/CCtR1IMYGFqAt3/x8kK/SwEzzH0Ke8JrRHD3w3kVgubTg==
+  dependencies:
+    tree-sitter "^0.16.1"
+
 "@babel/cli@^7.10.5":
   version "7.11.6"
   resolved "https://registry.yarnpkg.com/@babel/cli/-/cli-7.11.6.tgz#1fcbe61c2a6900c3539c06ee58901141f3558482"
@@ -4068,7 +4075,7 @@ minimatch@^3.0.4:
   dependencies:
     brace-expansion "^1.1.7"
 
-minimist@^1.2.0, minimist@^1.2.5:
+minimist@^1.2.0, minimist@^1.2.3, minimist@^1.2.5:
   version "1.2.5"
   resolved "https://registry.yarnpkg.com/minimist/-/minimist-1.2.5.tgz#67d66014b66a6a8aaa0c083c5fd58df4e4e97602"
   integrity sha512-FM9nNUYrRBAELZQT3xeZQ7fmMOBg6nWNmJKTcgsJeaLstP/UODVpGsr5OhXhhXg6f+qtJ8uiZ+PUxkDWcgIXLw==
@@ -4112,6 +4119,11 @@ mixin-deep@^1.2.0:
     for-in "^1.0.2"
     is-extendable "^1.0.1"
 
+mkdirp-classic@^0.5.3:
+  version "0.5.3"
+  resolved "https://registry.yarnpkg.com/mkdirp-classic/-/mkdirp-classic-0.5.3.tgz#fa10c9115cc6d8865be221ba47ee9bed78601113"
+  integrity sha512-gKLcREMhtuZRwRAfqP3RFW+TK4JqApVBtOIftVgjuABpAtpxhPGaDcfvbhNvD0B8iD1oUr/txX35NjcaY6Ns/A==
+
 mkdirp@^0.5.0, mkdirp@^0.5.1, mkdirp@^0.5.3:
   version "0.5.4"
   resolved "https://registry.yarnpkg.com/mkdirp/-/mkdirp-0.5.4.tgz#fd01504a6797ec5c9be81ff43d204961ed64a512"
@@ -4151,10 +4163,10 @@ mute-stream@0.0.8:
   resolved "https://registry.yarnpkg.com/mute-stream/-/mute-stream-0.0.8.tgz#1630c42b2251ff81e2a283de96a5497ea92e5e0d"
   integrity sha512-nnbWWOkoWyUsTjKrhgD0dcz22mdkSnpYqbEjIm2nhwhuxlSkpywJmBo8h0ZqJdkp73mb90SssHkN4rsRaBAfAA==
 
-nan@^2.12.1, nan@^2.14.0:
-  version "2.14.0"
-  resolved "https://registry.yarnpkg.com/nan/-/nan-2.14.0.tgz#7818f722027b2459a86f0295d434d1fc2336c52c"
-  integrity sha512-INOFj37C7k3AfaNTtX8RhsTw7qRy7eLET14cROi9+5HAVbbHuIWUHEauBv5qT4Av2tWasiTY1Jw6puUNqRJXQg==
+nan@^2.12.1, nan@^2.14.0, nan@^2.14.1:
+  version "2.14.2"
+  resolved "https://registry.yarnpkg.com/nan/-/nan-2.14.2.tgz#f5376400695168f4cc694ac9393d0c9585eeea19"
+  integrity sha512-M2ufzIiINKCuDfBSAUr1vWQ+vuVcA9kqx8JJUsbQi6yf1uGRyb7HfpdfUr5qLXf3B/t8dPvcjhKMmlfnP47EzQ==
 
 nanomatch@^1.2.9:
   version "1.2.13"
@@ -4743,16 +4755,16 @@ posix-character-classes@^0.1.0:
   resolved "https://registry.yarnpkg.com/posix-character-classes/-/posix-character-classes-0.1.1.tgz#01eac0fe3b5af71a2a6c02feabb8c1fef7e00eab"
   integrity sha1-AerA/jta9xoqbAL+q7jB/vfgDqs=
 
-prebuild-install@^5.0.0, prebuild-install@^5.3.3:
-  version "5.3.3"
-  resolved "https://registry.yarnpkg.com/prebuild-install/-/prebuild-install-5.3.3.tgz#ef4052baac60d465f5ba6bf003c9c1de79b9da8e"
-  integrity sha512-GV+nsUXuPW2p8Zy7SarF/2W/oiK8bFQgJcncoJ0d7kRpekEA0ftChjfEaF9/Y+QJEc/wFR7RAEa8lYByuUIe2g==
+prebuild-install@^5.0.0, prebuild-install@^5.3.5:
+  version "5.3.6"
+  resolved "https://registry.yarnpkg.com/prebuild-install/-/prebuild-install-5.3.6.tgz#7c225568d864c71d89d07f8796042733a3f54291"
+  integrity sha512-s8Aai8++QQGi4sSbs/M1Qku62PFK49Jm1CbgXklGz4nmHveDq0wzJkg7Na5QbnO1uNH8K7iqx2EQ/mV0MZEmOg==
   dependencies:
     detect-libc "^1.0.3"
     expand-template "^2.0.3"
     github-from-package "0.0.0"
-    minimist "^1.2.0"
-    mkdirp "^0.5.1"
+    minimist "^1.2.3"
+    mkdirp-classic "^0.5.3"
     napi-build-utils "^1.0.1"
     node-abi "^2.7.0"
     noop-logger "^0.1.1"
@@ -5858,13 +5870,22 @@ touch@^3.1.0:
   dependencies:
     nopt "~1.0.10"
 
-tree-sitter-tony@0.2.0-alpha.12:
-  version "0.2.0-alpha.12"
-  resolved "https://registry.yarnpkg.com/tree-sitter-tony/-/tree-sitter-tony-0.2.0-alpha.12.tgz#bab5dc12098f6b7a09b65f5cf9527fb13230ab5e"
-  integrity sha512-wdxj3g/Pe4yoPtyC3Sw5fPB3tNoa8412mNiA+T+1/EW/Yh3lyTETo7JGKznEtWwxCsdlWsYfBUpgwfSw9HNP3w==
+tree-sitter-tony@0.2.0-alpha.14:
+  version "0.2.0-alpha.14"
+  resolved "https://registry.yarnpkg.com/tree-sitter-tony/-/tree-sitter-tony-0.2.0-alpha.14.tgz#bcb72de168da476cf58ff73e9a42632578b88145"
+  integrity sha512-uAERQRiyjYjRVHCe33UrmeuQMFqqvjkohVjCDoZfmrAmua91svUxLXr9ye+U5VHon2m+XiDOqfoHdwZB6OaFKA==
+  dependencies:
+    "@asgerf/dts-tree-sitter" "^0.1.0"
+    nan "^2.14.1"
+    prebuild-install "^5.3.5"
+
+tree-sitter@^0.16.1:
+  version "0.16.2"
+  resolved "https://registry.yarnpkg.com/tree-sitter/-/tree-sitter-0.16.2.tgz#5a24015520237738bfe5bee7758667217786f3ad"
+  integrity sha512-1d9oNXVUWJGzpPyTwI7qBHoGZYLD4BU04bHSxj9PqRgR3URY8fXqk2LhFCu7AFBDQHifcinMxss5CqYXCTGcLQ==
   dependencies:
     nan "^2.14.0"
-    prebuild-install "^5.3.3"
+    prebuild-install "^5.0.0"
 
 tree-sitter@^0.17.0:
   version "0.17.1"
