@@ -14,9 +14,9 @@ export class InferStringType {
     )
     const typeConstraint = interpolations.reduce(
       (typeConstraint: TypeConstraint<ParametricType>, answer) =>
-        typeConstraint.unify(answer.typeConstraint) as TypeConstraint<
-          ParametricType
-        >,
+        typeConstraint.unify(
+          answer.typeConstraint,
+        ) as TypeConstraint<ParametricType>,
       new TypeConstraint(new ParametricType(STRING_TYPE)),
     )
 

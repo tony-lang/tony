@@ -5,10 +5,7 @@ import { TypeVariable } from './TypeVariable'
 export class TypeEquivalenceClass {
   private _types: Type[]
 
-  constructor(
-    typeEqualityGraph: TypeEqualityGraph,
-    types: Type[]
-  ) {
+  constructor(typeEqualityGraph: TypeEqualityGraph, types: Type[]) {
     this._types = TypeEquivalenceClass.reduce(typeEqualityGraph, types)
   }
 
@@ -20,11 +17,10 @@ export class TypeEquivalenceClass {
     return this._types
   }
 
-  includes = (type: Type): boolean => this._types.some(otherType => type.equals(otherType))
+  includes = (type: Type): boolean =>
+    this._types.some((otherType) => type.equals(otherType))
 
-  representative = (
-    typeEqualityGraph: TypeEqualityGraph
-  ): Type | undefined =>
+  representative = (typeEqualityGraph: TypeEqualityGraph): Type | undefined =>
     TypeEquivalenceClass.buildRepresentative(typeEqualityGraph, this._types)
 
   toString = (): string =>
@@ -50,7 +46,7 @@ export class TypeEquivalenceClass {
     types: Type[],
   ): Type[] =>
     types.reduce((types: Type[], type) => {
-      if (types.some(otherType => type.equals(otherType))) return types
+      if (types.some((otherType) => type.equals(otherType))) return types
 
       TypeEquivalenceClass.buildRepresentative(typeEqualityGraph, types)
       return [...types, type]
@@ -60,13 +56,21 @@ export class TypeEquivalenceClass {
     typeEqualityGraph: TypeEqualityGraph,
     types: Type[],
   ): Type | undefined => {
-    const immediateTypes = types.filter(type => !(type instanceof TypeVariable))
+    const immediateTypes = types.filter(
+      (type) => !(type instanceof TypeVariable),
+    )
     if (immediateTypes.length == 0) return
 
-    console.log(typeEqualityGraph.toString(), immediateTypes.map(t => t.toString()))
-    return immediateTypes.reduce((representative: Type, type) =>
-      representative.unsafeUnify(type, typeEqualityGraph),
-      // representative.unsafeUnify(type),
-    ).reduce(typeEqualityGraph)
+    console.log(
+      typeEqualityGraph.toString(),
+      immediateTypes.map((t) => t.toString()),
+    )
+    return immediateTypes
+      .reduce(
+        (representative: Type, type) =>
+          representative.unsafeUnify(type, typeEqualityGraph),
+        // representative.unsafeUnify(type),
+      )
+      .reduce(typeEqualityGraph)
   }
 }

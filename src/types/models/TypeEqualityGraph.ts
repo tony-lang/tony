@@ -12,7 +12,9 @@ export class TypeEqualityGraph {
   }
 
   add = (typeVariable: TypeVariable, type: Type): void =>
-    this.addEquivalenceClass(new TypeEquivalenceClass(this, [typeVariable, type]))
+    this.addEquivalenceClass(
+      new TypeEquivalenceClass(this, [typeVariable, type]),
+    )
 
   private addEquivalenceClass = (equivalence: TypeEquivalenceClass): void => {
     const [

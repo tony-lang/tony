@@ -78,8 +78,11 @@ export class ParametricType extends Type {
     if (!(type instanceof ParametricType)) return false
     if (this.parameters.length != type.parameters.length) return false
 
-    return this.name === type.name && this.parameters.every((parameter, i) =>
-      parameter.equals(type.parameters[i]),
+    return (
+      this.name === type.name &&
+      this.parameters.every((parameter, i) =>
+        parameter.equals(type.parameters[i]),
+      )
     )
   }
 

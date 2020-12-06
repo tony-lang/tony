@@ -8,9 +8,10 @@ import {
 } from '../models'
 
 export class DistributeTypeDisjunction<T extends AST.SyntaxNode> {
-  perform = ([disjunction, ...otherDisjunctions]: GeneralizedDisjunction<
-    T
-  >[]): AccumulatedDisjunction<T> => {
+  perform = ([
+    disjunction,
+    ...otherDisjunctions
+  ]: GeneralizedDisjunction<T>[]): AccumulatedDisjunction<T> => {
     if (disjunction === undefined) return []
 
     const distributedAnswers = this.perform(otherDisjunctions)
