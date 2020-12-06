@@ -20,7 +20,7 @@ jobs:
       - name: Install dependencies
         run: yarn install
       - name: Install dependencies
-        run: yarn rebuild tree-sitter
+        run: npm rebuild --update-binary tree-sitter
       - name: Build
         run: yarn build
       - name: Prettier
