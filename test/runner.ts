@@ -35,8 +35,6 @@ const setupTestCase = async (t: ExecutionContext, files: File[]) => {
 const runTestCase = (entryPath: string): { stdout: string; stderr: string } => {
   const nodeProcess = childProcess.spawnSync('node', [entryPath])
 
-  console.log(entryPath, nodeProcess.stdout.toString())
-
   return {
     stdout: nodeProcess.stdout.toString(),
     stderr: nodeProcess.stderr.toString(),
