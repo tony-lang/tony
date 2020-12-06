@@ -59,7 +59,7 @@ export class BuildFileModuleScope {
     })
     try {
       this.traverse(this._fileScope.tree.rootNode)
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof CompileError) error.filePath = this._filePath
       throw error
     }
@@ -98,7 +98,7 @@ export class BuildFileModuleScope {
         default:
           node.namedChildren.forEach((child) => this.traverse(child))
       }
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof CompileError && error.context === undefined)
         error.addContext(node)
       throw error

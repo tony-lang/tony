@@ -61,7 +61,7 @@ export class InferTypes {
 
     try {
       this.handleProgram(this._fileScope.tree.rootNode)
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof CompileError)
         error.filePath = this._fileScope.filePath
       throw error
@@ -165,7 +165,7 @@ export class InferTypes {
             `InferTypes: Could not find generator for AST node '${node.type}'.`,
           )
       }
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof CompileError && error.context === undefined)
         error.addContext(node)
       throw error

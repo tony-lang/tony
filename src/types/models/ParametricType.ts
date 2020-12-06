@@ -74,7 +74,7 @@ export class ParametricType extends Type {
     this.parameters.map((parameter, i) => {
       try {
         return parameter._unify(actual.parameters[i], constraints)
-      } catch (error) {
+      } catch (error: unknown) {
         assert(error instanceof TypeError, 'Should be TypeError.')
 
         error.addTypeMismatch(this, actual)

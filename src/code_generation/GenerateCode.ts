@@ -36,7 +36,7 @@ export class GenerateCode {
 
     try {
       return this.handleProgram(this._fileScope.tree.rootNode)
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof CompileError)
         error.filePath = this._fileScope.filePath
       throw error

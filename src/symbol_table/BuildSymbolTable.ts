@@ -39,7 +39,7 @@ export class BuildSymbolTable extends GraphSearch<string, GlobalScope> {
 
       this._scope.scopes = topologicalSort.map((i) => this._fileScopes[i])
       return this._scope
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof TopologicalSortError)
         throw new CyclicDependenciesError([
           this._fileScopes[error.cyclicDependency[0]].filePath,

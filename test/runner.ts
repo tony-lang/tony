@@ -109,7 +109,7 @@ const handleOutput = (
 }
 
 const handleTestCase = (
-  error: ExpectedError | undefined,
+  expectedError: ExpectedError | undefined,
   runtimeError: string | undefined,
   emit: string | undefined,
   output: string | undefined,
@@ -120,12 +120,12 @@ const handleTestCase = (
   try {
     const entryPath = await compile(sourcePath, {})
 
-    if (error !== undefined) t.fail('Did not encounter expected error')
+    if (expectedError !== undefined) t.fail('Did not encounter expected error')
 
     if (emit !== undefined) handleEmit(t, entryPath, emit)
     handleOutput(t, entryPath, output, runtimeError)
-  } catch (err) {
-    handleError(t, err, error)
+  } catch (error) {
+    if (error instanceof Error) handleError(t, error, expectedError)
   }
 }
 

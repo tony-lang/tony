@@ -61,7 +61,7 @@ export class InferApplicationType {
 
     try {
       parameterType.unify(argumentType, typeConstraints)
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof TypeError)
         this.handleArgumentTypeMismatch(error, valueType, argumentTypes)
       throw error
@@ -80,7 +80,7 @@ export class InferApplicationType {
       argumentTypes,
     )
 
-  private handleVoidParameterType = (valueType: CurriedType): void => {
+  private handleVoidParameterType = (valueType: Type): void => {
     if (!(valueType instanceof ParametricType && valueType.name === VOID_TYPE))
       return
 
