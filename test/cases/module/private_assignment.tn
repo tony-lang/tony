@@ -1,0 +1,8 @@
+# @file index.tn
+module M
+  internal := (x) => x
+  export fn := (x) => internal(x)
+print(M->fn(0))
+
+# @output
+# 0

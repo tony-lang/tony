@@ -1,2 +1,0 @@
-print(if true then 'hello')
-print(if true then 'hello' else 'world')

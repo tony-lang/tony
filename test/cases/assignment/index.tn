@@ -1,0 +1,8 @@
+# @file index.tn
+abstraction := (x) =>
+  return y := x
+
+print(abstraction(0).to_str)
+
+# @output
+# 0

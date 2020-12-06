@@ -1,0 +1,15 @@
+# @file index.tn
+a :=
+  if false then 'hello'
+  else if false
+    'world'
+  else 'oh'
+print(a)
+
+b := if true
+  0
+print(b.to_str)
+
+# @output
+# oh
+# 0

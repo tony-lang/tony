@@ -9,7 +9,8 @@
     "start": "nodemon --watch src --watch test --exec 'yarn build' -e ts",
     "lint": "prettier --check src test && eslint src test --ext .ts",
     "prettier": "prettier --write src test",
-    "test": "ava dist/test/index.test.js"
+    "test": "ava dist/test/index.test.js",
+    "retest": "yarn build && yarn test"
   },
   "engines": {
     "node": ">=12.0"

@@ -1,4 +1,0 @@
-list := [x + y | x in [1, 2, 3], y in [4, 5] if x + y % 2 == 0]
-print(list[0].to_str)
-print(list[1].to_str)
-print(list[2].to_str)

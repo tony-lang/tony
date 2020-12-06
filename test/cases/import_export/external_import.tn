@@ -1,0 +1,10 @@
+# @file index.tn
+import { print: puts :: String -> Void } from './lib.js'
+
+puts('hello world')
+
+# @file lib.js
+export const print = console.log
+
+# @output
+# hello world

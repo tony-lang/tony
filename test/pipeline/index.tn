@@ -1,6 +1,0 @@
-'hello world'.print
-
-print(99 . (+1) . to_str)
-
-inc := +1
-print(99.inc.to_str)
