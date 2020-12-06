@@ -1,11 +1,11 @@
+import { CompileError, compile } from '../src'
 import { ExecutionContext, TestInterface } from 'ava'
 import { ExpectedError, File, TestCase } from './types'
-import { compile, CompileError } from '../src'
+import { STDLIB, TEST_OUT_DIR_PATH } from './constants'
 import childProcess from 'child_process'
 import fs from 'fs'
 import mkdirp from 'mkdirp'
 import path from 'path'
-import { STDLIB, TEST_OUT_DIR_PATH } from './constants'
 
 const copyExample = async (
   outputPath: string,
@@ -43,6 +43,25 @@ const runTestCase = (entryPath: string): { stdout: string; stderr: string } => {
   }
 }
 
+const handleCompileError = (
+  t: ExecutionContext,
+  actual: CompileError,
+  expected: ExpectedError,
+) => {
+  t.is(actual.name, expected.code, 'Wrong error thrown')
+  t.is(
+    actual.filePath.slice(TEST_OUT_DIR_PATH.length + 1),
+    expected.file,
+    'Error thrown in the wrong file',
+  )
+  t.is(actual.context.start.row, expected.line, 'Error thrown in wrong row')
+  t.is(
+    actual.context.start.column,
+    expected.pos,
+    'Error thrown in wrong column',
+  )
+}
+
 const handleError = (
   t: ExecutionContext,
   actual: Error,
@@ -53,18 +72,7 @@ const handleError = (
       `Failed test with unexpected error [${actual.name}] ${actual.message}`,
     )
   } else if (actual instanceof CompileError) {
-    t.is(actual.name, expected.code, 'Wrong error thrown')
-    t.is(
-      actual.filePath.slice(TEST_OUT_DIR_PATH.length + 1),
-      expected.file,
-      'Error thrown in the wrong file',
-    )
-    t.is(actual.context.start.row, expected.line, 'Error thrown in wrong row')
-    t.is(
-      actual.context.start.column,
-      expected.pos,
-      'Error thrown in wrong column',
-    )
+    handleCompileError(t, actual, expected)
   } else {
     t.fail(`[${actual.name}] ${actual.message}`)
   }

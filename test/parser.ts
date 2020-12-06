@@ -1,5 +1,5 @@
-import { TEST_EMITS_PATH } from './constants'
 import { Command, TestCase } from './types'
+import { TEST_EMITS_PATH } from './constants'
 import fs from 'fs'
 import path from 'path'
 
@@ -14,8 +14,13 @@ export class ParsingError extends Error {
   }
 }
 
+type ParserState = {
+  testCase: TestCase
+  currentCommand: string | undefined
+}
+
 // @error <file>:<line>:<pos> <code>
-const parseErrorCommand = (testCase: TestCase, value: string): TestCase => {
+const handleErrorCommand = (testCase: TestCase, value: string): TestCase => {
   const args = value.split(' ')
   if (args.length !== 2)
     throw new ParsingError('@error: requires two arguments')
@@ -38,7 +43,7 @@ const parseErrorCommand = (testCase: TestCase, value: string): TestCase => {
 }
 
 // @runtime-error <error>
-const parseRuntimeErrorCommand = (
+const handleRuntimeErrorCommand = (
   testCase: TestCase,
   value: string,
 ): TestCase => ({
@@ -47,7 +52,7 @@ const parseRuntimeErrorCommand = (
 })
 
 // @emit <path>
-const parseEmitCommand = (testCase: TestCase, value: string): TestCase => ({
+const handleEmitCommand = (testCase: TestCase, value: string): TestCase => ({
   ...testCase,
   emit: fs.readFileSync(path.join(TEST_EMITS_PATH, value)).toString(),
 })
@@ -55,7 +60,7 @@ const parseEmitCommand = (testCase: TestCase, value: string): TestCase => ({
 // @output
 // hello
 // world
-const parseOutputCommand = (testCase: TestCase, value: string): TestCase => ({
+const handleOutputCommand = (testCase: TestCase, value: string): TestCase => ({
   ...testCase,
   output: value
     .split('\n')
@@ -65,7 +70,7 @@ const parseOutputCommand = (testCase: TestCase, value: string): TestCase => ({
 
 // @file <path>
 // IO->print('hello\nworld')
-const parseFileCommand = (testCase: TestCase, value: string): TestCase => {
+const handleFileCommand = (testCase: TestCase, value: string): TestCase => {
   const [path, ...lines] = value.split('\n')
 
   if (path === '') throw new ParsingError('@file: given path must be nonempty')
@@ -91,6 +96,21 @@ const detectCommand = (value: string): Command | undefined => {
   else if (value.startsWith(`# ${Command.File}`)) return Command.File
 }
 
+const handleCommand = (testCase: TestCase, command: Command, value: string) => {
+  switch (command) {
+    case Command.Error:
+      return handleErrorCommand(testCase, value)
+    case Command.RuntimeError:
+      return handleRuntimeErrorCommand(testCase, value)
+    case Command.Emit:
+      return handleEmitCommand(testCase, value)
+    case Command.Output:
+      return handleOutputCommand(testCase, value)
+    case Command.File:
+      return handleFileCommand(testCase, value)
+  }
+}
+
 const parseCommand = (
   testCase: TestCase,
   currentCommand: string | undefined,
@@ -103,17 +123,24 @@ const parseCommand = (
 
   const value = currentCommand.slice(command.length + 2).trim()
 
-  switch (command) {
-    case Command.Error:
-      return parseErrorCommand(testCase, value)
-    case Command.RuntimeError:
-      return parseRuntimeErrorCommand(testCase, value)
-    case Command.Emit:
-      return parseEmitCommand(testCase, value)
-    case Command.Output:
-      return parseOutputCommand(testCase, value)
-    case Command.File:
-      return parseFileCommand(testCase, value)
+  return handleCommand(testCase, command, value)
+}
+
+const parseCommands = (
+  { testCase, currentCommand }: ParserState,
+  line: string,
+) => {
+  const isNewCommand =
+    detectCommand(line) !== undefined && currentCommand !== undefined
+  if (isNewCommand)
+    return {
+      testCase: parseCommand(testCase, currentCommand),
+      currentCommand: line,
+    }
+
+  return {
+    testCase,
+    currentCommand: currentCommand ? `${currentCommand}\n${line}` : line,
   }
 }
 
@@ -124,26 +151,10 @@ export const parseTestCase = (
   const lines = content.split('\n')
 
   try {
-    const { testCase, currentCommand } = lines.reduce<{
-      testCase: TestCase
-      currentCommand: string | undefined
-    }>(
-      ({ testCase, currentCommand }, line) => {
-        const isNewCommand =
-          detectCommand(line) !== undefined && currentCommand !== undefined
-        if (isNewCommand)
-          return {
-            testCase: parseCommand(testCase, currentCommand),
-            currentCommand: line,
-          }
-
-        return {
-          testCase,
-          currentCommand: currentCommand ? `${currentCommand}\n${line}` : line,
-        }
-      },
-      { testCase: { name, files: [] }, currentCommand: undefined },
-    )
+    const { testCase, currentCommand } = lines.reduce(parseCommands, {
+      testCase: { name, files: [] },
+      currentCommand: undefined,
+    })
 
     const finalTestCase = parseCommand(testCase, currentCommand)
     if (finalTestCase.files.length === 0)

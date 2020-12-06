@@ -1,9 +1,9 @@
-import fs from 'fs'
-import path from 'path'
-import { isNotUndefined } from '../src/utilities'
 import { TEST_DIR_PATH } from './constants'
-import { parseTestCase } from './parser'
 import { TestCase } from './types'
+import fs from 'fs'
+import { isNotUndefined } from '../src/utilities'
+import { parseTestCase } from './parser'
+import path from 'path'
 
 const selectDirectories = (file: string) =>
   fs.statSync(path.join(TEST_DIR_PATH, file)).isDirectory()

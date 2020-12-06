@@ -21,8 +21,10 @@ jobs:
         run: yarn install
       - name: Build
         run: yarn build
-      - name: Prettier & ESLint
-        run: yarn lint
+      - name: Prettier
+        run: yarn prettierlint
+      - name: ESLint
+        run: yarn eslint
       - name: TypeScript
         run: yarn tsc
       - name: Tests
