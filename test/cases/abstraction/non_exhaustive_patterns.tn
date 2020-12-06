@@ -1,0 +1,5 @@
+# @runtime-error Non-exhaustive patterns
+
+# @file index.tn
+fn := (a, b, 1, { c }) => [a, b, c]
+fn(0, 1, 1, {})

@@ -1,0 +1,6 @@
+# @error index.tn:16:5 MissingBindingError
+
+# @file index.tn
+case []
+when [1], [1, x] then 0
+else !1

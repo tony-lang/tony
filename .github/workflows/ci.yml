@@ -8,8 +8,8 @@ jobs:
     strategy:
       matrix:
         node:
-          - '12.x'
-          # - '13.x'
+          # - '12.x'
+          - '14.x'
 
     name: Node ${{ matrix.node }}
     steps:
@@ -21,8 +21,10 @@ jobs:
         run: yarn install
       - name: Build
         run: yarn build
-      - name: Prettier & ESLint
-        run: yarn lint
+      - name: Prettier
+        run: yarn prettierlint
+      - name: ESLint
+        run: yarn eslint
       - name: TypeScript
         run: yarn tsc
       - name: Tests

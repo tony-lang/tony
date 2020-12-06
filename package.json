@@ -7,9 +7,13 @@
   "scripts": {
     "build": "babel . --ignore dist,node_modules --out-dir dist --extensions .ts",
     "start": "nodemon --watch src --watch test --exec 'yarn build' -e ts",
-    "lint": "prettier --check src test && eslint src test --ext .ts",
+    "prettierlint": "prettier --check src test",
+    "eslint": "eslint src test --ext .ts",
+    "lint": "yarn prettierlint && yarn eslint",
     "prettier": "prettier --write src test",
-    "test": "ava dist/test/index.test.js"
+    "fix": "yarn prettier && yarn eslint --fix",
+    "test": "ava dist/test/index.test.js",
+    "retest": "yarn build && yarn test"
   },
   "engines": {
     "node": ">=12.0"

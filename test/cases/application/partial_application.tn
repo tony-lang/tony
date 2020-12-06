@@ -1,0 +1,7 @@
+# @file index.tn
+print(((a, b) => [a, b])(1)(2)[1].to_str)
+print(((a, b) => [a, b])(?, 1)(2)[1].to_str)
+
+# @output
+# 2
+# 1

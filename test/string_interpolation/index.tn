@@ -1,5 +1,0 @@
-name := 'Tony'
-print('hello {name}')
-
-inc := +1
-print('Results\\: {0.inc.to_str}, {1.inc.to_str}')

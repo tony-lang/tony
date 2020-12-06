@@ -1,0 +1,5 @@
+# @error index.tn:16:0 TypeError
+
+# @file index.tn
+fn := (a, b, 1, { c }) => [a, b, c]
+fn(0, 'hello', 1, { c: 2 })
