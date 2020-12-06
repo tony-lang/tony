@@ -18,11 +18,7 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - name: Install dependencies
-        run: yarn install
-      - name: Reinstall tree-sitter
-        run: |
-          rm -rf node_modules/tree-sitter
-          yarn install
+        run: yarn install --force
       - name: Build
         run: yarn build
       - name: Prettier
