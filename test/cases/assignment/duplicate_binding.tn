@@ -1,0 +1,5 @@
+# @error index.tn:1:0 DuplicateBindingError
+
+# @file index.tn
+x := 1
+x := 2
