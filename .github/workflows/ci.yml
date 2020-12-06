@@ -8,7 +8,7 @@ jobs:
     strategy:
       matrix:
         node:
-          - '11.x'
+          - '12.x'
           # - '13.x'
 
     name: Node ${{ matrix.node }}
@@ -19,6 +19,8 @@ jobs:
           node-version: ${{ matrix.node }}
       - name: Install dependencies
         run: yarn install
+      - name: Install dependencies
+        run: yarn rebuild tree-sitter
       - name: Build
         run: yarn build
       - name: Prettier
