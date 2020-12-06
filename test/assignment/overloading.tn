@@ -1,0 +1,5 @@
+x := 1
+x := 'string'
+
+print(x)
+print(x.to_str)

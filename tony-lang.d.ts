@@ -3,24 +3,30 @@ import Parser from 'tree-sitter'
 declare module 'tony-lang' {
   export function compile(
     file: string,
-    { outFile, emit, webpack, webpackMode, verbose }: {
-      outFile?: string;
-      emit?: boolean;
-      webpack?: boolean;
-      webpackMode?: string;
-      verbose?: boolean;
-    }
+    {
+      outFile,
+      emit,
+      webpack,
+      webpackMode,
+      verbose,
+    }: {
+      outFile?: string
+      emit?: boolean
+      webpack?: boolean
+      webpackMode?: string
+      verbose?: boolean
+    },
   ): Promise<string | undefined>
 
   export function exec(
     file: string,
     args: string[],
-    { verbose }: { verbose?: boolean }
+    { verbose }: { verbose?: boolean },
   ): Promise<void>
 
   export function parse(
     file: string,
-    { verbose }: { verbose?: boolean }
+    { verbose }: { verbose?: boolean },
   ): Promise<Parser.Tree>
 
   export const VERSION: string
@@ -44,15 +50,34 @@ declare module 'tony-lang' {
 
   export class ImportOutsideFileModuleScopeError extends CompileError {}
 
+  export class IndeterminateTypeError extends CompileError {
+    get types(): string[]
+  }
+
   export class InternalError extends Error {}
 
-  export class InvalidPropertyAccessError extends CompileError {
-    get property(): string
-    get representation(): string
+  export class InternalTypeError extends InternalError {
+    get trace(): [string, string][]
+  }
+
+  export class InvalidExternalTypeImportError extends CompileError {
+    get type(): string
+  }
+
+  export class InvalidModuleAccessError extends CompileError {
+    get binding(): string | undefined
+    get type(): string
+  }
+
+  export class InvalidUseOfTypeAsValueError extends CompileError {
     get type(): string
   }
 
   export class MissingBindingError extends CompileError {
+    get binding(): string
+  }
+
+  export class MissingExternalImportTypeHintError extends CompileError {
     get binding(): string
   }
 
@@ -62,7 +87,7 @@ declare module 'tony-lang' {
   }
 
   export class TypeError extends CompileError {
-    get typeTrace(): [string, string][]
+    get trace(): InternalTypeError[]
   }
 
   export class UnknownImportError extends CompileError {

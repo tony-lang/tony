@@ -1,8 +1,8 @@
-import { Binding } from '../models'
+import { BindingTemplate } from '../models'
 import { MissingBindingError } from '../../errors'
 
 export class UnifyPatternBindings {
-  perform = (bindings: Binding[][]): Binding[] => {
+  perform = (bindings: BindingTemplate[][]): BindingTemplate[] => {
     return bindings.reduce((acc, bindings) => {
       this.checkBindingMissing(acc, bindings)
 
@@ -10,7 +10,7 @@ export class UnifyPatternBindings {
     })
   }
 
-  checkBindingMissing = (a: Binding[], b: Binding[]): void => {
+  checkBindingMissing = (a: BindingTemplate[], b: BindingTemplate[]): void => {
     const missingBinding =
       a.find((binding) => !b.includes(binding)) ||
       b.find((binding) => !a.includes(binding))

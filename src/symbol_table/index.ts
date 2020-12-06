@@ -1,11 +1,14 @@
 export {
   Binding,
+  BindingTemplate,
   FileModuleScope,
   IdentifierBinding,
-  ImportBinding,
+  IdentifierBindingTemplate,
+  IdentifierImport,
   ModuleScope,
   NestedScope,
-  TypeBinding,
+  ModuleBinding,
+  ModuleImport,
 } from './models'
 export { BuildSymbolTable } from './BuildSymbolTable'
 export { WalkFileModuleScope } from './WalkFileModuleScope'

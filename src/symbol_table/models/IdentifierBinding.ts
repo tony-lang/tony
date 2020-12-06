@@ -1,34 +1,53 @@
+import { Type, TypeConstraint } from '../../types'
 import { Binding } from './Binding'
-import { Type } from '../../types'
-
-const INTERNAL_IDENTIFIER_PREFIX = Object.freeze('tony_internal_')
+import Parser from 'tree-sitter'
 
 export class IdentifierBinding implements Binding {
-  private static count = 0
-
-  private _id: number
+  private _filePath: string | undefined
   private _isExported: boolean
   private _isImplicit: boolean
+  private _isImported: boolean
   private _name: string
-  protected _type: Type
+  private _node: Parser.SyntaxNode
+  private _transformedName: string
+  private _transformedImportName: string | undefined
+  protected _typeConstraint: TypeConstraint<Type>
 
+  // eslint-disable-next-line max-lines-per-function
   constructor(
+    node: Parser.SyntaxNode,
     name: string,
-    type: Type,
+    transformedName: string,
+    typeConstraint: TypeConstraint<Type>,
     {
       isExported = false,
       isImplicit = false,
-    }: { isExported?: boolean; isImplicit?: boolean } = {
+      importInformation,
+    }: {
+      isExported?: boolean
+      isImplicit?: boolean
+      importInformation?: {
+        filePath: string
+        transformedImportName: string
+      }
+    } = {
       isExported: false,
       isImplicit: false,
     },
   ) {
+    this._filePath = importInformation?.filePath
     this._isExported = isExported
     this._isImplicit = isImplicit
+    this._isImported = importInformation !== undefined
     this._name = name
-    this._type = type
+    this._node = node
+    this._transformedName = transformedName
+    this._transformedImportName = importInformation?.transformedImportName
+    this._typeConstraint = typeConstraint
+  }
 
-    this._id = IdentifierBinding.count += 1
+  get filePath(): string | undefined {
+    return this._filePath
   }
 
   get isExported(): boolean {
@@ -40,22 +59,30 @@ export class IdentifierBinding implements Binding {
   }
 
   get isImported(): boolean {
-    return false
+    return this._isImported
   }
 
   get name(): string {
     return this._name
   }
 
-  get type(): Type {
-    return this._type
+  get node(): Parser.SyntaxNode {
+    return this._node
   }
 
-  set type(value: Type) {
-    this._type = value
+  get typeConstraint(): TypeConstraint<Type> {
+    return this._typeConstraint
+  }
+
+  set typeConstraint(value: TypeConstraint<Type>) {
+    this._typeConstraint = value
   }
 
   get transformedName(): string {
-    return `${INTERNAL_IDENTIFIER_PREFIX}${this._id}`
+    return this._transformedName
+  }
+
+  get transformedImportName(): string | undefined {
+    return this._transformedImportName
   }
 }

@@ -41,7 +41,7 @@ const inferTypes = (fileScopes: FileModuleScope[], verbose: boolean): void =>
     if (verbose)
       console.log(`Running type inference on ${fileScope.filePath}...`)
 
-    new InferTypes(fileScope).perform()
+    fileScope.annotatedTree = new InferTypes(fileScope).perform()
   })
 
 const generateCode = async (

@@ -13,9 +13,6 @@ print(z.to_str)
 
 [(1, h), i] := [(1, 'hello'), (2, 'Tony')]
 print(h)
-# Dynamic tuple access
-# print(i[0].to_str)
-# print(i[1])
 
 [j, 1, k = 200] := [0, 1]
 print(j.to_str)

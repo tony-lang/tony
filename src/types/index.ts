@@ -1,17 +1,14 @@
 export {
-  CurriedType,
-  IdentifierProperty,
+  ModuleType,
   ParametricType,
-  RepresentationKind,
   Type,
-  TypeConstraints,
-  TypeProperty,
+  TypeConstraint,
+  TypeEqualityGraph,
   TypeVariable,
 } from './models'
-export { BuildRepresentation, BuildType } from './services'
+export { BuildType } from './services'
 
-export const INTERNAL_PARTIAL_APPLICATION_TYPE_NAME = Object.freeze('?')
-
+export const FUNCTION_TYPE = Object.freeze('->')
 export const VOID_TYPE = Object.freeze('Void')
 export const BOOLEAN_TYPE = Object.freeze('Boolean')
 export const NUMBER_TYPE = Object.freeze('Number')
@@ -22,6 +19,7 @@ export const MAP_TYPE = Object.freeze('Map')
 export const TUPLE_TYPE = Object.freeze('Tuple')
 
 export const BASIC_TYPES = Object.freeze([
+  FUNCTION_TYPE,
   VOID_TYPE,
   BOOLEAN_TYPE,
   NUMBER_TYPE,

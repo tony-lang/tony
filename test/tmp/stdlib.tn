@@ -5,7 +5,7 @@ import {
   add: + :: Number -> Number -> Number,
   sub: - :: Number -> Number -> Number,
   mod: % :: Number -> Number -> Number,
-  concat: ++ :: [Number] -> [Number] -> [Number],
+  concat: + :: [Number] -> [Number] -> [Number],
   leq: <= :: Number -> Number -> Boolean,
   lt: < :: Number -> Number -> Boolean,
   geq: >= :: Number -> Number -> Boolean,

@@ -1,5 +1,4 @@
-import { BuildType, TypeVariable } from '../../types'
-import { IdentifierBinding } from '../models'
+import { IdentifierBindingTemplate } from '../models'
 import Parser from 'tree-sitter'
 
 export class BuildPatternBindings {
@@ -17,7 +16,7 @@ export class BuildPatternBindings {
     this._isImplicit = isImplicit
   }
 
-  perform = (node: Parser.SyntaxNode): IdentifierBinding[] => {
+  perform = (node: Parser.SyntaxNode): IdentifierBindingTemplate[] => {
     if (
       node.type === 'identifier_pattern' ||
       node.type === 'shorthand_pair_identifier_pattern'
@@ -25,22 +24,19 @@ export class BuildPatternBindings {
       return this.handleIdentifierPattern(node)
 
     return node.namedChildren.reduce(
-      (names: IdentifierBinding[], child) => names.concat(this.perform(child)),
+      (names: IdentifierBindingTemplate[], child) =>
+        names.concat(this.perform(child)),
       [],
     )
   }
 
-  // prettier-ignore
   private handleIdentifierPattern = (
     node: Parser.SyntaxNode,
-  ): IdentifierBinding[] => {
+  ): IdentifierBindingTemplate[] => {
     const name = node.namedChild(0)!.text
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    const type = node.typeNode ? new BuildType().handleTypeConstructor(node.typeNode) : new TypeVariable()
 
     return [
-      new IdentifierBinding(name, type, {
+      new IdentifierBindingTemplate(node, name, {
         isExported: this._isExported,
         isImplicit: this._isImplicit,
       }),

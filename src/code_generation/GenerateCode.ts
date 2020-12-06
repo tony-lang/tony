@@ -1,3 +1,4 @@
+import * as AST from '../ast'
 import {
   CollectDefaultValues,
   GenerateBlock,
@@ -11,31 +12,26 @@ import {
   TRANSFORM_PLACEHOLDER_ARGUMENT,
   TRANSFORM_REST_PATTERN,
 } from '../constants'
-import Parser from 'tree-sitter'
-import { isNotUndefined } from '../utilities'
 
 export const INTERNAL_TEMP_TOKEN = Object.freeze('#TONY_INTERNAL_TEMP')
 
 export class GenerateCode {
   private _fileScope: FileModuleScope
-  private _listComprehensionGeneratorCountStack: number[] = []
-
   private _walkFileModuleScope: WalkFileModuleScope
 
   constructor(fileScope: FileModuleScope) {
     this._fileScope = fileScope
-
     this._walkFileModuleScope = new WalkFileModuleScope(fileScope)
   }
 
   perform = (): string => {
     assert(
-      this._fileScope.tree !== undefined,
-      'Syntax tree of file scope should be present.',
+      this._fileScope.annotatedTree !== undefined,
+      'Annotated syntax tree of file scope should be present.',
     )
 
     try {
-      return this.handleProgram(this._fileScope.tree.rootNode)
+      return this.handleProgram(this._fileScope.annotatedTree)
     } catch (error) {
       if (error instanceof CompileError)
         error.filePath = this._fileScope.filePath
@@ -44,128 +40,110 @@ export class GenerateCode {
   }
 
   // eslint-disable-next-line max-lines-per-function
-  traverse = (node: Parser.SyntaxNode): string | undefined => {
-    switch (node.type) {
-      case 'abstraction':
-        return this.handleAbstraction(node)
-      case 'abstraction_branch':
-        return this.handleAbstractionBranch(node)
-      case 'access':
-        return this.handleAccess(node)
-      case 'application':
-        return this.handleApplication(node)
-      case 'argument':
-        return this.handleArgument(node)
-      case 'arguments':
-        return this.handleArguments(node)
-      case 'assignment':
-        return this.handleAssignment(node)
-      case 'block':
-        return this.handleBlock(node)
-      case 'boolean':
-        return node.text
-      case 'case':
-        return this.handleCase(node)
-      case 'comment':
-        return
-      case 'else_if_clause':
-        return this.handleElseIfClause(node)
-      case 'else_if_clauses':
-        return this.handleElseIfClauses(node)
-      case 'export':
-        return this.handleExport(node)
-      case 'expression_pair':
-        return this.handleExpressionPair(node)
-      case 'generator':
-        return this.handleGenerator(node)
-      case 'generators':
-        return this.handleGenerators(node)
-      case 'identifier':
-        return this.handleIdentifier(node)
-      case 'identifier_pattern':
-        return this.handleIdentifierPattern(node)
-      case 'identifier_pattern_name':
-        return this.handleIdentifierPatternName(node)
-      case 'if':
-        return this.handleIf(node)
-      case 'import':
-        return
-      case 'infix_application':
-        return this.handleInfixApplication(node)
-      case 'interpolation':
-        return this.handleInterpolation(node)
-      case 'list':
-        return this.handleList(node)
-      case 'list_comprehension':
-        return this.handleListComprehension(node)
-      case 'list_pattern':
-        return this.handleListPattern(node)
-      case 'map':
-        return this.handleMap(node)
-      case 'map_pattern':
-        return this.handleMapPattern(node)
-      case 'module':
-        return this.handleModule(node)
-      case 'number':
-        return node.text
-      case 'parameters':
-        return this.handleParameters(node)
-      case 'pattern_list':
-        return this.handlePatternList(node)
-      case 'pattern_pair':
-        return this.handlePatternPair(node)
-      case 'pipeline':
-        return this.handlePipeline(node)
-      case 'prefix_application':
-        return this.handlePrefixApplication(node)
-      case 'program':
-        return this.handleProgram(node)
-      case 'regex':
-        return node.text
-      case 'rest_list':
-        return this.handleRestList(node)
-      case 'rest_map':
-        return this.handleRestMap(node)
-      case 'rest_tuple':
-        return this.handleRestTuple(node)
-      case 'return':
-        return this.handleReturn(node)
-      case 'shorthand_access_identifier':
-        return this.handleShorthandAccessIdentifier(node)
-      case 'shorthand_pair_identifier':
-        return this.handleShorthandPairIdentifier(node)
-      case 'shorthand_pair_identifier_pattern':
-        return this.handleShorthandPairIdentifierPattern(node)
-      case 'spread_list':
-      case 'spread_map':
-      case 'spread_tuple':
-        return this.handleSpread(node)
-      case 'string':
-        return this.handleString(node)
-      case 'string_pattern':
-        return this.handleStringPattern(node)
-      case 'tuple':
-        return this.handleTuple(node)
-      case 'tuple_pattern':
-        return this.handleTuplePattern(node)
-      case 'type':
-        return this.handleType(node)
-      case 'when_clause':
-        return this.handleWhenClause(node)
-      case 'when_clauses':
-        return this.handleWhenClauses(node)
-      default:
-        throw new InternalError(
-          'GenerateCode: Could not find generator for AST node ' +
-            `'${node.type}'.`,
-        )
-    }
+  traverse = (node: AST.SyntaxNode): string => {
+    if (node.constructor === AST.Abstraction)
+      return this.handleAbstraction(node as AST.Abstraction)
+    else if (node.constructor === AST.AbstractionBranch)
+      return this.handleAbstractionBranch(node as AST.AbstractionBranch)
+    else if (node.constructor === AST.Access)
+      return this.handleAccess(node as AST.Access)
+    else if (node.constructor === AST.Application)
+      return this.handleApplication(node as AST.Application)
+    else if (node.constructor === AST.Argument)
+      return this.handleArgument(node as AST.Argument)
+    else if (node.constructor === AST.Assignment)
+      return this.handleAssignment(node as AST.Assignment)
+    else if (node.constructor === AST.Block)
+      return this.handleBlock(node as AST.Block)
+    else if (node.constructor === AST.Boolean) return (node as AST.Boolean).text
+    else if (node.constructor === AST.Case)
+      return this.handleCase(node as AST.Case)
+    else if (node.constructor === AST.ElseIf)
+      return this.handleElseIf(node as AST.ElseIf)
+    else if (node.constructor === AST.Export)
+      return this.handleExport(node as AST.Export)
+    else if (node.constructor === AST.ExpressionPair)
+      return this.handleExpressionPair(node as AST.ExpressionPair)
+    else if (node.constructor === AST.Generator)
+      return this.handleGenerator(node as AST.Generator)
+    else if (node.constructor === AST.Identifier)
+      return this.handleIdentifier(node as AST.Identifier)
+    else if (node.constructor === AST.IdentifierPattern)
+      return this.handleIdentifierPattern(node as AST.IdentifierPattern)
+    else if (node.constructor === AST.If) return this.handleIf(node as AST.If)
+    else if (node.constructor === AST.Import) return ''
+    else if (node.constructor === AST.InfixApplication)
+      return this.handleInfixApplication(node as AST.InfixApplication)
+    else if (node.constructor === AST.Interpolation)
+      return this.handleInterpolation(node as AST.Interpolation)
+    else if (node.constructor === AST.List)
+      return this.handleList(node as AST.List)
+    else if (node.constructor === AST.ListComprehension)
+      return this.handleListComprehension(node as AST.ListComprehension)
+    else if (node.constructor === AST.ListPattern)
+      return this.handleListPattern(node as AST.ListPattern)
+    else if (node.constructor === AST.Map)
+      return this.handleMap(node as AST.Map)
+    else if (node.constructor === AST.MapPattern)
+      return this.handleMapPattern(node as AST.MapPattern)
+    else if (node.constructor === AST.Module)
+      return this.handleModule(node as AST.Module)
+    else if (node.constructor === AST.Number) return (node as AST.Number).text
+    else if (node.constructor === AST.Parameters)
+      return this.handleParameters(node as AST.Parameters)
+    else if (node.constructor === AST.ParametricType)
+      return (node as AST.ParametricType).name
+    else if (node.constructor === AST.PatternPair)
+      return this.handlePatternPair(node as AST.PatternPair)
+    else if (node.constructor === AST.Pipeline)
+      return this.handlePipeline(node as AST.Pipeline)
+    else if (node.constructor === AST.PrefixApplication)
+      return this.handlePrefixApplication(node as AST.PrefixApplication)
+    else if (node.constructor === AST.Regex) return (node as AST.Regex).text
+    else if (
+      node.constructor === AST.RestList ||
+      node.constructor === AST.RestTuple
+    )
+      return this.handleRestListOrRestTuple(
+        node as AST.RestList | AST.RestTuple,
+      )
+    else if (node.constructor === AST.RestMap)
+      return this.handleRestMap(node as AST.RestMap)
+    else if (node.constructor === AST.Return)
+      return this.handleReturn(node as AST.Return)
+    else if (node.constructor === AST.ShorthandAccessIdentifier)
+      return this.handleShorthandAccessIdentifier(
+        node as AST.ShorthandAccessIdentifier,
+      )
+    else if (node.constructor === AST.ShorthandPairIdentifier)
+      return this.handleShorthandPairIdentifier(
+        node as AST.ShorthandPairIdentifier,
+      )
+    else if (node.constructor === AST.ShorthandPairIdentifierPattern)
+      return this.handleShorthandPairIdentifierPattern(
+        node as AST.ShorthandPairIdentifierPattern,
+      )
+    else if (node.constructor === AST.Spread)
+      return this.handleSpread(node as AST.Spread)
+    else if (node.constructor === AST.String)
+      return this.handleString(node as AST.String)
+    else if (node.constructor === AST.StringPattern)
+      return this.handleStringPattern(node as AST.StringPattern)
+    else if (node.constructor === AST.Tuple)
+      return this.handleTuple(node as AST.Tuple)
+    else if (node.constructor === AST.TuplePattern)
+      return this.handleTuplePattern(node as AST.TuplePattern)
+    else if (node.constructor === AST.When)
+      return this.handleWhen(node as AST.When)
+
+    throw new InternalError(
+      'Could not find generator for AST node ' + `'${node.constructor.name}'.`,
+    )
   }
 
-  private handleAbstraction = (node: Parser.SyntaxNode): string => {
-    const branches = node.namedChildren
-      .map((element) => this.traverse(element))
-      .filter(isNotUndefined)
+  private handleAbstraction = (node: AST.Abstraction): string => {
+    const branches = node.branches
+      .map((branch) => this.traverse(branch))
       .join(',')
 
     return (
@@ -174,14 +152,14 @@ export class GenerateCode {
     )
   }
 
-  private handleAbstractionBranch = (node: Parser.SyntaxNode): string => {
+  private handleAbstractionBranch = (node: AST.AbstractionBranch): string => {
     this._walkFileModuleScope.peekBlock()
-    const parameters = this.traverse(node.namedChild(0)!)!
+    const parameters = this.traverse(node.parameters)
     this._walkFileModuleScope.leaveBlock()
 
-    const body = this.traverse(node.namedChild(1)!)
+    const body = this.traverse(node.body)
     const [pattern, identifiers] = ResolvePattern.perform(parameters)
-    const defaults = new CollectDefaultValues(this).perform(node.namedChild(0)!)
+    const defaults = new CollectDefaultValues(this).perform(node.parameters)
 
     return (
       `[${pattern},${defaults},(match)=>{` +
@@ -189,55 +167,42 @@ export class GenerateCode {
     )
   }
 
-  private handleAccess = (node: Parser.SyntaxNode): string => {
-    const left = this.traverse(node.namedChild(0)!)
-    const right = this.traverse(node.namedChild(1)!)
+  private handleAccess = (node: AST.Access): string =>
+    `${this.traverse(node.value)}[${this.traverse(node.accessor)}]`
 
-    return `${left}[${right}]`
-  }
-
-  private handleApplication = (node: Parser.SyntaxNode): string => {
-    const abstraction = this.traverse(node.namedChild(0)!)
-    const args = this.traverse(node.namedChild(1)!)
-
-    return `${abstraction}(${args})`
-  }
-
-  private handleArgument = (node: Parser.SyntaxNode): string => {
-    if (node.namedChildCount == 0) return `"${TRANSFORM_PLACEHOLDER_ARGUMENT}"`
-
-    const expression = this.traverse(node.namedChild(0)!)!
-    return expression
-  }
-
-  private handleArguments = (node: Parser.SyntaxNode): string => {
-    const args = node.namedChildren
+  private handleApplication = (node: AST.Application): string =>
+    `${this.traverse(node.value)}(${node.arguments
       .map((argument) => this.traverse(argument))
-      .filter(isNotUndefined)
-      .join(',')
+      .join(',')})`
 
-    return args
+  private handleArgument = (node: AST.Argument): string => {
+    if (node.value === undefined) return `"${TRANSFORM_PLACEHOLDER_ARGUMENT}"`
+
+    return this.traverse(node.value)
   }
 
-  private handleAssignment = (node: Parser.SyntaxNode): string => {
-    const left = this.traverse(node.namedChild(0)!)!
-    const right = this.traverse(node.namedChild(1)!)
-    const [pattern, identifiers] = ResolvePattern.perform(left)
-    const defaults = new CollectDefaultValues(this).perform(node.namedChild(0)!)
+  private handleAssignment = (node: AST.Assignment): string => {
+    const [pattern, identifiers] = ResolvePattern.perform(
+      this.traverse(node.pattern),
+    )
+    const defaults = new CollectDefaultValues(this).perform(node.pattern)
 
     return (
-      `(()=>{const value=${right};[${identifiers.join(',')}]=new stdlib.` +
+      `(()=>{const value=${this.traverse(node.value)};[${identifiers.join(
+        ',',
+      )}]=new stdlib.` +
       `PatternMatch({defaults:${defaults},overmatching:true}).perform(` +
       `${pattern},value);return value})()`
     )
   }
 
-  private handleBlock = (node: Parser.SyntaxNode): string => {
+  private handleBlock = (node: AST.Block): string => {
     this._walkFileModuleScope.enterBlock()
-    const expressions = node.namedChildren
-      .map((expression) => this.traverse(expression))
-      .filter(isNotUndefined)
-    const endsWithReturn = node.lastNamedChild!.type === 'return'
+    const expressions = node.expressions.map((expression) =>
+      this.traverse(expression),
+    )
+    const endsWithReturn =
+      node.expressions[node.expressions.length - 1] instanceof AST.Return
     const block = new GenerateBlock(this._walkFileModuleScope.scope).perform(
       expressions,
       endsWithReturn,
@@ -247,235 +212,146 @@ export class GenerateCode {
     return block
   }
 
-  private handleCase = (node: Parser.SyntaxNode): string => {
-    const value = this.traverse(node.namedChild(0)!)
-    const branches = this.traverse(node.namedChild(1)!)
-    if (node.namedChildCount == 2)
+  private handleCase = (node: AST.Case): string => {
+    const value = this.traverse(node.value)
+    const branches = node.branches
+      .map((branch) => this.traverse(branch))
+      .join(',')
+    if (node.else === undefined)
       return `stdlib.ResolveAbstractionBranch.perform(${value},[${branches}])`
 
-    const defaultValue = this.traverse(node.namedChild(2)!)
+    const defaultValue = this.traverse(node.else)
     return (
       `stdlib.ResolveAbstractionBranch.perform(${value},[${branches}],` +
       `()=>${defaultValue},false)`
     )
   }
 
-  private handleElseIfClause = (node: Parser.SyntaxNode): string => {
-    const condition = this.traverse(node.namedChild(0)!)
-    const consequence = this.traverse(node.namedChild(1)!)
+  private handleElseIf = (node: AST.ElseIf): string =>
+    `else if(${this.traverse(node.condition)}){return ${this.traverse(
+      node.body,
+    )}}`
 
-    return `else if(${condition}){return ${consequence}}`
+  private handleExport = (node: AST.Export): string =>
+    this.traverse(node.declaration)
+
+  private handleExpressionPair = (node: AST.ExpressionPair): string =>
+    `[${this.traverse(node.key)}]:${this.traverse(node.value)}`
+
+  private handleGenerator = (node: AST.Generator): string => {
+    const value = this.traverse(node.value)
+    if (node.condition === undefined)
+      return `${value}.map((${node.transformedName})=>`
+
+    return `${value}.map((${node.transformedName})=>!${this.traverse(
+      node.condition,
+    )} ? "${INTERNAL_TEMP_TOKEN}" : `
   }
 
-  private handleElseIfClauses = (node: Parser.SyntaxNode): string => {
-    const clauses = node.namedChildren
-      .map((clause) => this.traverse(clause))
-      .filter(isNotUndefined)
-      .join('')
+  private handleIdentifier = (node: AST.Identifier): string =>
+    node.transformedName
 
-    return clauses
+  private handleIdentifierPattern = (node: AST.IdentifierPattern): string =>
+    `"${INTERNAL_TEMP_TOKEN}${node.transformedName}"`
+
+  private handleIf = (node: AST.If): string => {
+    let result = '(()=>{'
+
+    const condition = this.traverse(node.condition)
+    const body = this.traverse(node.body)
+    result += `if(${condition}){return ${body}}`
+
+    if (node.elseIfs.length > 0)
+      result += node.elseIfs.map((elseIf) => this.traverse(elseIf)).join('')
+
+    if (node.else) result += `else{return ${this.traverse(node.else)}}`
+
+    result += '})()'
+    return result
   }
 
-  private handleExport = (node: Parser.SyntaxNode): string => {
-    const declaration = this.traverse(node.namedChild(0)!)!
+  private handleInfixApplication = (node: AST.InfixApplication): string =>
+    `${this.traverse(node.value)}(${this.traverse(node.left)},${this.traverse(
+      node.right,
+    )})`
 
-    return declaration
-  }
+  private handleInterpolation = (node: AST.Interpolation): string =>
+    this.traverse(node.value)
 
-  private handleExpressionPair = (node: Parser.SyntaxNode): string => {
-    const left = this.traverse(node.namedChild(0)!)
-    const right = this.traverse(node.namedChild(1)!)
-
-    return `[${left}]:${right}`
-  }
-
-  private handleGenerator = (node: Parser.SyntaxNode): string => {
-    const name = node.namedChild(0)!.text
-    const binding = this._walkFileModuleScope.scope.resolveBinding(name)
-    assert(binding !== undefined, 'Binding should not be undefined.')
-    const value = this.traverse(node.namedChild(1)!)
-    if (node.namedChildCount == 2)
-      return `${value}.map((${binding.transformedName})=>`
-
-    const condition = this.traverse(node.namedChild(2)!)
-    return `${value}.map((${binding.transformedName})=>!${condition} ? "${INTERNAL_TEMP_TOKEN}" : `
-  }
-
-  private handleGenerators = (node: Parser.SyntaxNode): string => {
-    const generators = node.namedChildren
-      .map((generator) => this.traverse(generator))
-      .filter(isNotUndefined)
-      .join('')
-
-    this._listComprehensionGeneratorCountStack.push(node.namedChildCount)
-    return generators
-  }
-
-  private handleIdentifier = (node: Parser.SyntaxNode): string => {
-    const name = node.text
-    const binding = this._walkFileModuleScope.scope.resolveBinding(name)
-
-    assert(binding !== undefined, 'Binding should not be undefined.')
-
-    return binding.transformedName
-  }
-
-  private handleIdentifierPattern = (node: Parser.SyntaxNode): string =>
-    this.traverse(node.namedChild(0)!)!
-
-  private handleIdentifierPatternName = (node: Parser.SyntaxNode): string => {
-    const name = node.text
-    const binding = this._walkFileModuleScope.scope.resolveBinding(name)
-
-    assert(binding !== undefined, 'Binding should not be undefined.')
-
-    return `"${INTERNAL_TEMP_TOKEN}${binding.transformedName}"`
-  }
-
-  // eslint-disable-next-line max-lines-per-function
-  private handleIf = (node: Parser.SyntaxNode): string => {
-    const condition = this.traverse(node.namedChild(0)!)
-    const consequence = this.traverse(node.namedChild(1)!)
-    if (node.namedChildCount == 2)
-      return `(()=>{if(${condition}){return ${consequence}}})()`
-
-    if (node.namedChild(node.namedChildCount - 1)!.type === 'else_if_clauses') {
-      const clauses = this.traverse(node.namedChild(2)!)
-
-      return `(()=>{if(${condition}){return ${consequence}}${clauses}})()`
-    } else if (node.namedChildCount == 3) {
-      const alternative = this.traverse(node.namedChild(2)!)
-
-      return (
-        `(()=>{if(${condition}){return ${consequence}}` +
-        `else{return ${alternative}}})()`
-      )
-    } else {
-      const clauses = this.traverse(node.namedChild(2)!)
-      const alternative = this.traverse(node.namedChild(3)!)
-
-      return (
-        `(()=>{if(${condition}){return ${consequence}}${clauses}` +
-        `else{return ${alternative}}})()`
-      )
-    }
-  }
-
-  private handleInfixApplication = (node: Parser.SyntaxNode): string => {
-    const abstraction = this.traverse(node.namedChild(1)!)
-    const left = this.traverse(node.namedChild(0)!)
-    const right = this.traverse(node.namedChild(2)!)
-
-    return `${abstraction}(${left},${right})`
-  }
-
-  private handleInterpolation = (node: Parser.SyntaxNode): string =>
-    this.traverse(node.namedChild(0)!)!
-
-  private handleList = (node: Parser.SyntaxNode): string => {
-    const elements = node.namedChildren
+  private handleList = (node: AST.List): string => {
+    const elements = node.elements
       .map((element) => this.traverse(element))
-      .filter(isNotUndefined)
       .join(',')
 
     return `[${elements}]`
   }
 
-  private handleListComprehension = (node: Parser.SyntaxNode): string => {
+  private handleListComprehension = (node: AST.ListComprehension): string => {
     this._walkFileModuleScope.peekBlock()
-    const generators = this.traverse(node.namedChild(1)!)
+    const generators = node.generators
+      .map((generator) => this.traverse(generator))
+      .join('')
     this._walkFileModuleScope.leaveBlock()
 
-    const body = this.traverse(node.namedChild(0)!)
-    const generatorCount = this._listComprehensionGeneratorCountStack.pop()
-    assert(
-      generatorCount !== undefined,
-      'generatorCount should have been pushed when analyzing generators.',
-    )
+    const body = this.traverse(node.body)
 
     return (
-      `${generators}${body}${')'.repeat(generatorCount)}.flat(` +
-      `${generatorCount - 1}).filter(e=>e!=="${INTERNAL_TEMP_TOKEN}")`
+      `${generators}${body}${')'.repeat(node.generators.length)}.flat(` +
+      `${node.generators.length - 1}).filter(e=>e!=="${INTERNAL_TEMP_TOKEN}")`
     )
   }
 
-  private handleListPattern = (node: Parser.SyntaxNode): string => {
-    const elements = node.namedChildren
+  private handleListPattern = (node: AST.ListPattern): string => {
+    const elements = node.elements
       .map((element) => this.traverse(element))
-      .filter(isNotUndefined)
       .join(',')
 
     return `[${elements}]`
   }
 
-  private handleMap = (node: Parser.SyntaxNode): string => {
-    const elements = node.namedChildren
+  private handleMap = (node: AST.Map): string => {
+    const elements = node.elements
       .map((element) => this.traverse(element))
-      .filter(isNotUndefined)
       .join(',')
 
     return `{${elements}}`
   }
 
-  private handleMapPattern = (node: Parser.SyntaxNode): string => {
-    const elements = node.namedChildren
+  private handleMapPattern = (node: AST.MapPattern): string => {
+    const elements = node.elements
       .map((element) => this.traverse(element))
-      .filter(isNotUndefined)
       .join(',')
 
     return `{${elements}}`
   }
 
-  private handleModule = (node: Parser.SyntaxNode): string => {
-    const name = this.traverse(node.namedChild(0)!)
-    const body = this.traverse(node.namedChild(1)!)
+  private handleModule = (node: AST.Module): string => {
+    const name = this.traverse(node.name)
 
-    return `(()=>{${name}=${body};return ${name}})()`
+    return `(()=>{${name}=${this.traverse(node.body)};return ${name}})()`
   }
 
-  private handleParameters = (node: Parser.SyntaxNode): string => {
-    const parameters = node.namedChildren
+  private handleParameters = (node: AST.Parameters): string => {
+    const parameters = node.parameters
       .map((parameter) => this.traverse(parameter))
-      .filter(isNotUndefined)
       .join(',')
 
     return `[${parameters}]`
   }
 
-  private handlePatternList = (node: Parser.SyntaxNode): string => {
-    const patterns = node.namedChildren
-      .map((pattern) => this.traverse(pattern))
-      .filter(isNotUndefined)
-      .join(';')
+  private handlePatternPair = (node: AST.PatternPair): string =>
+    `"[${this.traverse(node.key)}]":${this.traverse(node.value)}`
 
-    return patterns
-  }
+  private handlePipeline = (node: AST.Pipeline): string =>
+    `${this.traverse(node.value)}(${this.traverse(node.argument)})`
 
-  private handlePatternPair = (node: Parser.SyntaxNode): string => {
-    const left = this.traverse(node.namedChild(0)!)
-    const right = this.traverse(node.namedChild(1)!)
+  private handlePrefixApplication = (node: AST.PrefixApplication): string =>
+    `${this.traverse(node.value)}(${this.traverse(node.argument)})`
 
-    return `"[${left}]":${right}`
-  }
-
-  private handlePipeline = (node: Parser.SyntaxNode): string => {
-    const left = this.traverse(node.namedChild(0)!)
-    const right = this.traverse(node.namedChild(1)!)
-
-    return `${right}(${left})`
-  }
-
-  private handlePrefixApplication = (node: Parser.SyntaxNode): string => {
-    const abstraction = this.traverse(node.namedChild(0)!)
-    const argument = this.traverse(node.namedChild(1)!)
-
-    return `${abstraction}(${argument})`
-  }
-
-  private handleProgram = (node: Parser.SyntaxNode): string => {
-    const expressions = node.namedChildren
-      .map((expression) => this.traverse(expression))
-      .filter(isNotUndefined)
+  private handleProgram = (node: AST.Program): string => {
+    const expressions = node.expressions.map((expression) =>
+      this.traverse(expression),
+    )
 
     assert(
       this._walkFileModuleScope.scope instanceof FileModuleScope,
@@ -487,114 +363,85 @@ export class GenerateCode {
     )
   }
 
-  private handleRestList = (node: Parser.SyntaxNode): string => {
-    const name = this.traverse(node.namedChild(0)!)!.slice(1, -1)
+  private handleRestListOrRestTuple = (
+    node: AST.RestList | AST.RestTuple,
+  ): string => {
+    const name = this.traverse(node.name).slice(1, -1)
 
     return `"${INTERNAL_TEMP_TOKEN}${name}"`
   }
 
-  private handleRestMap = (node: Parser.SyntaxNode): string => {
-    const name = this.traverse(node.namedChild(0)!)!.slice(1, -1)
+  private handleRestMap = (node: AST.RestMap): string => {
+    const name = this.traverse(node.name).slice(1, -1)
 
     return `"['${TRANSFORM_REST_PATTERN}']":"${name}"`
   }
 
-  private handleRestTuple = (node: Parser.SyntaxNode): string => {
-    const name = this.traverse(node.namedChild(0)!)!.slice(1, -1)
+  private handleReturn = (node: AST.Return): string => {
+    if (node.value === undefined) return 'return'
 
-    return `"${INTERNAL_TEMP_TOKEN}${name}"`
-  }
-
-  private handleReturn = (node: Parser.SyntaxNode): string => {
-    if (node.namedChildCount == 0) return 'return'
-
-    const value = this.traverse(node.namedChild(0)!)
-    return `return ${value}`
+    return `return ${this.traverse(node.value)}`
   }
 
   private handleShorthandAccessIdentifier = (
-    node: Parser.SyntaxNode,
-  ): string => {
-    const name = node.text
+    node: AST.ShorthandAccessIdentifier,
+  ): string => `'${node.transformedName || node.name}'`
 
-    return `'${name}'`
-  }
-
-  private handleShorthandPairIdentifier = (node: Parser.SyntaxNode): string => {
-    const name = node.text
-    const binding = this._walkFileModuleScope.scope.resolveBinding(name)
-
-    assert(binding !== undefined, 'Binding should not be undefined.')
-
-    return `${name}:${binding.transformedName}`
-  }
+  private handleShorthandPairIdentifier = (
+    node: AST.ShorthandPairIdentifier,
+  ): string => `${node.name}:${node.transformedName}`
 
   private handleShorthandPairIdentifierPattern = (
-    node: Parser.SyntaxNode,
-  ): string => {
-    const name = node.namedChild(0)!.text
-    const identifierPattern = this.traverse(node.namedChild(0)!)!
+    node: AST.ShorthandPairIdentifierPattern,
+  ): string => `"${node.name}":"${INTERNAL_TEMP_TOKEN}${node.transformedName}"`
 
-    return `"${name}":${identifierPattern}`
-  }
+  private handleSpread = (node: AST.Spread): string =>
+    `...${this.traverse(node.value)}`
 
-  private handleSpread = (node: Parser.SyntaxNode): string => {
-    const expression = this.traverse(node.namedChild(0)!)
-
-    return `...${expression}`
-  }
-
-  private handleString = (node: Parser.SyntaxNode): string => {
-    const interpolations = node.namedChildren
-      .filter((child) => child.type === 'interpolation')
-      .map((child) => this.handleInterpolation(child))
-    const content = ParseStringContent.perform(node.text)
+  private handleString = (node: AST.String): string => {
+    const interpolations = node.interpolations.map((child) =>
+      this.traverse(child),
+    )
+    const content = ParseStringContent.perform(node.content)
       .replace(/(?<!\\){/g, '${')
       .replace(/(?<=\${).+?(?=})/g, () => interpolations.shift()!)
 
     return `\`${content}\``
   }
 
-  private handleStringPattern = (node: Parser.SyntaxNode): string => {
-    const content = ParseStringContent.perform(node.text, '"')
+  private handleStringPattern = (node: AST.StringPattern): string => {
+    const content = ParseStringContent.perform(node.content, '"')
 
     return `"${content}"`
   }
 
-  private handleTuple = (node: Parser.SyntaxNode): string => {
-    const elements = node.namedChildren
+  private handleTuple = (node: AST.Tuple): string => {
+    const elements = node.elements
       .map((element) => this.traverse(element))
-      .filter(isNotUndefined)
       .join(',')
 
     return `[${elements}]`
   }
 
-  private handleTuplePattern = (node: Parser.SyntaxNode): string => {
-    const elements = node.namedChildren
+  private handleTuplePattern = (node: AST.TuplePattern): string => {
+    const elements = node.elements
       .map((element) => this.traverse(element))
-      .filter(isNotUndefined)
       .join(',')
 
     return `[${elements}]`
   }
 
-  private handleType = (node: Parser.SyntaxNode): string => node.text
-
-  // eslint-disable-next-line max-lines-per-function
-  private handleWhenClause = (node: Parser.SyntaxNode): string => {
+  private handleWhen = (node: AST.When): string => {
     this._walkFileModuleScope.peekBlock()
-    const patterns = this.traverse(node.namedChild(0)!)!
-      .split(';')
-      .map((pattern) => ResolvePattern.perform(pattern))
+    const patterns = node.patterns.map((pattern) =>
+      ResolvePattern.perform(this.traverse(pattern)),
+    )
     this._walkFileModuleScope.leaveBlock()
 
-    const body = this.traverse(node.namedChild(1)!)
-    const defaults = node
-      .namedChild(0)!
-      .namedChildren.map((pattern) =>
-        new CollectDefaultValues(this).perform(pattern),
-      )
+    const body = this.traverse(node.body)
+    const defaults = node.patterns.map((pattern) =>
+      new CollectDefaultValues(this).perform(pattern),
+    )
 
     return patterns
       .map(([pattern, identifiers], i) => {
@@ -604,14 +451,5 @@ export class GenerateCode {
         )
       })
       .join(',')
-  }
-
-  private handleWhenClauses = (node: Parser.SyntaxNode): string => {
-    const clauses = node.namedChildren
-      .map((clause) => this.traverse(clause))
-      .filter(isNotUndefined)
-      .join(',')
-
-    return clauses
   }
 }

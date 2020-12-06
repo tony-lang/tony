@@ -4,13 +4,13 @@ import {
   JAVASCRIPT_FILE_EXTENSION_REGEX,
   TARGET_FILE_EXTENSION,
 } from '../../constants'
-import { ImportBinding } from '../../symbol_table/models'
+import { Binding } from '../../symbol_table'
 import { InternalError } from '../../errors'
 
 const EXTERNAL_IMPORT_SUFFIX = Object.freeze('_EXT')
 
 export class GenerateImport {
-  perform = (sourcePath: string, bindings: ImportBinding[]): string => {
+  perform = (sourcePath: string, bindings: Binding[]): string => {
     if (FILE_EXTENSION_REGEX.test(sourcePath))
       return this.handleImport(sourcePath, bindings)
     else if (JAVASCRIPT_FILE_EXTENSION_REGEX.test(sourcePath))
@@ -23,19 +23,16 @@ export class GenerateImport {
 
   private handleImport = (
     sourcePath: string,
-    bindings: ImportBinding[],
+    bindings: Binding[],
     suffix?: string,
-    transformOriginalName = true,
   ): string => {
     const compiledSourcePath = GenerateImport.getCompiledSourcePath(sourcePath)
     const aliases = bindings
       .map((binding) => {
-        const originalName = transformOriginalName
-          ? binding.transformedOriginalName
-          : binding.originalName
-        const name = binding.transformedName
+        const name = binding.transformedImportName
+        const alias = binding.transformedName
 
-        return `${originalName} as ${name}${suffix ? suffix : ''}`
+        return `${name} as ${alias}${suffix ? suffix : ''}`
       })
       .join(',')
 
@@ -45,13 +42,12 @@ export class GenerateImport {
   // eslint-disable-next-line max-lines-per-function
   private handleJavaScript = (
     sourcePath: string,
-    bindings: ImportBinding[],
+    bindings: Binding[],
   ): string => {
     const importStatement = this.handleImport(
       sourcePath,
       bindings,
       EXTERNAL_IMPORT_SUFFIX,
-      false,
     )
     const currying = bindings
       .map((binding) => {

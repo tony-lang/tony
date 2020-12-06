@@ -1,33 +1,24 @@
 import {
-  Binding,
-  FileModuleScope,
-  GlobalScope,
-  IdentifierBinding,
-  ModuleScope,
-  NestedScope,
-  TypeBinding,
-} from './models'
-import {
-  BuildImportBindings,
+  BuildImports,
   BuildPatternBindings,
   UnifyPatternBindings,
 } from './services'
-import {
-  BuildRepresentation,
-  BuildType,
-  LIST_TYPE,
-  ParametricType,
-  RepresentationKind,
-  TypeVariable,
-} from '../types'
+import { BuildType, ModuleType } from '../types'
 import {
   CompileError,
-  DuplicateBindingError,
   ExportOutsideModuleScopeError,
   ImportOutsideFileModuleScopeError,
   MissingBindingError,
   assert,
 } from '../errors'
+import {
+  FileModuleScope,
+  GlobalScope,
+  IdentifierBindingTemplate,
+  ModuleBinding,
+  ModuleScope,
+  NestedScope,
+} from './models'
 import { IMPORT_FILE_EXTENSIONS } from '../constants'
 import Parser from 'tree-sitter'
 import { UnknownImportError } from '../errors/UnknownImportError'
@@ -58,7 +49,7 @@ export class BuildFileModuleScope {
       verbose: this._verbose,
     })
     try {
-      this.traverse(this._fileScope.tree.rootNode)
+      CompileError.addContext(this.traverse, this._fileScope.tree.rootNode)
     } catch (error) {
       if (error instanceof CompileError) error.filePath = this._filePath
       throw error
@@ -69,47 +60,43 @@ export class BuildFileModuleScope {
 
   // eslint-disable-next-line max-lines-per-function
   private traverse = (node: Parser.SyntaxNode): void => {
-    try {
-      switch (node.type) {
-        case 'abstraction_branch':
-          return this.handleAbstractionBranch(node)
-        case 'assignment':
-          return this.handleAssignment(node)
-        case 'block':
-          return this.handleBlock(node)
-        case 'export':
-          return this.handleExport(node)
-        case 'generator':
-          return this.handleGenerator(node)
-        case 'identifier':
-          return this.handleIdentifier(node)
-        case 'import':
-          return this.handleImport(node)
-        case 'list_comprehension':
-          return this.handleListComprehension(node)
-        case 'module':
-          return this.handleModule(node)
-        case 'parameters':
-          return this.handleParameters(node)
-        case 'pattern_list':
-          return this.handlePatternList(node)
-        case 'when_clause':
-          return this.handleWhenClause(node)
-        default:
-          node.namedChildren.forEach((child) => this.traverse(child))
-      }
-    } catch (error) {
-      if (error instanceof CompileError && error.context === undefined)
-        error.addContext(node)
-      throw error
+    switch (node.type) {
+      case 'abstraction_branch':
+        return this.handleAbstractionBranch(node)
+      case 'assignment':
+        return this.handleAssignment(node)
+      case 'block':
+        return this.handleBlock(node)
+      case 'export':
+        return this.handleExport(node)
+      case 'generator':
+        return this.handleGenerator(node)
+      case 'identifier':
+        return this.handleIdentifier(node)
+      case 'import':
+        return this.handleImport(node)
+      case 'list_comprehension':
+        return this.handleListComprehension(node)
+      case 'module':
+        return this.handleModule(node)
+      case 'parameters':
+        return this.handleParameters(node)
+      case 'pattern_list':
+        return this.handlePatternList(node)
+      case 'when_clause':
+        return this.handleWhenClause(node)
+      default:
+        node.namedChildren.forEach((child) =>
+          CompileError.addContext(this.traverse, child),
+        )
     }
   }
 
   private handleAbstractionBranch = (node: Parser.SyntaxNode): void => {
     this.enterBlock()
 
-    this.traverse(node.namedChild(0)!)
-    this.traverse(node.namedChild(1)!)
+    CompileError.addContext(this.traverse, node.namedChild(0)!)
+    CompileError.addContext(this.traverse, node.namedChild(1)!)
 
     this._scope.reduce()
     this.leaveBlock()
@@ -118,18 +105,22 @@ export class BuildFileModuleScope {
   private handleAssignment = (node: Parser.SyntaxNode): void => {
     const isExported = this.disableExports()
 
-    this.traverse(node.namedChild(0)!)
+    CompileError.addContext(this.traverse, node.namedChild(0)!)
     new BuildPatternBindings({ isExported, isImplicit: false })
       .perform(node.namedChild(0)!)
-      .forEach((binding) => this.addBinding(binding))
+      .forEach((bindingTemplate) =>
+        this._scope.addBindingTemplate(bindingTemplate),
+      )
 
-    this.traverse(node.namedChild(1)!)
+    CompileError.addContext(this.traverse, node.namedChild(1)!)
   }
 
   private handleBlock = (node: Parser.SyntaxNode): void => {
     this.enterBlock()
 
-    node.namedChildren.forEach((child) => this.traverse(child))
+    node.namedChildren.forEach((child) =>
+      CompileError.addContext(this.traverse, child),
+    )
 
     this.leaveBlock()
   }
@@ -139,28 +130,26 @@ export class BuildFileModuleScope {
       throw new ExportOutsideModuleScopeError()
 
     this.enableExports()
-    this.traverse(node.namedChild(0)!)
+    CompileError.addContext(this.traverse, node.namedChild(0)!)
   }
 
   private handleGenerator = (node: Parser.SyntaxNode): void => {
-    this.traverse(node.namedChild(1)!)
+    CompileError.addContext(this.traverse, node.namedChild(1)!)
 
     const name = node.namedChild(0)!.text
-    const binding = new IdentifierBinding(
-      name,
-      new ParametricType(LIST_TYPE, [new TypeVariable()]),
-      { isImplicit: true },
-    )
-    this.addBinding(binding)
+    const bindingTemplate = new IdentifierBindingTemplate(node, name, {
+      isImplicit: true,
+    })
+    this._scope.addBindingTemplate(bindingTemplate)
 
-    if (node.namedChildCount == 3) this.traverse(node.namedChild(2)!)
+    if (node.namedChildCount == 3)
+      CompileError.addContext(this.traverse, node.namedChild(2)!)
   }
 
   private handleIdentifier = (node: Parser.SyntaxNode): void => {
     const name = node.text
 
-    if (this._scope.resolveBinding(name) === undefined)
-      throw new MissingBindingError(name)
+    if (!this._scope.isBound(name)) throw new MissingBindingError(name)
   }
 
   private handleImport = (node: Parser.SyntaxNode): void => {
@@ -173,16 +162,16 @@ export class BuildFileModuleScope {
       throw new UnknownImportError(sourcePath)
     this._fileScope.addDependency(sourcePath)
 
-    new BuildImportBindings(sourcePath)
+    new BuildImports(sourcePath)
       .perform(node)
-      .forEach((binding) => this.addBinding(binding))
+      .forEach((imp) => this._fileScope.addImport(imp))
   }
 
   private handleListComprehension = (node: Parser.SyntaxNode): void => {
     this.enterBlock()
 
-    this.traverse(node.namedChild(1)!)
-    this.traverse(node.namedChild(0)!)
+    CompileError.addContext(this.traverse, node.namedChild(1)!)
+    CompileError.addContext(this.traverse, node.namedChild(0)!)
 
     this._scope.reduce()
     this.leaveBlock()
@@ -192,26 +181,21 @@ export class BuildFileModuleScope {
     this.enableDeclaration()
     const isExported = this.disableExports()
 
-    this.traverse(node.namedChild(1)!)
+    CompileError.addContext(this.traverse, node.namedChild(1)!)
 
-    const moduleScope = this._scope.lastNestedScope
-    const exportedBindings = moduleScope.bindings.filter(
-      (binding) => binding.isExported,
-    )
-    const representation = new BuildRepresentation().perform(
-      RepresentationKind.Instance,
-      exportedBindings,
-    )
-
-    const type = new BuildType().handleType(node.namedChild(0)!)
-    const binding = new TypeBinding(type, representation, { isExported })
-    this.addBinding(binding)
+    const moduleScope = this._scope.lastNestedScope!
+    const name = new BuildType().perform(node.namedChild(0)!)
+    const type = new ModuleType(moduleScope)
+    const binding = new ModuleBinding(node, name, type, { isExported })
+    this._scope.addBinding(binding)
   }
 
   private handleParameters = (node: Parser.SyntaxNode): void => {
     new BuildPatternBindings({ isExported: false, isImplicit: true })
       .perform(node)
-      .forEach((binding) => this.addBinding(binding))
+      .forEach((bindingTemplate) =>
+        this._scope.addBindingTemplate(bindingTemplate),
+      )
   }
 
   private handlePatternList = (node: Parser.SyntaxNode): void => {
@@ -224,14 +208,16 @@ export class BuildFileModuleScope {
 
     new UnifyPatternBindings()
       .perform(bindings)
-      .forEach((binding) => this.addBinding(binding))
+      .forEach((bindingTemplate) =>
+        this._scope.addBindingTemplate(bindingTemplate),
+      )
   }
 
   private handleWhenClause = (node: Parser.SyntaxNode): void => {
     this.enterBlock()
 
-    this.traverse(node.namedChild(0)!)
-    this.traverse(node.namedChild(1)!)
+    CompileError.addContext(this.traverse, node.namedChild(0)!)
+    CompileError.addContext(this.traverse, node.namedChild(1)!)
 
     this._scope.reduce()
     this.leaveBlock()
@@ -272,12 +258,5 @@ export class BuildFileModuleScope {
 
     this._exportBindings = false
     return value
-  }
-
-  private addBinding = (binding: Binding): void => {
-    const matchingBinding = this._scope.resolveBinding(binding.name, 0)
-    if (matchingBinding) throw new DuplicateBindingError(matchingBinding.name)
-
-    this._scope.addBinding(binding)
   }
 }

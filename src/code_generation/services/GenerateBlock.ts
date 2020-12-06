@@ -30,7 +30,9 @@ export class GenerateBlock {
   }
 
   private generateDeclarations = (bindings: Binding[]): string => {
-    const declarations = bindings.map((binding) => binding.transformedName)
+    const declarations = [
+      ...new Set(bindings.map((binding) => binding.transformedName)),
+    ]
 
     return declarations.length > 0 ? `let ${declarations.join(',')}` : ''
   }

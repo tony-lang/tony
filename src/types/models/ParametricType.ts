@@ -1,7 +1,6 @@
-import { TypeError, assert } from '../../errors'
-import { CurriedType } from './CurriedType'
+import { InternalTypeError } from '../../errors'
 import { Type } from './Type'
-import { TypeConstraints } from './TypeConstraints'
+import { TypeEqualityGraph } from './TypeEqualityGraph'
 import { TypeVariable } from './TypeVariable'
 
 export class ParametricType extends Type {
@@ -23,71 +22,65 @@ export class ParametricType extends Type {
     return this._parameters
   }
 
-  concat = (type: Type): CurriedType => {
-    if (type instanceof CurriedType) return type.concat(this)
+  concat = (type: Type): ParametricType =>
+    new ParametricType(this.name, [...this.parameters, type])
 
-    return new CurriedType([this, type])
-  }
-
-  unify = (
+  // eslint-disable-next-line max-lines-per-function
+  unsafeUnify = (
     actual: Type,
-    constraints: TypeConstraints,
-    useActualParameters = false,
-  ): ParametricType =>
-    this._unify(actual, constraints, useActualParameters)._reduce(constraints)
-
-  _unify = (
-    actual: Type,
-    constraints: TypeConstraints,
-    useActualParameters = false,
+    typeEqualityGraph?: TypeEqualityGraph,
+    ignoreExpectedParameters = false,
   ): ParametricType => {
     if (actual instanceof TypeVariable) {
-      constraints.add(actual, this)
+      if (typeEqualityGraph) typeEqualityGraph.add(actual, this)
+
       return this
     } else if (
       actual instanceof ParametricType &&
       this.name === actual.name &&
-      (useActualParameters ||
+      (ignoreExpectedParameters ||
         this.parameters.length == actual.parameters.length)
-    )
-      return this.buildUnifiedType(actual, constraints, useActualParameters)
+    ) {
+      const parameters = ignoreExpectedParameters
+        ? actual.parameters
+        : this.parameters.map((parameter, i) => {
+            try {
+              return parameter.unsafeUnify(
+                actual.parameters[i],
+                typeEqualityGraph,
+              )
+            } catch (error) {
+              if (error instanceof InternalTypeError)
+                error.addTypeMismatch(this, actual)
+              throw error
+            }
+          })
 
-    throw new TypeError(this, actual, 'Non-variable types do not match')
+      return new ParametricType(this.name, parameters)
+    }
+
+    throw new InternalTypeError(
+      this,
+      actual,
+      'Non-variable types do not match.',
+    )
   }
 
-  private buildUnifiedType = (
-    actual: ParametricType,
-    constraints: TypeConstraints,
-    useActualParameters = false,
-  ): ParametricType =>
-    new ParametricType(
-      this.name,
-      useActualParameters
-        ? actual.parameters
-        : this.unifyParameters(actual, constraints),
-    )
-
-  private unifyParameters = (
-    actual: ParametricType,
-    constraints: TypeConstraints,
-  ): Type[] =>
-    this.parameters.map((parameter, i) => {
-      try {
-        return parameter._unify(actual.parameters[i], constraints)
-      } catch (error) {
-        assert(error instanceof TypeError, 'Should be TypeError.')
-
-        error.addTypeMismatch(this, actual)
-        throw error
-      }
-    })
-
-  _reduce = (constraints: TypeConstraints): ParametricType => {
+  reduce = (typeEqualityGraph: TypeEqualityGraph): Type => {
     const parameters = this.parameters.map((parameter) =>
-      parameter._reduce(constraints),
+      parameter.reduce(typeEqualityGraph),
     )
 
     return new ParametricType(this.name, parameters)
+  }
+
+  equals = (type: Type): boolean => {
+    if (!(type instanceof ParametricType)) return false
+    if (this.parameters.length != type.parameters.length) return false
+
+    return this.name === type.name && this.parameters.every((parameter, i) =>
+      parameter.equals(type.parameters[i]),
+    )
   }
 
   toString = (): string => {
