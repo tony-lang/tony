@@ -14,7 +14,9 @@ const copyExample = async (
   const completeOutputPath = path.join(TEST_OUT_DIR_PATH, outputPath)
 
   // TODO: remove once standard library is implemented
-  const fileContent = outputPath.endsWith('.tn') ? `${STDLIB}\n${content}` : content
+  const fileContent = outputPath.endsWith('.tn')
+    ? `${STDLIB}\n${content}`
+    : content
 
   await mkdirp(path.dirname(completeOutputPath))
   fs.writeFileSync(completeOutputPath, fileContent)
@@ -52,7 +54,11 @@ const handleError = (
     )
   } else if (actual instanceof CompileError) {
     t.is(actual.name, expected.code, 'Wrong error thrown')
-    t.is(actual.filePath.slice(TEST_OUT_DIR_PATH.length + 1), expected.file, 'Error thrown in the wrong file')
+    t.is(
+      actual.filePath.slice(TEST_OUT_DIR_PATH.length + 1),
+      expected.file,
+      'Error thrown in the wrong file',
+    )
     t.is(actual.context.start.row, expected.line, 'Error thrown in wrong row')
     t.is(
       actual.context.start.column,
@@ -83,12 +89,15 @@ const handleOutput = (
   const { stdout, stderr } = runTestCase(entryPath)
 
   if (stderr) {
-    if (expectedRuntimeError === undefined) t.fail(`Encountered runtime error: ${stderr}`)
+    if (expectedRuntimeError === undefined)
+      t.fail(`Encountered runtime error: ${stderr}`)
 
     t.true(stderr.includes(expectedRuntimeError))
-  } else if (expectedRuntimeError !== undefined) t.fail('Did not encounter expected runtime error')
+  } else if (expectedRuntimeError !== undefined)
+    t.fail('Did not encounter expected runtime error')
 
-  if (expected !== undefined) t.is(stdout.trim(), expected, 'Output does not match')
+  if (expected !== undefined)
+    t.is(stdout.trim(), expected, 'Output does not match')
 }
 
 const handleTestCase = (

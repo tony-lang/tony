@@ -38,7 +38,10 @@ const parseErrorCommand = (testCase: TestCase, value: string): TestCase => {
 }
 
 // @runtime-error <error>
-const parseRuntimeErrorCommand = (testCase: TestCase, value: string): TestCase => ({
+const parseRuntimeErrorCommand = (
+  testCase: TestCase,
+  value: string,
+): TestCase => ({
   ...testCase,
   runtimeError: value,
 })
@@ -54,7 +57,10 @@ const parseEmitCommand = (testCase: TestCase, value: string): TestCase => ({
 // world
 const parseOutputCommand = (testCase: TestCase, value: string): TestCase => ({
   ...testCase,
-  output: value.split('\n').map((line) => line.slice(2)).join('\n'),
+  output: value
+    .split('\n')
+    .map((line) => line.slice(2))
+    .join('\n'),
 })
 
 // @file <path>
@@ -78,7 +84,8 @@ const parseFileCommand = (testCase: TestCase, value: string): TestCase => {
 
 const detectCommand = (value: string): Command | undefined => {
   if (value.startsWith(`# ${Command.Error}`)) return Command.Error
-  else if (value.startsWith(`# ${Command.RuntimeError}`)) return Command.RuntimeError
+  else if (value.startsWith(`# ${Command.RuntimeError}`))
+    return Command.RuntimeError
   else if (value.startsWith(`# ${Command.Emit}`)) return Command.Emit
   else if (value.startsWith(`# ${Command.Output}`)) return Command.Output
   else if (value.startsWith(`# ${Command.File}`)) return Command.File
@@ -91,7 +98,8 @@ const parseCommand = (
   if (currentCommand === undefined) return testCase
 
   const command = detectCommand(currentCommand)
-  if (command === undefined) throw new ParsingError(`Invalid test command:\n${currentCommand}`)
+  if (command === undefined)
+    throw new ParsingError(`Invalid test command:\n${currentCommand}`)
 
   const value = currentCommand.slice(command.length + 2).trim()
 
@@ -109,7 +117,10 @@ const parseCommand = (
   }
 }
 
-export const parseTestCase = (name: string, content: string): TestCase | undefined => {
+export const parseTestCase = (
+  name: string,
+  content: string,
+): TestCase | undefined => {
   const lines = content.split('\n')
 
   try {
@@ -118,7 +129,8 @@ export const parseTestCase = (name: string, content: string): TestCase | undefin
       currentCommand: string | undefined
     }>(
       ({ testCase, currentCommand }, line) => {
-        const isNewCommand = detectCommand(line) !== undefined && currentCommand !== undefined
+        const isNewCommand =
+          detectCommand(line) !== undefined && currentCommand !== undefined
         if (isNewCommand)
           return {
             testCase: parseCommand(testCase, currentCommand),
