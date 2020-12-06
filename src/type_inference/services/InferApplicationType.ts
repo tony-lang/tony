@@ -80,7 +80,7 @@ export class InferApplicationType {
       argumentTypes,
     )
 
-  private handleVoidParameterType = (valueType: CurriedType): void => {
+  private handleVoidParameterType = (valueType: Type): void => {
     if (!(valueType instanceof ParametricType && valueType.name === VOID_TYPE))
       return
 
