@@ -19,6 +19,10 @@ jobs:
           node-version: ${{ matrix.node }}
       - name: Install dependencies
         run: yarn install
+      - name: Reinstall tree-sitter-tony
+        run: |
+          rm -rf node_modules/tree-sitter-tony
+          yarn install
       - name: Build
         run: yarn build
       - name: Prettier
