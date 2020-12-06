@@ -22,7 +22,7 @@ export class ResolveAbstractionBranch {
           pattern,
           args,
         )
-      } catch (error: unknown) {
+      } catch (error) {
         // branch pattern does not match arguments, try next branch
         if (error instanceof PatternNotMatching) continue
         else if (error instanceof PatternPartiallyMatching) match = undefined

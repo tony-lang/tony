@@ -88,7 +88,7 @@ export class InferPatternBindingTypes {
               `node '${patternNode.type}'.`,
           )
       }
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof CompileError && error.context === undefined)
         error.addContext(patternNode)
       throw error

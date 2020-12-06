@@ -61,7 +61,7 @@ export class InferApplicationType {
 
     try {
       parameterType.unify(argumentType, typeConstraints)
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof TypeError)
         this.handleArgumentTypeMismatch(error, valueType, argumentTypes)
       throw error

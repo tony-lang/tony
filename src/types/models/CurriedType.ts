@@ -43,7 +43,7 @@ export class CurriedType extends Type {
     this.parameters.map((parameter, i) => {
       try {
         return parameter._unify(actual.parameters[i], constraints)
-      } catch (error: unknown) {
+      } catch (error) {
         assert(error instanceof TypeError, 'Should be TypeError.')
 
         error.addTypeMismatch(this, actual)
