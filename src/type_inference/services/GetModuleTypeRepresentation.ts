@@ -1,4 +1,4 @@
-import { InvalidUseOfTypeAsValueError, MissingBindingError } from '../../errors'
+import { UseOfTypeAsValueError, MissingBindingError } from '../../errors'
 import { ModuleBinding, NestedScope } from '../../symbol_table'
 import { ModuleType, ParametricType } from '../../types'
 
@@ -14,6 +14,6 @@ export class GetModuleTypeRepresentation {
 
     if (binding === undefined) throw new MissingBindingError(type.name)
     else if (binding instanceof ModuleBinding) return binding.type
-    else throw new InvalidUseOfTypeAsValueError(binding.name)
+    else throw new UseOfTypeAsValueError(binding.name)
   }
 }

@@ -1,6 +1,6 @@
 import { CompileError } from './CompileError'
 
-export class InvalidExternalTypeImportError extends CompileError {
+export class UseOfTypeAsValueError extends CompileError {
   private _type: string
 
   constructor(type: string) {

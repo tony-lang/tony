@@ -1,8 +1,5 @@
-.vscode
 build
 dist
 node_modules
 
 *.log
-
-!.vscode/launch.template.json

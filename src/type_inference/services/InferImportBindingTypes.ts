@@ -10,7 +10,7 @@ import {
   ModuleImport,
 } from '../../symbol_table'
 import {
-  InvalidExternalTypeImportError,
+  ExternalTypeImportError,
   MissingBindingError,
   assert,
 } from '../../errors'
@@ -137,7 +137,7 @@ export class InferImportBindingTypes {
     )
 
     if (fileScope) this.handleInternalTypeImport(node, imp, fileScope)
-    else throw new InvalidExternalTypeImportError(name)
+    else throw new ExternalTypeImportError(name)
   }
 
   private handleInternalTypeImport = (
