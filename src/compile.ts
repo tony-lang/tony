@@ -1,5 +1,5 @@
 import { BuildSymbolTable, FileModuleScope } from './symbol_table'
-import { getFilePath, getOutFile, writeFile } from './utilities'
+import { getFilePath, getOutFile, writeFile } from './util'
 import { GenerateCode } from './code_generation'
 import { InferTypes } from './type_inference'
 import { compile as webpackCompile } from './webpack'

@@ -1,6 +1,6 @@
 import childProcess from 'child_process'
 
-import { getFilePath } from './utilities'
+import { getFilePath } from './util'
 
 export const exec = async (
   file: string,

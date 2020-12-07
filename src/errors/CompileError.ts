@@ -1,53 +1,22 @@
-import Parser from 'tree-sitter'
-
-type Position = {
-  row: number
-  column: number
-}
+import { Node } from '../types/ast'
+import { Path } from '../types/util'
 
 export type Context = {
-  start: Position
-  end: Position
+  filePath: Path
+  node: Node
 }
 
 export abstract class CompileError extends Error {
-  private _context: Context | undefined
-  private _filePath: string | undefined
+  private _context: Context
 
-  constructor(message?: string) {
+  constructor(context: Context, message?: string) {
     super(message)
+    this.name = this.constructor.name
+
+    this._context = context
   }
 
   get context(): Context | undefined {
     return this._context
-  }
-
-  get filePath(): string | undefined {
-    return this._filePath
-  }
-
-  set filePath(value: string | undefined) {
-    this._filePath = value
-  }
-
-  private addContext = (node: Parser.SyntaxNode): void => {
-    this._context = {
-      start: node.startPosition,
-      end: node.endPosition,
-    }
-  }
-
-  static addContext = <T extends Array<V>, U, V>(
-    fn: (node: Parser.SyntaxNode, ...args: T) => U,
-    node: Parser.SyntaxNode,
-    ...args: T
-  ): U => {
-    try {
-      return fn(node, ...args)
-    } catch (error) {
-      if (error instanceof CompileError && error.context === undefined)
-        error.addContext(node)
-      throw error
-    }
   }
 }

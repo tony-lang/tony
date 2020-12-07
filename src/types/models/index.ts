@@ -1,6 +1,0 @@
-export { ModuleType } from './ModuleType'
-export { ParametricType } from './ParametricType'
-export { Type } from './Type'
-export { TypeConstraint } from './TypeConstraint'
-export { TypeEqualityGraph } from './TypeEqualityGraph'
-export { TypeVariable } from './TypeVariable'

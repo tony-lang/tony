@@ -1,10 +1,10 @@
-import Parser from 'tree-sitter'
+import { Tree } from 'tree-sitter-tony'
 
 export class SyntaxError extends Error {
   private _filePath: string
-  private _tree: Parser.Tree
+  private _tree: Tree
 
-  constructor(filePath: string, tree: Parser.Tree) {
+  constructor(filePath: string, tree: Tree) {
     super(undefined)
     this.name = this.constructor.name
 
@@ -16,7 +16,7 @@ export class SyntaxError extends Error {
     return this._filePath
   }
 
-  get tree(): Parser.Tree {
+  get tree(): Tree {
     return this._tree
   }
 }

@@ -1,4 +1,4 @@
-import { InternalError } from './errors'
+import { InternalError } from './errors/InternalError'
 import childProcess from 'child_process'
 import path from 'path'
 

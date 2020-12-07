@@ -3,21 +3,17 @@ export { exec } from './exec'
 export { parse } from './parse'
 export { VERSION } from './version'
 
-export {
-  CompileError,
-  CyclicDependenciesError,
-  DuplicateBindingError,
-  ExportOutsideModuleScopeError,
-  ImportOutsideFileModuleScopeError,
-  IndeterminateTypeError,
-  InternalError,
-  InternalTypeError,
-  ExternalTypeImportError,
-  InvalidModuleAccessError,
-  UseOfTypeAsValueError,
-  MissingBindingError,
-  MissingExternalImportTypeHintError,
-  SyntaxError,
-  TypeError,
-  UnknownImportError,
-} from './errors'
+export { CyclicDependenciesError } from './errors/compile/CyclicDependenciesError'
+export { DuplicateBindingError } from './errors/compile/DuplicateBindingError'
+export { ExportOutsideModuleScopeError } from './errors/compile/ExportOutsideModuleScopeError'
+export { ExternalTypeImportError } from './errors/compile/ExternalTypeImportError'
+export { ImportOutsideFileModuleScopeError } from './errors/compile/ImportOutsideFileModuleScopeError'
+export { IndeterminateTypeError } from './errors/compile/IndeterminateTypeError'
+export { InvalidModuleAccessError } from './errors/compile/InvalidModuleAccessError'
+export { MissingBindingError } from './errors/compile/MissingBindingError'
+export { MissingExternalImportTypeHintError } from './errors/compile/MissingExternalImportTypeHintError'
+export { UnknownImportError } from './errors/compile/UnknownImportError'
+export { UnsupportedSyntaxError } from './errors/compile/UnsupportedSyntaxError'
+export { UseOfTypeAsValueError } from './errors/compile/UseOfTypeAsValueError'
+export { CompileError } from './errors/CompileError'
+export { SyntaxError } from './errors/SyntaxError'
