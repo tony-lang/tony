@@ -83,10 +83,6 @@ export class InferApplicationType<
       ),
       argumentsTypeEqualityGraph,
     )
-    console.log(
-      valueTypeConstraint.toString(),
-      argumentsTypeConstraint.toString(),
-    )
 
     if (valueTypeConstraint.type instanceof TypeVariable)
       return this.inferValueType(value, argumentsTypeConstraint)

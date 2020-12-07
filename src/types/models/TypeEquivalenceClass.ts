@@ -61,10 +61,6 @@ export class TypeEquivalenceClass {
     )
     if (immediateTypes.length == 0) return
 
-    console.log(
-      typeEqualityGraph.toString(),
-      immediateTypes.map((t) => t.toString()),
-    )
     return immediateTypes
       .reduce(
         (representative: Type, type) =>

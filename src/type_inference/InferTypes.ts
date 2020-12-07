@@ -87,11 +87,6 @@ export class InferTypes {
 
   chooseAnswer = (node: Parser.SyntaxNode): AST.Program => {
     const answers = CompileError.addContext(this.handleProgram, node)
-    console.log(
-      this._walkFileModuleScope.scope
-        .resolveBinding('quicksort')
-        .typeConstraint.toString(),
-    )
 
     return answers.answers.reduce((acc, answer) => {
       const unifiedTypeConstraint = acc.typeConstraint.unify(

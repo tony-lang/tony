@@ -1,4 +1,4 @@
-# @error index.tn:1:0 DuplicateBindingError
+# @error index.tn:16:0 DuplicateBindingError
 
 # @file index.tn
 x := 1
