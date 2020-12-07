@@ -1,0 +1,23 @@
+---
+blank_issues_enabled: false
+contact_links:
+  -
+    about: "Please ask and answer usage questions on Stack Overflow."
+    name: Question
+    url: "https://stackoverflow.com/questions/tagged/tony"
+  -
+    about: "Please raise issues about the CLI on its own repo."
+    name: CLI
+    url: "https://github.com/tony-lang/cli/issues/new"
+  -
+    about: "Please raise issues about the parser on its own repo."
+    name: Parser
+    url: "https://github.com/tony-lang/tree-sitter-tony/issues/new"
+  -
+    about: "Please raise issues about the language spec on its own repo."
+    name: Language Specification
+    url: "https://github.com/tony-lang/spec/issues/new"
+  -
+    about: "Please raise issues about the site on its own repo."
+    name: Website
+    url: "https://github.com/tony-lang/tony-lang.github.io/issues/new"
