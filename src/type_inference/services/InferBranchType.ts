@@ -1,16 +1,34 @@
-import { Type, TypeConstraints } from '../../types'
+import * as AST from '../../ast'
+import { Answer, Disjunction, GeneralizedDisjunction } from '../models'
+import { Type, TypeConstraint, TypeVariable } from '../../types'
+import { DistributeTypeDisjunction } from './DistributeTypeDisjunction'
 
-export class InferBranchType {
-  private _typeConstraints: TypeConstraints
+type Factory<T, U> = (branches: T[]) => U
 
-  constructor(typeConstraints: TypeConstraints) {
-    this._typeConstraints = typeConstraints
+export class InferBranchType<
+  T extends AST.SyntaxNode,
+  U extends AST.SyntaxNode
+> {
+  private _factory: Factory<T, U>
+
+  constructor(factory: Factory<T, U>) {
+    this._factory = factory
   }
 
-  perform = (branchTypes: Type[]): Type =>
-    branchTypes
-      .reduce((type, branchType) =>
-        type.unify(branchType, this._typeConstraints),
-      )
-      ._reduce(this._typeConstraints)
+  perform = (branches: GeneralizedDisjunction<T>[]): Disjunction<U> =>
+    new Disjunction(
+      new DistributeTypeDisjunction<T>().perform(branches).map((branches) => {
+        const typeConstraint = branches.typeConstraints.reduce(
+          (acc: TypeConstraint<Type> | undefined, typeConstraint) => {
+            if (acc === undefined) return
+
+            return acc.unify(typeConstraint)
+          },
+          new TypeConstraint(new TypeVariable()),
+        )
+        if (typeConstraint === undefined) return
+
+        return new Answer(this._factory(branches.nodes), typeConstraint)
+      }),
+    )
 }

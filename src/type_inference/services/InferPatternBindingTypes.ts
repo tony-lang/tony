@@ -1,3 +1,5 @@
+import * as AST from '../../ast'
+import { Answer, Disjunction } from '../models'
 import {
   BOOLEAN_TYPE,
   BuildType,
@@ -9,274 +11,310 @@ import {
   STRING_TYPE,
   TUPLE_TYPE,
   Type,
-  TypeConstraints,
+  TypeConstraint,
   TypeVariable,
 } from '../../types'
-import { CompileError, InternalError, assert } from '../../errors'
-import { IdentifierBinding, NestedScope } from '../../symbol_table'
+import { CompileError, InternalError, TypeError } from '../../errors'
+import { InferIdentifierPatternType } from './InferIdentifierPatternType'
+import { InferListType } from './InferListType'
 import { InferMapType } from './InferMapType'
+import { InferPatternPairType } from './InferPatternPairType'
+import { InferTupleType } from './InferTupleType'
 import { InferTypes } from '../InferTypes'
+import { NestedScope } from '../../symbol_table'
 import Parser from 'tree-sitter'
 
 export class InferPatternBindingTypes {
   private _inferTypes: InferTypes
   private _scope: NestedScope
-  private _typeConstraints: TypeConstraints
 
-  constructor(
-    inferTypes: InferTypes,
-    scope: NestedScope,
-    typeConstraints: TypeConstraints,
-  ) {
+  constructor(inferTypes: InferTypes, scope: NestedScope) {
     this._inferTypes = inferTypes
     this._scope = scope
-    this._typeConstraints = typeConstraints
   }
 
   perform = (
     patternNode: Parser.SyntaxNode,
-    type: Type = new TypeVariable(),
-  ): Type => {
-    const patternType = this.traverse(patternNode, type)
+    typeConstraint: TypeConstraint<Type> = new TypeConstraint(
+      new TypeVariable(),
+    ),
+  ): Disjunction<AST.Pattern> | undefined =>
+    TypeError.safe(() =>
+      CompileError.addContext(this.traverse, patternNode, typeConstraint),
+    )
 
-    assert(patternType !== undefined, 'Should not be undefined.')
-
-    return patternType
-  }
-
-  // eslint-disable-next-line max-lines-per-function
   private traverse = (
     patternNode: Parser.SyntaxNode,
-    type: Type,
-  ): Type | undefined => {
-    try {
-      switch (patternNode.type) {
-        case 'boolean':
-          return this.handleBoolean(patternNode, type)
-        case 'comment':
-          return
-        case 'identifier_pattern':
-          return this.handleIdentifierPattern(patternNode, type)
-        case 'list_pattern':
-          return this.handleListPattern(patternNode, type)
-        case 'map_pattern':
-          return this.handleMapPattern(patternNode, type)
-        case 'number':
-          return this.handleNumber(patternNode, type)
-        case 'pattern_pair':
-          return this.handlePatternPair(patternNode, type)
-        case 'regex':
-          return this.handleRegex(patternNode, type)
-        case 'rest_list':
-          return this.handleRestList(patternNode, type)
-        case 'rest_map':
-          return this.handleRestMap(patternNode, type)
-        case 'rest_tuple':
-          return this.handleRestTuple(patternNode, type)
-        case 'shorthand_pair_identifier_pattern':
-          return this.handleShorthandPairIdentifierPattern(patternNode, type)
-        case 'string_pattern':
-          return this.handleStringPattern(patternNode, type)
-        case 'parameters':
-        case 'tuple_pattern':
-          return this.handleTuplePattern(patternNode, type)
-        case 'type':
-          return this.handleType(patternNode, type)
-        default:
-          throw new InternalError(
-            'InferPatternBindingTypes: Could not find matcher for AST pattern ' +
-              `node '${patternNode.type}'.`,
-          )
-      }
-    } catch (error) {
-      if (error instanceof CompileError && error.context === undefined)
-        error.addContext(patternNode)
-      throw error
+    typeConstraint: TypeConstraint<Type>,
+  ): Disjunction<AST.Pattern> => {
+    switch (patternNode.type) {
+      case 'boolean':
+        return this.handleBoolean(patternNode, typeConstraint)
+      case 'identifier_pattern':
+        return this.handleIdentifierPattern(patternNode, typeConstraint)
+      case 'list_pattern':
+        return this.handleListPattern(patternNode, typeConstraint)
+      case 'map_pattern':
+        return this.handleMapPattern(patternNode, typeConstraint)
+      case 'number':
+        return this.handleNumber(patternNode, typeConstraint)
+      case 'pattern_pair':
+        return this.handlePatternPair(patternNode, typeConstraint)
+      case 'regex':
+        return this.handleRegex(patternNode, typeConstraint)
+      case 'rest_list':
+        return this.handleRestList(patternNode, typeConstraint)
+      case 'rest_map':
+        return this.handleRestMap(patternNode, typeConstraint)
+      case 'rest_tuple':
+        return this.handleRestTuple(patternNode, typeConstraint)
+      case 'shorthand_pair_identifier_pattern':
+        return this.handleShorthandPairIdentifierPattern(
+          patternNode,
+          typeConstraint,
+        )
+      case 'string_pattern':
+        return this.handleStringPattern(patternNode, typeConstraint)
+      case 'parameters':
+      case 'tuple_pattern':
+        return this.handleTuplePattern(patternNode, typeConstraint)
+      case 'type':
+        return this.handleType(patternNode, typeConstraint)
+      default:
+        throw new InternalError(
+          'Could not find matcher for AST pattern ' +
+            `node '${patternNode.type}'.`,
+        )
     }
   }
 
   private handleBoolean = (
     patternNode: Parser.SyntaxNode,
-    type: Type,
-  ): ParametricType =>
-    new ParametricType(BOOLEAN_TYPE).unify(type, this._typeConstraints)
+    typeConstraint: TypeConstraint<Type>,
+  ): Disjunction<AST.Boolean> => {
+    const unifiedTypeConstraint = new TypeConstraint(
+      new ParametricType(BOOLEAN_TYPE),
+    ).unify(typeConstraint)
+    if (unifiedTypeConstraint === undefined) return new Disjunction([])
 
-  // prettier-ignore
+    return new Disjunction([
+      new Answer(new AST.Boolean(patternNode.text), unifiedTypeConstraint),
+    ])
+  }
+
   private handleIdentifierPattern = (
     patternNode: Parser.SyntaxNode,
-    type: Type,
-  ): Type => {
-    const name = patternNode.namedChild(0)!.text
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    const typeHint = patternNode.typeNode ? new BuildType().perform(patternNode.typeNode) : new TypeVariable()
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    const defaultType = patternNode.defaultNode ? this._inferTypes.traverse(patternNode.defaultNode)! : new TypeVariable()
-    const binding = this._scope.resolveBinding(name, 0)
-
-    assert(
-      binding instanceof IdentifierBinding,
-      'Pattern identifier binding should be found in current scope.',
-    )
-
-    type = typeHint.unify(type, this._typeConstraints)
-    type = defaultType.unify(type, this._typeConstraints)
-    binding.type = binding.type.unify(type, this._typeConstraints)
-
-    return binding.type
-  }
+    typeConstraint: TypeConstraint<Type>,
+  ): Disjunction<AST.IdentifierPattern> =>
+    new InferIdentifierPatternType(
+      this._inferTypes,
+      this._scope,
+      (name, transformedName, def) =>
+        new AST.IdentifierPattern(name, transformedName, def),
+    ).perform(patternNode, typeConstraint)
 
   private handleListPattern = (
     patternNode: Parser.SyntaxNode,
-    type: Type,
-  ): ParametricType => {
-    const unifiedType = new ParametricType(LIST_TYPE, [
+    typeConstraint: TypeConstraint<Type>,
+  ): Disjunction<AST.ListPattern> => {
+    const listType = new ParametricType(LIST_TYPE, [
       new TypeVariable(),
-    ]).unify(type, this._typeConstraints)
-    const valueTypes = patternNode.namedChildren.map((child) =>
-      this.perform(child, unifiedType.parameters[0]),
+    ]).unsafeUnify(typeConstraint.type, typeConstraint.typeEqualityGraph)
+    const elements = patternNode.namedChildren.map((elementNode) =>
+      CompileError.addContext(
+        this.traverse,
+        elementNode,
+        new TypeConstraint(
+          listType.parameters[0],
+          typeConstraint.typeEqualityGraph,
+        ),
+      ),
     )
 
-    return valueTypes.reduce((valueType: ParametricType, otherValueType) => {
-      return valueType.unify(
-        new ParametricType(LIST_TYPE, [otherValueType]),
-        this._typeConstraints,
-      )
-    }, new ParametricType(LIST_TYPE, [new TypeVariable()]))
+    return new InferListType(
+      (elements) => new AST.ListPattern(elements as AST.Pattern[]),
+    ).perform(elements)
   }
 
   private handleMapPattern = (
     patternNode: Parser.SyntaxNode,
-    type: Type,
-  ): ParametricType => {
-    const mapTypes = patternNode.namedChildren.map((child) =>
-      this.perform(child, type),
+    typeConstraint: TypeConstraint<Type>,
+  ): Disjunction<AST.MapPattern> => {
+    const elements = patternNode.namedChildren.map((elementNode) =>
+      CompileError.addContext(this.traverse, elementNode, typeConstraint),
     )
 
-    return new InferMapType(this._typeConstraints).perform(mapTypes)
+    return new InferMapType(
+      (elements) => new AST.MapPattern(elements as AST.MapPatternElement[]),
+    ).perform(elements)
   }
 
   private handleNumber = (
     patternNode: Parser.SyntaxNode,
-    type: Type,
-  ): ParametricType =>
-    new ParametricType(NUMBER_TYPE).unify(type, this._typeConstraints)
+    typeConstraint: TypeConstraint<Type>,
+  ): Disjunction<AST.Number> => {
+    const unifiedTypeConstraint = new TypeConstraint(
+      new ParametricType(NUMBER_TYPE),
+    ).unify(typeConstraint)
+    if (unifiedTypeConstraint === undefined) return new Disjunction([])
+
+    return new Disjunction([
+      new Answer(new AST.Number(patternNode.text), unifiedTypeConstraint),
+    ])
+  }
 
   private handlePatternPair = (
     patternNode: Parser.SyntaxNode,
-    type: Type,
-  ): Type => {
-    const keyType = this._inferTypes.traverse(patternNode.namedChild(0)!)!
-    const unifiedType = new ParametricType(MAP_TYPE, [
-      keyType,
-      new TypeVariable(),
-    ]).unify(type, this._typeConstraints)
-    const valueType = this.perform(
+    typeConstraint: TypeConstraint<Type>,
+  ): Disjunction<AST.PatternPair> => {
+    const key = this._inferTypes.traverse(patternNode.namedChild(0)!)
+    const value = CompileError.addContext(
+      this.traverse,
       patternNode.namedChild(1)!,
-      unifiedType.parameters[1],
+      new TypeConstraint(new TypeVariable(), typeConstraint.typeEqualityGraph),
     )
 
-    return new ParametricType(MAP_TYPE, [keyType, valueType])
+    return new InferPatternPairType().perform(key, value, typeConstraint)
   }
 
   private handleRegex = (
     patternNode: Parser.SyntaxNode,
-    type: Type,
-  ): ParametricType =>
-    new ParametricType(REGULAR_EXPRESSION_TYPE).unify(
-      type,
-      this._typeConstraints,
-    )
+    typeConstraint: TypeConstraint<Type>,
+  ): Disjunction<AST.Regex> => {
+    const unifiedTypeConstraint = new TypeConstraint(
+      new ParametricType(REGULAR_EXPRESSION_TYPE),
+    ).unify(typeConstraint)
+    if (unifiedTypeConstraint === undefined) return new Disjunction([])
+
+    return new Disjunction([
+      new Answer(new AST.Regex(patternNode.text), unifiedTypeConstraint),
+    ])
+  }
 
   private handleRestList = (
     patternNode: Parser.SyntaxNode,
-    type: Type,
-  ): Type => {
-    const valueType = this.perform(
+    typeConstraint: TypeConstraint<Type>,
+  ): Disjunction<AST.RestList> => {
+    const value = CompileError.addContext(
+      this.handleIdentifierPattern,
       patternNode.namedChild(0)!,
-      new ParametricType(LIST_TYPE, [type]),
+      new TypeConstraint(
+        new ParametricType(LIST_TYPE, [typeConstraint.type]),
+        typeConstraint.typeEqualityGraph,
+      ),
     )
 
-    assert(valueType instanceof ParametricType, 'Should be parametric type.')
-
-    return valueType.parameters[0]
+    return new Disjunction(
+      value.answers.map(
+        (answer) =>
+          new Answer(new AST.RestList(answer.node), answer.typeConstraint),
+      ),
+    )
   }
 
-  private handleRestMap = (patternNode: Parser.SyntaxNode, type: Type): Type =>
-    this.perform(patternNode.namedChild(0)!, type)
+  private handleRestMap = (
+    patternNode: Parser.SyntaxNode,
+    typeConstraint: TypeConstraint<Type>,
+  ): Disjunction<AST.RestMap> => {
+    const value = CompileError.addContext(
+      this.handleIdentifierPattern,
+      patternNode.namedChild(0)!,
+      typeConstraint,
+    )
+
+    return new Disjunction(
+      value.answers.map(
+        (answer) =>
+          new Answer(new AST.RestMap(answer.node), answer.typeConstraint),
+      ),
+    )
+  }
 
   private handleRestTuple = (
     patternNode: Parser.SyntaxNode,
-    type: Type,
-  ): ParametricType => {
-    const valueType = this.perform(patternNode.namedChild(0)!, type)
+    typeConstraint: TypeConstraint<Type>,
+  ): Disjunction<AST.RestTuple> => {
+    const value = CompileError.addContext(
+      this.handleIdentifierPattern,
+      patternNode.namedChild(0)!,
+      typeConstraint,
+    )
 
-    assert(valueType instanceof ParametricType, 'Should be parametric type.')
-
-    return valueType
-  }
-
-  // prettier-ignore
-  private handleShorthandPairIdentifierPattern = (
-    patternNode: Parser.SyntaxNode,
-    type: Type,
-  ): ParametricType => {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    const typeHint = patternNode.typeNode ? new BuildType().perform(patternNode.typeNode) : new TypeVariable()
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    const defaultType = patternNode.defaultNode ? this._inferTypes.traverse(patternNode.defaultNode)! : new TypeVariable()
-    const valueType = typeHint.unify(defaultType, this._typeConstraints)
-    const keyType = new ParametricType(STRING_TYPE)
-
-    return new ParametricType(MAP_TYPE, [keyType, valueType]).unify(
-      type,
-      this._typeConstraints,
+    return new Disjunction(
+      value.answers.map(
+        (answer) =>
+          new Answer(new AST.RestTuple(answer.node), answer.typeConstraint),
+      ),
     )
   }
+
+  private handleShorthandPairIdentifierPattern = (
+    patternNode: Parser.SyntaxNode,
+    typeConstraint: TypeConstraint<Type>,
+  ): Disjunction<AST.ShorthandPairIdentifierPattern> =>
+    new InferIdentifierPatternType(
+      this._inferTypes,
+      this._scope,
+      (name, transformedName, def) =>
+        new AST.ShorthandPairIdentifierPattern(name, transformedName, def),
+      (type) =>
+        new ParametricType(MAP_TYPE, [new ParametricType(STRING_TYPE), type]),
+      (typeConstraint) =>
+        new TypeConstraint(
+          (typeConstraint.type as ParametricType).parameters[1],
+          typeConstraint.typeEqualityGraph,
+        ),
+    ).perform(patternNode, typeConstraint)
 
   private handleStringPattern = (
     patternNode: Parser.SyntaxNode,
-    type: Type,
-  ): ParametricType =>
-    new ParametricType(STRING_TYPE).unify(type, this._typeConstraints)
+    typeConstraint: TypeConstraint<Type>,
+  ): Disjunction<AST.StringPattern> => {
+    const content = patternNode.text.slice(1, -1)
+    const unifiedTypeConstraint = new TypeConstraint(
+      new ParametricType(STRING_TYPE),
+    ).unify(typeConstraint)
+    if (unifiedTypeConstraint === undefined) return new Disjunction([])
+
+    return new Disjunction([
+      new Answer(new AST.StringPattern(content), unifiedTypeConstraint),
+    ])
+  }
 
   private handleTuplePattern = (
     patternNode: Parser.SyntaxNode,
-    type: Type,
-  ): ParametricType => {
-    const tupleType = new ParametricType(TUPLE_TYPE, []).unify(
-      type,
-      this._typeConstraints,
-      true,
-    )
-    const parameters = patternNode.namedChildren.reduce(
-      this.handleTuplePatternValues(tupleType),
-      [],
+    typeConstraint: TypeConstraint<Type>,
+  ): Disjunction<AST.TuplePattern> => {
+    const tupleType = new ParametricType(
+      TUPLE_TYPE,
+      [...Array(patternNode.namedChildCount)].map(() => new TypeVariable()),
+    ).unsafeUnify(typeConstraint.type, typeConstraint.typeEqualityGraph)
+    const elements = patternNode.namedChildren.map((elementNode, i) =>
+      CompileError.addContext(
+        this.traverse,
+        elementNode,
+        new TypeConstraint(
+          tupleType.parameters[i],
+          typeConstraint.typeEqualityGraph,
+        ),
+      ),
     )
 
-    return new ParametricType(TUPLE_TYPE, parameters)
+    return new InferTupleType(
+      (elements) => new AST.TuplePattern(elements as AST.Pattern[]),
+    ).perform(elements)
   }
 
-  private handleTuplePatternValues = (type: ParametricType) => (
-    parameters: Type[],
+  private handleType = (
     patternNode: Parser.SyntaxNode,
-    i: number,
-  ): Type[] => {
-    if (patternNode.type === 'rest_tuple')
-      return [
-        ...parameters,
-        ...this.handleRestTuple(
-          patternNode,
-          new ParametricType(TUPLE_TYPE, type.parameters.slice(i)),
-        ).parameters,
-      ]
+    typeConstraint: TypeConstraint<Type>,
+  ): Disjunction<AST.ParametricType> => {
+    const type = new BuildType().perform(patternNode)
+    const unifiedTypeConstraint = new TypeConstraint(type).unify(typeConstraint)
+    if (unifiedTypeConstraint === undefined) return new Disjunction([])
 
-    return [...parameters, this.perform(patternNode, type.parameters[i])]
+    return new Disjunction([
+      new Answer(new AST.ParametricType(type.name), unifiedTypeConstraint),
+    ])
   }
-
-  private handleType = (patternNode: Parser.SyntaxNode, type: Type): Type =>
-    new BuildType().handleType(patternNode).unify(type, this._typeConstraints)
 }

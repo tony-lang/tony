@@ -1,6 +1,5 @@
-import { CurriedType } from './CurriedType'
 import { Type } from './Type'
-import { TypeConstraints } from './TypeConstraints'
+import { TypeEqualityGraph } from './TypeEqualityGraph'
 
 export class TypeVariable extends Type {
   private static unnamedVariableCount = 0
@@ -17,37 +16,29 @@ export class TypeVariable extends Type {
     return this._name
   }
 
-  concat = (type: Type): CurriedType => {
-    if (type instanceof CurriedType) return type.concat(this)
-
-    return new CurriedType([this, type])
-  }
-
-  unify = (actual: Type, constraints: TypeConstraints): Type =>
-    this._unify(actual, constraints)._reduce(constraints)
-
-  _unify = (actual: Type, constraints: TypeConstraints): Type => {
+  unsafeUnify = (actual: Type, typeEqualityGraph?: TypeEqualityGraph): Type => {
     if (!(actual instanceof TypeVariable)) {
-      constraints.add(this, actual)
+      if (typeEqualityGraph) typeEqualityGraph.add(this, actual)
+
       return actual
     }
 
-    if (this.name !== actual.name) constraints.add(actual, this)
+    if (this.name !== actual.name && typeEqualityGraph)
+      typeEqualityGraph.add(actual, this)
     return this
   }
 
-  _reduce = (constraints: TypeConstraints): Type => {
-    if (constraints.has(this)) return constraints.resolve(this)!
+  reduce = (typeEqualityGraph: TypeEqualityGraph): Type =>
+    typeEqualityGraph.reduce(this)
 
-    return this
+  equals = (type: Type): boolean => {
+    if (!(type instanceof TypeVariable)) return false
+
+    return this.name === type.name
   }
 
   toString = (): string => this.name
 
-  private static getUnusedVariableName = (): string => {
-    const name = `t${TypeVariable.unnamedVariableCount}`
-    TypeVariable.unnamedVariableCount += 1
-
-    return name
-  }
+  private static getUnusedVariableName = (): string =>
+    `t${(TypeVariable.unnamedVariableCount += 1)}`
 }

@@ -4,7 +4,7 @@ import { assert } from '../errors'
 export class WalkFileModuleScope {
   private _scope: NestedScope
 
-  // tracks the progression through nested scopes within symbol table
+  // track the progression through nested scopes within symbol table
   private _currentNestedScopeIndex = -1
   private _nestedScopesIndexStack: number[] = []
 
@@ -18,14 +18,20 @@ export class WalkFileModuleScope {
 
   enterBlock = (): void => {
     this._nestedScopesIndexStack.push(this._currentNestedScopeIndex + 1)
-    this._scope = this.scope.nestedScope(this._currentNestedScopeIndex + 1)
+    const scope = this.scope.nestedScope(this._currentNestedScopeIndex + 1)
     this._currentNestedScopeIndex = -1
+
+    assert(scope !== undefined, 'Entering a scope that does not exist.')
+    this._scope = scope
   }
 
   peekBlock = (): void => {
     this._nestedScopesIndexStack.push(this._currentNestedScopeIndex)
-    this._scope = this.scope.nestedScope(this._currentNestedScopeIndex + 1)
+    const scope = this.scope.nestedScope(this._currentNestedScopeIndex + 1)
     this._currentNestedScopeIndex = -1
+
+    assert(scope !== undefined, 'Entering a scope that does not exist.')
+    this._scope = scope
   }
 
   leaveBlock = (): void => {

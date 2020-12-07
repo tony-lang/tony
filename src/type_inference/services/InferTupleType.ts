@@ -1,33 +1,76 @@
-import { ParametricType, TUPLE_TYPE, Type, TypeConstraints } from '../../types'
-import { InferTypes } from '../InferTypes'
-import Parser from 'tree-sitter'
+import * as AST from '../../ast'
+import { AccumulatedAnswer, Answer, Disjunction } from '../models'
+import {
+  ParametricType,
+  TUPLE_TYPE,
+  Type,
+  TypeConstraint,
+  TypeEqualityGraph,
+} from '../../types'
+import { DistributeTypeDisjunction } from './DistributeTypeDisjunction'
 
-export class InferTupleType {
-  private _inferTypes: InferTypes
-  private _typeConstraints: TypeConstraints
+type Factory<T> = (elements: AST.SyntaxNode[]) => T
 
-  constructor(inferTypes: InferTypes, typeConstraints: TypeConstraints) {
-    this._inferTypes = inferTypes
-    this._typeConstraints = typeConstraints
+export class InferTupleType<T extends AST.SyntaxNode> {
+  private _factory: Factory<T>
+
+  constructor(factory: Factory<T>) {
+    this._factory = factory
   }
 
-  perform = (valueNodes: Parser.SyntaxNode[]): ParametricType => {
-    const valueTypes = valueNodes.reduce((valueTypes: Type[], valueNode) => {
-      const valueType = this._inferTypes.traverse(valueNode)!
-
-      if (valueNode.type === 'spread_tuple') {
-        const restType = new ParametricType(TUPLE_TYPE).unify(
-          valueType,
-          this._typeConstraints,
-          true,
+  perform = (elements: Disjunction<AST.SyntaxNode>[]): Disjunction<T> =>
+    new Disjunction(
+      new DistributeTypeDisjunction().perform(elements).map((elements) => {
+        const typeEqualityGraph = TypeEqualityGraph.build(
+          ...elements.typeConstraints.map(
+            (typeConstraint) => typeConstraint.typeEqualityGraph,
+          ),
         )
+        if (typeEqualityGraph === undefined) return
+        const type = this.inferType(elements, typeEqualityGraph)
+        if (type === undefined) return
 
-        return [...valueTypes, ...restType.parameters]
-      }
+        return new Answer(
+          this._factory(elements.nodes),
+          new TypeConstraint(type, typeEqualityGraph),
+        )
+      }),
+    )
 
-      return [...valueTypes, valueType]
-    }, [])
+  private inferType = (
+    elements: AccumulatedAnswer<AST.SyntaxNode>,
+    typeEqualityGraph: TypeEqualityGraph,
+  ): ParametricType | undefined => {
+    const parameterTypes = elements.answers.reduce(
+      (parameters: Type[] | undefined, answer) => {
+        if (parameters === undefined) return
+        if (
+          answer.node instanceof AST.RestTuple ||
+          answer.node instanceof AST.SpreadTuple
+        )
+          return this.handleSpread(parameters, answer, typeEqualityGraph)
 
-    return new ParametricType(TUPLE_TYPE, valueTypes)
+        return [...parameters, answer.typeConstraint.type]
+      },
+      [],
+    )
+    if (parameterTypes === undefined) return
+
+    return new ParametricType(TUPLE_TYPE, parameterTypes)
+  }
+
+  private handleSpread = (
+    parameters: Type[],
+    answer: Answer<AST.SyntaxNode>,
+    typeEqualityGraph: TypeEqualityGraph,
+  ): Type[] | undefined => {
+    const spreadType = new ParametricType(TUPLE_TYPE, []).unify(
+      answer.typeConstraint.type,
+      typeEqualityGraph,
+      true,
+    )
+    if (!(spreadType instanceof ParametricType)) return
+
+    return [...parameters, ...spreadType.parameters]
   }
 }

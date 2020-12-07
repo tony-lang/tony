@@ -1,10 +1,10 @@
-import { CurriedType, ParametricType, Type } from '../models'
-import { InternalError, assert } from '../../errors'
-import { LIST_TYPE, MAP_TYPE, TUPLE_TYPE } from '..'
+import { FUNCTION_TYPE, LIST_TYPE, MAP_TYPE, TUPLE_TYPE } from '..'
+import { InternalError } from '../../errors'
+import { ParametricType } from '../models'
 import Parser from 'tree-sitter'
 
 export class BuildType {
-  perform = (node: Parser.SyntaxNode): Type => {
+  perform = (node: Parser.SyntaxNode): ParametricType => {
     switch (node.type) {
       case 'list_type':
         return this.handleListType(node)
@@ -18,7 +18,7 @@ export class BuildType {
         return this.handleType(node)
       default:
         throw new InternalError(
-          `ParseType: Could not find generator for AST node '${node.type}'.`,
+          `Could not find generator for AST node '${node.type}'.`,
         )
     }
   }
@@ -42,12 +42,7 @@ export class BuildType {
     return new ParametricType(TUPLE_TYPE, valueTypes)
   }
 
-  handleTypeConstructor = (node: Parser.SyntaxNode): Type => {
-    assert(
-      node.type === 'type_constructor',
-      'Should be `type_constructor` node.',
-    )
-
+  private handleTypeConstructor = (node: Parser.SyntaxNode): ParametricType => {
     if (node.namedChildCount == 1) {
       const type = this.perform(node.namedChild(0)!)
 
@@ -55,12 +50,10 @@ export class BuildType {
     }
 
     const types = node.namedChildren.map((childNode) => this.perform(childNode))
-    return new CurriedType(types)
+    return new ParametricType(FUNCTION_TYPE, types)
   }
 
-  handleType = (node: Parser.SyntaxNode): ParametricType => {
-    assert(node.type === 'type', 'Should be `type` node.')
-
+  private handleType = (node: Parser.SyntaxNode): ParametricType => {
     const name = node.text
 
     return new ParametricType(name)

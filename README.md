@@ -86,7 +86,7 @@ Contains `filePath: string` and `context: { start: { row: number; column: number
 
 Is thrown when the dependency graph is not acyclic.
 
-Contains `cyclicDependency: [string, string]` representing file Paths where the latter one is a dependency to the first one. `message` is set to `undefined`.
+Contains `cyclicDependency: [string, string]` representing file paths where the latter one is a dependency to the first one. `message` is set to `undefined`.
 
 #### `DuplicateBindingError`
 
@@ -100,23 +100,41 @@ Is thrown when the `export` expression is used outside of a module scope.
 
 `message` is set to `undefined`.
 
+#### `ExternalTypeImportError`
+
+Is thrown when a type is imported from an external module.
+
+Contains `type: string` representing the type whose import was attempted. `message` is set to `undefined`.
+
 #### `ImportOutsideFileModuleScopeError`
 
 Is thrown when `import` is used outside of a file-level module scope.
 
 `message` is set to `undefined`.
 
-#### `InvalidPropertyAccessError`
+#### `IndeterminateTypeError`
 
-Is thrown when a property is accessed that does not exist on the accessed value type.
+Is thrown when the actual type of a type variable cannot be determined during inference.
 
-Contains `property: string` representing the accessed property, `representation: string` (i.e. the representation of the accessed value), and `type: string` (i.e. the type of the accessed value). `message` is set to `undefined`.
+Contains `types: string[]` representing the types that could not be determined. `message` is set to `undefined`.
+
+#### `InvalidModuleAccessError`
+
+Is thrown when a binding is accessed that does not exist on the accessed module.
+
+Contains `binding: string | undefined` representing the accessed binding and `type: string` representing the type of the accessed module. `message` is set to `undefined`.
 
 #### `MissingBindingError`
 
 Is thrown when the value of an unassigned/undeclared identifier/type is attempted to be used.
 
 Contains `binding: string` representing the missing identifier/type. `message` is set to `undefined`.
+
+#### `MissingExternalImportTypeHintError`
+
+Is thrown when an external import is lacking a type hint.
+
+Contains `binding: string` representing the binding lacking the type hint. `message` is set to `undefined`.
 
 #### `TypeError`
 
@@ -130,11 +148,17 @@ Is thrown when the extension of an imported file cannot be handled by Tony.
 
 Contains `sourcePath: string` representing the file that could not be imprted. `message` is set to `undefined`.
 
+#### `UseOfTypeAsValueError`
+
+Is thrown when a type is used as a value.
+
+Contains `type: string` representing the type used as a value. `message` is set to `undefined`.
+
 ### `InternalError`
 
 Errors of this class should not be thrown. If they are, they should be reported in the [issue tracker](https://github.com/tony-lang/tony/issues) immediately.
 
-Contains a `message: string` and (optionally) additional `context: string`.
+Contains a `message: string`.
 
 ## Release
 

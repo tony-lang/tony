@@ -1,11 +1,16 @@
 import { Binding } from './Binding'
 import { ParametricType } from '../../types'
+import Parser from 'tree-sitter'
 
 export class BasicTypeBinding implements Binding {
-  private _type: ParametricType
+  private _name: ParametricType
 
-  constructor(type: ParametricType) {
-    this._type = type
+  constructor(name: ParametricType) {
+    this._name = name
+  }
+
+  get filePath(): string | undefined {
+    return undefined
   }
 
   get isExported(): boolean {
@@ -21,10 +26,18 @@ export class BasicTypeBinding implements Binding {
   }
 
   get name(): string {
-    return this._type.name
+    return this._name.name
+  }
+
+  get node(): Parser.SyntaxNode | undefined {
+    return undefined
   }
 
   get transformedName(): string {
     return this.name
+  }
+
+  get transformedImportName(): string | undefined {
+    return undefined
   }
 }

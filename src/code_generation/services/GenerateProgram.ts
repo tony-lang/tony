@@ -1,5 +1,5 @@
-import { FileModuleScope, ImportBinding } from '../../symbol_table'
 import { DEFAULT_IMPORTS } from '../../constants'
+import { FileModuleScope } from '../../symbol_table'
 import { GenerateImport } from './GenerateImport'
 
 export class GenerateProgram {
@@ -17,9 +17,13 @@ export class GenerateProgram {
     )};${this.generateExports()}`
 
   private generateDeclarations = (): string => {
-    const declarations = this._scope.bindings
-      .filter((binding) => !binding.isImplicit)
-      .map((binding) => binding.transformedName)
+    const declarations = [
+      ...new Set(
+        this._scope.bindings
+          .filter((binding) => !binding.isImplicit)
+          .map((binding) => binding.transformedName),
+      ),
+    ]
 
     return declarations.length > 0 ? `let ${declarations.join(',')}` : ''
   }
@@ -27,7 +31,7 @@ export class GenerateProgram {
   private generateImports = (): string => {
     const importBindings = this._scope.bindings.filter(
       (binding) => binding.isImported,
-    ) as ImportBinding[]
+    )
 
     return this._scope.dependencies
       .map((sourcePath) => {

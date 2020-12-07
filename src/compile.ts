@@ -4,7 +4,6 @@ import { GenerateCode } from './code_generation'
 import { InferTypes } from './type_inference'
 import { compile as webpackCompile } from './webpack'
 
-// eslint-disable-next-line max-lines-per-function
 export const compile = async (
   file: string,
   {
@@ -41,7 +40,7 @@ const inferTypes = (fileScopes: FileModuleScope[], verbose: boolean): void =>
     if (verbose)
       console.log(`Running type inference on ${fileScope.filePath}...`)
 
-    new InferTypes(fileScope).perform()
+    fileScope.annotatedTree = new InferTypes(fileScope).perform()
   })
 
 const generateCode = async (
