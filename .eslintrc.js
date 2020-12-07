@@ -17,6 +17,8 @@ module.exports = {
   plugins: ['@typescript-eslint'],
   rules: {
     'sort-imports': 'error',
+    '@typescript-eslint/ban-ts-comment': 'warn',
+    '@typescript-eslint/ban-types': 'off',
     '@typescript-eslint/camelcase': 'off',
     '@typescript-eslint/explicit-module-boundary-types': 'off',
     '@typescript-eslint/explicit-function-return-type': 'off',

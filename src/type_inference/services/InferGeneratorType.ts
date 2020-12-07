@@ -30,11 +30,9 @@ export class InferGeneratorType<T> {
       ),
     )
 
-  // eslint-disable-next-line max-lines-per-function
   private handleValueAnswer = (
     bindingTemplate: IdentifierBindingTemplate,
     condition: Disjunction<AST.SyntaxNode> | undefined,
-    // eslint-disable-next-line max-lines-per-function
   ) => (
     answers: (Answer<AST.Generator> | undefined)[],
     valueAnswer: Answer<AST.SyntaxNode>,
@@ -114,12 +112,10 @@ export class InferGeneratorType<T> {
       ),
     )
 
-  // eslint-disable-next-line max-lines-per-function
   private handleConditionAnswer = (
     bindingTemplate: IdentifierBindingTemplate,
     valueTypeConstraint: TypeConstraint<Type>,
     value: Answer<AST.SyntaxNode>,
-    // eslint-disable-next-line max-lines-per-function
   ) => (
     condition: Answer<AST.SyntaxNode>,
   ): Answer<AST.Generator> | undefined => {

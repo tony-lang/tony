@@ -15,7 +15,6 @@ export class IdentifierBindingTemplate implements BindingTemplate {
   private _transformedName: string
   protected _type: TypeVariable
 
-  // eslint-disable-next-line max-lines-per-function
   constructor(
     node: Parser.SyntaxNode,
     name: string,

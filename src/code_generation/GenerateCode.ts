@@ -39,7 +39,6 @@ export class GenerateCode {
     }
   }
 
-  // eslint-disable-next-line max-lines-per-function
   traverse = (node: AST.SyntaxNode): string => {
     if (node.constructor === AST.Abstraction)
       return this.handleAbstraction(node as AST.Abstraction)

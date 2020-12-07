@@ -71,7 +71,6 @@ export class PatternMatch {
     }, [])
   }
 
-  // eslint-disable-next-line max-lines-per-function
   private patternMatchObject = (
     patterns: any,
     obj: any,

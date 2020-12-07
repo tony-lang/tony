@@ -25,7 +25,6 @@ export class ParametricType extends Type {
   concat = (type: Type): ParametricType =>
     new ParametricType(this.name, [...this.parameters, type])
 
-  // eslint-disable-next-line max-lines-per-function
   unsafeUnify = (
     actual: Type,
     typeEqualityGraph?: TypeEqualityGraph,

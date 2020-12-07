@@ -37,8 +37,7 @@ export abstract class CompileError extends Error {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  static addContext = <T extends Array<any>, U>(
+  static addContext = <T extends Array<V>, U, V>(
     fn: (node: Parser.SyntaxNode, ...args: T) => U,
     node: Parser.SyntaxNode,
     ...args: T

@@ -13,7 +13,6 @@ export class IdentifierBinding implements Binding {
   private _transformedImportName: string | undefined
   protected _typeConstraint: TypeConstraint<Type>
 
-  // eslint-disable-next-line max-lines-per-function
   constructor(
     node: Parser.SyntaxNode,
     name: string,

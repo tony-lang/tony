@@ -12,7 +12,6 @@ export class CollectDefaultValues {
   perform = (node: AST.Pattern | AST.Parameters): string =>
     `[${this.traverse(node).join(',')}]`
 
-  // eslint-disable-next-line max-lines-per-function
   private traverse = (
     node: AST.Pattern | AST.Parameters,
   ): (string | undefined)[] => {

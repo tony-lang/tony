@@ -39,7 +39,6 @@ export class GenerateImport {
     return `import {${aliases}} from '${compiledSourcePath}'`
   }
 
-  // eslint-disable-next-line max-lines-per-function
   private handleJavaScript = (
     sourcePath: string,
     bindings: Binding[],

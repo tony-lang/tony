@@ -11,7 +11,6 @@ export class ModuleBinding implements Binding {
   private _transformedImportName: string | undefined
   private _type: ModuleType
 
-  // eslint-disable-next-line max-lines-per-function
   constructor(
     node: Parser.SyntaxNode,
     name: ParametricType,

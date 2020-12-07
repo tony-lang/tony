@@ -63,7 +63,6 @@ export class InferApplicationType<
     )
   }
 
-  // eslint-disable-next-line max-lines-per-function
   private inferType = (
     value: Answer<T>,
     args: AccumulatedAnswer<U>,
@@ -187,7 +186,6 @@ export class InferApplicationType<
     return false
   }
 
-  // eslint-disable-next-line max-lines-per-function
   private matchArgumentsAndParameters = (
     valueTypeConstraint: TypeConstraint<ParametricType>,
     argumentsTypeConstraint: TypeConstraint<ParametricType>,

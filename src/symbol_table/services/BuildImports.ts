@@ -48,7 +48,6 @@ export class BuildImports {
     node: Parser.SyntaxNode,
   ): IdentifierImport => {
     const name = node.namedChild(0)!.text
-    // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
     // @ts-ignore
     const typeNode: Parser.SyntaxNode | undefined = node.typeNode
     if (typeNode === undefined)

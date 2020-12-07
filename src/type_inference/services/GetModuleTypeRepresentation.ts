@@ -1,4 +1,4 @@
-import { UseOfTypeAsValueError, MissingBindingError } from '../../errors'
+import { MissingBindingError, UseOfTypeAsValueError } from '../../errors'
 import { ModuleBinding, NestedScope } from '../../symbol_table'
 import { ModuleType, ParametricType } from '../../types'
 

@@ -1,12 +1,12 @@
 import * as AST from '../../ast'
 import { Answer, Disjunction } from '../models'
+import { BuildType, Type, TypeConstraint, TypeVariable } from '../../types'
 import { DuplicateBindingError, assert } from '../../errors'
 import {
   IdentifierBinding,
   IdentifierBindingTemplate,
   NestedScope,
 } from '../../symbol_table'
-import { Type, TypeConstraint, TypeVariable } from '../../types'
 import { InferTypes } from '../InferTypes'
 import Parser from 'tree-sitter'
 
@@ -43,16 +43,16 @@ export class InferIdentifierPatternType<T extends AST.IdentifierPattern> {
     this._typeConstraintFactory = typeConstraintFactory
   }
 
-  // eslint-disable-next-line max-lines-per-function
   perform = (
     patternNode: Parser.SyntaxNode,
     typeConstraint: TypeConstraint<Type>,
   ): Disjunction<T> => {
     const bindingTemplate = this.findBindingTemplate(patternNode)
-    // prettier-ignore
-    // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
     // @ts-ignore
-    const type = patternNode.typeNode ? new BuildType().perform(patternNode.typeNode) : new TypeVariable()
+    const type = patternNode.typeNode
+      ? // @ts-ignore
+        new BuildType().perform(patternNode.typeNode)
+      : new TypeVariable()
 
     const unifiedTypeConstraint = new TypeConstraint(
       this._typeFactory(type).unsafeUnify(
@@ -62,7 +62,6 @@ export class InferIdentifierPatternType<T extends AST.IdentifierPattern> {
       typeConstraint.typeEqualityGraph,
     )
 
-    // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
     // @ts-ignore
     const defaultNode: Parser.SyntaxNode | undefined = patternNode.defaultNode
     if (defaultNode)
@@ -103,7 +102,6 @@ export class InferIdentifierPatternType<T extends AST.IdentifierPattern> {
     return bindingTemplate
   }
 
-  // eslint-disable-next-line max-lines-per-function
   private handleDefaultNode = (
     bindingTemplate: IdentifierBindingTemplate,
     typeConstraint: TypeConstraint<Type>,

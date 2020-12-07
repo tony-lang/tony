@@ -43,7 +43,6 @@ export class InferPatternBindingTypes {
       CompileError.addContext(this.traverse, patternNode, typeConstraint),
     )
 
-  // eslint-disable-next-line max-lines-per-function
   private traverse = (
     patternNode: Parser.SyntaxNode,
     typeConstraint: TypeConstraint<Type>,

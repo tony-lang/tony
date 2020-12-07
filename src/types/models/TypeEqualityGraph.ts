@@ -1,4 +1,3 @@
-import { ParametricType } from './ParametricType'
 import { Type } from './Type'
 import { TypeEquivalenceClass } from './TypeEquivalenceClass'
 import { TypeError } from '../../errors'

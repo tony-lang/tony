@@ -58,7 +58,6 @@ export class BuildFileModuleScope {
     return this._fileScope
   }
 
-  // eslint-disable-next-line max-lines-per-function
   private traverse = (node: Parser.SyntaxNode): void => {
     switch (node.type) {
       case 'abstraction_branch':

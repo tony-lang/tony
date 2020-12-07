@@ -1,5 +1,10 @@
 import { BuildType, TypeConstraint, TypeEqualityGraph } from '../../types'
 import {
+  ExternalTypeImportError,
+  MissingBindingError,
+  assert,
+} from '../../errors'
+import {
   FileModuleScope,
   IdentifierBinding,
   IdentifierBindingTemplate,
@@ -9,11 +14,6 @@ import {
   ModuleBinding,
   ModuleImport,
 } from '../../symbol_table'
-import {
-  ExternalTypeImportError,
-  MissingBindingError,
-  assert,
-} from '../../errors'
 import Parser from 'tree-sitter'
 import { isNotUndefined } from '../../utilities'
 
@@ -65,7 +65,6 @@ export class InferImportBindingTypes {
     else this.handleExternalIdentifierImport(node, imp)
   }
 
-  // eslint-disable-next-line max-lines-per-function
   private handleInternalIdentifierImport = (
     node: Parser.SyntaxNode,
     imp: IdentifierImport,
@@ -103,7 +102,7 @@ export class InferImportBindingTypes {
 
     if (bindings.length > 0)
       bindings.forEach((binding) => this._scope.addBinding(binding))
-    else throw new MissingBindingError(name)
+    else throw new MissingBindingError(imp.name)
   }
 
   private handleExternalIdentifierImport = (
@@ -158,6 +157,6 @@ export class InferImportBindingTypes {
 
     if (bindings.length > 0)
       bindings.forEach((binding) => this._scope.addBinding(binding))
-    else throw new MissingBindingError(name)
+    else throw new MissingBindingError(imp.name)
   }
 }

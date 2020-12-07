@@ -50,7 +50,6 @@ export class InferAccessType {
     return this.inferType(value, accessor, typeEqualityGraph)
   }
 
-  // eslint-disable-next-line max-lines-per-function
   private inferType = (
     value: Answer<AST.Expression>,
     accessor: Answer<AST.Expression>,
@@ -173,7 +172,6 @@ export class InferAccessType {
       )
   }
 
-  // eslint-disable-next-line max-lines-per-function
   private inferModuleAccessType = (
     valueType: Type,
     valueNode: AST.Expression,

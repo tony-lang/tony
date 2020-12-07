@@ -101,7 +101,6 @@ export class InferTypes {
     }).node
   }
 
-  // eslint-disable-next-line max-lines-per-function
   traverse = (node: Parser.SyntaxNode): Disjunction<AST.SyntaxNode> => {
     switch (node.type) {
       case 'abstraction':
@@ -304,7 +303,6 @@ export class InferTypes {
       ),
     ])
 
-  // eslint-disable-next-line max-lines-per-function
   private handleCase = (node: Parser.SyntaxNode): Disjunction<AST.Case> => {
     const value = CompileError.addContext(this.traverse, node.namedChild(0)!)
     let branches: GeneralizedDisjunction<AST.SyntaxNode>[] = []
@@ -341,7 +339,6 @@ export class InferTypes {
     )
   }
 
-  // eslint-disable-next-line max-lines-per-function
   private handleElseIf = (node: Parser.SyntaxNode): Disjunction<AST.ElseIf> => {
     const condition = CompileError.addContext(
       this.traverse,
@@ -466,7 +463,6 @@ export class InferTypes {
     )
   }
 
-  // eslint-disable-next-line max-lines-per-function
   private handleIf = (node: Parser.SyntaxNode): Disjunction<AST.If> => {
     const condition = CompileError.addContext(
       this.traverse,
@@ -532,7 +528,6 @@ export class InferTypes {
     ])
   }
 
-  // eslint-disable-next-line max-lines-per-function
   private handleInfixApplication = (
     node: Parser.SyntaxNode,
   ): Disjunction<AST.InfixApplication> => {
@@ -573,7 +568,6 @@ export class InferTypes {
     )
   }
 
-  // eslint-disable-next-line max-lines-per-function
   private handleListComprehension = (
     node: Parser.SyntaxNode,
   ): Disjunction<AST.ListComprehension> => {
@@ -646,7 +640,6 @@ export class InferTypes {
       ),
     ])
 
-  // eslint-disable-next-line max-lines-per-function
   private handleParameters = (
     node: Parser.SyntaxNode,
   ): Disjunction<AST.Parameters> => {
@@ -697,7 +690,6 @@ export class InferTypes {
     return new DistributeTypeDisjunction<AST.Pattern>().perform(patterns)
   }
 
-  // eslint-disable-next-line max-lines-per-function
   private handlePipeline = (
     node: Parser.SyntaxNode,
   ): Disjunction<AST.Pipeline> => {
@@ -723,7 +715,6 @@ export class InferTypes {
     ).perform(value, args)
   }
 
-  // eslint-disable-next-line max-lines-per-function
   private handlePrefixApplication = (
     node: Parser.SyntaxNode,
   ): Disjunction<AST.PrefixApplication> => {
@@ -797,7 +788,6 @@ export class InferTypes {
     ])
   }
 
-  // eslint-disable-next-line max-lines-per-function
   private handleShorthandPairIdentifier = (
     node: Parser.SyntaxNode,
   ): Disjunction<AST.ShorthandPairIdentifier> => {
@@ -917,7 +907,6 @@ export class InferTypes {
     ])
   }
 
-  // eslint-disable-next-line max-lines-per-function
   private handleWhen = (
     node: Parser.SyntaxNode,
     value: Answer<AST.Expression>,
