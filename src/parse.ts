@@ -13,7 +13,5 @@ export const parse = async (file: string, config: Config): Promise<Tree> => {
   log(`Parsing ${filePath}...`, config)
 
   const sourceCode = await readFile(filePath)
-  const tree = parser.parse(sourceCode) as Tree
-
-  return tree
+  return parser.parse(sourceCode) as Tree
 }

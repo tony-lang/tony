@@ -1,4 +1,4 @@
-import { Path } from './types/util'
+import { Path } from './types'
 import { getFilePath, getOutFile } from './util'
 
 export type Config = ConfigOptions & InternalConfig

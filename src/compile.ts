@@ -13,7 +13,7 @@ export const compile = async (
 
   log(`Compiling ${config.entry}...`, config)
 
-  const globalScope = await analyze(config.entry, config)
+  const globalScope = await analyze(config)
   const typedGlobalScope = inferTypes(globalScope, config)
 
   if (!options.emit) return

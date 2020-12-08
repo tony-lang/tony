@@ -1,12 +1,12 @@
 import { Config } from './config'
 import { log } from './logger'
-import { Emit } from './types/util'
-import { getOutFile, writeFile } from './util'
+import { Emit } from './types'
+import { getOutFilename, writeFile } from './util/file_system'
 
 export const writeEmit = async (emit: Emit, config: Config): Promise<void> => {
   await Promise.all(
     emit.map(async ({ path, content }) => {
-      const out = getOutFile(path)
+      const out = getOutFilename(path)
 
       log(`Emitting code for ${path} to ${out}...`, config)
 

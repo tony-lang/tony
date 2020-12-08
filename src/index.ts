@@ -1,6 +1,6 @@
 export { analyze } from './analyze'
 export { compile } from './compile'
-export { emit } from './emit'
+export { writeEmit } from './emit'
 export { exec } from './exec'
 export { generateCode } from './code_generation'
 export { inferTypes } from './type_inference'

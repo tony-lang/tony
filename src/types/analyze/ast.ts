@@ -1,13 +1,14 @@
 import { SyntaxNode } from 'tree-sitter-tony'
+import { CompileError } from '../errors/compile'
 
-export enum NodeKind {
+enum NodeKind {
   Error,
   Program,
 }
 
 interface AbstractNode {
   node: SyntaxNode
-  errors: Error[]
+  errors: CompileError[]
 }
 
 export interface Error extends AbstractNode {

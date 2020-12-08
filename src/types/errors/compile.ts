@@ -1,11 +1,11 @@
-import { Node } from '../analyze/ast'
+import { Program } from '../analyze/ast'
 import { Binding } from '../analyze/bindings'
 import { FileScope, NestedScope } from '../analyze/scopes'
 import { Answers } from '../type_inference/answers'
 import { Type } from '../type_inference/types'
-import { CyclicDependency, Path } from '../util'
+import { CyclicDependency, Path } from '..'
 
-export enum CompileErrorKind {
+enum CompileErrorKind {
   CyclicDependency,
   DuplicateBinding,
   ExportOutsideModuleScope,
@@ -25,44 +25,44 @@ export interface CyclicDependencyError {
   cyclicDependency: CyclicDependency<Path>
 }
 
-export interface DuplicateBindingError<T extends Binding> {
+export interface DuplicateBindingError {
   kind: typeof CompileErrorKind.DuplicateBinding
-  binding: T
+  binding: Binding
 }
 
 export interface ExportOutsideModuleScopeError {
   kind: typeof CompileErrorKind.ExportOutsideModuleScope
 }
 
-export interface ExternalTypeImportError<T extends Type> {
+export interface ExternalTypeImportError {
   kind: typeof CompileErrorKind.ExternalTypeImport
-  type: T
+  type: Type
 }
 
 export interface ImportOutsideFileScopeError {
   kind: typeof CompileErrorKind.ImportOutsideFileScope
 }
 
-export interface IndeterminateTypeError<T extends Node> {
+export interface IndeterminateTypeError {
   kind: typeof CompileErrorKind.IndeterminateType
-  answers: Answers<T>
+  answers: Answers<Program>
 }
 
-export interface MissingBindingError<T extends Binding> {
+export interface MissingBindingError {
   kind: typeof CompileErrorKind.MissingBinding
-  binding: T
+  binding: Binding
   scope: FileScope | NestedScope
 }
 
-export interface MissingExternalImportTypeHintError<T extends Binding> {
+export interface MissingExternalImportTypeHintError {
   kind: typeof CompileErrorKind.MissingExternalImportTypeHint
-  binding: T
+  binding: Binding
 }
 
-export interface TypeError<T extends Type, U extends Type> {
+export interface TypeError {
   kind: typeof CompileErrorKind.Type
-  expected: T
-  actual: U
+  expected: Type
+  actual: Type
 }
 
 export interface UnknownImportError {
@@ -74,26 +74,36 @@ export interface UnsupportedSyntaxError {
   kind: typeof CompileErrorKind.UnsupportedSyntax
 }
 
-export interface UseOfTypeAsValueError<T extends Type> {
+export interface UseOfTypeAsValueError {
   kind: typeof CompileErrorKind.UseOfTypeAsValue
-  type: T
+  type: Type
 }
 
-export type CompileError<
-  T extends Binding,
-  U extends Node,
-  V extends Type,
-  W extends Type
-> =
+export type CompileError =
   | CyclicDependencyError
-  | DuplicateBindingError<T>
+  | DuplicateBindingError
   | ExportOutsideModuleScopeError
-  | ExternalTypeImportError<V>
+  | ExternalTypeImportError
   | ImportOutsideFileScopeError
-  | IndeterminateTypeError<U>
-  | MissingBindingError<T>
-  | MissingExternalImportTypeHintError<T>
-  | TypeError<V, W>
+  | IndeterminateTypeError
+  | MissingBindingError
+  | MissingExternalImportTypeHintError
+  | TypeError
   | UnknownImportError
   | UnsupportedSyntaxError
-  | UseOfTypeAsValueError<V>
+  | UseOfTypeAsValueError
+
+export class UnknownEntryError extends Error {
+  private _sourcePath: string
+
+  constructor(sourcePath: string) {
+    super()
+    this.name = this.constructor.name
+
+    this._sourcePath = sourcePath
+  }
+
+  get sourcePath(): string {
+    return this._sourcePath
+  }
+}

@@ -19,10 +19,10 @@ export type BasicType =
   | typeof LIST_TYPE
   | typeof TUPLE_TYPE
 
-export enum TypeKind {
+enum TypeKind {
   Alias,
-  Object,
   Parametric,
+  Struct,
   Variable,
 }
 
@@ -46,11 +46,11 @@ export interface ParametricType {
 }
 
 // an object type represents the scope of an object
-export interface ObjectType extends ConcreteScope {
-  kind: typeof TypeKind.Object
+export interface StructType extends ConcreteScope {
+  kind: typeof TypeKind.Struct
 }
 
-export type Type = TypeVariable | TypeAlias | ParametricType | ObjectType
+export type Type = TypeVariable | TypeAlias | ParametricType | StructType
 
 // a constrained type represents a type alongside equivalence classes over all types
 export type ConstrainedType<T extends Type> = {

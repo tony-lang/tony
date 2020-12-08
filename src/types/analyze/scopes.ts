@@ -1,36 +1,40 @@
 import { Program } from './ast'
 import { Binding } from './bindings'
-import { Path } from '../util'
+import { Path } from '..'
 import { Answer } from '../type_inference/answers'
 
-export enum ScopeKind {
+// ---- Types ----
+
+enum ScopeKind {
   Global,
   File,
   Nested,
 }
 
-export interface GlobalScope<T extends FileScope> {
+// a concrete scope represents a scope including bindings
+export interface ConcreteScope {
+  bindings: Binding[]
+}
+
+export interface GlobalScope<T extends FileScope | TypedFileScope> {
   kind: typeof ScopeKind.Global
   scopes: T[]
 }
 
 export interface FileScope extends ConcreteScope {
   kind: typeof ScopeKind.File
-  parentScope: GlobalScope<FileScope>
-  scopes: NestedScope[]
   filePath: Path
-  dependencies: Path[]
   node: Program
+  scopes: NestedScope[]
+  dependencies: Path[]
 }
 
 export interface TypedFileScope extends FileScope {
-  parentScope: GlobalScope<TypedFileScope>
   typedNode: Answer<Program>
 }
 
 export interface NestedScope extends ConcreteScope {
   kind: typeof ScopeKind.Nested
-  parentScope: FileScope | NestedScope
   scopes: NestedScope[]
   isModule: boolean
 }
@@ -41,7 +45,37 @@ export type Scope<T extends FileScope> =
   | TypedFileScope
   | NestedScope
 
-// a concrete scope represents a scope including bindings
-export interface ConcreteScope {
-  bindings: Binding
-}
+// ---- Factories ----
+
+export const buildGlobalScope = <T extends FileScope | TypedFileScope>(
+  scopes: T[],
+): GlobalScope<T> => ({
+  kind: ScopeKind.Global,
+  scopes,
+})
+
+export const buildFileScope = (
+  filePath: Path,
+  node: Program,
+  scopes: NestedScope[] = [],
+  dependencies: Path[] = [],
+  bindings: Binding[] = [],
+): FileScope => ({
+  kind: ScopeKind.File,
+  filePath,
+  node,
+  scopes,
+  dependencies,
+  bindings,
+})
+
+export const buildNestedScope = (
+  bindings: Binding[] = [],
+  scopes: NestedScope[] = [],
+  isModule = false,
+): NestedScope => ({
+  kind: ScopeKind.Nested,
+  bindings,
+  scopes,
+  isModule,
+})
