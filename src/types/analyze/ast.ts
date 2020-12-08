@@ -1,18 +1,18 @@
 import { SyntaxNode } from 'tree-sitter-tony'
-import { CompileError } from '../errors/compile'
+import { ErrorAnnotation } from '../errors/annotations'
 
 enum NodeKind {
-  Error,
+  SyntaxError,
   Program,
 }
 
 interface AbstractNode {
   node: SyntaxNode
-  errors: CompileError[]
+  errors: ErrorAnnotation[]
 }
 
-export interface Error extends AbstractNode {
-  kind: typeof NodeKind.Error
+export interface SyntaxError extends AbstractNode {
+  kind: typeof NodeKind.SyntaxError
 }
 
 export interface Program extends AbstractNode {
@@ -22,4 +22,4 @@ export interface Program extends AbstractNode {
 
 export type Expression = never
 
-export type Node = Error | Program
+export type Node = SyntaxError | Program

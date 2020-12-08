@@ -1,8 +1,8 @@
 export const graphSearch = async <T, U>(
   visit: (
     acc: U,
-    explored: T[],
     vertice: T,
+    explored: T[],
   ) => Promise<[newAcc: U, newVertices: T[]]>,
   acc: U,
   frontier: T[],
@@ -12,7 +12,7 @@ export const graphSearch = async <T, U>(
 
   const [vertice, ...remainingFrontier] = frontier
   const newExplored = [...explored, vertice]
-  const [newAcc, newVertices] = await visit(acc, newExplored, vertice)
+  const [newAcc, newVertices] = await visit(acc, vertice, newExplored)
   const newFrontier = [...remainingFrontier, ...newVertices]
 
   return graphSearch(visit, newAcc, newFrontier, newExplored)
