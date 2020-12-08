@@ -1,11 +1,17 @@
+import { ProgramNode } from 'tree-sitter-tony'
+import { Config } from '../config'
+import { log } from '../logger'
+import { parse } from '../parse'
 import { Path } from '../types'
-import { FileScope } from '../types/analyze/scopes'
+import { buildFileScope, FileScope } from '../types/analyze/scopes'
 import { graphSearch } from '../util/graph_search'
+import { buildAST } from './ast'
+import { buildSymbolTable } from './symbol_table'
 
-export const analyzeFiles = (entry: Path) =>
+export const analyzeFiles = (entry: Path, config: Config) =>
   graphSearch<Path, FileScope[]>(
     async (fileScopes, filePath, exploredFilePaths) => {
-      const fileScope: FileScope = await analyzeFile(filePath)
+      const fileScope = await analyzeFile(filePath, config)
       const newFileScopes = [...fileScopes, fileScope]
       const newVertices = fileScope.dependencies.filter(
         (filePath) => !exploredFilePaths.includes(filePath),
@@ -17,4 +23,21 @@ export const analyzeFiles = (entry: Path) =>
     [entry],
   )
 
-const analyzeFile = async (filePath: Path): Promise<FileScope> => {}
+const analyzeFile = async (
+  filePath: Path,
+  config: Config,
+): Promise<FileScope> => {
+  log(`Building file scope of ${filePath}...`, config)
+
+  const tree = await parse(filePath, config)
+  const symbolTable = buildSymbolTable(tree.rootNode as ProgramNode)
+  const node = buildAST(symbolTable, tree.rootNode as ProgramNode)
+
+  return buildFileScope(
+    filePath,
+    node,
+    symbolTable.scopes,
+    symbolTable.dependencies,
+    symbolTable.bindings,
+  )
+}

@@ -2,7 +2,7 @@ import { analyze } from './analyze'
 import { writeEmit } from './emit'
 import { generateCode } from './code_generation'
 import { inferTypes } from './type_inference'
-import { buildConfig, ConfigOptions } from './config'
+import { ConfigOptions, buildConfig } from './config'
 import { log } from './logger'
 
 export const compile = async (

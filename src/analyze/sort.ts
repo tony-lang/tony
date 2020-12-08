@@ -1,10 +1,17 @@
+import { Config } from '../config'
+import { log } from '../logger'
 import { CyclicDependency, Path } from '../types'
 import { FileScope } from '../types/analyze/scopes'
 import { CyclicDependencyError } from '../types/errors/compile'
-import { topologicalSort, TopologicalSortError } from '../util/topological_sort'
+import { TopologicalSortError, topologicalSort } from '../util/topological_sort'
 
-export const sortFileScopes = (fileScopes: FileScope[]): FileScope[] => {
+export const sortFileScopes = (
+  fileScopes: FileScope[],
+  config: Config,
+): FileScope[] => {
   const dependencyGraph = buildDependencyGraph(fileScopes)
+
+  log(`Built dependency graph: ${dependencyGraph}`, config)
 
   try {
     return topologicalSort(dependencyGraph).map(getFileScope(fileScopes))
