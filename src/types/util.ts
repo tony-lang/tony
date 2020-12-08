@@ -6,3 +6,10 @@ export type CyclicDependency<T> = {
   b: T
   ancestorsOfA: T[]
 }
+
+type FileEmit = {
+  path: Path
+  content: string
+}
+
+export type Emit = FileEmit[]

@@ -1,4 +1,4 @@
-import { ConcreteScope } from './scopes'
+import { ConcreteScope } from '../analyze/scopes'
 
 export const FUNCTION_TYPE = '->'
 export const VOID_TYPE = 'Void'

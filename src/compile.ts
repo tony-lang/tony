@@ -1,58 +1,25 @@
-import { BuildSymbolTable, FileModuleScope } from './symbol_table'
-import { getFilePath, getOutFile, writeFile } from './util'
-import { GenerateCode } from './code_generation'
-import { InferTypes } from './type_inference'
-import { compile as webpackCompile } from './webpack'
+import { analyze } from './analyze'
+import { writeEmit } from './emit'
+import { generateCode } from './code_generation'
+import { inferTypes } from './type_inference'
+import { buildConfig, ConfigOptions } from './config'
+import { log } from './logger'
 
 export const compile = async (
-  file: string,
-  {
-    outFile,
-    emit = true,
-    webpack = true,
-    webpackMode = 'production',
-    verbose = false,
-  }: {
-    outFile?: string
-    emit?: boolean
-    webpack?: boolean
-    webpackMode?: string
-    verbose?: boolean
-  },
+  entry: string,
+  options: ConfigOptions,
 ): Promise<string | undefined> => {
-  const filePath = getFilePath(file)
-  const outFilePath = getFilePath(outFile || getOutFile(file))
-  if (verbose) console.log(`Compiling ${filePath} to ${outFilePath}...`)
+  const config = buildConfig(entry, options)
 
-  const globalScope = await new BuildSymbolTable(filePath, verbose).perform()
-  inferTypes(globalScope.scopes, verbose)
+  log(`Compiling ${config.entry}...`, config)
 
-  if (!emit) return
+  const globalScope = await analyze(config.entry, config)
+  const typedGlobalScope = inferTypes(globalScope, config)
 
-  await generateCode(globalScope.scopes, verbose)
-  if (webpack) await webpackCompile(outFilePath, webpackMode, verbose)
+  if (!options.emit) return
 
-  return outFilePath
-}
+  const emit = generateCode(typedGlobalScope, config)
+  await writeEmit(emit, config)
 
-const inferTypes = (fileScopes: FileModuleScope[], verbose: boolean): void =>
-  fileScopes.forEach((fileScope) => {
-    if (verbose)
-      console.log(`Running type inference on ${fileScope.filePath}...`)
-
-    fileScope.annotatedTree = new InferTypes(fileScope).perform()
-  })
-
-const generateCode = async (
-  fileScopes: FileModuleScope[],
-  verbose: boolean,
-): Promise<void> => {
-  await Promise.all(
-    fileScopes.map(async (fileScope) => {
-      if (verbose) console.log(`Generating code for ${fileScope.filePath}...`)
-
-      const source = new GenerateCode(fileScope).perform()
-      await writeFile(getOutFile(fileScope.filePath), source)
-    }),
-  )
+  return config.out
 }

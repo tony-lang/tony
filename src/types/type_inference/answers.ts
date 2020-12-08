@@ -1,4 +1,4 @@
-import { Node } from './ast'
+import { Node } from '../analyze/ast'
 import { ConstrainedType, Type } from './types'
 
 // an answer represents a type annotation for a given node in the syntax tree

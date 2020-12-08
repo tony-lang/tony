@@ -2,6 +2,7 @@ import { FILE_EXTENSION, TARGET_FILE_EXTENSION } from './constants'
 import fs from 'fs'
 import mkdirp from 'mkdirp'
 import path from 'path'
+import { Path } from './types/util'
 
 export const readFile = (filePath: string): Promise<string> =>
   new Promise((resolve, reject) =>
@@ -20,7 +21,7 @@ export const writeFile = async (filePath: string, data = ''): Promise<void> => {
   )
 }
 
-export const getFilePath = (file: string) => {
+export const getFilePath = (file: string): Path => {
   if (!file.startsWith('.')) return file
 
   return path.join(process.cwd(), file)

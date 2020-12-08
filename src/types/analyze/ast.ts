@@ -1,11 +1,17 @@
 import { SyntaxNode } from 'tree-sitter-tony'
 
 export enum NodeKind {
+  Error,
   Program,
 }
 
 interface AbstractNode {
   node: SyntaxNode
+  errors: Error[]
+}
+
+export interface Error extends AbstractNode {
+  kind: typeof NodeKind.Error
 }
 
 export interface Program extends AbstractNode {
@@ -15,4 +21,4 @@ export interface Program extends AbstractNode {
 
 export type Expression = never
 
-export type Node = Program
+export type Node = Error | Program
