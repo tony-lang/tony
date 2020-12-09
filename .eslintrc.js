@@ -17,27 +17,18 @@ module.exports = {
   plugins: ['@typescript-eslint'],
   rules: {
     'sort-imports': 'error',
-    '@typescript-eslint/ban-ts-comment': 'warn',
     '@typescript-eslint/ban-types': 'off',
     '@typescript-eslint/camelcase': 'off',
-    '@typescript-eslint/explicit-module-boundary-types': 'off',
-    '@typescript-eslint/explicit-function-return-type': 'off',
-    '@typescript-eslint/no-use-before-define': 'off',
+    '@typescript-eslint/explicit-module-boundary-types': 'error',
     '@typescript-eslint/no-explicit-any': 'error',
+    '@typescript-eslint/no-non-null-assertion': 'error',
     '@typescript-eslint/no-unused-vars': 'error',
-    '@typescript-eslint/member-delimiter-style': 'off',
   },
   overrides: [
     {
-      files: ['src/stdlib/*.ts'],
+      files: ['src/code_generation/lib/*.ts'],
       rules: {
         '@typescript-eslint/no-explicit-any': 'off',
-      },
-    },
-    {
-      files: ['src/code_generation/services/ResolvePattern.ts'],
-      rules: {
-        '@typescript-eslint/no-explicit-any': 'warn',
       },
     },
   ],
