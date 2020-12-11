@@ -8,7 +8,7 @@ export const writeEmit = async (emit: Emit, config: Config): Promise<void> => {
     emit.map(async ({ path, content }) => {
       const out = getOutFilename(path)
 
-      log(`Emitting code for ${path} to ${out}...`, config)
+      log(config, 'Emitting code for', path, 'to', out)
 
       await writeFile(out, content)
     }),

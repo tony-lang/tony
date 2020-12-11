@@ -4,5 +4,5 @@ import { Emit } from '../types'
 
 export const generateCode = (
   globalScope: GlobalScope<TypedFileScope>,
-  { verbose }: Config,
+  config: Config,
 ): Emit => {}

@@ -3,5 +3,5 @@ import { Config } from '../config'
 
 export const inferTypes = (
   globalScope: GlobalScope<FileScope>,
-  { verbose }: Config,
+  config: Config,
 ): GlobalScope<TypedFileScope> => {}

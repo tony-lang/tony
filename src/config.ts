@@ -1,5 +1,5 @@
 import { Path } from './types'
-import { getFilePath, getOutFile } from './util'
+import { getFilePath, getOutFilename } from './util/file_system'
 
 export type Config = ConfigOptions & InternalConfig
 
@@ -24,6 +24,6 @@ export const buildConfig = (entry: string, options: ConfigOptions): Config => {
     verbose: false,
     ...options,
     entry: getFilePath(entry),
-    out: getFilePath(out || getOutFile(entry)),
+    out: getFilePath(out || getOutFilename(entry)),
   }
 }

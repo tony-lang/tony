@@ -1,7 +1,7 @@
 import { Config } from './config'
 
-export const log = (value: string, { verbose }: Config) => {
+export const log = ({ verbose }: Config, ...messages: any[]) => {
   if (!verbose) return
 
-  console.log(value)
+  console.log(...messages)
 }

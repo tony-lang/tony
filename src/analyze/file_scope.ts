@@ -20,14 +20,15 @@ import {
 import { Path } from '../types'
 import { buildBinding } from '../types/analyze/bindings'
 import {
+  buildFileScope,
   buildNestedScope,
-  buildSymbolTable,
+  FileScope,
+  isFileScope,
   isModuleScope,
-  isSymbolTable,
   NestedScope,
-  SymbolTable,
 } from '../types/analyze/scopes'
 import {
+  MountedErrorAnnotation,
   buildDuplicateBindingError,
   buildExportOutsideModuleScopeError,
   buildImportOutsideFileScopeError,
@@ -38,18 +39,11 @@ import { assert } from '../types/errors/internal'
 import { buildRelativePath, fileMayBeImported } from '../util/file_system'
 import { parseStringPattern } from '../util/literals'
 
-type CurrentScope = SymbolTable | NestedScope
-// TODO: move error type to a different place
-type AnalyzeErrorAnnotation = {
-  node: SyntaxNode
-  error: ErrorAnnotation
-}
 type State = {
   filePath: Path
-  errors: AnalyzeErrorAnnotation[]
   // A stack of all scopes starting with the closest scope and ending with the
   // symbol table. Scopes are collected recursively.
-  scopesStack: CurrentScope[]
+  scopesStack: (FileScope | NestedScope)[]
   // When enabled the next created scope will be a module with the given name.
   nextModuleScopeName?: string
   // When enabled the next declared bindings will be exported.
@@ -62,37 +56,35 @@ type State = {
   nextIdentifierPatternBindingsImplicit?: boolean
 }
 
-export const constructSymbolTable = (
+export const constructFileScope = (
   filePath: Path,
   node: ProgramNode,
-): [symbolTable: SymbolTable, errors: AnalyzeErrorAnnotation[]] => {
-  const initialSymbolTable = buildSymbolTable()
+): FileScope => {
+  const initialFileScope = buildFileScope(filePath, node)
   const initialState: State = {
     filePath,
-    errors: [],
-    scopesStack: [initialSymbolTable],
+    scopesStack: [initialFileScope],
   }
 
   const {
-    errors,
-    scopesStack: [symbolTable],
+    scopesStack: [fileScope],
   } = traverse(initialState, node)
   assert(
-    isSymbolTable(symbolTable),
+    isFileScope(fileScope),
     'Traverse should arrive at the top-level file scope.',
   )
 
-  return [symbolTable, errors]
+  return fileScope
 }
 
 const addDependency = (path: Path) =>
   ensure(
     () => fileMayBeImported(path),
     (state) => {
-      const [symbolTable] = state.scopesStack
+      const [fileScope] = state.scopesStack
 
       assert(
-        isSymbolTable(symbolTable),
+        isFileScope(fileScope),
         'Dependencies may only be added to a file-level scope.',
       )
 
@@ -100,8 +92,8 @@ const addDependency = (path: Path) =>
         ...state,
         scopesStack: [
           {
-            ...symbolTable,
-            dependencies: [...symbolTable.dependencies, path],
+            ...fileScope,
+            dependencies: [...fileScope.dependencies, path],
           },
         ],
       }
@@ -109,10 +101,17 @@ const addDependency = (path: Path) =>
     buildUnknownImportError(path),
   )
 
-const addError = (state: State, error: AnalyzeErrorAnnotation): State => ({
-  ...state,
-  errors: [...state.errors, error],
-})
+const addError = (state: State, error: MountedErrorAnnotation): State => {
+  const [scope, ...parentScopes] = state.scopesStack
+
+  return {
+    ...state,
+    scopesStack: [{
+      ...scope,
+      errors: [...scope.errors, error]
+    }, ...parentScopes]
+  }
+}
 
 // Checks predicate. If true, returns callback. Else, adds error annotation.
 const ensure = <T extends SyntaxNode>(
@@ -140,7 +139,7 @@ const leaveBlock = (state: State): State => {
   const [scope, parentScope, ...parentScopes] = state.scopesStack
 
   assert(
-    !isSymbolTable(scope) && parentScope !== undefined,
+    !isFileScope(scope) && parentScope !== undefined,
     'Cannot leave file-level scope.',
   )
 
@@ -302,7 +301,7 @@ const handleExport = ensure<ExportNode>(
 
 const handleImportAndExternalExport = (isExported: boolean) =>
   ensure<ImportNode | ExternalExportNode>(
-    (state) => isSymbolTable(state.scopesStack[0]),
+    (state) => isFileScope(state.scopesStack[0]),
     (state, node) => {
       const source = parseStringPattern(node.sourceNode)
       const sourcePath = buildRelativePath(state.filePath, source)

@@ -1,11 +1,14 @@
-import { Path } from '..'
-import { Program } from '../analyze/ast'
+import { ProgramNode, SyntaxNode } from 'tree-sitter-tony'
+import { CyclicDependency, Path } from '..'
 import { Binding } from '../analyze/bindings'
 import { FileScope, NestedScope } from '../analyze/scopes'
 import { Answers } from '../type_inference/answers'
 import { Type } from '../type_inference/types'
 
-enum ErrorAnnotationKind {
+// ---- Types ----
+
+export enum ErrorAnnotationKind {
+  CyclicDependency,
   DuplicateBinding,
   ExportOutsideModuleScope,
   ExternalTypeImport,
@@ -14,9 +17,15 @@ enum ErrorAnnotationKind {
   MissingBinding,
   MissingExternalImportTypeHint,
   Type,
+  UnknownEntry,
   UnknownImport,
   UnsupportedSyntax,
   UseOfTypeAsValue,
+}
+
+export interface CyclicDependencyError {
+  kind: typeof ErrorAnnotationKind.CyclicDependency
+  cyclicDependency: CyclicDependency<Path>
 }
 
 export interface DuplicateBindingError {
@@ -39,7 +48,7 @@ export interface ImportOutsideFileScopeError {
 
 export interface IndeterminateTypeError {
   kind: typeof ErrorAnnotationKind.IndeterminateType
-  answers: Answers<Program>
+  answers: Answers<ProgramNode>
 }
 
 export interface MissingBindingError {
@@ -59,6 +68,11 @@ export interface TypeError {
   actual: Type
 }
 
+export interface UnknownEntryError {
+  kind: typeof ErrorAnnotationKind.UnknownEntry
+  sourcePath: Path
+}
+
 export interface UnknownImportError {
   kind: typeof ErrorAnnotationKind.UnknownImport
   sourcePath: Path
@@ -74,6 +88,7 @@ export interface UseOfTypeAsValueError {
 }
 
 export type ErrorAnnotation =
+  | CyclicDependencyError
   | DuplicateBindingError
   | ExportOutsideModuleScopeError
   | ExternalTypeImportError
@@ -82,9 +97,24 @@ export type ErrorAnnotation =
   | MissingBindingError
   | MissingExternalImportTypeHintError
   | TypeError
+  | UnknownEntryError
   | UnknownImportError
   | UnsupportedSyntaxError
   | UseOfTypeAsValueError
+
+export type MountedErrorAnnotation = {
+  node: SyntaxNode
+  error: ErrorAnnotation
+}
+
+// ---- Factories ----
+
+export const buildCyclicDependencyError = (
+  cyclicDependency: CyclicDependency<Path>,
+): CyclicDependencyError => ({
+  kind: ErrorAnnotationKind.CyclicDependency,
+  cyclicDependency,
+})
 
 export const buildDuplicateBindingError = (
   name: string,
@@ -99,6 +129,13 @@ export const buildExportOutsideModuleScopeError = (): ExportOutsideModuleScopeEr
 
 export const buildImportOutsideFileScopeError = (): ImportOutsideFileScopeError => ({
   kind: ErrorAnnotationKind.ImportOutsideFileScope,
+})
+
+export const buildUnknownEntryError = (
+  sourcePath: Path,
+): UnknownEntryError => ({
+  kind: ErrorAnnotationKind.UnknownEntry,
+  sourcePath,
 })
 
 export const buildUnknownImportError = (

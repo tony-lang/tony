@@ -1,6 +1,6 @@
 import childProcess from 'child_process'
 
-import { getFilePath } from './util'
+import { getFilePath } from './util/file_system'
 
 export const exec = async (
   file: string,
@@ -8,7 +8,7 @@ export const exec = async (
   { verbose = false },
 ): Promise<void> => {
   const filePath = getFilePath(file)
-  if (verbose) console.log(`Executing ${filePath}...`)
+  if (verbose) console.log('Executing', filePath)
 
   return new Promise((resolve) => {
     childProcess

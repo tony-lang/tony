@@ -11,7 +11,7 @@ export const compile = async (
 ): Promise<string | undefined> => {
   const config = buildConfig(entry, options)
 
-  log(`Compiling ${config.entry}...`, config)
+  log(config, `Compiling ${config.entry}...`)
 
   const globalScope = await analyze(config)
   const typedGlobalScope = inferTypes(globalScope, config)

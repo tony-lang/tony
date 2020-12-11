@@ -1,7 +1,8 @@
-import { Program } from './ast'
 import { Binding } from './bindings'
 import { Path } from '..'
 import { Answer } from '../type_inference/answers'
+import { ProgramNode } from 'tree-sitter-tony'
+import { ErrorAnnotation, MountedErrorAnnotation } from '../errors/annotations'
 
 // ---- Types ----
 
@@ -14,26 +15,25 @@ enum ScopeKind {
 // a concrete scope represents a scope including bindings
 export interface ConcreteScope {
   bindings: Binding[]
-}
-
-export interface SymbolTable extends ConcreteScope {
-  kind: typeof ScopeKind.File
-  scopes: NestedScope[]
-  dependencies: Path[]
+  errors: MountedErrorAnnotation[]
 }
 
 export interface GlobalScope<T extends FileScope | TypedFileScope> {
   kind: typeof ScopeKind.Global
   scopes: T[]
+  errors: ErrorAnnotation[]
 }
 
-export interface FileScope extends SymbolTable {
+export interface FileScope extends ConcreteScope {
+  kind: typeof ScopeKind.File
   filePath: Path
-  node: Program
+  node: ProgramNode
+  scopes: NestedScope[]
+  dependencies: Path[]
 }
 
 export interface TypedFileScope extends FileScope {
-  typedNode: Answer<Program>
+  typedNode: Answer<ProgramNode>
 }
 
 export interface NestedScope extends ConcreteScope {
@@ -52,28 +52,20 @@ export type Scope<T extends FileScope> =
 
 export const buildGlobalScope = <T extends FileScope | TypedFileScope>(
   scopes: T[],
+  errors: ErrorAnnotation[] = [],
 ): GlobalScope<T> => ({
   kind: ScopeKind.Global,
   scopes,
-})
-
-export const buildSymbolTable = (
-  scopes: NestedScope[] = [],
-  dependencies: Path[] = [],
-  bindings: Binding[] = [],
-): SymbolTable => ({
-  kind: ScopeKind.File,
-  scopes,
-  dependencies,
-  bindings,
+  errors,
 })
 
 export const buildFileScope = (
   filePath: Path,
-  node: Program,
+  node: ProgramNode,
   scopes: NestedScope[] = [],
   dependencies: Path[] = [],
   bindings: Binding[] = [],
+  errors: MountedErrorAnnotation[] = [],
 ): FileScope => ({
   kind: ScopeKind.File,
   filePath,
@@ -81,22 +73,25 @@ export const buildFileScope = (
   scopes,
   dependencies,
   bindings,
+  errors,
 })
 
 export const buildNestedScope = (
   moduleName?: string,
   bindings: Binding[] = [],
   scopes: NestedScope[] = [],
+  errors: MountedErrorAnnotation[] = [],
 ): NestedScope => ({
   kind: ScopeKind.Nested,
   bindings,
   scopes,
   moduleName,
+  errors,
 })
 
-export const isSymbolTable = (
-  scope: SymbolTable | NestedScope,
-): scope is SymbolTable => scope.kind === ScopeKind.File
+export const isFileScope = (
+  scope: FileScope | NestedScope,
+): scope is FileScope => scope.kind === ScopeKind.File
 
-export const isModuleScope = (scope: SymbolTable | NestedScope) =>
-  isSymbolTable(scope) || !!scope.moduleName
+export const isModuleScope = (scope: FileScope | NestedScope) =>
+  isFileScope(scope) || !!scope.moduleName

@@ -1,10 +1,11 @@
 import { SyntaxNode } from 'tree-sitter-tony'
 import { Path } from '..'
-import { Node } from './ast'
+
+// ---- Types ----
 
 export interface Binding {
   name: string
-  syntaxNode: SyntaxNode
+  node: SyntaxNode
   isExported: boolean
   importedFrom?: Path
   // A binding is implicit when it stems from a generator, parameter or case,
@@ -12,9 +13,7 @@ export interface Binding {
   isImplicit: boolean
 }
 
-export interface AnnotatedBinding extends Binding {
-  node: Node
-}
+// ---- Factories ----
 
 export const buildBinding = (
   name: string,
