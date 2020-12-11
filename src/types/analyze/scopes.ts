@@ -99,4 +99,4 @@ export const isSymbolTable = (
 ): scope is SymbolTable => scope.kind === ScopeKind.File
 
 export const isModuleScope = (scope: SymbolTable | NestedScope) =>
-  isSymbolTable(scope) || scope.isModule
+  isSymbolTable(scope) || !!scope.moduleName
