@@ -16,17 +16,20 @@ export interface ConcreteScope {
   bindings: Binding[]
 }
 
+export interface SymbolTable extends ConcreteScope {
+  kind: typeof ScopeKind.File
+  scopes: NestedScope[]
+  dependencies: Path[]
+}
+
 export interface GlobalScope<T extends FileScope | TypedFileScope> {
   kind: typeof ScopeKind.Global
   scopes: T[]
 }
 
-export interface FileScope extends ConcreteScope {
-  kind: typeof ScopeKind.File
+export interface FileScope extends SymbolTable {
   filePath: Path
   node: Program
-  scopes: NestedScope[]
-  dependencies: Path[]
 }
 
 export interface TypedFileScope extends FileScope {
@@ -36,7 +39,7 @@ export interface TypedFileScope extends FileScope {
 export interface NestedScope extends ConcreteScope {
   kind: typeof ScopeKind.Nested
   scopes: NestedScope[]
-  isModule: boolean
+  moduleName?: string
 }
 
 export type Scope<T extends FileScope> =
@@ -52,6 +55,17 @@ export const buildGlobalScope = <T extends FileScope | TypedFileScope>(
 ): GlobalScope<T> => ({
   kind: ScopeKind.Global,
   scopes,
+})
+
+export const buildSymbolTable = (
+  scopes: NestedScope[] = [],
+  dependencies: Path[] = [],
+  bindings: Binding[] = [],
+): SymbolTable => ({
+  kind: ScopeKind.File,
+  scopes,
+  dependencies,
+  bindings,
 })
 
 export const buildFileScope = (
@@ -70,12 +84,19 @@ export const buildFileScope = (
 })
 
 export const buildNestedScope = (
+  moduleName?: string,
   bindings: Binding[] = [],
   scopes: NestedScope[] = [],
-  isModule = false,
 ): NestedScope => ({
   kind: ScopeKind.Nested,
   bindings,
   scopes,
-  isModule,
+  moduleName,
 })
+
+export const isSymbolTable = (
+  scope: SymbolTable | NestedScope,
+): scope is SymbolTable => scope.kind === ScopeKind.File
+
+export const isModuleScope = (scope: SymbolTable | NestedScope) =>
+  isSymbolTable(scope) || scope.isModule

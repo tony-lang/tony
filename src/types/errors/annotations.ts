@@ -1,3 +1,4 @@
+import { Path } from '..'
 import { Program } from '../analyze/ast'
 import { Binding } from '../analyze/bindings'
 import { FileScope, NestedScope } from '../analyze/scopes'
@@ -20,7 +21,7 @@ enum ErrorAnnotationKind {
 
 export interface DuplicateBindingError {
   kind: typeof ErrorAnnotationKind.DuplicateBinding
-  binding: Binding
+  name: string
 }
 
 export interface ExportOutsideModuleScopeError {
@@ -60,7 +61,7 @@ export interface TypeError {
 
 export interface UnknownImportError {
   kind: typeof ErrorAnnotationKind.UnknownImport
-  sourcePath: string
+  sourcePath: Path
 }
 
 export interface UnsupportedSyntaxError {
@@ -84,3 +85,25 @@ export type ErrorAnnotation =
   | UnknownImportError
   | UnsupportedSyntaxError
   | UseOfTypeAsValueError
+
+export const buildDuplicateBindingError = (
+  name: string,
+): DuplicateBindingError => ({
+  kind: ErrorAnnotationKind.DuplicateBinding,
+  name,
+})
+
+export const buildExportOutsideModuleScopeError = (): ExportOutsideModuleScopeError => ({
+  kind: ErrorAnnotationKind.ExportOutsideModuleScope,
+})
+
+export const buildImportOutsideFileScopeError = (): ImportOutsideFileScopeError => ({
+  kind: ErrorAnnotationKind.ImportOutsideFileScope,
+})
+
+export const buildUnknownImportError = (
+  sourcePath: Path,
+): UnknownImportError => ({
+  kind: ErrorAnnotationKind.UnknownImport,
+  sourcePath,
+})

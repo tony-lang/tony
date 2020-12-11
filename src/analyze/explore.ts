@@ -5,8 +5,8 @@ import { parse } from '../parse'
 import { Path } from '../types'
 import { FileScope, buildFileScope } from '../types/analyze/scopes'
 import { graphSearch } from '../util/graph_search'
-import { buildAST } from './ast'
-import { buildSymbolTable } from './symbol_table'
+import { constructAST } from './ast'
+import { constructSymbolTable } from './symbol_table'
 
 export const analyzeFiles = (entry: Path, config: Config) =>
   graphSearch<Path, FileScope[]>(
@@ -30,8 +30,8 @@ const analyzeFile = async (
   log(`Building file scope of ${filePath}...`, config)
 
   const tree = await parse(filePath, config)
-  const symbolTable = buildSymbolTable(tree.rootNode as ProgramNode)
-  const node = buildAST(symbolTable, tree.rootNode as ProgramNode)
+  const symbolTable = constructSymbolTable(tree.rootNode as ProgramNode)
+  const node = constructAST(symbolTable, tree.rootNode as ProgramNode)
 
   return buildFileScope(
     filePath,
