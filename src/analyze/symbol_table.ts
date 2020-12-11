@@ -39,13 +39,13 @@ import { buildRelativePath, fileMayBeImported } from '../util/file_system'
 import { parseStringPattern } from '../util/literals'
 
 type CurrentScope = SymbolTable | NestedScope
+// TODO: move error type to a different place
 type AnalyzeErrorAnnotation = {
   node: SyntaxNode
   error: ErrorAnnotation
 }
 type State = {
   filePath: Path
-  dependencies: Path[]
   errors: AnalyzeErrorAnnotation[]
   // A stack of all scopes starting with the closest scope and ending with the
   // symbol table. Scopes are collected recursively.
@@ -65,16 +65,16 @@ type State = {
 export const constructSymbolTable = (
   filePath: Path,
   node: ProgramNode,
-): SymbolTable => {
+): [symbolTable: SymbolTable, errors: AnalyzeErrorAnnotation[]] => {
   const initialSymbolTable = buildSymbolTable()
   const initialState: State = {
     filePath,
-    dependencies: [],
     errors: [],
     scopesStack: [initialSymbolTable],
   }
 
   const {
+    errors,
     scopesStack: [symbolTable],
   } = traverse(initialState, node)
   assert(
@@ -82,16 +82,30 @@ export const constructSymbolTable = (
     'Traverse should arrive at the top-level file scope.',
   )
 
-  return symbolTable
+  return [symbolTable, errors]
 }
 
 const addDependency = (path: Path) =>
   ensure(
     () => fileMayBeImported(path),
-    (state) => ({
-      ...state,
-      dependencies: [...state.dependencies, path],
-    }),
+    (state) => {
+      const [symbolTable] = state.scopesStack
+
+      assert(
+        isSymbolTable(symbolTable),
+        'Dependencies may only be added to a file-level scope.',
+      )
+
+      return {
+        ...state,
+        scopesStack: [
+          {
+            ...symbolTable,
+            dependencies: [...symbolTable.dependencies, path],
+          },
+        ],
+      }
+    },
     buildUnknownImportError(path),
   )
 

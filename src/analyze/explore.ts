@@ -30,7 +30,10 @@ const analyzeFile = async (
   log(`Building file scope of ${filePath}...`, config)
 
   const tree = await parse(filePath, config)
-  const symbolTable = constructSymbolTable(tree.rootNode as ProgramNode)
+  const symbolTable = constructSymbolTable(
+    filePath,
+    tree.rootNode as ProgramNode,
+  )
   const node = constructAST(symbolTable, tree.rootNode as ProgramNode)
 
   return buildFileScope(
