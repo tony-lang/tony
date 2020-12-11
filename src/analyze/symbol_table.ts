@@ -224,6 +224,7 @@ const traverseAllChildren = (state: State, node: SyntaxNode): State =>
 const traverse = (state: State, node: SyntaxNode): State => {
   if (!node.isNamed) return state
 
+  // TODO: build import bindings (identifier_pattern, import_clause_identifier_pair, import_clause_type_pair, type)
   switch (node.type) {
     case SyntaxType.AbstractionBranch:
       return handleAbstractionBranch(state, node)
@@ -355,6 +356,7 @@ const handleModule = (state: State, node: ModuleNode): State => {
 }
 
 const handleWhen = nest<WhenNode>((state, node) => {
+  // TODO: expect all patterns to define the same bindings, don't throw duplicate binding errors across multiple patterns
   const nestedStateWithAssignments = traverseAll(
     {
       ...state,
