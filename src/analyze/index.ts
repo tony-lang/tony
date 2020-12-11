@@ -9,6 +9,7 @@ import { fileMayBeEntry } from '../util/file_system'
 import { analyzeFiles } from './explore'
 import { sortFileScopes } from './sort'
 import { buildUnknownEntryError } from '../types/errors/annotations'
+import { isNotUndefined } from '../util'
 
 export const analyze = async (
   config: Config,
@@ -19,25 +20,24 @@ export const analyze = async (
     return buildGlobalScope([], [buildUnknownEntryError(config.entry)])
 
   const fileScopes = await analyzeFiles(config.entry, config)
-  const { fileScopes: sortedFileScopes, error } = sortFileScopes(fileScopes, config)
+  const { fileScopes: sortedFileScopes, error } = sortFileScopes(
+    fileScopes,
+    config,
+  )
 
   if (error === undefined) {
     log(
       config,
       'Topological sorting on files returned:',
-      sortedFileScopes
-        .map((fileScope) => fileScope.filePath)
-        .join('>')
+      sortedFileScopes.map((fileScope) => fileScope.filePath).join('>'),
     )
-
-    return buildGlobalScope(sortedFileScopes)
   } else {
     log(
       config,
       'Topological sorting failed with cyclic dependency:',
-      error.cyclicDependency
+      error.cyclicDependency,
     )
-
-    return buildGlobalScope(sortedFileScopes, [error])
   }
+
+  return buildGlobalScope(sortedFileScopes, [error].filter(isNotUndefined))
 }

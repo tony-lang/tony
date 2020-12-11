@@ -2,14 +2,17 @@ import { Config } from '../config'
 import { log } from '../logger'
 import { CyclicDependency, Path } from '../types'
 import { FileScope } from '../types/analyze/scopes'
-import { buildCyclicDependencyError, CyclicDependencyError } from '../types/errors/annotations'
+import {
+  buildCyclicDependencyError,
+  CyclicDependencyError,
+} from '../types/errors/annotations'
 import { TopologicalSortError, topologicalSort } from '../util/topological_sort'
 
 export const sortFileScopes = (
   fileScopes: FileScope[],
   config: Config,
 ): {
-  fileScopes: FileScope[],
+  fileScopes: FileScope[]
   error?: CyclicDependencyError
 } => {
   const dependencyGraph = buildDependencyGraph(fileScopes)
@@ -18,11 +21,18 @@ export const sortFileScopes = (
 
   try {
     return {
-      fileScopes: topologicalSort(dependencyGraph).map(getFileScope(fileScopes))
+      fileScopes: topologicalSort(dependencyGraph).map(
+        getFileScope(fileScopes),
+      ),
     }
   } catch (error: unknown) {
     if (error instanceof TopologicalSortError)
-      return { fileScopes, error: buildCyclicDependencyError(buildCyclicDependency(fileScopes, error.cyclicDependency)) }
+      return {
+        fileScopes,
+        error: buildCyclicDependencyError(
+          buildCyclicDependency(fileScopes, error.cyclicDependency),
+        ),
+      }
     else throw error
   }
 }

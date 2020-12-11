@@ -29,8 +29,5 @@ const analyzeFile = async (
   log(config, 'Building file scope of', filePath)
 
   const tree = await parse(filePath, config)
-  return constructFileScope(
-    filePath,
-    tree.rootNode as ProgramNode,
-  )
+  return constructFileScope(filePath, tree.rootNode as ProgramNode)
 }

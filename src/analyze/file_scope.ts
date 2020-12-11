@@ -106,10 +106,13 @@ const addError = (state: State, error: MountedErrorAnnotation): State => {
 
   return {
     ...state,
-    scopesStack: [{
-      ...scope,
-      errors: [...scope.errors, error]
-    }, ...parentScopes]
+    scopesStack: [
+      {
+        ...scope,
+        errors: [...scope.errors, error],
+      },
+      ...parentScopes,
+    ],
   }
 }
 
