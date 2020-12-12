@@ -9,12 +9,17 @@ export enum BindingKind {
   Type,
 }
 
+export type ImportBindingConfig = {
+  file: AbsolutePath
+  originalName?: string
+}
+
 export interface Binding {
   kind: BindingKind
   name: string
   node: SyntaxNode
   isExported: boolean
-  importedFrom?: AbsolutePath
+  importedFrom?: ImportBindingConfig
   // A binding is implicit when it stems from a generator, parameter or case,
   // but not when it stems from an assignment or a module.
   isImplicit: boolean
@@ -26,13 +31,21 @@ export type Bindings = Record<BindingKind, Binding[]>
 
 // ---- Factories ----
 
+export const buildImportBindingConfig = (
+  file: AbsolutePath,
+  originalName?: string,
+): ImportBindingConfig => ({
+  file,
+  originalName,
+})
+
 export const buildBinding = (
   kind: BindingKind,
   name: string,
   node: SyntaxNode,
   isImplicit: boolean,
   isExported = false,
-  importedFrom?: AbsolutePath,
+  importedFrom?: ImportBindingConfig,
 ): Binding => ({
   kind,
   name,

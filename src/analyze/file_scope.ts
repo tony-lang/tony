@@ -8,7 +8,9 @@ import {
   IdentifierNode,
   IdentifierPatternNameNode,
   IdentifierPatternNode,
+  ImportIdentifierAsNode,
   ImportNode,
+  ImportTypeAsNode,
   ListComprehensionNode,
   ModuleNode,
   ProgramNode,
@@ -16,10 +18,16 @@ import {
   SyntaxNode,
   SyntaxType,
   TypeDeclarationNode,
+  TypeNode,
   WhenNode,
 } from 'tree-sitter-tony'
 import { Config } from '../config'
-import { BindingKind, buildBinding } from '../types/analyze/bindings'
+import {
+  BindingKind,
+  buildBinding,
+  buildImportBindingConfig,
+  ImportBindingConfig,
+} from '../types/analyze/bindings'
 import {
   buildFileScope,
   buildNestedScope,
@@ -42,12 +50,7 @@ import { assert } from '../types/errors/internal'
 import { AbsolutePath, buildRelativePath, RelativePath } from '../types/paths'
 import { fileMayBeImported } from '../util/file_system'
 import { parseStringPattern } from '../util/literals'
-import {
-  addBinding,
-  areSameBindings,
-  bindingsMissingFrom,
-  findBinding,
-} from '../util/analyze'
+import { addBinding, bindingsMissingFrom, findBinding } from '../util/analyze'
 import { resolveRelativePath } from './resolve'
 
 type State = {
@@ -62,7 +65,7 @@ type State = {
   exportNextBindings?: boolean
   // When enabled the next declared bindings will be imported from the given
   // path.
-  importNextBindingsFrom?: AbsolutePath
+  importNextBindingsFrom?: ImportBindingConfig
   // When enabled the next bindings stemming from identifier patterns will be
   // implicit.
   nextIdentifierPatternBindingsImplicit?: boolean
@@ -199,7 +202,7 @@ const declareBinding = (
   name: string,
   isImplicit: boolean,
   isExported = false,
-  importedFrom?: AbsolutePath,
+  importedFrom?: ImportBindingConfig,
 ) =>
   ensure(
     (state) => findBinding(kind, name, state.scopes) === undefined,
@@ -230,7 +233,7 @@ const getIdentifierName = (
   node: IdentifierNode | IdentifierPatternNameNode,
 ): string => node.text
 
-const getTypeName = (node: TypeDeclarationNode): string => node.nameNode.text
+const getTypeName = (node: TypeNode): string => node.text
 
 const traverseAll = (state: State, nodes: SyntaxNode[]): State =>
   nodes.reduce((acc, child) => traverse(acc, child), state)
@@ -241,7 +244,6 @@ const traverseAllChildren = (state: State, node: SyntaxNode): State =>
 const traverse = (state: State, node: SyntaxNode): State => {
   if (!node.isNamed) return state
 
-  // TODO: build import bindings (identifier_pattern, import_clause_identifier_pair, import_clause_type_pair, type)
   switch (node.type) {
     case SyntaxType.AbstractionBranch:
       return handleAbstractionBranch(state, node)
@@ -261,6 +263,10 @@ const traverse = (state: State, node: SyntaxNode): State => {
       return handleIdentifierPatternAndShorthandMemberPattern(state, node)
     case SyntaxType.Import:
       return handleImportAndExternalExport(false)(state, node)
+    case SyntaxType.ImportIdentifierAs:
+      return handleImportIdentifierAs(state, node)
+    case SyntaxType.ImportTypeAs:
+      return handleImportTypeAs(state, node)
     case SyntaxType.ListComprehension:
       return handleListComprehension(state, node)
     case SyntaxType.Module:
@@ -346,7 +352,7 @@ const handleImportAndExternalExport = (isExported: boolean) =>
         {
           ...stateWithDependency,
           exportNextBindings: isExported,
-          importNextBindingsFrom: resolvedSource,
+          importNextBindingsFrom: buildImportBindingConfig(resolvedSource),
         },
         node.importNodes,
       )
@@ -389,13 +395,58 @@ const handleIdentifierPatternAndShorthandMemberPattern = (
   const {
     exportNextBindings: isExported,
     nextIdentifierPatternBindingsImplicit: isImplicit,
+    importNextBindingsFrom: importedFrom,
   } = state
   return declareBinding(
     BindingKind.Term,
     name,
     !!isImplicit,
     isExported,
+    importedFrom,
   )(state, node)
+}
+
+const handleImportIdentifierAs = (
+  state: State,
+  node: ImportIdentifierAsNode,
+): State => {
+  const originalName = getIdentifierName(node.nameNode)
+  const { importNextBindingsFrom } = state
+
+  assert(
+    importNextBindingsFrom !== undefined,
+    'Within an import statement, there should be an import config.',
+  )
+
+  return traverse(
+    {
+      ...state,
+      importNextBindingsFrom: {
+        ...importNextBindingsFrom,
+        originalName,
+      },
+    },
+    node.asNode,
+  )
+}
+
+const handleImportTypeAs = (state: State, node: ImportTypeAsNode): State => {
+  const originalName = getTypeName(node.nameNode)
+  const name = getTypeName(node.asNode)
+  const {
+    exportNextBindings: isExported,
+    importNextBindingsFrom: importedFrom,
+  } = state
+
+  assert(
+    importedFrom !== undefined,
+    'Within an import statement, there should be an import config.',
+  )
+
+  return declareBinding(BindingKind.Term, name, false, isExported, {
+    ...importedFrom,
+    originalName,
+  })(state, node)
 }
 
 const handleListComprehension = nest<ListComprehensionNode>((state, node) => {
@@ -410,7 +461,7 @@ const handleListComprehension = nest<ListComprehensionNode>((state, node) => {
 })
 
 const handleModule = (state: State, node: ModuleNode): State => {
-  const name = getTypeName(node.nameNode)
+  const name = getTypeName(node.nameNode.nameNode)
   const { exportNextBindings: isExported } = state
   const stateWithBody = traverse(
     {
