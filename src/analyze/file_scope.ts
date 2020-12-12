@@ -97,36 +97,28 @@ export const constructFileScope = (
   return fileScope
 }
 
-const addDependency = (
-  relativePath: RelativePath,
-  absolutePath: AbsolutePath | undefined,
-) =>
-  ensure(
-    () => absolutePath !== undefined,
-    (state) => {
-      const [fileScope] = state.scopes
+const addDependency = (state: State, absolutePath: AbsolutePath): State => {
+  const [fileScope] = state.scopes
 
-      assert(
-        absolutePath !== undefined,
-        'It should be ensured that the dependency is not undefined.',
-      )
-      assert(
-        isFileScope(fileScope),
-        'Dependencies may only be added to a file-level scope.',
-      )
-
-      return {
-        ...state,
-        scopes: [
-          {
-            ...fileScope,
-            dependencies: [...fileScope.dependencies, absolutePath],
-          },
-        ],
-      }
-    },
-    buildUnknownImportError(relativePath),
+  assert(
+    absolutePath !== undefined,
+    'It should be ensured that the dependency is not undefined.',
   )
+  assert(
+    isFileScope(fileScope),
+    'Dependencies may only be added to a file-level scope.',
+  )
+
+  return {
+    ...state,
+    scopes: [
+      {
+        ...fileScope,
+        dependencies: [...fileScope.dependencies, absolutePath],
+      },
+    ],
+  }
+}
 
 const addError = (
   state: State,
@@ -343,11 +335,10 @@ const handleImportAndExternalExport = (isExported: boolean) =>
         source,
         fileMayBeImported,
       )
+      if (resolvedSource === undefined)
+        return addError(state, node.sourceNode, buildUnknownImportError(source))
 
-      const stateWithDependency = addDependency(source, resolvedSource)(
-        state,
-        node.sourceNode,
-      )
+      const stateWithDependency = addDependency(state, resolvedSource)
       const stateWithBindings = traverseAll(
         {
           ...stateWithDependency,
