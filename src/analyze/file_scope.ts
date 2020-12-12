@@ -25,7 +25,6 @@ import {
   FileScope,
   isFileScope,
   isModuleScope,
-  NestedScope,
   ScopeStack,
 } from '../types/analyze/scopes'
 import {
@@ -92,7 +91,7 @@ const addDependency = (
   absolutePath: AbsolutePath | undefined,
 ) =>
   ensure(
-    () => absolutePath !== undefined && fileMayBeImported(absolutePath),
+    () => absolutePath !== undefined,
     (state) => {
       const [fileScope] = state.scopes
 
@@ -317,7 +316,11 @@ const handleImportAndExternalExport = (isExported: boolean) =>
         '..',
         parseStringPattern(node.sourceNode),
       )
-      const resolvedSource = resolveRelativePath(state.config, source)
+      const resolvedSource = resolveRelativePath(
+        state.config,
+        source,
+        fileMayBeImported,
+      )
 
       const stateWithDependency = addDependency(source, resolvedSource)(
         state,

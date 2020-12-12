@@ -1,6 +1,5 @@
 import { Config } from '../config'
-import { buildAbsolutePath, RelativePath } from '../types/paths'
-import { fileMayBeImported } from '../util/file_system'
+import { AbsolutePath, buildAbsolutePath, RelativePath } from '../types/paths'
 
 const resolveOptions = ({ entry }: Config, { path, mount }: RelativePath) => [
   buildAbsolutePath(mount.path, path),
@@ -8,5 +7,8 @@ const resolveOptions = ({ entry }: Config, { path, mount }: RelativePath) => [
   buildAbsolutePath(entry.path, path),
 ]
 
-export const resolveRelativePath = (config: Config, path: RelativePath) =>
-  resolveOptions(config, path).find(fileMayBeImported)
+export const resolveRelativePath = (
+  config: Config,
+  path: RelativePath,
+  predicate: (file: AbsolutePath) => boolean,
+) => resolveOptions(config, path).find(predicate)
