@@ -12,7 +12,7 @@ enum ScopeKind {
   Nested,
 }
 
-// a concrete scope represents a scope including bindings
+// A concrete scope represents a scope including bindings.
 export interface ConcreteScope {
   bindings: Binding[]
   errors: MountedErrorAnnotation[]
@@ -42,11 +42,17 @@ export interface NestedScope extends ConcreteScope {
   moduleName?: string
 }
 
-export type Scope<T extends FileScope> =
-  | GlobalScope<T>
+export type Scope =
+  | GlobalScope<FileScope>
   | FileScope
+  | NestedScope
+
+export type TypedScope =
+  | GlobalScope<TypedFileScope>
   | TypedFileScope
   | NestedScope
+
+export type ScopeStack<T extends FileScope> = (T | NestedScope)[]
 
 // ---- Factories ----
 

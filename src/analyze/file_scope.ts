@@ -26,6 +26,7 @@ import {
   isFileScope,
   isModuleScope,
   NestedScope,
+  ScopeStack,
 } from '../types/analyze/scopes'
 import {
   MountedErrorAnnotation,
@@ -38,12 +39,12 @@ import {
 import { assert } from '../types/errors/internal'
 import {
   AbsolutePath,
-  buildAbsolutePath,
   buildRelativePath,
   RelativePath,
 } from '../types/paths'
 import { fileMayBeImported } from '../util/file_system'
 import { parseStringPattern } from '../util/literals'
+import { findBinding } from '../util/scopes'
 import { resolveRelativePath } from './resolve'
 
 type State = {
@@ -51,7 +52,7 @@ type State = {
   file: AbsolutePath
   // A stack of all scopes starting with the closest scope and ending with the
   // symbol table. Scopes are collected recursively.
-  scopesStack: (FileScope | NestedScope)[]
+  scopes: ScopeStack<FileScope>
   // When enabled the next created scope will be a module with the given name.
   nextModuleScopeName?: string
   // When enabled the next declared bindings will be exported.
@@ -73,11 +74,11 @@ export const constructFileScope = (
   const initialState: State = {
     config,
     file,
-    scopesStack: [initialFileScope],
+    scopes: [initialFileScope],
   }
 
   const {
-    scopesStack: [fileScope],
+    scopes: [fileScope],
   } = traverse(initialState, node)
   assert(
     isFileScope(fileScope),
@@ -94,7 +95,7 @@ const addDependency = (
   ensure(
     () => absolutePath !== undefined && fileMayBeImported(absolutePath),
     (state) => {
-      const [fileScope] = state.scopesStack
+      const [fileScope] = state.scopes
 
       assert(
         absolutePath !== undefined,
@@ -107,7 +108,7 @@ const addDependency = (
 
       return {
         ...state,
-        scopesStack: [
+        scopes: [
           {
             ...fileScope,
             dependencies: [...fileScope.dependencies, absolutePath],
@@ -119,11 +120,11 @@ const addDependency = (
   )
 
 const addError = (state: State, error: MountedErrorAnnotation): State => {
-  const [scope, ...parentScopes] = state.scopesStack
+  const [scope, ...parentScopes] = state.scopes
 
   return {
     ...state,
-    scopesStack: [
+    scopes: [
       {
         ...scope,
         errors: [...scope.errors, error],
@@ -151,12 +152,12 @@ const enterBlock = (state: State): State => {
   return {
     ...state,
     nextModuleScopeName: undefined,
-    scopesStack: [scope, ...state.scopesStack],
+    scopes: [scope, ...state.scopes],
   }
 }
 
 const leaveBlock = (state: State): State => {
-  const [scope, parentScope, ...parentScopes] = state.scopesStack
+  const [scope, parentScope, ...parentScopes] = state.scopes
 
   assert(
     !isFileScope(scope) && parentScope !== undefined,
@@ -165,7 +166,7 @@ const leaveBlock = (state: State): State => {
 
   return {
     ...state,
-    scopesStack: [
+    scopes: [
       {
         ...parentScope,
         scopes: [...parentScope.scopes, scope],
@@ -177,7 +178,7 @@ const leaveBlock = (state: State): State => {
 
 // Merges the two most low-level scopes into one.
 const reduceScopes = (state: State): State => {
-  const [scope, ...parentScopes] = state.scopesStack
+  const [scope, ...parentScopes] = state.scopes
 
   assert(
     scope.scopes.length === 1,
@@ -193,7 +194,7 @@ const reduceScopes = (state: State): State => {
 
   return {
     ...state,
-    scopesStack: [newScope, ...parentScopes],
+    scopes: [newScope, ...parentScopes],
   }
 }
 
@@ -220,10 +221,9 @@ const addBinding = (
   importedFrom?: AbsolutePath,
 ) =>
   ensure(
-    (state) =>
-      !state.scopesStack[0].bindings.find((binding) => binding.name === name),
+    (state) => findBinding(name, state.scopes) === undefined,
     (state, node) => {
-      const [scope, ...parentScopes] = state.scopesStack
+      const [scope, ...parentScopes] = state.scopes
       const binding = buildBinding(
         name,
         node,
@@ -238,7 +238,7 @@ const addBinding = (
 
       return {
         ...state,
-        scopesStack: [newScope, ...parentScopes],
+        scopes: [newScope, ...parentScopes],
       }
     },
     buildDuplicateBindingError(name),
@@ -307,7 +307,7 @@ const handleAssignment = (state: State, node: AssignmentNode): State => {
 const handleBlock = nest<BlockNode>(traverseAllChildren)
 
 const handleExport = ensure<ExportNode>(
-  (state) => isModuleScope(state.scopesStack[0]),
+  (state) => isModuleScope(state.scopes[0]),
   (state, node) =>
     traverse(
       {
@@ -321,10 +321,11 @@ const handleExport = ensure<ExportNode>(
 
 const handleImportAndExternalExport = (isExported: boolean) =>
   ensure<ImportNode | ExternalExportNode>(
-    (state) => isFileScope(state.scopesStack[0]),
+    (state) => isFileScope(state.scopes[0]),
     (state, node) => {
       const source = buildRelativePath(
         state.file,
+        '..',
         parseStringPattern(node.sourceNode),
       )
       const resolvedSource = resolveRelativePath(state.config, source)
