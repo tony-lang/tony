@@ -5,6 +5,7 @@ import {
   ExportNode,
   ExternalExportNode,
   GeneratorNode,
+  IdentifierNode,
   IdentifierPatternNameNode,
   IdentifierPatternNode,
   ImportNode,
@@ -35,6 +36,7 @@ import {
   buildUnknownImportError,
   ErrorAnnotation,
   buildIncompleteWhenPatternError,
+  buildMissingBindingError,
 } from '../types/errors/annotations'
 import { assert } from '../types/errors/internal'
 import { AbsolutePath, buildRelativePath, RelativePath } from '../types/paths'
@@ -123,7 +125,11 @@ const addDependency = (
     buildUnknownImportError(relativePath),
   )
 
-const addError = (state: State, error: MountedErrorAnnotation): State => {
+const addError = (
+  state: State,
+  node: SyntaxNode,
+  error: ErrorAnnotation,
+): State => {
   const [scope, ...parentScopes] = state.scopes
 
   return {
@@ -131,7 +137,7 @@ const addError = (state: State, error: MountedErrorAnnotation): State => {
     scopes: [
       {
         ...scope,
-        errors: [...scope.errors, error],
+        errors: [...scope.errors, { node, error }],
       },
       ...parentScopes,
     ],
@@ -146,7 +152,7 @@ const ensure = <T extends SyntaxNode>(
 ) => (state: State, node: T) => {
   if (predicate(state, node)) return callback(state, node)
 
-  return addError(state, { node, error })
+  return addError(state, node, error)
 }
 
 const enterBlock = (state: State, node: SyntaxNode): State => {
@@ -220,7 +226,9 @@ const declareBinding = (
     buildDuplicateBindingError(name),
   )
 
-const getIdentifierName = (node: IdentifierPatternNameNode): string => node.text
+const getIdentifierName = (
+  node: IdentifierNode | IdentifierPatternNameNode,
+): string => node.text
 
 const getTypeName = (node: TypeDeclarationNode): string => node.nameNode.text
 
@@ -247,6 +255,8 @@ const traverse = (state: State, node: SyntaxNode): State => {
       return handleImportAndExternalExport(true)(state, node)
     case SyntaxType.Generator:
       return handleGenerator(state, node)
+    case SyntaxType.Identifier:
+      return handleIdentifier(state, node)
     case SyntaxType.IdentifierPattern:
       return handleIdentifierPatternAndShorthandMemberPattern(state, node)
     case SyntaxType.Import:
@@ -362,6 +372,15 @@ const handleGenerator = (state: State, node: GeneratorNode): State => {
   return stateWithBinding
 }
 
+const handleIdentifier = (state: State, node: IdentifierNode): State => {
+  const name = getIdentifierName(node)
+  const binding = findBinding(BindingKind.Term, name, state.scopes)
+
+  if (binding === undefined)
+    return addError(state, node, buildMissingBindingError(name))
+  return state
+}
+
 const handleIdentifierPatternAndShorthandMemberPattern = (
   state: State,
   node: IdentifierPatternNode | ShorthandMemberPatternNode,
@@ -438,12 +457,13 @@ const handleWhen = nest<WhenNode>((state, node) => {
         accScope.bindings[BindingKind.Term],
       )
       if (missingBindings.length > 0)
-        return addError(accState, {
-          node: node.patternNodes[i],
-          error: buildIncompleteWhenPatternError(
+        return addError(
+          accState,
+          node.patternNodes[i],
+          buildIncompleteWhenPatternError(
             missingBindings.map((binding) => binding.name),
           ),
-        })
+        )
 
       return {
         ...accState,

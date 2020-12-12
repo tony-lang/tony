@@ -60,8 +60,7 @@ export interface IndeterminateTypeError {
 
 export interface MissingBindingError {
   kind: typeof ErrorAnnotationKind.MissingBinding
-  binding: Binding
-  scope: FileScope | NestedScope
+  name: string
 }
 
 export interface MissingExternalImportTypeHintError {
@@ -144,6 +143,13 @@ export const buildIncompleteWhenPatternError = (
 ): IncompleteWhenPatternError => ({
   kind: ErrorAnnotationKind.IncompleteWhenPattern,
   missingBindings,
+})
+
+export const buildMissingBindingError = (
+  name: string,
+): MissingBindingError => ({
+  kind: ErrorAnnotationKind.MissingBinding,
+  name,
 })
 
 export const buildUnknownEntryError = (
