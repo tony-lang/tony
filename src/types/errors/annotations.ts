@@ -14,6 +14,7 @@ export enum ErrorAnnotationKind {
   ExportOutsideModuleScope,
   ExternalTypeImport,
   ImportOutsideFileScope,
+  IncompleteWhenPattern,
   IndeterminateType,
   MissingBinding,
   MissingExternalImportTypeHint,
@@ -45,6 +46,11 @@ export interface ExternalTypeImportError {
 
 export interface ImportOutsideFileScopeError {
   kind: typeof ErrorAnnotationKind.ImportOutsideFileScope
+}
+
+export interface IncompleteWhenPatternError {
+  kind: typeof ErrorAnnotationKind.IncompleteWhenPattern
+  missingBindings: string[]
 }
 
 export interface IndeterminateTypeError {
@@ -94,6 +100,7 @@ export type ErrorAnnotation =
   | ExportOutsideModuleScopeError
   | ExternalTypeImportError
   | ImportOutsideFileScopeError
+  | IncompleteWhenPatternError
   | IndeterminateTypeError
   | MissingBindingError
   | MissingExternalImportTypeHintError
@@ -130,6 +137,13 @@ export const buildExportOutsideModuleScopeError = (): ExportOutsideModuleScopeEr
 
 export const buildImportOutsideFileScopeError = (): ImportOutsideFileScopeError => ({
   kind: ErrorAnnotationKind.ImportOutsideFileScope,
+})
+
+export const buildIncompleteWhenPatternError = (
+  missingBindings: string[],
+): IncompleteWhenPatternError => ({
+  kind: ErrorAnnotationKind.IncompleteWhenPattern,
+  missingBindings,
 })
 
 export const buildUnknownEntryError = (

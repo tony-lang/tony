@@ -1,8 +1,9 @@
-import { Binding, Bindings, buildBindings } from './bindings'
+import { Bindings, buildBindings } from './bindings'
 import { Answer } from '../type_inference/answers'
 import { ProgramNode } from 'tree-sitter-tony'
 import { ErrorAnnotation, MountedErrorAnnotation } from '../errors/annotations'
 import { AbsolutePath } from '../paths'
+import { SyntaxNode } from 'tree-sitter-tony'
 
 // ---- Types ----
 
@@ -39,6 +40,7 @@ export interface TypedFileScope extends FileScope {
 export interface NestedScope extends ConcreteScope {
   kind: typeof ScopeKind.Nested
   scopes: NestedScope[]
+  node: SyntaxNode
   moduleName?: string
 }
 
@@ -75,8 +77,12 @@ export const buildFileScope = (
   errors: [],
 })
 
-export const buildNestedScope = (moduleName?: string): NestedScope => ({
+export const buildNestedScope = (
+  node: SyntaxNode,
+  moduleName?: string,
+): NestedScope => ({
   kind: ScopeKind.Nested,
+  node,
   bindings: buildBindings(),
   scopes: [],
   moduleName,

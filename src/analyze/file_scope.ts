@@ -34,12 +34,18 @@ import {
   buildImportOutsideFileScopeError,
   buildUnknownImportError,
   ErrorAnnotation,
+  buildIncompleteWhenPatternError,
 } from '../types/errors/annotations'
 import { assert } from '../types/errors/internal'
 import { AbsolutePath, buildRelativePath, RelativePath } from '../types/paths'
 import { fileMayBeImported } from '../util/file_system'
 import { parseStringPattern } from '../util/literals'
-import { addBinding, findBinding } from '../util/analyze'
+import {
+  addBinding,
+  areSameBindings,
+  bindingsMissingFrom,
+  findBinding,
+} from '../util/analyze'
 import { resolveRelativePath } from './resolve'
 
 type State = {
@@ -143,9 +149,9 @@ const ensure = <T extends SyntaxNode>(
   return addError(state, { node, error })
 }
 
-const enterBlock = (state: State): State => {
+const enterBlock = (state: State, node: SyntaxNode): State => {
   const { nextModuleScopeName: moduleName } = state
-  const scope = buildNestedScope(moduleName)
+  const scope = buildNestedScope(node, moduleName)
 
   return {
     ...state,
@@ -177,7 +183,7 @@ const leaveBlock = (state: State): State => {
 const nest = <T extends SyntaxNode>(
   callback: (state: State, node: T) => State,
 ) => (state: State, node: T) => {
-  const nestedState = enterBlock(state)
+  const nestedState = enterBlock(state, node)
   const updatedState = callback(nestedState, node)
   return leaveBlock(updatedState)
 }
@@ -405,18 +411,57 @@ const handleModule = (state: State, node: ModuleNode): State => {
 }
 
 const handleWhen = nest<WhenNode>((state, node) => {
-  // TODO: expect all patterns to define the same bindings, don't throw duplicate binding errors across multiple patterns
-  const nestedStateWithAssignments = traverseAll(
-    {
-      ...state,
-      nextIdentifierPatternBindingsImplicit: true,
+  // Build temporary scopes around patterns.
+  const statesWithBindings = node.patternNodes.map((patternNode) => {
+    const nestedState = enterBlock(state, patternNode)
+    return traverse(
+      {
+        ...nestedState,
+        nextIdentifierPatternBindingsImplicit: true,
+      },
+      patternNode,
+    )
+  })
+
+  // Ensure that all patterns define the same terms.
+  const stateWithBindings = statesWithBindings.reduceRight(
+    (accState, state, i) => {
+      const [accScope, ...parentScopes] = accState.scopes
+      const [scope] = state.scopes
+      assert(
+        !isFileScope(accScope) && !isFileScope(scope),
+        'Temporary scopes around `when` patterns should be nested scopes.',
+      )
+
+      const missingBindings = bindingsMissingFrom(
+        scope.bindings[BindingKind.Term],
+        accScope.bindings[BindingKind.Term],
+      )
+      if (missingBindings.length > 0)
+        return addError(accState, {
+          node: node.patternNodes[i],
+          error: buildIncompleteWhenPatternError(
+            missingBindings.map((binding) => binding.name),
+          ),
+        })
+
+      return {
+        ...accState,
+        scopes: [
+          {
+            ...accScope,
+            errors: [...accScope.errors, ...scope.errors],
+          },
+          ...parentScopes,
+        ],
+      }
     },
-    node.patternNodes,
+    statesWithBindings[0],
   )
+
   return traverse(
     {
-      ...nestedStateWithAssignments,
-      nextIdentifierPatternBindingsImplicit: undefined,
+      ...stateWithBindings,
       nextBlockScopeAlreadyCreated: true,
     },
     node.bodyNode,

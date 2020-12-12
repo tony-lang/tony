@@ -22,3 +22,12 @@ export const addBinding = (binding: Binding, bindings: Bindings): Bindings => ({
   ...bindings,
   [binding.kind]: [...bindings[binding.kind], binding],
 })
+
+// Returns the bindings (1) is missing from (2).
+export const bindingsMissingFrom = (
+  bindings1: Binding[],
+  bindings2: Binding[],
+): Binding[] =>
+  bindings2.filter(
+    (a) => bindings1.find((b) => a.name === b.name) === undefined,
+  )
