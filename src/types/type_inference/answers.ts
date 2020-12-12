@@ -1,6 +1,8 @@
 import { SyntaxNode } from 'tree-sitter-tony'
 import { ConstrainedType, Type } from './types'
 
+// ---- Types ----
+
 // An answer represents a type annotation for a given node in the syntax tree.
 export type Answer<T extends SyntaxNode> = {
   node: T

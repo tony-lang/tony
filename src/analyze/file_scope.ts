@@ -18,7 +18,7 @@ import {
   WhenNode,
 } from 'tree-sitter-tony'
 import { Config } from '../config'
-import { buildBinding } from '../types/analyze/bindings'
+import { BindingKind, buildBinding } from '../types/analyze/bindings'
 import {
   buildFileScope,
   buildNestedScope,
@@ -37,14 +37,10 @@ import {
   ErrorAnnotation,
 } from '../types/errors/annotations'
 import { assert } from '../types/errors/internal'
-import {
-  AbsolutePath,
-  buildRelativePath,
-  RelativePath,
-} from '../types/paths'
+import { AbsolutePath, buildRelativePath, RelativePath } from '../types/paths'
 import { fileMayBeImported } from '../util/file_system'
 import { parseStringPattern } from '../util/literals'
-import { findBinding } from '../util/scopes'
+import { addBinding, findBinding } from '../util/analyze'
 import { resolveRelativePath } from './resolve'
 
 type State = {
@@ -63,6 +59,9 @@ type State = {
   // When enabled the next bindings stemming from identifier patterns will be
   // implicit.
   nextIdentifierPatternBindingsImplicit?: boolean
+  // Is set to true when the scope for the next block was already created. Then,
+  // no additional scope is created when encountering the next block.
+  nextBlockScopeAlreadyCreated?: boolean
 }
 
 export const constructFileScope = (
@@ -176,55 +175,27 @@ const leaveBlock = (state: State): State => {
   }
 }
 
-// Merges the two most low-level scopes into one.
-const reduceScopes = (state: State): State => {
-  const [scope, ...parentScopes] = state.scopes
-
-  assert(
-    scope.scopes.length === 1,
-    'Scopes may only be reduced when the parent only has a single nested scope.',
-  )
-
-  const [childScope] = scope.scopes
-  const newScope = {
-    ...scope,
-    bindings: [...childScope.bindings, ...scope.bindings],
-    scopes: childScope.scopes,
-  }
-
-  return {
-    ...state,
-    scopes: [newScope, ...parentScopes],
-  }
-}
-
 const nest = <T extends SyntaxNode>(
   callback: (state: State, node: T) => State,
-  shallow = false,
 ) => (state: State, node: T) => {
   const nestedState = enterBlock(state)
   const updatedState = callback(nestedState, node)
-
-  if (shallow) {
-    // Merges the created scope with the scope of the nested block.
-    const reducedState = reduceScopes(updatedState)
-
-    return leaveBlock(reducedState)
-  }
   return leaveBlock(updatedState)
 }
 
-const addBinding = (
+const declareBinding = (
+  kind: BindingKind,
   name: string,
   isImplicit: boolean,
   isExported = false,
   importedFrom?: AbsolutePath,
 ) =>
   ensure(
-    (state) => findBinding(name, state.scopes) === undefined,
+    (state) => findBinding(kind, name, state.scopes) === undefined,
     (state, node) => {
       const [scope, ...parentScopes] = state.scopes
       const binding = buildBinding(
+        kind,
         name,
         node,
         isImplicit,
@@ -233,7 +204,7 @@ const addBinding = (
       )
       const newScope = {
         ...scope,
-        bindings: [...scope.bindings, binding],
+        bindings: addBinding(binding, scope.bindings),
       }
 
       return {
@@ -290,8 +261,14 @@ const traverse = (state: State, node: SyntaxNode): State => {
 
 const handleAbstractionBranch = nest<AbstractionBranchNode>((state, node) => {
   const nestedStateWithParameters = traverse(state, node.parametersNode)
-  return traverse(nestedStateWithParameters, node.bodyNode)
-}, true)
+  return traverse(
+    {
+      ...nestedStateWithParameters,
+      nextBlockScopeAlreadyCreated: true,
+    },
+    node.bodyNode,
+  )
+})
 
 const handleAssignment = (state: State, node: AssignmentNode): State => {
   const stateWithBindings = traverse(state, node.patternNode)
@@ -304,7 +281,19 @@ const handleAssignment = (state: State, node: AssignmentNode): State => {
   )
 }
 
-const handleBlock = nest<BlockNode>(traverseAllChildren)
+const handleBlock = (state: State, node: BlockNode): State => {
+  const { nextBlockScopeAlreadyCreated: skipNesting } = state
+
+  if (skipNesting)
+    return traverseAllChildren(
+      {
+        ...state,
+        nextBlockScopeAlreadyCreated: undefined,
+      },
+      node,
+    )
+  else return nest<BlockNode>(traverseAllChildren)(state, node)
+}
 
 const handleExport = ensure<ExportNode>(
   (state) => isModuleScope(state.scopes[0]),
@@ -354,7 +343,11 @@ const handleImportAndExternalExport = (isExported: boolean) =>
 const handleGenerator = (state: State, node: GeneratorNode): State => {
   const name = getIdentifierName(node.nameNode)
   const stateAfterValue = traverse(state, node.valueNode)
-  const stateWithBinding = addBinding(name, true)(stateAfterValue, node)
+  const stateWithBinding = declareBinding(
+    BindingKind.Term,
+    name,
+    true,
+  )(stateAfterValue, node)
 
   if (node.conditionNode) return traverse(stateWithBinding, node.conditionNode)
   return stateWithBinding
@@ -369,13 +362,24 @@ const handleIdentifierPatternAndShorthandMemberPattern = (
     exportNextBindings: isExported,
     nextIdentifierPatternBindingsImplicit: isImplicit,
   } = state
-  return addBinding(name, !!isImplicit, isExported)(state, node)
+  return declareBinding(
+    BindingKind.Term,
+    name,
+    !!isImplicit,
+    isExported,
+  )(state, node)
 }
 
 const handleListComprehension = nest<ListComprehensionNode>((state, node) => {
   const nestedStateWithGenerators = traverseAll(state, node.generatorNodes)
-  return traverse(nestedStateWithGenerators, node.bodyNode)
-}, true)
+  return traverse(
+    {
+      ...nestedStateWithGenerators,
+      nextBlockScopeAlreadyCreated: true,
+    },
+    node.bodyNode,
+  )
+})
 
 const handleModule = (state: State, node: ModuleNode): State => {
   const name = getTypeName(node.nameNode)
@@ -389,7 +393,12 @@ const handleModule = (state: State, node: ModuleNode): State => {
     node.bodyNode,
   )
 
-  return addBinding(name, false, isExported)(stateWithBody, node)
+  return declareBinding(
+    BindingKind.Term,
+    name,
+    false,
+    isExported,
+  )(stateWithBody, node)
 }
 
 const handleWhen = nest<WhenNode>((state, node) => {
@@ -405,7 +414,8 @@ const handleWhen = nest<WhenNode>((state, node) => {
     {
       ...nestedStateWithAssignments,
       nextIdentifierPatternBindingsImplicit: undefined,
+      nextBlockScopeAlreadyCreated: true,
     },
     node.bodyNode,
   )
-}, true)
+})

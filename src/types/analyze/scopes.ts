@@ -1,4 +1,4 @@
-import { Binding } from './bindings'
+import { Binding, Bindings, buildBindings } from './bindings'
 import { Answer } from '../type_inference/answers'
 import { ProgramNode } from 'tree-sitter-tony'
 import { ErrorAnnotation, MountedErrorAnnotation } from '../errors/annotations'
@@ -14,7 +14,7 @@ enum ScopeKind {
 
 // A concrete scope represents a scope including bindings.
 export interface ConcreteScope {
-  bindings: Binding[]
+  bindings: Bindings
   errors: MountedErrorAnnotation[]
 }
 
@@ -42,10 +42,7 @@ export interface NestedScope extends ConcreteScope {
   moduleName?: string
 }
 
-export type Scope =
-  | GlobalScope<FileScope>
-  | FileScope
-  | NestedScope
+export type Scope = GlobalScope<FileScope> | FileScope | NestedScope
 
 export type TypedScope =
   | GlobalScope<TypedFileScope>
@@ -68,31 +65,22 @@ export const buildGlobalScope = <T extends FileScope | TypedFileScope>(
 export const buildFileScope = (
   file: AbsolutePath,
   node: ProgramNode,
-  scopes: NestedScope[] = [],
-  dependencies: AbsolutePath[] = [],
-  bindings: Binding[] = [],
-  errors: MountedErrorAnnotation[] = [],
 ): FileScope => ({
   kind: ScopeKind.File,
   file,
   node,
-  scopes,
-  dependencies,
-  bindings,
-  errors,
+  scopes: [],
+  dependencies: [],
+  bindings: buildBindings(node),
+  errors: [],
 })
 
-export const buildNestedScope = (
-  moduleName?: string,
-  bindings: Binding[] = [],
-  scopes: NestedScope[] = [],
-  errors: MountedErrorAnnotation[] = [],
-): NestedScope => ({
+export const buildNestedScope = (moduleName?: string): NestedScope => ({
   kind: ScopeKind.Nested,
-  bindings,
-  scopes,
+  bindings: buildBindings(),
+  scopes: [],
   moduleName,
-  errors,
+  errors: [],
 })
 
 export const isFileScope = (

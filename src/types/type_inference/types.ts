@@ -1,23 +1,6 @@
 import { ConcreteScope } from '../analyze/scopes'
 
-export const FUNCTION_TYPE = '->'
-export const VOID_TYPE = 'Void'
-export const BOOLEAN_TYPE = 'Boolean'
-export const NUMBER_TYPE = 'Number'
-export const STRING_TYPE = 'String'
-export const REGULAR_EXPRESSION_TYPE = 'RegularExpression'
-export const LIST_TYPE = 'List'
-export const TUPLE_TYPE = 'Tuple'
-
-export type BasicType =
-  | typeof FUNCTION_TYPE
-  | typeof VOID_TYPE
-  | typeof BOOLEAN_TYPE
-  | typeof NUMBER_TYPE
-  | typeof STRING_TYPE
-  | typeof REGULAR_EXPRESSION_TYPE
-  | typeof LIST_TYPE
-  | typeof TUPLE_TYPE
+// ---- Types ----
 
 enum TypeKind {
   Alias,
