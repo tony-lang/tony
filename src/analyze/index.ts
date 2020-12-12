@@ -19,17 +19,17 @@ export const analyze = async (
   if (!fileMayBeEntry(config.entry))
     return buildGlobalScope([], [buildUnknownEntryError(config.entry)])
 
-  const fileScopes = await analyzeFiles(config.entry, config)
+  const fileScopes = await analyzeFiles(config)
   const { fileScopes: sortedFileScopes, error } = sortFileScopes(
-    fileScopes,
     config,
+    fileScopes,
   )
 
   if (error === undefined) {
     log(
       config,
       'Topological sorting on files returned:',
-      sortedFileScopes.map((fileScope) => fileScope.filePath).join('>'),
+      sortedFileScopes.map((fileScope) => fileScope.file.path).join('>'),
     )
   } else {
     log(

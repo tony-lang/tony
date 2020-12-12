@@ -7,50 +7,44 @@ import {
   IMPORT_FILE_EXTENSIONS,
   TARGET_FILE_EXTENSION,
 } from '../constants'
-import { Path } from '../types'
+import { AbsolutePath, Path } from '../types/paths'
 
-const fileExists = (filePath: Path) => fs.existsSync(path.resolve(filePath))
+const fileExists = (file: AbsolutePath) => fs.existsSync(file.path)
 
-const fileHasTonyExtension = (filePath: Path) =>
-  FILE_EXTENSION_REGEX.test(filePath)
+const fileHasTonyExtension = (file: Path) =>
+  FILE_EXTENSION_REGEX.test(file.path)
 
-const fileHasImportExtension = (filePath: Path) =>
-  !!IMPORT_FILE_EXTENSIONS.find((regex) => regex.test(filePath))
+const fileHasImportExtension = (file: Path) =>
+  !!IMPORT_FILE_EXTENSIONS.find((regex) => regex.test(file.path))
 
-export const fileMayBeEntry = (filePath: Path) =>
-  fileHasTonyExtension(filePath) && fileExists(filePath)
+export const fileMayBeEntry = (file: AbsolutePath) =>
+  fileHasTonyExtension(file) && fileExists(file)
 
-export const fileMayBeImported = (filePath: Path) =>
-  fileHasImportExtension(filePath) && fileExists(filePath)
+export const fileMayBeImported = (file: AbsolutePath) =>
+  fileHasImportExtension(file) && fileExists(file)
 
-export const readFile = (filePath: string): Promise<string> =>
+export const readFile = (file: AbsolutePath): Promise<string> =>
   new Promise((resolve, reject) =>
-    fs.readFile(filePath, 'utf8', (error, data) =>
+    fs.readFile(file.path, 'utf8', (error, data) =>
       !error ? resolve(data) : reject(error),
     ),
   )
 
-export const writeFile = async (filePath: string, data = ''): Promise<void> => {
-  await mkdirp(path.dirname(filePath))
+export const writeFile = async (
+  file: AbsolutePath,
+  data = '',
+): Promise<void> => {
+  await mkdirp(path.dirname(file.path))
 
   return new Promise((resolve, reject) =>
-    fs.writeFile(filePath, data, (error) =>
+    fs.writeFile(file.path, data, (error) =>
       !error ? resolve() : reject(error),
     ),
   )
 }
 
-export const getFilePath = (filename: string): Path => {
-  if (!filename.startsWith('.')) return filename
-
-  // return buildPath(process.cwd(), filename)
-  return buildPath(filename)
-}
-
 export const getOutFilename = (filename: string) =>
   filename.replace(FILE_EXTENSION, TARGET_FILE_EXTENSION)
 
-export const buildPath: (...pathSegments: string[]) => Path = path.resolve
-
-export const buildRelativePath = (filePath: Path, path: string): Path =>
-  buildPath(filePath, '..', path)
+export const isSamePath = (path1: AbsolutePath, path2: AbsolutePath) =>
+  path1.path === path2.path

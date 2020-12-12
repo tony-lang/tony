@@ -1,5 +1,5 @@
 import { SyntaxNode } from 'tree-sitter-tony'
-import { Path } from '..'
+import { AbsolutePath } from '../paths'
 
 // ---- Types ----
 
@@ -7,7 +7,7 @@ export interface Binding {
   name: string
   node: SyntaxNode
   isExported: boolean
-  importedFrom?: Path
+  importedFrom?: AbsolutePath
   // A binding is implicit when it stems from a generator, parameter or case,
   // but not when it stems from an assignment or a module.
   isImplicit: boolean
@@ -17,13 +17,13 @@ export interface Binding {
 
 export const buildBinding = (
   name: string,
-  syntaxNode: SyntaxNode,
+  node: SyntaxNode,
   isImplicit: boolean,
   isExported = false,
-  importedFrom?: Path,
+  importedFrom?: AbsolutePath,
 ): Binding => ({
   name,
-  syntaxNode,
+  node,
   isExported,
   importedFrom,
   isImplicit,

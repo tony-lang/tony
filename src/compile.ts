@@ -4,22 +4,23 @@ import { generateCode } from './code_generation'
 import { inferTypes } from './type_inference'
 import { ConfigOptions, buildConfig } from './config'
 import { log } from './logger'
+import { AbsolutePath } from './types/paths'
 
 export const compile = async (
   entry: string,
   options: ConfigOptions,
-): Promise<string | undefined> => {
+): Promise<AbsolutePath | undefined> => {
   const config = buildConfig(entry, options)
 
-  log(config, `Compiling ${config.entry}...`)
+  log(config, 'Compiling', config.entry)
 
   const globalScope = await analyze(config)
-  const typedGlobalScope = inferTypes(globalScope, config)
+  const typedGlobalScope = inferTypes(config, globalScope)
 
   if (!options.emit) return
 
-  const emit = generateCode(typedGlobalScope, config)
-  await writeEmit(emit, config)
+  const emit = generateCode(config, typedGlobalScope)
+  await writeEmit(config, emit)
 
   return config.out
 }

@@ -1,4 +1,4 @@
-import { CyclicDependency } from '../types'
+import { CyclicDependency } from '../types/cyclic_dependencies'
 
 // adjacency lists where where for each index in the list the corresponding
 // sublist represents the indices of all adjacent nodes in the graph.

@@ -1,5 +1,6 @@
 import path from 'path'
 
+// file extensions
 export const FILE_EXTENSION = '.tn'
 export const TARGET_FILE_EXTENSION = '.js'
 export const FILE_EXTENSION_REGEX = new RegExp(

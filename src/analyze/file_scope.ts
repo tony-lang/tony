@@ -17,7 +17,7 @@ import {
   TypeDeclarationNode,
   WhenNode,
 } from 'tree-sitter-tony'
-import { Path } from '../types'
+import { Config } from '../config'
 import { buildBinding } from '../types/analyze/bindings'
 import {
   buildFileScope,
@@ -36,11 +36,19 @@ import {
   ErrorAnnotation,
 } from '../types/errors/annotations'
 import { assert } from '../types/errors/internal'
-import { buildRelativePath, fileMayBeImported } from '../util/file_system'
+import {
+  AbsolutePath,
+  buildAbsolutePath,
+  buildRelativePath,
+  RelativePath,
+} from '../types/paths'
+import { fileMayBeImported } from '../util/file_system'
 import { parseStringPattern } from '../util/literals'
+import { resolveRelativePath } from './resolve'
 
 type State = {
-  filePath: Path
+  config: Config
+  file: AbsolutePath
   // A stack of all scopes starting with the closest scope and ending with the
   // symbol table. Scopes are collected recursively.
   scopesStack: (FileScope | NestedScope)[]
@@ -50,19 +58,21 @@ type State = {
   exportNextBindings?: boolean
   // When enabled the next declared bindings will be imported from the given
   // path.
-  importNextBindingsFrom?: Path
+  importNextBindingsFrom?: AbsolutePath
   // When enabled the next bindings stemming from identifier patterns will be
   // implicit.
   nextIdentifierPatternBindingsImplicit?: boolean
 }
 
 export const constructFileScope = (
-  filePath: Path,
+  config: Config,
+  file: AbsolutePath,
   node: ProgramNode,
 ): FileScope => {
-  const initialFileScope = buildFileScope(filePath, node)
+  const initialFileScope = buildFileScope(file, node)
   const initialState: State = {
-    filePath,
+    config,
+    file,
     scopesStack: [initialFileScope],
   }
 
@@ -77,12 +87,19 @@ export const constructFileScope = (
   return fileScope
 }
 
-const addDependency = (path: Path) =>
+const addDependency = (
+  relativePath: RelativePath,
+  absolutePath: AbsolutePath | undefined,
+) =>
   ensure(
-    () => fileMayBeImported(path),
+    () => absolutePath !== undefined && fileMayBeImported(absolutePath),
     (state) => {
       const [fileScope] = state.scopesStack
 
+      assert(
+        absolutePath !== undefined,
+        'It should be ensured that the dependency is not undefined.',
+      )
       assert(
         isFileScope(fileScope),
         'Dependencies may only be added to a file-level scope.',
@@ -93,12 +110,12 @@ const addDependency = (path: Path) =>
         scopesStack: [
           {
             ...fileScope,
-            dependencies: [...fileScope.dependencies, path],
+            dependencies: [...fileScope.dependencies, absolutePath],
           },
         ],
       }
     },
-    buildUnknownImportError(path),
+    buildUnknownImportError(relativePath),
   )
 
 const addError = (state: State, error: MountedErrorAnnotation): State => {
@@ -200,7 +217,7 @@ const addBinding = (
   name: string,
   isImplicit: boolean,
   isExported = false,
-  importedFrom?: Path,
+  importedFrom?: AbsolutePath,
 ) =>
   ensure(
     (state) =>
@@ -306,10 +323,13 @@ const handleImportAndExternalExport = (isExported: boolean) =>
   ensure<ImportNode | ExternalExportNode>(
     (state) => isFileScope(state.scopesStack[0]),
     (state, node) => {
-      const source = parseStringPattern(node.sourceNode)
-      const sourcePath = buildRelativePath(state.filePath, source)
+      const source = buildRelativePath(
+        state.file,
+        parseStringPattern(node.sourceNode),
+      )
+      const resolvedSource = resolveRelativePath(state.config, source)
 
-      const stateWithDependency = addDependency(sourcePath)(
+      const stateWithDependency = addDependency(source, resolvedSource)(
         state,
         node.sourceNode,
       )
@@ -317,7 +337,7 @@ const handleImportAndExternalExport = (isExported: boolean) =>
         {
           ...stateWithDependency,
           exportNextBindings: isExported,
-          importNextBindingsFrom: sourcePath,
+          importNextBindingsFrom: resolvedSource,
         },
         node.importNodes,
       )

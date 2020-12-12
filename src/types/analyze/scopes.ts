@@ -1,8 +1,8 @@
 import { Binding } from './bindings'
-import { Path } from '..'
 import { Answer } from '../type_inference/answers'
 import { ProgramNode } from 'tree-sitter-tony'
 import { ErrorAnnotation, MountedErrorAnnotation } from '../errors/annotations'
+import { AbsolutePath } from '../paths'
 
 // ---- Types ----
 
@@ -26,10 +26,10 @@ export interface GlobalScope<T extends FileScope | TypedFileScope> {
 
 export interface FileScope extends ConcreteScope {
   kind: typeof ScopeKind.File
-  filePath: Path
+  file: AbsolutePath
   node: ProgramNode
   scopes: NestedScope[]
-  dependencies: Path[]
+  dependencies: AbsolutePath[]
 }
 
 export interface TypedFileScope extends FileScope {
@@ -60,15 +60,15 @@ export const buildGlobalScope = <T extends FileScope | TypedFileScope>(
 })
 
 export const buildFileScope = (
-  filePath: Path,
+  file: AbsolutePath,
   node: ProgramNode,
   scopes: NestedScope[] = [],
-  dependencies: Path[] = [],
+  dependencies: AbsolutePath[] = [],
   bindings: Binding[] = [],
   errors: MountedErrorAnnotation[] = [],
 ): FileScope => ({
   kind: ScopeKind.File,
-  filePath,
+  file,
   node,
   scopes,
   dependencies,

@@ -1,18 +1,18 @@
 import childProcess from 'child_process'
-
-import { getFilePath } from './util/file_system'
+import { Config } from './config'
+import { log } from './logger'
+import { AbsolutePath } from './types/paths'
 
 export const exec = async (
-  file: string,
+  config: Config,
+  file: AbsolutePath,
   args: string[] = [],
-  { verbose = false },
 ): Promise<void> => {
-  const filePath = getFilePath(file)
-  if (verbose) console.log('Executing', filePath)
+  log(config, 'Executing', file.path)
 
   return new Promise((resolve) => {
     childProcess
-      .spawn('node', [filePath, ...args], { stdio: 'inherit' })
+      .spawn('node', [file.path, ...args], { stdio: 'inherit' })
       .on('close', resolve)
   })
 }

@@ -1,19 +1,17 @@
-import { Path } from './types'
-import { getFilePath, getOutFilename } from './util/file_system'
+import { AbsolutePath, buildAbsolutePath } from './types/paths'
+import { getOutFilename } from './util/file_system'
 
-export type Config = ConfigOptions & InternalConfig
+export type Config = {
+  entry: AbsolutePath
+  emit: boolean
+  out: AbsolutePath
+  verbose: boolean
+}
 
 export type ConfigOptions = {
   emit?: boolean
   out?: string
   verbose?: boolean
-}
-
-type InternalConfig = {
-  entry: Path
-  emit: boolean
-  out: Path
-  verbose: boolean
 }
 
 export const buildConfig = (entry: string, options: ConfigOptions): Config => {
@@ -23,7 +21,7 @@ export const buildConfig = (entry: string, options: ConfigOptions): Config => {
     emit: true,
     verbose: false,
     ...options,
-    entry: getFilePath(entry),
-    out: getFilePath(out || getOutFilename(entry)),
+    entry: buildAbsolutePath(entry),
+    out: buildAbsolutePath(out || getOutFilename(entry)),
   }
 }

@@ -1,8 +1,8 @@
 import { GlobalScope, TypedFileScope } from '../types/analyze/scopes'
 import { Config } from '../config'
-import { Emit } from '../types'
+import { Emit } from '../types/emits'
 
 export const generateCode = (
-  globalScope: GlobalScope<TypedFileScope>,
   config: Config,
+  globalScope: GlobalScope<TypedFileScope>,
 ): Emit => {}

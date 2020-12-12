@@ -1,7 +1,8 @@
 import { ProgramNode, SyntaxNode } from 'tree-sitter-tony'
-import { CyclicDependency, Path } from '..'
 import { Binding } from '../analyze/bindings'
 import { FileScope, NestedScope } from '../analyze/scopes'
+import { CyclicDependency } from '../cyclic_dependencies'
+import { AbsolutePath, RelativePath } from '../paths'
 import { Answers } from '../type_inference/answers'
 import { Type } from '../type_inference/types'
 
@@ -25,7 +26,7 @@ export enum ErrorAnnotationKind {
 
 export interface CyclicDependencyError {
   kind: typeof ErrorAnnotationKind.CyclicDependency
-  cyclicDependency: CyclicDependency<Path>
+  cyclicDependency: CyclicDependency<AbsolutePath>
 }
 
 export interface DuplicateBindingError {
@@ -70,12 +71,12 @@ export interface TypeError {
 
 export interface UnknownEntryError {
   kind: typeof ErrorAnnotationKind.UnknownEntry
-  sourcePath: Path
+  sourcePath: AbsolutePath
 }
 
 export interface UnknownImportError {
   kind: typeof ErrorAnnotationKind.UnknownImport
-  sourcePath: Path
+  sourcePath: RelativePath
 }
 
 export interface UnsupportedSyntaxError {
@@ -110,7 +111,7 @@ export type MountedErrorAnnotation = {
 // ---- Factories ----
 
 export const buildCyclicDependencyError = (
-  cyclicDependency: CyclicDependency<Path>,
+  cyclicDependency: CyclicDependency<AbsolutePath>,
 ): CyclicDependencyError => ({
   kind: ErrorAnnotationKind.CyclicDependency,
   cyclicDependency,
@@ -132,14 +133,14 @@ export const buildImportOutsideFileScopeError = (): ImportOutsideFileScopeError 
 })
 
 export const buildUnknownEntryError = (
-  sourcePath: Path,
+  sourcePath: AbsolutePath,
 ): UnknownEntryError => ({
   kind: ErrorAnnotationKind.UnknownEntry,
   sourcePath,
 })
 
 export const buildUnknownImportError = (
-  sourcePath: Path,
+  sourcePath: RelativePath,
 ): UnknownImportError => ({
   kind: ErrorAnnotationKind.UnknownImport,
   sourcePath,
