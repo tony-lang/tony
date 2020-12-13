@@ -1,5 +1,5 @@
 import { Config } from '../config'
-import { AbsolutePath, buildAbsolutePath, RelativePath } from '../types/paths'
+import { AbsolutePath, RelativePath, buildAbsolutePath } from '../types/paths'
 
 const resolveOptions = ({ entry }: Config, { path, mount }: RelativePath) => [
   buildAbsolutePath(mount.path, path),

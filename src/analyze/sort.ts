@@ -3,8 +3,8 @@ import { log } from '../logger'
 import { FileScope } from '../types/analyze/scopes'
 import { CyclicDependency } from '../types/cyclic_dependencies'
 import {
-  buildCyclicDependencyError,
   CyclicDependencyError,
+  buildCyclicDependencyError,
 } from '../types/errors/annotations'
 import { AbsolutePath } from '../types/paths'
 import { isSamePath } from '../util/file_system'

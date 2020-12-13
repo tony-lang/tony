@@ -32,28 +32,28 @@ import {
 import { Config } from '../config'
 import {
   Binding,
+  ImportBindingConfig,
   buildBinding,
   buildImportBindingConfig,
-  ImportBindingConfig,
 } from '../types/analyze/bindings'
 import {
+  FileScope,
+  ScopeStack,
   buildFileScope,
   buildNestedScope,
-  FileScope,
   isFileScope,
   isModuleScope,
-  ScopeStack,
 } from '../types/analyze/scopes'
 import {
+  ErrorAnnotation,
   buildDuplicateBindingError,
+  buildDuplicateTypeVariableError,
   buildExportOutsideModuleScopeError,
   buildImportOutsideFileScopeError,
-  buildUnknownImportError,
-  ErrorAnnotation,
   buildIncompleteWhenPatternError,
   buildMissingBindingError,
-  buildDuplicateTypeVariableError,
   buildMissingTypeVariableError,
+  buildUnknownImportError,
 } from '../types/errors/annotations'
 import { assert } from '../types/errors/internal'
 import { AbsolutePath, buildRelativePath } from '../types/paths'

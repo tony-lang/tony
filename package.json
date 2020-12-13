@@ -12,8 +12,7 @@
     "lint": "yarn prettierlint && yarn eslint",
     "prettier": "prettier --write src test",
     "fix": "yarn prettier && yarn eslint --fix",
-    "test": "ava dist/test/index.test.js",
-    "retest": "yarn build && yarn test"
+    "test": "ava dist/test/index.test.js"
   },
   "engines": {
     "node": ">=12.0"

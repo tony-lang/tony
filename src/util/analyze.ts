@@ -1,9 +1,9 @@
 import { Binding } from '../types/analyze/bindings'
 import {
   FileScope,
-  isFileScope,
   NestedScope,
   ScopeStack,
+  isFileScope,
 } from '../types/analyze/scopes'
 import { TypeVariable } from '../types/analyze/type_variables'
 
