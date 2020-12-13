@@ -31,6 +31,7 @@ import {
 } from 'tree-sitter-tony'
 import { Config } from '../config'
 import {
+  Binding,
   buildBinding,
   buildImportBindingConfig,
   ImportBindingConfig,
@@ -61,6 +62,7 @@ import { parseStringPattern } from '../util/literals'
 import {
   bindingsMissingFrom,
   findBinding,
+  findItem,
   findTypeVariable,
 } from '../util/analyze'
 import { resolveRelativePath } from './resolve'
@@ -72,6 +74,9 @@ type State = {
   // A stack of all scopes starting with the closest scope and ending with the
   // symbol table. Scopes are collected recursively.
   scopes: ScopeStack<FileScope>
+  // Buffered bindings that have been defined but should not be accessed yet
+  // (e.g. within patterns).
+  bindings: Binding[]
   // When enabled the next declared bindings will be exported.
   exportNextBindings?: boolean
   // When enabled the next declared bindings will be imported from the given
@@ -95,6 +100,7 @@ export const constructFileScope = (
     config,
     file,
     scopes: [initialFileScope],
+    bindings: [],
   }
 
   const {
@@ -120,14 +126,13 @@ const addDependency = (state: State, absolutePath: AbsolutePath): State => {
     'Dependencies may only be added to a file-level scope.',
   )
 
+  const newFileScope = {
+    ...fileScope,
+    dependencies: [...fileScope.dependencies, absolutePath],
+  }
   return {
     ...state,
-    scopes: [
-      {
-        ...fileScope,
-        dependencies: [...fileScope.dependencies, absolutePath],
-      },
-    ],
+    scopes: [newFileScope],
   }
 }
 
@@ -137,16 +142,13 @@ const addError = (
   error: ErrorAnnotation,
 ): State => {
   const [scope, ...parentScopes] = state.scopes
-
+  const newScope = {
+    ...scope,
+    errors: [...scope.errors, { node, error }],
+  }
   return {
     ...state,
-    scopes: [
-      {
-        ...scope,
-        errors: [...scope.errors, { node, error }],
-      },
-      ...parentScopes,
-    ],
+    scopes: [newScope, ...parentScopes],
   }
 }
 
@@ -157,7 +159,6 @@ const ensure = <T extends SyntaxNode>(
   error: ErrorAnnotation,
 ) => (state: State, node: T) => {
   if (predicate(state, node)) return callback(state, node)
-
   return addError(state, node, error)
 }
 
@@ -176,7 +177,6 @@ const enterBlock = (
   moduleName?: string,
 ): State => {
   const scope = buildNestedScope(node, moduleName)
-
   return {
     ...state,
     scopes: [scope, ...state.scopes],
@@ -191,15 +191,13 @@ const leaveBlock = (state: State): State => {
     'Cannot leave file-level scope.',
   )
 
+  const newParentScope = {
+    ...parentScope,
+    scopes: [...parentScope.scopes, scope],
+  }
   return {
     ...state,
-    scopes: [
-      {
-        ...parentScope,
-        scopes: [...parentScope.scopes, scope],
-      },
-      ...parentScopes,
-    ],
+    scopes: [newParentScope, ...parentScopes],
   }
 }
 
@@ -212,6 +210,19 @@ const nest = <T extends SyntaxNode>(
   return leaveBlock(updatedState)
 }
 
+const flushBindings = (state: State): State => {
+  const [scope, ...parentScopes] = state.scopes
+  const newScope = {
+    ...scope,
+    bindings: [...scope.bindings, ...state.bindings],
+  }
+  return {
+    ...state,
+    scopes: [newScope, ...parentScopes],
+    bindings: [],
+  }
+}
+
 const addBinding = (
   name: string,
   isImplicit: boolean,
@@ -219,9 +230,10 @@ const addBinding = (
   importedFrom?: ImportBindingConfig,
 ) =>
   ensure(
-    (state) => findBinding(name, state.scopes) === undefined,
+    (state) =>
+      findBinding(name, state.scopes) === undefined &&
+      findItem(name, state.bindings) === undefined,
     (state, node) => {
-      const [scope, ...parentScopes] = state.scopes
       const binding = buildBinding(
         name,
         node,
@@ -229,14 +241,9 @@ const addBinding = (
         isExported,
         importedFrom,
       )
-      const newScope = {
-        ...scope,
-        bindings: [...scope.bindings, binding],
-      }
-
       return {
         ...state,
-        scopes: [newScope, ...parentScopes],
+        bindings: [...state.bindings, binding],
       }
     },
     buildDuplicateBindingError(name),
@@ -256,7 +263,6 @@ const addTypeVariable = (name: string) =>
         ...scope,
         typeVariables: [...scope.typeVariables, typeVariable],
       }
-
       return {
         ...state,
         scopes: [newScope, ...parentScopes],
@@ -352,9 +358,10 @@ const handleAbstractionBranch = nest<AbstractionBranchNode>((state, node) => {
     stateWithTypeParameters,
     node.parametersNode,
   )
+  const stateWithFlushedBindings = flushBindings(stateWithParameters)
   return traverse(
     {
-      ...stateWithParameters,
+      ...stateWithFlushedBindings,
       nextBlockScopeAlreadyCreated: true,
     },
     node.bodyNode,
@@ -363,9 +370,10 @@ const handleAbstractionBranch = nest<AbstractionBranchNode>((state, node) => {
 
 const handleAssignment = (state: State, node: AssignmentNode): State => {
   const stateWithBindings = traverse(state, node.patternNode)
+  const stateWithFlushedBindings = flushBindings(stateWithBindings)
   return traverse(
     {
-      ...stateWithBindings,
+      ...stateWithFlushedBindings,
       exportNextBindings: undefined,
     },
     node.valueNode,
@@ -408,14 +416,20 @@ const handleEnum = (state: State, node: EnumNode): State => {
   const name = getTypeName(node.nameNode)
   const stateWithName = traverse(stateWithoutExport, node.nameNode)
   const stateWithValues = traverseAll(stateWithName, node.valueNodes)
-  return addBinding(name, false, isExported)(stateWithValues, node)
+  const stateWithBinding = addBinding(
+    name,
+    false,
+    isExported,
+  )(stateWithValues, node)
+  return flushBindings(stateWithBinding)
 }
 
 const handleEnumValue = (state: State, node: EnumValueNode): State => {
   const name = getTypeName(node.nameNode)
   const stateWithName = traverse(state, node.nameNode)
   const stateWithBinding = addBinding(name, false, true)(stateWithName, node)
-  return conditionalApply(traverse)(stateWithBinding, node.valueNode)
+  const stateWithFlushedBinding = flushBindings(stateWithBinding)
+  return conditionalApply(traverse)(stateWithFlushedBinding, node.valueNode)
 }
 
 const handleExport = ensure<ExportNode>(
@@ -457,8 +471,9 @@ const handleImportAndExternalImport = (isExported: boolean) =>
         },
         node.importNodes,
       )
+      const stateWithFlushedBindings = flushBindings(stateWithBindings)
       return {
-        ...stateWithBindings,
+        ...stateWithFlushedBindings,
         exportNextBindings: undefined,
         importNextBindingsFrom: undefined,
       }
@@ -471,7 +486,8 @@ const handleGenerator = (state: State, node: GeneratorNode): State => {
   const stateWithName = traverse(state, node.nameNode)
   const stateWithValue = traverse(stateWithName, node.valueNode)
   const stateWithBinding = addBinding(name, true)(stateWithValue, node)
-  return conditionalApply(traverse)(stateWithBinding, node.conditionNode)
+  const stateWithFlushedBinding = flushBindings(stateWithBinding)
+  return conditionalApply(traverse)(stateWithFlushedBinding, node.conditionNode)
 }
 
 const handleIdentifier = (state: State, node: IdentifierNode): State => {
@@ -566,7 +582,9 @@ const handleInterface = nest<InterfaceNode>((state, node) => {
     },
     node.memberNodes,
   )
-  return addBinding(name, false, isExported)(stateWithMembers, node)
+  return flushBindings(
+    addBinding(name, false, isExported)(stateWithMembers, node),
+  )
 })
 
 const handleListComprehension = nest<ListComprehensionNode>((state, node) => {
@@ -593,7 +611,9 @@ const handleModule = (state: State, node: ModuleNode): State => {
       },
       node.bodyNode,
     )
-    return addBinding(name, false, isExported)(stateWithBody, node)
+    return flushBindings(
+      addBinding(name, false, isExported)(stateWithBody, node),
+    )
   }, name)(stateWithName, node)
 }
 
@@ -602,7 +622,7 @@ const handleNamedType = (state: State, node: NamedTypeNode): State => {
   const name = getTypeName(node.nameNode)
   const stateWithName = traverse(state, node.nameNode)
   const stateWithType = traverse(stateWithName, node.typeNode)
-  return addBinding(name, false, isExported)(stateWithType, node)
+  return flushBindings(addBinding(name, false, isExported)(stateWithType, node))
 }
 
 const handleTypeAlias = nest<TypeAliasNode>((state, node) => {
@@ -610,12 +630,10 @@ const handleTypeAlias = nest<TypeAliasNode>((state, node) => {
   const name = getTypeName(node.nameNode.nameNode)
   const stateWithName = traverse(state, node.nameNode)
   const stateWithType = traverse(stateWithName, node.typeNode)
-  const stateWithBinding = addBinding(
-    name,
-    false,
-    isExported,
-  )(stateWithType, node)
-  return { ...stateWithBinding, exportNextBindings: undefined }
+  const stateWithFlushedBinding = flushBindings(
+    addBinding(name, false, isExported)(stateWithType, node),
+  )
+  return { ...stateWithFlushedBinding, exportNextBindings: undefined }
 })
 
 const handleTypeVariable = (state: State, node: TypeVariableNode): State => {
@@ -640,12 +658,14 @@ const handleWhen = nest<WhenNode>((state, node) => {
   // Build temporary scopes around patterns.
   const statesWithBindings = node.patternNodes.map((patternNode) => {
     const nestedState = enterBlock(state, patternNode)
-    return traverse(
-      {
-        ...nestedState,
-        nextIdentifierPatternBindingsImplicit: true,
-      },
-      patternNode,
+    return flushBindings(
+      traverse(
+        {
+          ...nestedState,
+          nextIdentifierPatternBindingsImplicit: true,
+        },
+        patternNode,
+      ),
     )
   })
 

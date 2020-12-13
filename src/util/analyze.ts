@@ -7,8 +7,10 @@ import {
 } from '../types/analyze/scopes'
 import { TypeVariable } from '../types/analyze/type_variables'
 
-const findItem = <T extends { name: string }>(name: string, items: T[]) =>
-  items.find((item) => item.name === name)
+export const findItem = <T extends { name: string }>(
+  name: string,
+  items: T[],
+) => items.find((item) => item.name === name)
 
 const find = <T extends FileScope, U>(
   findInScope: (
