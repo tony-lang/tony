@@ -24,7 +24,7 @@ jobs:
         run: yarn prettierlint
       - name: ESLint
         run: yarn eslint
-      - name: TypeScript
-        run: yarn tsc
+      # - name: TypeScript
+      #   run: yarn tsc
       # - name: Tests
       #   run: sudo yarn test
