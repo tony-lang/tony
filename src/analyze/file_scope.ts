@@ -15,6 +15,7 @@ import {
   InterfaceNode,
   ListComprehensionNode,
   ModuleNode,
+  NamedTypeNode,
   ProgramNode,
   ShorthandMemberPatternNode,
   SyntaxNode,
@@ -264,6 +265,8 @@ const traverse = (state: State, node: SyntaxNode): State => {
       return handleListComprehension(state, node)
     case SyntaxType.Module:
       return handleModule(state, node)
+    case SyntaxType.NamedType:
+      return handleNamedType(state, node)
     case SyntaxType.ShorthandMemberPattern:
       return handleIdentifierPatternAndShorthandMemberPattern(state, node)
     case SyntaxType.When:
@@ -470,6 +473,13 @@ const handleModule = (state: State, node: ModuleNode): State => {
     },
     node.bodyNode,
   )
+}
+
+const handleNamedType = (state: State, node: NamedTypeNode): State => {
+  const name = getTypeName(node.nameNode)
+  const { exportNextBindings: isExported } = state
+  const stateWithBinding = addBinding(name, false, isExported)(state, node)
+  return traverse(stateWithBinding, node.typeNode)
 }
 
 const handleWhen = nest<WhenNode>((state, node) => {
