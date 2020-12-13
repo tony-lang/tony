@@ -1,1 +1,0 @@
-export { InferTypes } from './InferTypes'

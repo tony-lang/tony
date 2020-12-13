@@ -1,1 +1,0 @@
-export { GenerateCode } from './GenerateCode'
