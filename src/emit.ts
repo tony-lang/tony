@@ -1,4 +1,4 @@
-import { getOutFilename, writeFile } from './util/file_system'
+import { getOutFilename, writeFile } from './util/paths'
 import { Config } from './config'
 import { Emit } from './types/emits'
 import { buildAbsolutePath } from './types/paths'

@@ -1,16 +1,17 @@
 {
   "name": "tony-lang",
-  "version": "0.1.4",
+  "version": "0.2.0-alpha",
   "description": "The Tony programming language",
   "main": "dist/src/index.js",
-  "types": "tony-lang.d.ts",
+  "source": "src/index.js",
   "scripts": {
-    "build": "babel . --ignore dist,node_modules --out-dir dist --extensions .ts",
+    "build": "tsc",
     "start": "nodemon --watch src --watch test --exec 'yarn build' -e ts",
     "prettierlint": "prettier --check src test",
     "eslint": "eslint src test --ext .ts",
     "lint": "yarn prettierlint && yarn eslint",
     "prettier": "prettier --write src test",
+    "tsc": "tsc --noEmit",
     "fix": "yarn prettier && yarn eslint --fix",
     "test": "ava dist/test/index.test.js"
   },
@@ -31,19 +32,12 @@
   },
   "homepage": "https://github.com/tony-lang/tony#readme",
   "dependencies": {
-    "core-js": "^3.6.5",
     "deep-equal": "^2.0.3",
     "mkdirp": "^1.0.3",
-    "outdent": "^0.7.1",
     "tree-sitter": "^0.17.0",
     "tree-sitter-tony": "0.2.0-alpha.19"
   },
   "devDependencies": {
-    "@babel/cli": "^7.10.5",
-    "@babel/core": "^7.11.1",
-    "@babel/plugin-proposal-class-properties": "^7.10.4",
-    "@babel/preset-env": "^7.11.0",
-    "@babel/preset-typescript": "^7.10.4",
     "@types/deep-equal": "^1.0.1",
     "@types/mkdirp": "^1.0.1",
     "@typescript-eslint/eslint-plugin": "^4.9.1",

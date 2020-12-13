@@ -3,7 +3,7 @@ import { AbsolutePath } from './types/paths'
 import { Config } from './config'
 import Parser from 'tree-sitter'
 import { log } from './logger'
-import { readFile } from './util/file_system'
+import { readFile } from './util/paths'
 
 const parser = new Parser()
 parser.setLanguage(TreeSitterTony)

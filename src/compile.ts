@@ -9,15 +9,13 @@ import { writeEmit } from './emit'
 export const compile = async (
   entry: string,
   options: ConfigOptions,
-): Promise<AbsolutePath | undefined> => {
+): Promise<AbsolutePath> => {
   const config = buildConfig(entry, options)
 
-  log(config, 'Compiling', config.entry)
+  log(config, 'Compiling', config.entry.path)
 
   const globalScope = await analyze(config)
   const typedGlobalScope = inferTypes(config, globalScope)
-
-  if (!options.emit) return
 
   const emit = generateCode(config, typedGlobalScope)
   await writeEmit(config, emit)
