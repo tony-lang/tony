@@ -1,6 +1,7 @@
 import { Config } from './config'
 
-export const log = ({ verbose }: Config, ...messages: any[]) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const log = ({ verbose }: Config, ...messages: any[]): void => {
   if (!verbose) return
 
   console.log(...messages)

@@ -127,7 +127,10 @@ const handleTestCase = (
   }
 }
 
-export const run = async (test: TestInterface, testCases: TestCase[]) =>
+export const run = async (
+  test: TestInterface,
+  testCases: TestCase[],
+): Promise<void> =>
   testCases.forEach(({ name, error, runtimeError, emit, output, files }) => {
     test.serial(name, handleTestCase(error, runtimeError, emit, output, files))
   })

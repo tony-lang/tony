@@ -1,14 +1,14 @@
-import { Config } from '../config'
-import { log } from '../logger'
-import { FileScope } from '../types/analyze/scopes'
-import { CyclicDependency } from '../types/cyclic_dependencies'
 import {
   CyclicDependencyError,
   buildCyclicDependencyError,
 } from '../types/errors/annotations'
-import { AbsolutePath } from '../types/paths'
-import { isSamePath } from '../util/file_system'
 import { TopologicalSortError, topologicalSort } from '../util/topological_sort'
+import { AbsolutePath } from '../types/paths'
+import { Config } from '../config'
+import { CyclicDependency } from '../types/cyclic_dependencies'
+import { FileScope } from '../types/analyze/scopes'
+import { isSamePath } from '../util/file_system'
+import { log } from '../logger'
 
 export const sortFileScopes = (
   config: Config,

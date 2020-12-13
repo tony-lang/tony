@@ -1,5 +1,5 @@
-import { SyntaxNode } from 'tree-sitter-tony'
 import { ConstrainedType, Type } from './types'
+import { SyntaxNode } from 'tree-sitter-tony'
 
 // ---- Types ----
 

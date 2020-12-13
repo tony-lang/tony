@@ -1,9 +1,9 @@
-import { readFile } from './util/file_system'
-import Parser from 'tree-sitter'
 import TreeSitterTony, { Tree } from 'tree-sitter-tony'
-import { Config } from './config'
-import { log } from './logger'
 import { AbsolutePath } from './types/paths'
+import { Config } from './config'
+import Parser from 'tree-sitter'
+import { log } from './logger'
+import { readFile } from './util/file_system'
 
 const parser = new Parser()
 parser.setLanguage(TreeSitterTony)

@@ -1,8 +1,8 @@
+import { getOutFilename, writeFile } from './util/file_system'
 import { Config } from './config'
-import { log } from './logger'
 import { Emit } from './types/emits'
 import { buildAbsolutePath } from './types/paths'
-import { getOutFilename, writeFile } from './util/file_system'
+import { log } from './logger'
 
 export const writeEmit = async (config: Config, emit: Emit): Promise<void> => {
   await Promise.all(

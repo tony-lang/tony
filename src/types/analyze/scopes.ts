@@ -1,8 +1,8 @@
 import { Binding, buildPrimitiveTypeBindings } from './bindings'
-import { Answer } from '../type_inference/answers'
-import { ProgramNode } from 'tree-sitter-tony'
 import { ErrorAnnotation, MountedErrorAnnotation } from '../errors/annotations'
 import { AbsolutePath } from '../paths'
+import { Answer } from '../type_inference/answers'
+import { ProgramNode } from 'tree-sitter-tony'
 import { SyntaxNode } from 'tree-sitter-tony'
 import { TypeVariable } from './type_variables'
 
@@ -96,5 +96,5 @@ export const isFileScope = (
   scope: FileScope | NestedScope,
 ): scope is FileScope => scope.kind === ScopeKind.File
 
-export const isModuleScope = (scope: FileScope | NestedScope) =>
+export const isModuleScope = (scope: FileScope | NestedScope): boolean =>
   isFileScope(scope) || !!scope.moduleName

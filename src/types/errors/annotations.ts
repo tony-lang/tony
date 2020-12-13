@@ -1,9 +1,8 @@
-import { ProgramNode, SyntaxNode } from 'tree-sitter-tony'
-import { Binding } from '../analyze/bindings'
-import { FileScope, NestedScope } from '../analyze/scopes'
-import { CyclicDependency } from '../cyclic_dependencies'
 import { AbsolutePath, RelativePath } from '../paths'
+import { ProgramNode, SyntaxNode } from 'tree-sitter-tony'
 import { Answers } from '../type_inference/answers'
+import { Binding } from '../analyze/bindings'
+import { CyclicDependency } from '../cyclic_dependencies'
 import { Type } from '../type_inference/types'
 
 // ---- Types ----

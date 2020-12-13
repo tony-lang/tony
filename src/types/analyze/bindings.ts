@@ -1,6 +1,6 @@
 import { ProgramNode, SyntaxNode } from 'tree-sitter-tony'
-import { PRIMITIVE_TYPES } from '../../constants'
 import { AbsolutePath } from '../paths'
+import { PRIMITIVE_TYPES } from '../../constants'
 
 // ---- Types ----
 

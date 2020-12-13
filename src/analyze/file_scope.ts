@@ -1,3 +1,4 @@
+import { AbsolutePath, buildRelativePath } from '../types/paths'
 import {
   AbstractionBranchNode,
   AssignmentNode,
@@ -29,21 +30,12 @@ import {
   TypeVariableNode,
   WhenNode,
 } from 'tree-sitter-tony'
-import { Config } from '../config'
 import {
   Binding,
   ImportBindingConfig,
   buildBinding,
   buildImportBindingConfig,
 } from '../types/analyze/bindings'
-import {
-  FileScope,
-  ScopeStack,
-  buildFileScope,
-  buildNestedScope,
-  isFileScope,
-  isModuleScope,
-} from '../types/analyze/scopes'
 import {
   ErrorAnnotation,
   buildDuplicateBindingError,
@@ -55,18 +47,26 @@ import {
   buildMissingTypeVariableError,
   buildUnknownImportError,
 } from '../types/errors/annotations'
-import { assert } from '../types/errors/internal'
-import { AbsolutePath, buildRelativePath } from '../types/paths'
-import { fileMayBeImported } from '../util/file_system'
-import { parseStringPattern } from '../util/literals'
+import {
+  FileScope,
+  ScopeStack,
+  buildFileScope,
+  buildNestedScope,
+  isFileScope,
+  isModuleScope,
+} from '../types/analyze/scopes'
 import {
   bindingsMissingFrom,
   findBinding,
   findItem,
   findTypeVariable,
 } from '../util/analyze'
-import { resolveRelativePath } from './resolve'
+import { Config } from '../config'
+import { assert } from '../types/errors/internal'
 import { buildTypeVariable } from '../types/analyze/type_variables'
+import { fileMayBeImported } from '../util/file_system'
+import { parseStringPattern } from '../util/literals'
+import { resolveRelativePath } from './resolve'
 
 type State = {
   config: Config

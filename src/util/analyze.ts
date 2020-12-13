@@ -1,16 +1,16 @@
-import { Binding } from '../types/analyze/bindings'
 import {
   FileScope,
   NestedScope,
   ScopeStack,
   isFileScope,
 } from '../types/analyze/scopes'
+import { Binding } from '../types/analyze/bindings'
 import { TypeVariable } from '../types/analyze/type_variables'
 
 export const findItem = <T extends { name: string }>(
   name: string,
   items: T[],
-) => items.find((item) => item.name === name)
+): T | undefined => items.find((item) => item.name === name)
 
 const find = <T extends FileScope, U>(
   findInScope: (

@@ -1,10 +1,10 @@
+import { ConfigOptions, buildConfig } from './config'
+import { AbsolutePath } from './types/paths'
 import { analyze } from './analyze'
-import { writeEmit } from './emit'
 import { generateCode } from './code_generation'
 import { inferTypes } from './type_inference'
-import { ConfigOptions, buildConfig } from './config'
 import { log } from './logger'
-import { AbsolutePath } from './types/paths'
+import { writeEmit } from './emit'
 
 export const compile = async (
   entry: string,

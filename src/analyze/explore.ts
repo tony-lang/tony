@@ -1,13 +1,13 @@
-import { ProgramNode } from 'tree-sitter-tony'
+import { AbsolutePath } from '../types/paths'
 import { Config } from '../config'
+import { FileScope } from '../types/analyze/scopes'
+import { ProgramNode } from 'tree-sitter-tony'
+import { constructFileScope } from './file_scope'
+import { graphSearch } from '../util/graph_search'
 import { log } from '../logger'
 import { parse } from '../parse'
-import { FileScope } from '../types/analyze/scopes'
-import { AbsolutePath } from '../types/paths'
-import { graphSearch } from '../util/graph_search'
-import { constructFileScope } from './file_scope'
 
-export const analyzeFiles = (config: Config) =>
+export const analyzeFiles = (config: Config): Promise<FileScope[]> =>
   graphSearch<AbsolutePath, FileScope[]>(
     async (fileScopes, file, exploredFiles) => {
       const fileScope = await analyzeFile(config, file)
