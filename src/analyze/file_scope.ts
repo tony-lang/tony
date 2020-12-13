@@ -2,6 +2,7 @@ import {
   AbstractionBranchNode,
   AssignmentNode,
   BlockNode,
+  EnumNode,
   ExportNode,
   ExternalImportNode,
   GeneratorNode,
@@ -186,7 +187,7 @@ const nest = <T extends SyntaxNode>(
   return leaveBlock(updatedState)
 }
 
-const declareBinding = (
+const addBinding = (
   name: string,
   isImplicit: boolean,
   isExported = false,
@@ -238,6 +239,8 @@ const traverse = (state: State, node: SyntaxNode): State => {
       return handleAssignment(state, node)
     case SyntaxType.Block:
       return handleBlock(state, node)
+    case SyntaxType.Enum:
+      return handleEnum(state, node)
     case SyntaxType.Export:
       return handleExport(state, node)
     case SyntaxType.ExternalImport:
@@ -303,6 +306,13 @@ const handleBlock = (state: State, node: BlockNode): State => {
   else return nest<BlockNode>(traverseAllChildren)(state, node)
 }
 
+const handleEnum = (state: State, node: EnumNode): State => {
+  const name = getTypeName(node.nameNode)
+  const { exportNextBindings: isExported } = state
+  const stateWithBinding = addBinding(name, false, isExported)(state, node)
+  return traverseAll(stateWithBinding, node.valueNodes)
+}
+
 const handleExport = ensure<ExportNode>(
   (state) => isModuleScope(state.scopes[0]),
   (state, node) =>
@@ -354,7 +364,7 @@ const handleImportAndExternalImport = (isExported: boolean) =>
 const handleGenerator = (state: State, node: GeneratorNode): State => {
   const name = getIdentifierName(node.nameNode)
   const stateAfterValue = traverse(state, node.valueNode)
-  const stateWithBinding = declareBinding(name, true)(stateAfterValue, node)
+  const stateWithBinding = addBinding(name, true)(stateAfterValue, node)
 
   if (node.conditionNode) return traverse(stateWithBinding, node.conditionNode)
   return stateWithBinding
@@ -379,7 +389,7 @@ const handleIdentifierPatternAndShorthandMemberPattern = (
     nextIdentifierPatternBindingsImplicit: isImplicit,
     importNextBindingsFrom: importedFrom,
   } = state
-  return declareBinding(
+  return addBinding(
     name,
     !!isImplicit,
     isExported,
@@ -426,7 +436,7 @@ const handleImportType = (state: State, node: ImportTypeNode): State => {
     'Within an import statement, there should be an import config.',
   )
 
-  return declareBinding(name, false, isExported, {
+  return addBinding(name, false, isExported, {
     ...importedFrom,
     originalName,
   })(state, node)
@@ -446,16 +456,15 @@ const handleListComprehension = nest<ListComprehensionNode>((state, node) => {
 const handleModule = (state: State, node: ModuleNode): State => {
   const name = getTypeName(node.nameNode.nameNode)
   const { exportNextBindings: isExported } = state
-  const stateWithBody = traverse(
+  const stateWithBinding = addBinding(name, false, isExported)(state, node)
+  return traverse(
     {
-      ...state,
+      ...stateWithBinding,
       nextModuleScopeName: name,
       exportNextBindings: undefined,
     },
     node.bodyNode,
   )
-
-  return declareBinding(name, false, isExported)(stateWithBody, node)
 }
 
 const handleWhen = nest<WhenNode>((state, node) => {
