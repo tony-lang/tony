@@ -2,9 +2,9 @@
 blank_issues_enabled: false
 contact_links:
   -
-    about: "Please ask and answer usage questions on Stack Overflow."
+    about: "Please ask and answer usage questions in Discussions."
     name: Question
-    url: "https://stackoverflow.com/questions/tagged/tony"
+    url: "https://github.com/tony-lang/tony/discussions"
   -
     about: "Please raise issues about the CLI on its own repo."
     name: CLI
