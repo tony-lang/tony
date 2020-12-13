@@ -3,7 +3,7 @@
   "version": "0.2.0-alpha",
   "description": "The Tony programming language",
   "main": "dist/src/index.js",
-  "source": "src/index.js",
+  "source": "src/index.ts",
   "scripts": {
     "build": "tsc",
     "start": "nodemon --watch src --watch test --exec 'yarn build' -e ts",
