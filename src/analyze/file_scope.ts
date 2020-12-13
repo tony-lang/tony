@@ -72,8 +72,6 @@ type State = {
   // A stack of all scopes starting with the closest scope and ending with the
   // symbol table. Scopes are collected recursively.
   scopes: ScopeStack<FileScope>
-  // When enabled the next created scope will be a module with the given name.
-  nextModuleScopeName?: string
   // When enabled the next declared bindings will be exported.
   exportNextBindings?: boolean
   // When enabled the next declared bindings will be imported from the given
@@ -163,13 +161,15 @@ const ensure = <T extends SyntaxNode>(
   return addError(state, node, error)
 }
 
-const enterBlock = (state: State, node: SyntaxNode): State => {
-  const { nextModuleScopeName: moduleName } = state
+const enterBlock = (
+  state: State,
+  node: SyntaxNode,
+  moduleName?: string,
+): State => {
   const scope = buildNestedScope(node, moduleName)
 
   return {
     ...state,
-    nextModuleScopeName: undefined,
     scopes: [scope, ...state.scopes],
   }
 }
@@ -196,8 +196,9 @@ const leaveBlock = (state: State): State => {
 
 const nest = <T extends SyntaxNode>(
   callback: (state: State, node: T) => State,
+  moduleName?: string,
 ) => (state: State, node: T) => {
-  const nestedState = enterBlock(state, node)
+  const nestedState = enterBlock(state, node, moduleName)
   const updatedState = callback(nestedState, node)
   return leaveBlock(updatedState)
 }
@@ -268,7 +269,9 @@ const getIdentifierName = (
 
 const getTypeName = (node: TypeNode): string => node.text
 
-const getTypeVariableName = (node: TypeVariableNode | TypeVariableDeclarationNameNode): string => node.text
+const getTypeVariableName = (
+  node: TypeVariableNode | TypeVariableDeclarationNameNode,
+): string => node.text
 
 const traverseAll = (state: State, nodes: SyntaxNode[]): State =>
   nodes.reduce((acc, child) => traverse(acc, child), state)
@@ -523,7 +526,7 @@ const handleImportType = (state: State, node: ImportTypeNode): State => {
   })(state, node)
 }
 
-const handleInterface = (state: State, node: InterfaceNode): State => {
+const handleInterface = nest<InterfaceNode>((state, node) => {
   const name = getTypeName(node.nameNode.nameNode)
   const [isExported, stateWithoutExport] = exportAndReset(state)
   const stateWithBinding = addBinding(
@@ -531,8 +534,14 @@ const handleInterface = (state: State, node: InterfaceNode): State => {
     false,
     isExported,
   )(stateWithoutExport, node)
-  return traverseAll(stateWithBinding, node.memberNodes)
-}
+  return traverseAll(
+    {
+      ...stateWithBinding,
+      nextBlockScopeAlreadyCreated: true,
+    },
+    node.memberNodes,
+  )
+})
 
 const handleListComprehension = nest<ListComprehensionNode>((state, node) => {
   const nestedStateWithGenerators = traverseAll(state, node.generatorNodes)
@@ -547,19 +556,21 @@ const handleListComprehension = nest<ListComprehensionNode>((state, node) => {
 
 const handleModule = (state: State, node: ModuleNode): State => {
   const name = getTypeName(node.nameNode.nameNode)
-  const [isExported, stateWithoutExport] = exportAndReset(state)
-  const stateWithBinding = addBinding(
-    name,
-    false,
-    isExported,
-  )(stateWithoutExport, node)
-  return traverse(
-    {
-      ...stateWithBinding,
-      nextModuleScopeName: name,
-    },
-    node.bodyNode,
-  )
+  return nest<ModuleNode>((state, node) => {
+    const [isExported, stateWithoutExport] = exportAndReset(state)
+    const stateWithBinding = addBinding(
+      name,
+      false,
+      isExported,
+    )(stateWithoutExport, node)
+    return traverse(
+      {
+        ...stateWithBinding,
+        nextBlockScopeAlreadyCreated: true,
+      },
+      node.bodyNode,
+    )
+  }, name)(state, node)
 }
 
 const handleNamedType = (state: State, node: NamedTypeNode): State => {
@@ -569,7 +580,7 @@ const handleNamedType = (state: State, node: NamedTypeNode): State => {
   return traverse(stateWithBinding, node.typeNode)
 }
 
-const handleTypeAlias = (state: State, node: TypeAliasNode): State => {
+const handleTypeAlias = nest<TypeAliasNode>((state, node) => {
   const name = getTypeName(node.nameNode.nameNode)
   const { exportNextBindings: isExported } = state
   const stateWithType = traverse(state, node.typeNode)
@@ -579,7 +590,7 @@ const handleTypeAlias = (state: State, node: TypeAliasNode): State => {
     isExported,
   )(stateWithType, node)
   return { ...stateWithBinding, exportNextBindings: undefined }
-}
+})
 
 const handleTypeVariable = (state: State, node: TypeVariableNode): State => {
   const name = getTypeVariableName(node)
@@ -589,10 +600,14 @@ const handleTypeVariable = (state: State, node: TypeVariableNode): State => {
   return addError(state, node, buildMissingTypeVariableError(name))
 }
 
-const handleTypeVariableDeclaration = (state: State, node: TypeVariableDeclarationNode): State => {
+const handleTypeVariableDeclaration = (
+  state: State,
+  node: TypeVariableDeclarationNode,
+): State => {
   const name = getTypeVariableName(node.nameNode)
   const stateWithTypeVariable = addTypeVariable(name)(state, node)
-  if (node.constraintNode) return traverse(stateWithTypeVariable, node.constraintNode)
+  if (node.constraintNode)
+    return traverse(stateWithTypeVariable, node.constraintNode)
   return stateWithTypeVariable
 }
 
