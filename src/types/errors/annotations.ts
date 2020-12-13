@@ -11,6 +11,7 @@ import { Type } from '../type_inference/types'
 export enum ErrorAnnotationKind {
   CyclicDependency,
   DuplicateBinding,
+  DuplicateTypeVariable,
   ExportOutsideModuleScope,
   ExternalTypeImport,
   ImportOutsideFileScope,
@@ -18,6 +19,7 @@ export enum ErrorAnnotationKind {
   IndeterminateType,
   MissingBinding,
   MissingExternalImportTypeHint,
+  MissingTypeVariable,
   Type,
   UnknownEntry,
   UnknownImport,
@@ -32,6 +34,11 @@ export interface CyclicDependencyError {
 
 export interface DuplicateBindingError {
   kind: typeof ErrorAnnotationKind.DuplicateBinding
+  name: string
+}
+
+export interface DuplicateTypeVariableError {
+  kind: typeof ErrorAnnotationKind.DuplicateTypeVariable
   name: string
 }
 
@@ -68,6 +75,11 @@ export interface MissingExternalImportTypeHintError {
   binding: Binding
 }
 
+export interface MissingTypeVariableError {
+  kind: typeof ErrorAnnotationKind.MissingTypeVariable
+  name: string
+}
+
 export interface TypeError {
   kind: typeof ErrorAnnotationKind.Type
   expected: Type
@@ -96,6 +108,7 @@ export interface UseOfTypeAsValueError {
 export type ErrorAnnotation =
   | CyclicDependencyError
   | DuplicateBindingError
+  | DuplicateTypeVariableError
   | ExportOutsideModuleScopeError
   | ExternalTypeImportError
   | ImportOutsideFileScopeError
@@ -103,6 +116,7 @@ export type ErrorAnnotation =
   | IndeterminateTypeError
   | MissingBindingError
   | MissingExternalImportTypeHintError
+  | MissingTypeVariableError
   | TypeError
   | UnknownEntryError
   | UnknownImportError
@@ -130,6 +144,13 @@ export const buildDuplicateBindingError = (
   name,
 })
 
+export const buildDuplicateTypeVariableError = (
+  name: string,
+): DuplicateTypeVariableError => ({
+  kind: ErrorAnnotationKind.DuplicateTypeVariable,
+  name,
+})
+
 export const buildExportOutsideModuleScopeError = (): ExportOutsideModuleScopeError => ({
   kind: ErrorAnnotationKind.ExportOutsideModuleScope,
 })
@@ -149,6 +170,13 @@ export const buildMissingBindingError = (
   name: string,
 ): MissingBindingError => ({
   kind: ErrorAnnotationKind.MissingBinding,
+  name,
+})
+
+export const buildMissingTypeVariableError = (
+  name: string,
+): MissingTypeVariableError => ({
+  kind: ErrorAnnotationKind.MissingTypeVariable,
   name,
 })
 

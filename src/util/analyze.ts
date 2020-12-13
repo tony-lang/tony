@@ -1,18 +1,37 @@
 import { Binding } from '../types/analyze/bindings'
-import { ConcreteScope, FileScope, ScopeStack } from '../types/analyze/scopes'
+import {
+  FileScope,
+  isFileScope,
+  NestedScope,
+  ScopeStack,
+} from '../types/analyze/scopes'
+import { TypeVariable } from '../types/analyze/type_variables'
 
-const findBindingInScope = (name: string, scope: ConcreteScope) =>
-  scope.bindings.find((binding) => binding.name === name)
+const findItem = <T extends { name: string }>(name: string, items: T[]) =>
+  items.find((item) => item.name === name)
 
-export const findBinding = <T extends FileScope>(
-  name: string,
-  scopes: ScopeStack<T>,
-) =>
-  scopes.reduce<Binding | undefined>((binding, scope) => {
+const find = <T extends FileScope, U>(
+  findInScope: (
+    name: string,
+  ) => (acc: U | undefined, scope: T | NestedScope) => U | undefined,
+) => (name: string, scopes: ScopeStack<T>) =>
+  scopes.reduce(findInScope(name), undefined)
+
+export const findBinding = find(
+  (name) => (binding: Binding | undefined, scope) => {
     if (binding !== undefined) return binding
 
-    return findBindingInScope(name, scope)
-  }, undefined)
+    return findItem(name, scope.bindings)
+  },
+)
+
+export const findTypeVariable = find(
+  (name) => (typeVariable: TypeVariable | undefined, scope) => {
+    if (typeVariable !== undefined || isFileScope(scope)) return typeVariable
+
+    return findItem(name, scope.typeVariables)
+  },
+)
 
 // Returns the bindings (1) is missing from (2).
 export const bindingsMissingFrom = (

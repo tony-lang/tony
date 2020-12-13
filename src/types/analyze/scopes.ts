@@ -4,6 +4,7 @@ import { ProgramNode } from 'tree-sitter-tony'
 import { ErrorAnnotation, MountedErrorAnnotation } from '../errors/annotations'
 import { AbsolutePath } from '../paths'
 import { SyntaxNode } from 'tree-sitter-tony'
+import { TypeVariable } from './type_variables'
 
 // ---- Types ----
 
@@ -42,6 +43,7 @@ export interface NestedScope extends ConcreteScope {
   scopes: NestedScope[]
   node: SyntaxNode
   moduleName?: string
+  typeVariables: TypeVariable[]
 }
 
 export type Scope = GlobalScope<FileScope> | FileScope | NestedScope
@@ -84,6 +86,7 @@ export const buildNestedScope = (
   kind: ScopeKind.Nested,
   node,
   bindings: [],
+  typeVariables: [],
   scopes: [],
   moduleName,
   errors: [],

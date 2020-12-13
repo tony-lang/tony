@@ -4,6 +4,7 @@ import {
   BlockNode,
   DestructuringPatternNode,
   EnumNode,
+  EnumValueNode,
   ExportNode,
   ExternalImportNode,
   GeneratorNode,
@@ -23,6 +24,7 @@ import {
   SyntaxType,
   TypeAliasNode,
   TypeNode,
+  TypeVariableNode,
   WhenNode,
 } from 'tree-sitter-tony'
 import { Config } from '../config'
@@ -47,13 +49,20 @@ import {
   ErrorAnnotation,
   buildIncompleteWhenPatternError,
   buildMissingBindingError,
+  buildDuplicateTypeVariableError,
+  buildMissingTypeVariableError,
 } from '../types/errors/annotations'
 import { assert } from '../types/errors/internal'
 import { AbsolutePath, buildRelativePath } from '../types/paths'
 import { fileMayBeImported } from '../util/file_system'
 import { parseStringPattern } from '../util/literals'
-import { bindingsMissingFrom, findBinding } from '../util/analyze'
+import {
+  bindingsMissingFrom,
+  findBinding,
+  findTypeVariable,
+} from '../util/analyze'
 import { resolveRelativePath } from './resolve'
+import { buildTypeVariable } from '../types/analyze/type_variables'
 
 type State = {
   config: Config
@@ -221,11 +230,43 @@ const addBinding = (
     buildDuplicateBindingError(name),
   )
 
+const addTypeVariable = (name: string) =>
+  ensure<TypeVariableNode>(
+    (state) => findTypeVariable(name, state.scopes) === undefined,
+    (state, node) => {
+      const [scope, ...parentScopes] = state.scopes
+      assert(
+        !isFileScope(scope),
+        'Type variables may only be declared within type declarations.',
+      )
+      const typeVariable = buildTypeVariable(name, node)
+      const newScope = {
+        ...scope,
+        typeVariables: [...scope.typeVariables, typeVariable],
+      }
+
+      return {
+        ...state,
+        scopes: [newScope, ...parentScopes],
+      }
+    },
+    buildDuplicateTypeVariableError(name),
+  )
+
+const exportAndReset = (
+  state: State,
+): [isExported: boolean, newState: State] => [
+  !!state.exportNextBindings,
+  { ...state, exportNextBindings: undefined },
+]
+
 const getIdentifierName = (
   node: IdentifierNode | IdentifierPatternNameNode,
 ): string => node.text
 
 const getTypeName = (node: TypeNode): string => node.text
+
+const getTypeVariableName = (node: TypeVariableNode): string => node.text
 
 const traverseAll = (state: State, nodes: SyntaxNode[]): State =>
   nodes.reduce((acc, child) => traverse(acc, child), state)
@@ -247,6 +288,8 @@ const traverse = (state: State, node: SyntaxNode): State => {
       return handleDestructuringPattern(state, node)
     case SyntaxType.Enum:
       return handleEnum(state, node)
+    case SyntaxType.EnumValue:
+      return handleEnumValue(state, node)
     case SyntaxType.Export:
       return handleExport(state, node)
     case SyntaxType.ExternalImport:
@@ -275,6 +318,8 @@ const traverse = (state: State, node: SyntaxNode): State => {
       return handleIdentifierPatternAndShorthandMemberPattern(state, node)
     case SyntaxType.TypeAlias:
       return handleTypeAlias(state, node)
+    case SyntaxType.TypeVariable:
+      return handleTypeVariable(state, node)
     case SyntaxType.When:
       return handleWhen(state, node)
     default:
@@ -332,9 +377,22 @@ const handleDestructuringPattern = (
 
 const handleEnum = (state: State, node: EnumNode): State => {
   const name = getTypeName(node.nameNode)
-  const { exportNextBindings: isExported } = state
-  const stateWithBinding = addBinding(name, false, isExported)(state, node)
+  const [isExported, stateWithoutExport] = exportAndReset(state)
+  const stateWithBinding = addBinding(
+    name,
+    false,
+    isExported,
+  )(stateWithoutExport, node)
   return traverseAll(stateWithBinding, node.valueNodes)
+}
+
+const handleEnumValue = (state: State, node: EnumValueNode): State => {
+  const name = getTypeName(node.nameNode)
+  const stateWithBinding = addBinding(name, false, true)(state, node)
+
+  if (node.valueNode !== undefined)
+    return traverse(stateWithBinding, node.valueNode)
+  return stateWithBinding
 }
 
 const handleExport = ensure<ExportNode>(
@@ -463,8 +521,12 @@ const handleImportType = (state: State, node: ImportTypeNode): State => {
 
 const handleInterface = (state: State, node: InterfaceNode): State => {
   const name = getTypeName(node.nameNode.nameNode)
-  const { exportNextBindings: isExported } = state
-  const stateWithBinding = addBinding(name, false, isExported)(state, node)
+  const [isExported, stateWithoutExport] = exportAndReset(state)
+  const stateWithBinding = addBinding(
+    name,
+    false,
+    isExported,
+  )(stateWithoutExport, node)
   return traverseAll(stateWithBinding, node.memberNodes)
 }
 
@@ -481,13 +543,16 @@ const handleListComprehension = nest<ListComprehensionNode>((state, node) => {
 
 const handleModule = (state: State, node: ModuleNode): State => {
   const name = getTypeName(node.nameNode.nameNode)
-  const { exportNextBindings: isExported } = state
-  const stateWithBinding = addBinding(name, false, isExported)(state, node)
+  const [isExported, stateWithoutExport] = exportAndReset(state)
+  const stateWithBinding = addBinding(
+    name,
+    false,
+    isExported,
+  )(stateWithoutExport, node)
   return traverse(
     {
       ...stateWithBinding,
       nextModuleScopeName: name,
-      exportNextBindings: undefined,
     },
     node.bodyNode,
   )
@@ -503,8 +568,22 @@ const handleNamedType = (state: State, node: NamedTypeNode): State => {
 const handleTypeAlias = (state: State, node: TypeAliasNode): State => {
   const name = getTypeName(node.nameNode.nameNode)
   const { exportNextBindings: isExported } = state
-  const stateWithBinding = addBinding(name, false, isExported)(state, node)
-  return traverse(stateWithBinding, node.typeNode)
+  const stateWithType = traverse(state, node.typeNode)
+  const stateWithBinding = addBinding(
+    name,
+    false,
+    isExported,
+  )(stateWithType, node)
+  return { ...stateWithBinding, exportNextBindings: undefined }
+}
+
+const handleTypeVariable = (state: State, node: TypeVariableNode): State => {
+  const name = getTypeVariableName(node)
+  const typeVariable = findTypeVariable(name, state.scopes)
+
+  if (typeVariable === undefined)
+    return addError(state, node, buildMissingTypeVariableError(name))
+  return state
 }
 
 const handleWhen = nest<WhenNode>((state, node) => {
