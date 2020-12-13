@@ -3,21 +3,20 @@ import {
   AssignmentNode,
   BlockNode,
   ExportNode,
-  ExternalExportNode,
+  ExternalImportNode,
   GeneratorNode,
   IdentifierNode,
   IdentifierPatternNameNode,
   IdentifierPatternNode,
-  ImportIdentifierAsNode,
+  ImportIdentifierNode,
   ImportNode,
-  ImportTypeAsNode,
+  ImportTypeNode,
   ListComprehensionNode,
   ModuleNode,
   ProgramNode,
   ShorthandMemberPatternNode,
   SyntaxNode,
   SyntaxType,
-  TypeDeclarationNode,
   TypeNode,
   WhenNode,
 } from 'tree-sitter-tony'
@@ -37,7 +36,6 @@ import {
   ScopeStack,
 } from '../types/analyze/scopes'
 import {
-  MountedErrorAnnotation,
   buildDuplicateBindingError,
   buildExportOutsideModuleScopeError,
   buildImportOutsideFileScopeError,
@@ -47,7 +45,7 @@ import {
   buildMissingBindingError,
 } from '../types/errors/annotations'
 import { assert } from '../types/errors/internal'
-import { AbsolutePath, buildRelativePath, RelativePath } from '../types/paths'
+import { AbsolutePath, buildRelativePath } from '../types/paths'
 import { fileMayBeImported } from '../util/file_system'
 import { parseStringPattern } from '../util/literals'
 import { addBinding, bindingsMissingFrom, findBinding } from '../util/analyze'
@@ -245,8 +243,8 @@ const traverse = (state: State, node: SyntaxNode): State => {
       return handleBlock(state, node)
     case SyntaxType.Export:
       return handleExport(state, node)
-    case SyntaxType.ExternalExport:
-      return handleImportAndExternalExport(true)(state, node)
+    case SyntaxType.ExternalImport:
+      return handleImportAndExternalImport(true)(state, node)
     case SyntaxType.Generator:
       return handleGenerator(state, node)
     case SyntaxType.Identifier:
@@ -254,11 +252,11 @@ const traverse = (state: State, node: SyntaxNode): State => {
     case SyntaxType.IdentifierPattern:
       return handleIdentifierPatternAndShorthandMemberPattern(state, node)
     case SyntaxType.Import:
-      return handleImportAndExternalExport(false)(state, node)
-    case SyntaxType.ImportIdentifierAs:
-      return handleImportIdentifierAs(state, node)
-    case SyntaxType.ImportTypeAs:
-      return handleImportTypeAs(state, node)
+      return handleImportAndExternalImport(false)(state, node)
+    case SyntaxType.ImportIdentifier:
+      return handleImportIdentifier(state, node)
+    case SyntaxType.ImportType:
+      return handleImportType(state, node)
     case SyntaxType.ListComprehension:
       return handleListComprehension(state, node)
     case SyntaxType.Module:
@@ -321,8 +319,8 @@ const handleExport = ensure<ExportNode>(
   buildExportOutsideModuleScopeError(),
 )
 
-const handleImportAndExternalExport = (isExported: boolean) =>
-  ensure<ImportNode | ExternalExportNode>(
+const handleImportAndExternalImport = (isExported: boolean) =>
+  ensure<ImportNode | ExternalImportNode>(
     (state) => isFileScope(state.scopes[0]),
     (state, node) => {
       const source = buildRelativePath(
@@ -397,11 +395,13 @@ const handleIdentifierPatternAndShorthandMemberPattern = (
   )(state, node)
 }
 
-const handleImportIdentifierAs = (
+const handleImportIdentifier = (
   state: State,
-  node: ImportIdentifierAsNode,
+  node: ImportIdentifierNode,
 ): State => {
-  const originalName = getIdentifierName(node.nameNode)
+  const originalName = node.nameNode
+    ? getIdentifierName(node.nameNode)
+    : undefined
   const { importNextBindingsFrom } = state
 
   assert(
@@ -421,9 +421,9 @@ const handleImportIdentifierAs = (
   )
 }
 
-const handleImportTypeAs = (state: State, node: ImportTypeAsNode): State => {
+const handleImportType = (state: State, node: ImportTypeNode): State => {
   const originalName = getTypeName(node.nameNode)
-  const name = getTypeName(node.asNode)
+  const name = node.asNode ? getTypeName(node.asNode) : originalName
   const {
     exportNextBindings: isExported,
     importNextBindingsFrom: importedFrom,
