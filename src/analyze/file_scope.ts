@@ -12,6 +12,7 @@ import {
   ImportIdentifierNode,
   ImportNode,
   ImportTypeNode,
+  InterfaceNode,
   ListComprehensionNode,
   ModuleNode,
   ProgramNode,
@@ -257,6 +258,8 @@ const traverse = (state: State, node: SyntaxNode): State => {
       return handleImportIdentifier(state, node)
     case SyntaxType.ImportType:
       return handleImportType(state, node)
+    case SyntaxType.Interface:
+      return handleInterface(state, node)
     case SyntaxType.ListComprehension:
       return handleListComprehension(state, node)
     case SyntaxType.Module:
@@ -389,12 +392,7 @@ const handleIdentifierPatternAndShorthandMemberPattern = (
     nextIdentifierPatternBindingsImplicit: isImplicit,
     importNextBindingsFrom: importedFrom,
   } = state
-  return addBinding(
-    name,
-    !!isImplicit,
-    isExported,
-    importedFrom,
-  )(state, node)
+  return addBinding(name, !!isImplicit, isExported, importedFrom)(state, node)
 }
 
 const handleImportIdentifier = (
@@ -440,6 +438,13 @@ const handleImportType = (state: State, node: ImportTypeNode): State => {
     ...importedFrom,
     originalName,
   })(state, node)
+}
+
+const handleInterface = (state: State, node: InterfaceNode): State => {
+  const name = getTypeName(node.nameNode.nameNode)
+  const { exportNextBindings: isExported } = state
+  const stateWithBinding = addBinding(name, false, isExported)(state, node)
+  return traverseAll(stateWithBinding, node.memberNodes)
 }
 
 const handleListComprehension = nest<ListComprehensionNode>((state, node) => {
