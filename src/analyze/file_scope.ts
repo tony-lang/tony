@@ -24,6 +24,8 @@ import {
   SyntaxType,
   TypeAliasNode,
   TypeNode,
+  TypeVariableDeclarationNameNode,
+  TypeVariableDeclarationNode,
   TypeVariableNode,
   WhenNode,
 } from 'tree-sitter-tony'
@@ -231,7 +233,7 @@ const addBinding = (
   )
 
 const addTypeVariable = (name: string) =>
-  ensure<TypeVariableNode>(
+  ensure<TypeVariableDeclarationNode>(
     (state) => findTypeVariable(name, state.scopes) === undefined,
     (state, node) => {
       const [scope, ...parentScopes] = state.scopes
@@ -266,7 +268,7 @@ const getIdentifierName = (
 
 const getTypeName = (node: TypeNode): string => node.text
 
-const getTypeVariableName = (node: TypeVariableNode): string => node.text
+const getTypeVariableName = (node: TypeVariableNode | TypeVariableDeclarationNameNode): string => node.text
 
 const traverseAll = (state: State, nodes: SyntaxNode[]): State =>
   nodes.reduce((acc, child) => traverse(acc, child), state)
@@ -320,6 +322,8 @@ const traverse = (state: State, node: SyntaxNode): State => {
       return handleTypeAlias(state, node)
     case SyntaxType.TypeVariable:
       return handleTypeVariable(state, node)
+    case SyntaxType.TypeVariableDeclaration:
+      return handleTypeVariableDeclaration(state, node)
     case SyntaxType.When:
       return handleWhen(state, node)
     default:
@@ -328,7 +332,7 @@ const traverse = (state: State, node: SyntaxNode): State => {
 }
 
 const handleAbstractionBranch = nest<AbstractionBranchNode>((state, node) => {
-  const nestedStateWithParameters = traverse(state, node.parametersNode)
+  const nestedStateWithParameters = traverseAll(state, node.valueNodes)
   return traverse(
     {
       ...nestedStateWithParameters,
@@ -581,9 +585,15 @@ const handleTypeVariable = (state: State, node: TypeVariableNode): State => {
   const name = getTypeVariableName(node)
   const typeVariable = findTypeVariable(name, state.scopes)
 
-  if (typeVariable === undefined)
-    return addError(state, node, buildMissingTypeVariableError(name))
-  return state
+  if (typeVariable) return state
+  return addError(state, node, buildMissingTypeVariableError(name))
+}
+
+const handleTypeVariableDeclaration = (state: State, node: TypeVariableDeclarationNode): State => {
+  const name = getTypeVariableName(node.nameNode)
+  const stateWithTypeVariable = addTypeVariable(name)(state, node)
+  if (node.constraintNode) return traverse(stateWithTypeVariable, node.constraintNode)
+  return stateWithTypeVariable
 }
 
 const handleWhen = nest<WhenNode>((state, node) => {
