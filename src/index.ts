@@ -1,23 +1,8 @@
+export { analyze } from './analyze'
 export { compile } from './compile'
+export { writeEmit } from './emit'
 export { exec } from './exec'
+export { generateCode } from './code_generation'
+export { inferTypes } from './type_inference'
 export { parse } from './parse'
 export { VERSION } from './version'
-
-export {
-  CompileError,
-  CyclicDependenciesError,
-  DuplicateBindingError,
-  ExportOutsideModuleScopeError,
-  ImportOutsideFileModuleScopeError,
-  IndeterminateTypeError,
-  InternalError,
-  InternalTypeError,
-  ExternalTypeImportError,
-  InvalidModuleAccessError,
-  UseOfTypeAsValueError,
-  MissingBindingError,
-  MissingExternalImportTypeHintError,
-  SyntaxError,
-  TypeError,
-  UnknownImportError,
-} from './errors'

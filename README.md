@@ -80,19 +80,19 @@ Contains attributes `filePath: string` and `tree: Parser.Tree`. `message` is set
 
 `CompileError` is abstract. Therefore, only instances of subclasses may be thrown.
 
-Contains `filePath: string` and `context: { start: { row: number; column: number }; end: { row: number; column: number } }`.
+Contains `context: { filePath: Path, node: Node }`.
 
 #### `CycilcDependenciesError`
 
 Is thrown when the dependency graph is not acyclic.
 
-Contains `cyclicDependency: [string, string]` representing file paths where the latter one is a dependency to the first one. `message` is set to `undefined`.
+Contains `cyclicDependency: CyclicDependency<Path>` representing file paths who depend on each other. `message` is set to `undefined`.
 
 #### `DuplicateBindingError`
 
 Is thrown when an identifier or type is assigned to/declared multiple times.
 
-Contains `binding: string` representing the duplicate identifier/type. `message` is set to `undefined`.
+Contains `binding: Binding` representing the duplicate identifier/type. `message` is set to `undefined`.
 
 #### `ExportOutsideModuleScopeError`
 
@@ -104,7 +104,7 @@ Is thrown when the `export` expression is used outside of a module scope.
 
 Is thrown when a type is imported from an external module.
 
-Contains `type: string` representing the type whose import was attempted. `message` is set to `undefined`.
+Contains `type: Type` representing the type whose import was attempted. `message` is set to `undefined`.
 
 #### `ImportOutsideFileModuleScopeError`
 
@@ -116,43 +116,49 @@ Is thrown when `import` is used outside of a file-level module scope.
 
 Is thrown when the actual type of a type variable cannot be determined during inference.
 
-Contains `types: string[]` representing the types that could not be determined. `message` is set to `undefined`.
+Contains `types: Type[]` representing the an array of possible types for the indeterminate expression. `message` is set to `undefined`.
 
 #### `InvalidModuleAccessError`
 
 Is thrown when a binding is accessed that does not exist on the accessed module.
 
-Contains `binding: string | undefined` representing the accessed binding and `type: string` representing the type of the accessed module. `message` is set to `undefined`.
+Contains `binding: Binding` representing the accessed binding and `type: Type` representing the type of the accessed module. `message` is set to `undefined`.
 
 #### `MissingBindingError`
 
 Is thrown when the value of an unassigned/undeclared identifier/type is attempted to be used.
 
-Contains `binding: string` representing the missing identifier/type. `message` is set to `undefined`.
+Contains `binding: Binding` representing the missing identifier/type. `message` is set to `undefined`.
 
 #### `MissingExternalImportTypeHintError`
 
 Is thrown when an external import is lacking a type hint.
 
-Contains `binding: string` representing the binding lacking the type hint. `message` is set to `undefined`.
+Contains `binding: Binding` representing the binding lacking the type hint. `message` is set to `undefined`.
 
 #### `TypeError`
 
 Is thrown when two types cannot be unified.
 
-Contains `typeTrace: [string, string][]` representing a trace of mismatches from narrowest to broadest.
+Contains `trace: TypeMismatch[]` representing a trace of mismatches from narrowest to broadest.
 
 #### `UnknownImportError`
 
 Is thrown when the extension of an imported file cannot be handled by Tony.
 
-Contains `sourcePath: string` representing the file that could not be imprted. `message` is set to `undefined`.
+Contains `sourcePath: Path` representing the file that could not be imprted. `message` is set to `undefined`.
+
+#### `UnsupportedSyntaxError`
+
+Is thrown when a syntactical construct is used that is not yet implemented by the compiler.
+
+Contains a `message: string`.
 
 #### `UseOfTypeAsValueError`
 
 Is thrown when a type is used as a value.
 
-Contains `type: string` representing the type used as a value. `message` is set to `undefined`.
+Contains `type: Type` representing the type used as a value. `message` is set to `undefined`.
 
 ### `InternalError`
 
@@ -167,4 +173,4 @@ Contains a `message: string`.
 1. Reset `CHANGELOG.md`.
 1. Create a pull request to merge the changes into `master`.
 1. After the pull request was merged, create a new release listing the breaking changes and commits on `master` since the last release.
-1. The release workflow will publish the package to NPM and GPR.
+2. The release workflow will publish the package to NPM.

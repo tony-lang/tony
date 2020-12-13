@@ -1,22 +1,19 @@
-import { getFilePath, readFile } from './utilities'
+import TreeSitterTony, { Tree } from 'tree-sitter-tony'
+import { AbsolutePath } from './types/paths'
+import { Config } from './config'
 import Parser from 'tree-sitter'
-import { SyntaxError } from './errors'
-import TreeSitterTony from 'tree-sitter-tony'
+import { log } from './logger'
+import { readFile } from './util/file_system'
 
 const parser = new Parser()
 parser.setLanguage(TreeSitterTony)
 
 export const parse = async (
-  file: string,
-  { verbose = false },
-): Promise<Parser.Tree> => {
-  const filePath = getFilePath(file)
-  if (verbose) console.log(`Parsing ${filePath}...`)
+  config: Config,
+  file: AbsolutePath,
+): Promise<Tree> => {
+  log(config, 'Parsing', file.path)
 
-  const sourceCode = await readFile(filePath)
-  const tree = parser.parse(sourceCode)
-
-  if (tree.rootNode.hasError()) throw new SyntaxError(filePath, tree)
-
-  return tree
+  const sourceCode = await readFile(file)
+  return parser.parse(sourceCode) as Tree
 }
