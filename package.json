@@ -31,23 +31,21 @@
     "url": "https://github.com/tony-lang/tony/issues"
   },
   "homepage": "https://github.com/tony-lang/tony#readme",
-  "dependencies": {
-    "deep-equal": "^2.0.3",
-    "mkdirp": "^1.0.3",
-    "tree-sitter": "^0.17.0",
-    "tree-sitter-tony": "0.2.0-alpha.19"
-  },
   "devDependencies": {
     "@types/deep-equal": "^1.0.1",
     "@types/mkdirp": "^1.0.1",
     "@typescript-eslint/eslint-plugin": "^4.9.1",
     "@typescript-eslint/parser": "^4.9.1",
     "ava": "^3.11.1",
+    "deep-equal": "^2.0.3",
     "eslint": "^7.7.0",
     "eslint-config-prettier": "^7.0.0",
     "eslint-plugin-prettier": "^3.1.4",
+    "mkdirp": "^1.0.3",
     "nodemon": "^2.0.4",
     "prettier": "^2.0.5",
+    "tree-sitter": "^0.17.0",
+    "tree-sitter-tony": "0.2.0-alpha.19",
     "typescript": "^4.1.2"
   }
 }
