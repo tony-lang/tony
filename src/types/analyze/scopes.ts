@@ -1,4 +1,4 @@
-import { Bindings, buildBindings } from './bindings'
+import { Binding, buildPrimitiveTypeBindings } from './bindings'
 import { Answer } from '../type_inference/answers'
 import { ProgramNode } from 'tree-sitter-tony'
 import { ErrorAnnotation, MountedErrorAnnotation } from '../errors/annotations'
@@ -15,7 +15,7 @@ enum ScopeKind {
 
 // A concrete scope represents a scope including bindings.
 export interface ConcreteScope {
-  bindings: Bindings
+  bindings: Binding[]
   errors: MountedErrorAnnotation[]
 }
 
@@ -73,7 +73,7 @@ export const buildFileScope = (
   node,
   scopes: [],
   dependencies: [],
-  bindings: buildBindings(node),
+  bindings: buildPrimitiveTypeBindings(node),
   errors: [],
 })
 
@@ -83,7 +83,7 @@ export const buildNestedScope = (
 ): NestedScope => ({
   kind: ScopeKind.Nested,
   node,
-  bindings: buildBindings(),
+  bindings: [],
   scopes: [],
   moduleName,
   errors: [],

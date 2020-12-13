@@ -22,7 +22,6 @@ import {
 } from 'tree-sitter-tony'
 import { Config } from '../config'
 import {
-  BindingKind,
   buildBinding,
   buildImportBindingConfig,
   ImportBindingConfig,
@@ -48,7 +47,7 @@ import { assert } from '../types/errors/internal'
 import { AbsolutePath, buildRelativePath } from '../types/paths'
 import { fileMayBeImported } from '../util/file_system'
 import { parseStringPattern } from '../util/literals'
-import { addBinding, bindingsMissingFrom, findBinding } from '../util/analyze'
+import { bindingsMissingFrom, findBinding } from '../util/analyze'
 import { resolveRelativePath } from './resolve'
 
 type State = {
@@ -188,18 +187,16 @@ const nest = <T extends SyntaxNode>(
 }
 
 const declareBinding = (
-  kind: BindingKind,
   name: string,
   isImplicit: boolean,
   isExported = false,
   importedFrom?: ImportBindingConfig,
 ) =>
   ensure(
-    (state) => findBinding(kind, name, state.scopes) === undefined,
+    (state) => findBinding(name, state.scopes) === undefined,
     (state, node) => {
       const [scope, ...parentScopes] = state.scopes
       const binding = buildBinding(
-        kind,
         name,
         node,
         isImplicit,
@@ -208,7 +205,7 @@ const declareBinding = (
       )
       const newScope = {
         ...scope,
-        bindings: addBinding(binding, scope.bindings),
+        bindings: [...scope.bindings, binding],
       }
 
       return {
@@ -357,11 +354,7 @@ const handleImportAndExternalImport = (isExported: boolean) =>
 const handleGenerator = (state: State, node: GeneratorNode): State => {
   const name = getIdentifierName(node.nameNode)
   const stateAfterValue = traverse(state, node.valueNode)
-  const stateWithBinding = declareBinding(
-    BindingKind.Term,
-    name,
-    true,
-  )(stateAfterValue, node)
+  const stateWithBinding = declareBinding(name, true)(stateAfterValue, node)
 
   if (node.conditionNode) return traverse(stateWithBinding, node.conditionNode)
   return stateWithBinding
@@ -369,7 +362,7 @@ const handleGenerator = (state: State, node: GeneratorNode): State => {
 
 const handleIdentifier = (state: State, node: IdentifierNode): State => {
   const name = getIdentifierName(node)
-  const binding = findBinding(BindingKind.Term, name, state.scopes)
+  const binding = findBinding(name, state.scopes)
 
   if (binding === undefined)
     return addError(state, node, buildMissingBindingError(name))
@@ -387,7 +380,6 @@ const handleIdentifierPatternAndShorthandMemberPattern = (
     importNextBindingsFrom: importedFrom,
   } = state
   return declareBinding(
-    BindingKind.Term,
     name,
     !!isImplicit,
     isExported,
@@ -434,7 +426,7 @@ const handleImportType = (state: State, node: ImportTypeNode): State => {
     'Within an import statement, there should be an import config.',
   )
 
-  return declareBinding(BindingKind.Term, name, false, isExported, {
+  return declareBinding(name, false, isExported, {
     ...importedFrom,
     originalName,
   })(state, node)
@@ -463,12 +455,7 @@ const handleModule = (state: State, node: ModuleNode): State => {
     node.bodyNode,
   )
 
-  return declareBinding(
-    BindingKind.Term,
-    name,
-    false,
-    isExported,
-  )(stateWithBody, node)
+  return declareBinding(name, false, isExported)(stateWithBody, node)
 }
 
 const handleWhen = nest<WhenNode>((state, node) => {
@@ -495,8 +482,8 @@ const handleWhen = nest<WhenNode>((state, node) => {
       )
 
       const missingBindings = bindingsMissingFrom(
-        scope.bindings[BindingKind.Term],
-        accScope.bindings[BindingKind.Term],
+        scope.bindings,
+        accScope.bindings,
       )
       if (missingBindings.length > 0)
         return addError(
