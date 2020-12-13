@@ -2,6 +2,7 @@ import {
   AbstractionBranchNode,
   AssignmentNode,
   BlockNode,
+  DestructuringPatternNode,
   EnumNode,
   ExportNode,
   ExternalImportNode,
@@ -20,6 +21,7 @@ import {
   ShorthandMemberPatternNode,
   SyntaxNode,
   SyntaxType,
+  TypeAliasNode,
   TypeNode,
   WhenNode,
 } from 'tree-sitter-tony'
@@ -241,6 +243,8 @@ const traverse = (state: State, node: SyntaxNode): State => {
       return handleAssignment(state, node)
     case SyntaxType.Block:
       return handleBlock(state, node)
+    case SyntaxType.DestructuringPattern:
+      return handleDestructuringPattern(state, node)
     case SyntaxType.Enum:
       return handleEnum(state, node)
     case SyntaxType.Export:
@@ -269,6 +273,8 @@ const traverse = (state: State, node: SyntaxNode): State => {
       return handleNamedType(state, node)
     case SyntaxType.ShorthandMemberPattern:
       return handleIdentifierPatternAndShorthandMemberPattern(state, node)
+    case SyntaxType.TypeAlias:
+      return handleTypeAlias(state, node)
     case SyntaxType.When:
       return handleWhen(state, node)
     default:
@@ -310,6 +316,18 @@ const handleBlock = (state: State, node: BlockNode): State => {
       node,
     )
   else return nest<BlockNode>(traverseAllChildren)(state, node)
+}
+
+const handleDestructuringPattern = (
+  state: State,
+  node: DestructuringPatternNode,
+): State => {
+  if (node.aliasNode === undefined) return traverse(state, node.patternNode)
+
+  const name = getIdentifierName(node.aliasNode)
+  const { exportNextBindings: isExported } = state
+  const stateWithBinding = addBinding(name, false, isExported)(state, node)
+  return traverse(stateWithBinding, node.patternNode)
 }
 
 const handleEnum = (state: State, node: EnumNode): State => {
@@ -477,6 +495,13 @@ const handleModule = (state: State, node: ModuleNode): State => {
 
 const handleNamedType = (state: State, node: NamedTypeNode): State => {
   const name = getTypeName(node.nameNode)
+  const { exportNextBindings: isExported } = state
+  const stateWithBinding = addBinding(name, false, isExported)(state, node)
+  return traverse(stateWithBinding, node.typeNode)
+}
+
+const handleTypeAlias = (state: State, node: TypeAliasNode): State => {
+  const name = getTypeName(node.nameNode.nameNode)
   const { exportNextBindings: isExported } = state
   const stateWithBinding = addBinding(name, false, isExported)(state, node)
   return traverse(stateWithBinding, node.typeNode)
