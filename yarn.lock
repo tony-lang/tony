@@ -5894,10 +5894,10 @@ touch@^3.1.0:
   dependencies:
     nopt "~1.0.10"
 
-tree-sitter-tony@0.2.0-alpha.18:
-  version "0.2.0-alpha.18"
-  resolved "https://registry.yarnpkg.com/tree-sitter-tony/-/tree-sitter-tony-0.2.0-alpha.18.tgz#853335478e5d4e2eea7061dc6284b9773fb06cd3"
-  integrity sha512-lfaSGXvx9mhLgT7m5Jm7xO5UHBvFVaBnYjKUpkmhRC69dDyZFevH2J4yEzAjtc+4TevpDrvaf+0AtCwVz4BaGw==
+tree-sitter-tony@0.2.0-alpha.19:
+  version "0.2.0-alpha.19"
+  resolved "https://registry.yarnpkg.com/tree-sitter-tony/-/tree-sitter-tony-0.2.0-alpha.19.tgz#6bf62a2eed2baee75c86c13e2618014fce866ade"
+  integrity sha512-OTtERwvSA+QOA+o/pvZq4lKGGtgg6piJWZay1O78ZM1Mt7I8HJn5eseytml/cP6yHPh/RiwPIxmKwm37UK4h1w==
   dependencies:
     "@asgerf/dts-tree-sitter" "^0.1.0"
     nan "^2.14.1"
