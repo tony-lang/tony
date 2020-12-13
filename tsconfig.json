@@ -2,12 +2,13 @@
   "compilerOptions": {
     "esModuleInterop": true,
     "moduleResolution": "node",
-    "noEmit": true,
     "strict": true,
-    "target": "ESNext"
+    "target": "ESNext",
+    "sourceMap": true,
+    "outDir": "dist"
   },
   "include": [
     "src",
-    "test"
+    // "test"
   ]
 }

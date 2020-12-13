@@ -64,7 +64,7 @@ import {
 import { Config } from '../config'
 import { assert } from '../types/errors/internal'
 import { buildTypeVariable } from '../types/analyze/type_variables'
-import { fileMayBeImported } from '../util/file_system'
+import { fileMayBeImported } from '../util/paths'
 import { parseStringPattern } from '../util/literals'
 import { resolveRelativePath } from './resolve'
 

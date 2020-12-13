@@ -7,7 +7,7 @@ import { AbsolutePath } from '../types/paths'
 import { Config } from '../config'
 import { CyclicDependency } from '../types/cyclic_dependencies'
 import { FileScope } from '../types/analyze/scopes'
-import { isSamePath } from '../util/file_system'
+import { isSamePath } from '../util/paths'
 import { log } from '../logger'
 
 export const sortFileScopes = (
