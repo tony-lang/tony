@@ -37,7 +37,7 @@ jobs:
     - uses: actions/checkout@master
     - uses: actions/setup-node@v2.1.3
       with:
-        node-version: ${{ matrix.node }}
+        node-version: 15
     - name: Install dependencies
       run: yarn install
     - name: Build
