@@ -1,4 +1,4 @@
-import path from 'path'
+import { join, resolve } from 'path'
 
 // ---- Types ----
 
@@ -24,7 +24,7 @@ export type Path = AbsolutePath | RelativePath
 
 export const buildAbsolutePath = (...pathSegments: string[]): AbsolutePath => ({
   kind: PathKind.Absolute,
-  path: path.resolve(...pathSegments),
+  path: resolve(...pathSegments),
 })
 
 export const buildRelativePath = (
@@ -32,7 +32,7 @@ export const buildRelativePath = (
   ...pathSegments: string[]
 ): RelativePath => ({
   kind: PathKind.Relative,
-  path: path.join(...pathSegments),
+  path: join(...pathSegments),
   mount,
 })
 

@@ -131,10 +131,6 @@ const addDependency = (state: State, absolutePath: AbsolutePath): State => {
   const [fileScope] = state.scopes
 
   assert(
-    absolutePath !== undefined,
-    'It should be ensured that the dependency is not undefined.',
-  )
-  assert(
     isFileScope(fileScope),
     'Dependencies may only be added to a file-level scope.',
   )
