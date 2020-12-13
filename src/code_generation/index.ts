@@ -1,7 +1,7 @@
 import { GlobalScope, TypedFileScope } from '../types/analyze/scopes'
 import { Config } from '../config'
 import { Emit } from '../types/emits'
-import { log } from '../logger'
+import { LogLevel, log } from '../logger'
 
 export const generateCode = (
   config: Config,
@@ -9,7 +9,7 @@ export const generateCode = (
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
 ): Emit => {
-  log(config, 'Generating code')
+  log(config, LogLevel.Info, 'Generating code')
 
   console.log(globalScope)
 }

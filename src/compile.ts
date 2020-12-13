@@ -3,7 +3,7 @@ import { AbsolutePath } from './types/paths'
 import { analyze } from './analyze'
 import { generateCode } from './code_generation'
 import { inferTypes } from './type_inference'
-import { log } from './logger'
+import { LogLevel, log } from './logger'
 import { writeEmit } from './emit'
 
 export const compile = async (
@@ -12,7 +12,7 @@ export const compile = async (
 ): Promise<AbsolutePath> => {
   const config = buildConfig(entry, options)
 
-  log(config, 'Compiling', config.entry.path)
+  log(config, LogLevel.Info, 'Compiling', config.entry.path)
 
   const globalScope = await analyze(config)
   const typedGlobalScope = inferTypes(config, globalScope)
