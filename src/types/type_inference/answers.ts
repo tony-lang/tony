@@ -17,3 +17,11 @@ export type Answer<T extends SyntaxNode> = {
  * the syntax tree.
  */
 export type Answers<T extends SyntaxNode> = Answer<T>[]
+
+// ---- Factories ----
+
+export const buildAnswer = <T extends SyntaxNode>(node: T, type: ConstrainedType<Type>, childNodes: Answer<SyntaxNode>[] = []): Answer<T> => ({
+  node,
+  type,
+  childNodes,
+})

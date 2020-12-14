@@ -8,11 +8,12 @@ import {
 } from '../types/analyze/scopes'
 import { Config } from '../config'
 import { LogLevel, log } from '../logger'
-import { ProgramNode, SyntaxNode } from 'tree-sitter-tony'
-import { Answers } from '../types/type_inference/answers'
+import { ErrorNode, ProgramNode, SyntaxNode, SyntaxType } from 'tree-sitter-tony'
+import { Answer, Answers, buildAnswer } from '../types/type_inference/answers'
 import { assert } from '../types/errors/internal'
 import { buildIndeterminateTypeError } from '../types/errors/annotations'
 import { ensure } from '../util/traverse'
+import { buildConstrainedType, buildTypeVariable } from '../types/type_inference/types'
 
 type State<T extends SyntaxNode> = {
   typedFileScopes: TypedFileScope[]
@@ -57,14 +58,13 @@ const inferTypesOfFile = (
 
   const state = traverse(initialState, fileScope.node)
   const {
-    answers,
+    answers: [answer],
     scopes: [finalFileScope],
   } = ensure<State<ProgramNode>, ProgramNode>(
     ({ answers }) => answers.length === 1,
     (state) => state,
     buildIndeterminateTypeError(state.answers),
   )(state, fileScope.node)
-  const answer = answers[0]
   assert(
     isFileScope(finalFileScope),
     'Traverse should arrive at the top-level file scope.',
@@ -73,7 +73,25 @@ const inferTypesOfFile = (
   return buildTypedFileScope(finalFileScope, answer)
 }
 
+const addAnswer = <T extends SyntaxNode>(state: State<T>, answer: Answer<T>): State<T> => ({
+  ...state,
+  answers: [...state.answers, answer]
+})
+
 const traverse = <T extends SyntaxNode>(
   state: State<T>,
   node: T,
-): State<T> => {}
+): State<T> => {
+  if (!node.isNamed) return state
+
+  switch (node.type) {
+    case SyntaxType.ERROR:
+      return handleError(state, node)
+  }
+}
+
+const handleError = (state: State<ErrorNode>, node: ErrorNode): State<ErrorNode> => {
+  const type = buildConstrainedType(buildTypeVariable())
+  const answer = buildAnswer(node, type)
+  return addAnswer(state, answer)
+}
