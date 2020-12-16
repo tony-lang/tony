@@ -1,5 +1,5 @@
 import { ConstrainedType, Type } from './types'
-import { SyntaxNode } from 'tree-sitter-tony'
+import { ProgramNode, SyntaxNode } from 'tree-sitter-tony'
 
 // ---- Types ----
 
@@ -20,7 +20,11 @@ export type Answers<T extends SyntaxNode> = Answer<T>[]
 
 // ---- Factories ----
 
-export const buildAnswer = <T extends SyntaxNode>(node: T, type: ConstrainedType<Type>, childNodes: Answer<SyntaxNode>[] = []): Answer<T> => ({
+export const buildAnswer = <T extends SyntaxNode>(
+  node: T,
+  type: ConstrainedType<Type>,
+  childNodes: Answer<SyntaxNode>[] = [],
+): Answer<T> => ({
   node,
   type,
   childNodes,

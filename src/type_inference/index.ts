@@ -8,26 +8,37 @@ import {
 } from '../types/analyze/scopes'
 import { Config } from '../config'
 import { LogLevel, log } from '../logger'
-import { ErrorNode, ProgramNode, SyntaxNode, SyntaxType } from 'tree-sitter-tony'
-import { Answer, Answers, buildAnswer } from '../types/type_inference/answers'
+import {
+  ErrorNode,
+  ProgramNode,
+  SyntaxNode,
+  SyntaxType,
+} from 'tree-sitter-tony'
+import { Answers, buildAnswer } from '../types/type_inference/answers'
 import { assert } from '../types/errors/internal'
 import { buildIndeterminateTypeError } from '../types/errors/annotations'
 import { ensure } from '../util/traverse'
-import { buildConstrainedType, buildTypeVariable } from '../types/type_inference/types'
+import {
+  buildConstrainedType,
+  buildTypeVariable,
+} from '../types/type_inference/types'
 
-type State<T extends SyntaxNode> = {
+type State = {
   typedFileScopes: TypedFileScope[]
-  /**
-   * Represents a disjunction of possible type annotations for a given syntax
-   * node. Answers are empty on the way down the stack.
-   */
-  answers: Answers<T>
   /**
    * A stack of all scopes starting with the closest scope and ending with the
    * symbol table. Scopes are collected recursively.
    */
   scopes: ScopeStack<FileScope>
 }
+type StateWithAnswers<T extends SyntaxNode> = [
+  state: State,
+  /**
+   * Represents a disjunction of possible type annotations for a given syntax
+   * node. Answers are empty on the way down the stack.
+   */
+  answers: Answers<T>,
+]
 
 export const inferTypes = (
   config: Config,
@@ -50,20 +61,19 @@ const inferTypesOfFile = (
   typedFileScopes: TypedFileScope[],
   fileScope: FileScope,
 ): TypedFileScope => {
-  const initialState: State<ProgramNode> = {
+  const initialState: State = {
     typedFileScopes,
-    answers: [],
     scopes: [fileScope],
   }
 
-  const state = traverse(initialState, fileScope.node)
+  const [state, answers] = handleProgram(initialState, fileScope.node)
+  const [answer] = answers
   const {
-    answers: [answer],
     scopes: [finalFileScope],
-  } = ensure<State<ProgramNode>, ProgramNode>(
-    ({ answers }) => answers.length === 1,
+  } = ensure<State, ProgramNode>(
+    () => answers.length === 1,
     (state) => state,
-    buildIndeterminateTypeError(state.answers),
+    buildIndeterminateTypeError(answers),
   )(state, fileScope.node)
   assert(
     isFileScope(finalFileScope),
@@ -73,25 +83,30 @@ const inferTypesOfFile = (
   return buildTypedFileScope(finalFileScope, answer)
 }
 
-const addAnswer = <T extends SyntaxNode>(state: State<T>, answer: Answer<T>): State<T> => ({
-  ...state,
-  answers: [...state.answers, answer]
-})
-
-const traverse = <T extends SyntaxNode>(
-  state: State<T>,
-  node: T,
-): State<T> => {
-  if (!node.isNamed) return state
+const traverse = (
+  state: State,
+  node: SyntaxNode,
+): StateWithAnswers<SyntaxNode> => {
+  if (!node.isNamed) return [state, []]
 
   switch (node.type) {
     case SyntaxType.ERROR:
       return handleError(state, node)
+    case SyntaxType.Program:
+      return handleProgram(state, node)
   }
 }
 
-const handleError = (state: State<ErrorNode>, node: ErrorNode): State<ErrorNode> => {
+const handleError = (
+  state: State,
+  node: ErrorNode,
+): StateWithAnswers<ErrorNode> => {
   const type = buildConstrainedType(buildTypeVariable())
   const answer = buildAnswer(node, type)
-  return addAnswer(state, answer)
+  return [state, [answer]]
 }
+
+const handleProgram = (
+  state: State,
+  node: ProgramNode,
+): StateWithAnswers<ProgramNode> => {}
