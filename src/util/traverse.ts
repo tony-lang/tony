@@ -22,6 +22,14 @@ export const addError = <T extends State>(
   }
 }
 
+export const addErrorUnless = <T extends State>(
+  predicate: boolean,
+  error: ErrorAnnotation,
+) => (state: T, node: SyntaxNode): T => {
+  if (predicate) return state
+  return addError(state, node, error)
+}
+
 /**
  * Checks predicate. If true, returns callback. Else, adds error annotation.
  */

@@ -21,7 +21,7 @@ import {
 import { Config } from '../config'
 import { assert } from '../types/errors/internal'
 import { buildIndeterminateTypeError } from '../types/errors/annotations'
-import { ensure } from '../util/traverse'
+import { addErrorUnless, ensure } from '../util/traverse'
 
 type State = {
   typedFileScopes: TypedFileScope[]
@@ -70,9 +70,8 @@ const inferTypesOfFile = (
   const [answer] = answers
   const {
     scopes: [finalFileScope],
-  } = ensure<State, ProgramNode>(
-    () => answers.length === 1,
-    (state) => state,
+  } = addErrorUnless(
+    answers.length === 1,
     buildIndeterminateTypeError(answers),
   )(state, fileScope.node)
   assert(
