@@ -14,10 +14,14 @@ export interface Binding {
   node: SyntaxNode
   isExported: boolean
   importedFrom?: ImportBindingConfig
-  // A binding is implicit when it stems from a generator, parameter or case,
-  // but not when it stems from an assignment or a module.
+  /**
+   * A binding is implicit when it stems from a generator, parameter or case,
+   * but not when it stems from an assignment or a module.
+   */
   isImplicit: boolean
-  // A binding is primitive if it represents one of the primitive types.
+  /**
+   * A binding is primitive if it represents one of the primitive types.
+   */
   isPrimitive: boolean
 }
 

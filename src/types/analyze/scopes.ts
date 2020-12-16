@@ -14,9 +14,11 @@ enum ScopeKind {
   Nested,
 }
 
-// A concrete scope represents a scope including bindings.
-export interface ConcreteScope {
+export interface ObjectScope {
   bindings: Binding[]
+}
+
+export interface ConcreteScope extends ObjectScope {
   errors: MountedErrorAnnotation[]
 }
 
@@ -77,6 +79,14 @@ export const buildFileScope = (
   dependencies: [],
   bindings: buildPrimitiveTypeBindings(node),
   errors: [],
+})
+
+export const buildTypedFileScope = (
+  fileScope: FileScope,
+  typedNode: Answer<ProgramNode>,
+): TypedFileScope => ({
+  ...fileScope,
+  typedNode,
 })
 
 export const buildNestedScope = (

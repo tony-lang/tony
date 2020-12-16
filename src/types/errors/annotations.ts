@@ -165,6 +165,13 @@ export const buildIncompleteWhenPatternError = (
   missingBindings,
 })
 
+export const buildIndeterminateTypeError = (
+  answers: Answers<ProgramNode>,
+): IndeterminateTypeError => ({
+  kind: ErrorAnnotationKind.IndeterminateType,
+  answers,
+})
+
 export const buildMissingBindingError = (
   name: string,
 ): MissingBindingError => ({

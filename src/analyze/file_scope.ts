@@ -37,7 +37,21 @@ import {
   buildImportBindingConfig,
 } from '../types/analyze/bindings'
 import {
-  ErrorAnnotation,
+  FileScope,
+  ScopeStack,
+  buildFileScope,
+  buildNestedScope,
+  isFileScope,
+  isModuleScope,
+} from '../types/analyze/scopes'
+import { addError, conditionalApply, ensure } from '../util/traverse'
+import {
+  bindingsMissingFrom,
+  findBinding,
+  findItem,
+  findTypeVariable,
+} from '../util/analyze'
+import {
   buildDuplicateBindingError,
   buildDuplicateTypeVariableError,
   buildExportOutsideModuleScopeError,
@@ -47,20 +61,6 @@ import {
   buildMissingTypeVariableError,
   buildUnknownImportError,
 } from '../types/errors/annotations'
-import {
-  FileScope,
-  ScopeStack,
-  buildFileScope,
-  buildNestedScope,
-  isFileScope,
-  isModuleScope,
-} from '../types/analyze/scopes'
-import {
-  bindingsMissingFrom,
-  findBinding,
-  findItem,
-  findTypeVariable,
-} from '../util/analyze'
 import { Config } from '../config'
 import { assert } from '../types/errors/internal'
 import { buildTypeVariable } from '../types/analyze/type_variables'
@@ -71,22 +71,34 @@ import { resolveRelativePath } from './resolve'
 type State = {
   config: Config
   file: AbsolutePath
-  // A stack of all scopes starting with the closest scope and ending with the
-  // symbol table. Scopes are collected recursively.
+  /**
+   * A stack of all scopes starting with the closest scope and ending with the
+   * symbol table. Scopes are collected recursively.
+   */
   scopes: ScopeStack<FileScope>
-  // Buffered bindings that have been defined but should not be accessed yet
-  // (e.g. within patterns).
+  /**
+   * Buffered bindings that have been defined but should not be accessed yet
+   * (e.g. within patterns).
+   */
   bindings: Binding[]
-  // When enabled the next declared bindings will be exported.
+  /**
+   * When enabled the next declared bindings will be exported.
+   */
   exportNextBindings?: boolean
-  // When enabled the next declared bindings will be imported from the given
-  // path.
+  /**
+   * When enabled the next declared bindings will be imported from the given
+   * path.
+   */
   importNextBindingsFrom?: ImportBindingConfig
-  // When enabled the next bindings stemming from identifier patterns will be
-  // implicit.
+  /**
+   * When enabled the next bindings stemming from identifier patterns will be
+   * implicit.
+   */
   nextIdentifierPatternBindingsImplicit?: boolean
-  // Is set to true when the scope for the next block was already created. Then,
-  // no additional scope is created when encountering the next block.
+  /**
+   * Is set to true when the scope for the next block was already created. Then,
+   * no additional scope is created when encountering the next block.
+   */
   nextBlockScopeAlreadyCreated?: boolean
 }
 
@@ -118,10 +130,6 @@ const addDependency = (state: State, absolutePath: AbsolutePath): State => {
   const [fileScope] = state.scopes
 
   assert(
-    absolutePath !== undefined,
-    'It should be ensured that the dependency is not undefined.',
-  )
-  assert(
     isFileScope(fileScope),
     'Dependencies may only be added to a file-level scope.',
   )
@@ -134,41 +142,6 @@ const addDependency = (state: State, absolutePath: AbsolutePath): State => {
     ...state,
     scopes: [newFileScope],
   }
-}
-
-const addError = (
-  state: State,
-  node: SyntaxNode,
-  error: ErrorAnnotation,
-): State => {
-  const [scope, ...parentScopes] = state.scopes
-  const newScope = {
-    ...scope,
-    errors: [...scope.errors, { node, error }],
-  }
-  return {
-    ...state,
-    scopes: [newScope, ...parentScopes],
-  }
-}
-
-// Checks predicate. If true, returns callback. Else, adds error annotation.
-const ensure = <T extends SyntaxNode>(
-  predicate: (state: State, node: T) => boolean,
-  callback: (state: State, node: T) => State,
-  error: ErrorAnnotation,
-) => (state: State, node: T) => {
-  if (predicate(state, node)) return callback(state, node)
-  return addError(state, node, error)
-}
-
-// Conditionally applies argument to callback depending on whether it exists.
-const conditionalApply = <T>(callback: (state: State, arg: T) => State) => (
-  state: State,
-  arg: T | undefined,
-): State => {
-  if (arg) return callback(state, arg)
-  return state
 }
 
 const enterBlock = (
@@ -223,13 +196,13 @@ const flushBindings = (state: State): State => {
   }
 }
 
-const addBinding = (
+const addBinding = <T extends SyntaxNode>(
   name: string,
   isImplicit: boolean,
   isExported = false,
   importedFrom?: ImportBindingConfig,
 ) =>
-  ensure(
+  ensure<State, T>(
     (state) =>
       findBinding(name, state.scopes) === undefined &&
       findItem(name, state.bindings) === undefined,
@@ -250,7 +223,7 @@ const addBinding = (
   )
 
 const addTypeVariable = (name: string) =>
-  ensure<TypeVariableDeclarationNode>(
+  ensure<State, TypeVariableDeclarationNode>(
     (state) => findTypeVariable(name, state.scopes) === undefined,
     (state, node) => {
       const [scope, ...parentScopes] = state.scopes
@@ -432,7 +405,7 @@ const handleEnumValue = (state: State, node: EnumValueNode): State => {
   return conditionalApply(traverse)(stateWithFlushedBinding, node.valueNode)
 }
 
-const handleExport = ensure<ExportNode>(
+const handleExport = ensure<State, ExportNode>(
   (state) => isModuleScope(state.scopes[0]),
   (state, node) =>
     traverse(
@@ -446,7 +419,7 @@ const handleExport = ensure<ExportNode>(
 )
 
 const handleImportAndExternalImport = (isExported: boolean) =>
-  ensure<ImportNode | ExternalImportNode>(
+  ensure<State, ImportNode | ExternalImportNode>(
     (state) => isFileScope(state.scopes[0]),
     (state, node) => {
       const source = buildRelativePath(

@@ -35,7 +35,9 @@ export const findTypeVariable = find(
   },
 )
 
-// Returns the bindings (1) is missing from (2).
+/**
+ * Returns the bindings (1) is missing from (2).
+ */
 export const bindingsMissingFrom = (
   bindings1: Binding[],
   bindings2: Binding[],

@@ -1,10 +1,10 @@
+import { LogLevel, log } from '../logger'
 import { AbsolutePath } from '../types/paths'
 import { Config } from '../config'
 import { FileScope } from '../types/analyze/scopes'
 import { ProgramNode } from 'tree-sitter-tony'
 import { constructFileScope } from './file_scope'
 import { graphSearch } from '../util/graph_search'
-import { log } from '../logger'
 import { parse } from '../parse'
 
 export const analyzeFiles = (config: Config): Promise<FileScope[]> =>
@@ -26,7 +26,7 @@ const analyzeFile = async (
   config: Config,
   file: AbsolutePath,
 ): Promise<FileScope> => {
-  log(config, 'Building file scope of', file)
+  log(config, LogLevel.Info, 'Building file scope of', file)
 
   const tree = await parse(config, file)
   return constructFileScope(config, file, tree.rootNode as ProgramNode)

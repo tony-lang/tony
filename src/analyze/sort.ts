@@ -2,13 +2,13 @@ import {
   CyclicDependencyError,
   buildCyclicDependencyError,
 } from '../types/errors/annotations'
+import { LogLevel, log } from '../logger'
 import { TopologicalSortError, topologicalSort } from '../util/topological_sort'
 import { AbsolutePath } from '../types/paths'
 import { Config } from '../config'
 import { CyclicDependency } from '../types/cyclic_dependencies'
 import { FileScope } from '../types/analyze/scopes'
 import { isSamePath } from '../util/paths'
-import { log } from '../logger'
 
 export const sortFileScopes = (
   config: Config,
@@ -19,7 +19,7 @@ export const sortFileScopes = (
 } => {
   const dependencyGraph = buildDependencyGraph(fileScopes)
 
-  log(config, 'Built dependency graph:', dependencyGraph)
+  log(config, LogLevel.Debug, 'Built dependency graph:', dependencyGraph)
 
   try {
     return {
