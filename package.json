@@ -30,7 +30,7 @@
   "bugs": {
     "url": "https://github.com/tony-lang/tony/issues"
   },
-  "homepage": "https://github.com/tony-lang/tony#readme",
+  "homepage": "https://tony-lang.github.io/",
   "devDependencies": {
     "@types/deep-equal": "^1.0.1",
     "@types/mkdirp": "^1.0.1",
