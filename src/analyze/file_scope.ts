@@ -37,7 +37,21 @@ import {
   buildImportBindingConfig,
 } from '../types/analyze/bindings'
 import {
-  ErrorAnnotation,
+  FileScope,
+  ScopeStack,
+  buildFileScope,
+  buildNestedScope,
+  isFileScope,
+  isModuleScope,
+} from '../types/analyze/scopes'
+import { addError, conditionalApply, ensure } from '../util/traverse'
+import {
+  bindingsMissingFrom,
+  findBinding,
+  findItem,
+  findTypeVariable,
+} from '../util/analyze'
+import {
   buildDuplicateBindingError,
   buildDuplicateTypeVariableError,
   buildExportOutsideModuleScopeError,
@@ -47,27 +61,12 @@ import {
   buildMissingTypeVariableError,
   buildUnknownImportError,
 } from '../types/errors/annotations'
-import {
-  FileScope,
-  ScopeStack,
-  buildFileScope,
-  buildNestedScope,
-  isFileScope,
-  isModuleScope,
-} from '../types/analyze/scopes'
-import {
-  bindingsMissingFrom,
-  findBinding,
-  findItem,
-  findTypeVariable,
-} from '../util/analyze'
 import { Config } from '../config'
 import { assert } from '../types/errors/internal'
 import { buildTypeVariable } from '../types/analyze/type_variables'
 import { fileMayBeImported } from '../util/paths'
 import { parseStringPattern } from '../util/literals'
 import { resolveRelativePath } from './resolve'
-import { addError, conditionalApply, ensure } from '../util/traverse'
 
 type State = {
   config: Config

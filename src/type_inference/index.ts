@@ -1,3 +1,10 @@
+import { Answers, buildAnswer } from '../types/type_inference/answers'
+import {
+  ErrorNode,
+  ProgramNode,
+  SyntaxNode,
+  SyntaxType,
+} from 'tree-sitter-tony'
 import {
   FileScope,
   GlobalScope,
@@ -6,22 +13,15 @@ import {
   buildTypedFileScope,
   isFileScope,
 } from '../types/analyze/scopes'
-import { Config } from '../config'
 import { LogLevel, log } from '../logger'
-import {
-  ErrorNode,
-  ProgramNode,
-  SyntaxNode,
-  SyntaxType,
-} from 'tree-sitter-tony'
-import { Answers, buildAnswer } from '../types/type_inference/answers'
-import { assert } from '../types/errors/internal'
-import { buildIndeterminateTypeError } from '../types/errors/annotations'
-import { ensure } from '../util/traverse'
 import {
   buildConstrainedType,
   buildTypeVariable,
 } from '../types/type_inference/types'
+import { Config } from '../config'
+import { assert } from '../types/errors/internal'
+import { buildIndeterminateTypeError } from '../types/errors/annotations'
+import { ensure } from '../util/traverse'
 
 type State = {
   typedFileScopes: TypedFileScope[]

@@ -1,6 +1,6 @@
-import { SyntaxNode } from 'tree-sitter-tony'
 import { FileScope, ScopeStack } from '../types/analyze/scopes'
 import { ErrorAnnotation } from '../types/errors/annotations'
+import { SyntaxNode } from 'tree-sitter-tony'
 
 type State = {
   scopes: ScopeStack<FileScope>
@@ -29,7 +29,7 @@ export const ensure = <T extends State, U extends SyntaxNode>(
   predicate: (state: T, node: U) => boolean,
   callback: (state: T, node: U) => T,
   error: ErrorAnnotation,
-) => (state: T, node: U) => {
+) => (state: T, node: U): T => {
   if (predicate(state, node)) return callback(state, node)
   return addError(state, node, error)
 }

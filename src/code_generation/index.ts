@@ -1,7 +1,7 @@
 import { GlobalScope, TypedFileScope } from '../types/analyze/scopes'
+import { LogLevel, log } from '../logger'
 import { Config } from '../config'
 import { Emit } from '../types/emits'
-import { LogLevel, log } from '../logger'
 
 export const generateCode = (
   config: Config,

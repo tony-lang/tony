@@ -1,7 +1,7 @@
+import { LogLevel, log } from './logger'
 import { AbsolutePath } from './types/paths'
 import { Config } from './config'
 import childProcess from 'child_process'
-import { LogLevel, log } from './logger'
 
 export const exec = async (
   config: Config,

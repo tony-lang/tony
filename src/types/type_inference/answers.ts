@@ -1,5 +1,5 @@
 import { ConstrainedType, Type } from './types'
-import { ProgramNode, SyntaxNode } from 'tree-sitter-tony'
+import { SyntaxNode } from 'tree-sitter-tony'
 
 // ---- Types ----
 

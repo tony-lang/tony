@@ -1,8 +1,8 @@
+import { LogLevel, log } from './logger'
 import TreeSitterTony, { Tree } from 'tree-sitter-tony'
 import { AbsolutePath } from './types/paths'
 import { Config } from './config'
 import Parser from 'tree-sitter'
-import { LogLevel, log } from './logger'
 import { readFile } from './util/paths'
 
 const parser = new Parser()

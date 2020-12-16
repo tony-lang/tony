@@ -3,12 +3,12 @@ import {
   GlobalScope,
   buildGlobalScope,
 } from '../types/analyze/scopes'
+import { LogLevel, log } from '../logger'
 import { Config } from '../config'
 import { analyzeFiles } from './explore'
 import { buildUnknownEntryError } from '../types/errors/annotations'
 import { fileMayBeEntry } from '../util/paths'
 import { isNotUndefined } from '../util'
-import { LogLevel, log } from '../logger'
 import { sortFileScopes } from './sort'
 
 export const analyze = async (

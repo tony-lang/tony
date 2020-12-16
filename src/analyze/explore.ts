@@ -1,10 +1,10 @@
+import { LogLevel, log } from '../logger'
 import { AbsolutePath } from '../types/paths'
 import { Config } from '../config'
 import { FileScope } from '../types/analyze/scopes'
 import { ProgramNode } from 'tree-sitter-tony'
 import { constructFileScope } from './file_scope'
 import { graphSearch } from '../util/graph_search'
-import { LogLevel, log } from '../logger'
 import { parse } from '../parse'
 
 export const analyzeFiles = (config: Config): Promise<FileScope[]> =>

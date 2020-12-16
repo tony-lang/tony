@@ -1,9 +1,9 @@
 import { ConfigOptions, buildConfig } from './config'
+import { LogLevel, log } from './logger'
 import { AbsolutePath } from './types/paths'
 import { analyze } from './analyze'
 import { generateCode } from './code_generation'
 import { inferTypes } from './type_inference'
-import { LogLevel, log } from './logger'
 import { writeEmit } from './emit'
 
 export const compile = async (
