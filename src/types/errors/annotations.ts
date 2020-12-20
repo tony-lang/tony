@@ -10,15 +10,13 @@ import { Type } from '../type_inference/types'
 export enum ErrorAnnotationKind {
   CyclicDependency,
   DuplicateBinding,
-  DuplicateTypeVariable,
-  ExportOutsideModuleScope,
+  ExportOutsideFileScope,
   ExternalTypeImport,
   ImportOutsideFileScope,
   IncompleteWhenPattern,
   IndeterminateType,
   MissingBinding,
   MissingExternalImportTypeHint,
-  MissingTypeVariable,
   Type,
   UnknownEntry,
   UnknownImport,
@@ -36,13 +34,8 @@ export interface DuplicateBindingError {
   name: string
 }
 
-export interface DuplicateTypeVariableError {
-  kind: typeof ErrorAnnotationKind.DuplicateTypeVariable
-  name: string
-}
-
-export interface ExportOutsideModuleScopeError {
-  kind: typeof ErrorAnnotationKind.ExportOutsideModuleScope
+export interface ExportOutsideFileScopeError {
+  kind: typeof ErrorAnnotationKind.ExportOutsideFileScope
 }
 
 export interface ExternalTypeImportError {
@@ -74,11 +67,6 @@ export interface MissingExternalImportTypeHintError {
   binding: Binding
 }
 
-export interface MissingTypeVariableError {
-  kind: typeof ErrorAnnotationKind.MissingTypeVariable
-  name: string
-}
-
 export interface TypeError {
   kind: typeof ErrorAnnotationKind.Type
   expected: Type
@@ -107,15 +95,13 @@ export interface UseOfTypeAsValueError {
 export type ErrorAnnotation =
   | CyclicDependencyError
   | DuplicateBindingError
-  | DuplicateTypeVariableError
-  | ExportOutsideModuleScopeError
+  | ExportOutsideFileScopeError
   | ExternalTypeImportError
   | ImportOutsideFileScopeError
   | IncompleteWhenPatternError
   | IndeterminateTypeError
   | MissingBindingError
   | MissingExternalImportTypeHintError
-  | MissingTypeVariableError
   | TypeError
   | UnknownEntryError
   | UnknownImportError
@@ -143,15 +129,8 @@ export const buildDuplicateBindingError = (
   name,
 })
 
-export const buildDuplicateTypeVariableError = (
-  name: string,
-): DuplicateTypeVariableError => ({
-  kind: ErrorAnnotationKind.DuplicateTypeVariable,
-  name,
-})
-
-export const buildExportOutsideModuleScopeError = (): ExportOutsideModuleScopeError => ({
-  kind: ErrorAnnotationKind.ExportOutsideModuleScope,
+export const buildExportOutsideFileScopeError = (): ExportOutsideFileScopeError => ({
+  kind: ErrorAnnotationKind.ExportOutsideFileScope,
 })
 
 export const buildImportOutsideFileScopeError = (): ImportOutsideFileScopeError => ({
@@ -176,13 +155,6 @@ export const buildMissingBindingError = (
   name: string,
 ): MissingBindingError => ({
   kind: ErrorAnnotationKind.MissingBinding,
-  name,
-})
-
-export const buildMissingTypeVariableError = (
-  name: string,
-): MissingTypeVariableError => ({
-  kind: ErrorAnnotationKind.MissingTypeVariable,
   name,
 })
 
