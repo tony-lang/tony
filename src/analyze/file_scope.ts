@@ -45,6 +45,7 @@ import {
   buildImportBindingConfig,
   buildTermBinding,
   buildTypeBinding,
+  getTerms,
 } from '../types/analyze/bindings'
 import { addError, conditionalApply, ensure } from '../util/traverse'
 import {
@@ -668,8 +669,8 @@ const handleWhen = nest<WhenNode>((state, node) => {
       )
 
       const missingBindings = bindingsMissingFrom(
-        scope.bindings.terms,
-        accScope.bindings.terms,
+        getTerms(scope.bindings),
+        getTerms(accScope.bindings),
       )
       if (missingBindings.length > 0)
         return addError(

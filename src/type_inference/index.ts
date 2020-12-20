@@ -17,24 +17,29 @@ import {
 import { LogLevel, log } from '../logger'
 import { NotImplementedError, assert } from '../types/errors/internal'
 import { Config } from '../config'
+import { TypedBindings } from '../types/analyze/bindings'
 import { addErrorUnless } from '../util/traverse'
 import { buildIndeterminateTypeError } from '../types/errors/annotations'
 import { buildUnconstrainedUnknownType } from '../util/types'
 
-type State = {
+type DownState = {
   typedFileScopes: TypedFileScope[]
   /**
    * A stack of all scopes starting with the closest scope and ending with the
-   * symbol table. Scopes are collected recursively.
+   * symbol table.
    */
   scopes: ScopeStack<FileScope>
+  /**
+   * A stack of typed bindings for each scope on the scope stack.
+   */
+  bindings: TypedBindings[]
   /**
    * The initial type for type inference on the given node.
    */
   type: ConstrainedType<Type>
 }
-type StateWithAnswers<T extends SyntaxNode> = {
-  state: State
+type UpState<T extends SyntaxNode> = {
+  state: DownState
   /**
    * Represents a disjunction of possible type annotations for a given syntax
    * node. Answers are empty on the way down the stack.
@@ -63,9 +68,10 @@ const inferTypesOfFile = (
   typedFileScopes: TypedFileScope[],
   fileScope: FileScope,
 ): TypedFileScope => {
-  const initialState: State = {
+  const initialState: DownState = {
     typedFileScopes,
     scopes: [fileScope],
+    bindings: [],
     type: buildUnconstrainedUnknownType(),
   }
 
@@ -73,7 +79,8 @@ const inferTypesOfFile = (
   const [answer] = answers
   const {
     scopes: [finalFileScope],
-  } = addErrorUnless(
+    bindings: [finalTypedBindings],
+  } = addErrorUnless<DownState>(
     answers.length === 1,
     buildIndeterminateTypeError(answers),
   )(state, fileScope.node)
@@ -82,22 +89,27 @@ const inferTypesOfFile = (
     'Traverse should arrive at the top-level file scope.',
   )
 
-  return buildTypedFileScope(finalFileScope, answer)
+  return buildTypedFileScope(finalFileScope, answer, finalTypedBindings)
 }
 
-const traverse = (
-  state: State,
-  node: SyntaxNode,
-): StateWithAnswers<SyntaxNode> => {
+const buildUpState = <T extends SyntaxNode>(
+  state: DownState,
+  answers: Answers<T> = [],
+): UpState<T> => ({
+  state,
+  answers,
+})
+
+const traverse = (state: DownState, node: SyntaxNode): UpState<SyntaxNode> => {
   assert(node.isNamed, 'The types of unnamed nodes should not be inferred.')
 
   switch (node.type) {
     case SyntaxType.ERROR:
       return handleError(state, node)
     case SyntaxType.Comment:
-      return { state, answers: [] }
+      return buildUpState(state)
     case SyntaxType.HashBangLine:
-      return { state, answers: [] }
+      return buildUpState(state)
 
     case SyntaxType.Abstraction:
       throw new NotImplementedError(
@@ -360,16 +372,13 @@ const traverse = (
   }
 }
 
-const handleError = (
-  state: State,
-  node: ErrorNode,
-): StateWithAnswers<ErrorNode> => {
+const handleError = (state: DownState, node: ErrorNode): UpState<ErrorNode> => {
   const type = buildUnconstrainedUnknownType()
   const answer = buildAnswer(node, type)
-  return { state, answers: [answer] }
+  return buildUpState(state, [answer])
 }
 
 const handleProgram = (
-  state: State,
+  state: DownState,
   node: ProgramNode,
-): StateWithAnswers<ProgramNode> => {}
+): UpState<ProgramNode> => {}
