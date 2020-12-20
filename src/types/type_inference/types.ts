@@ -1,4 +1,5 @@
 import { ObjectScope } from '../analyze/scopes'
+import { TermNode } from '../parser'
 
 // ---- Types ----
 
@@ -6,6 +7,7 @@ enum TypeKind {
   Alias,
   Object,
   Parametric,
+  Refined,
   Variable,
 }
 
@@ -35,13 +37,23 @@ export interface ParametricType {
 }
 
 /**
+ * A refined type represents a type alongside some predicates on values of that
+ * type.
+ */
+export interface RefinedType {
+  kind: typeof TypeKind.Refined
+  type: Type
+  predicates: TypePredicate[]
+}
+
+/**
  * An object type represents the scope of an object (e.g. its properties).
  */
 export interface ObjectType extends ObjectScope {
   kind: typeof TypeKind.Object
 }
 
-export type Type = TypeVariable | TypeAlias | ParametricType | ObjectType
+export type Type = TypeVariable | TypeAlias | ParametricType | RefinedType | ObjectType
 
 /**
  * A constrained type represents a type alongside constraints on type variables.
@@ -64,6 +76,13 @@ type TypeVariableAssignment<T extends Type> = {
   type: T
 }
 
+/**
+ * Stores a predicate on a type.
+ */
+type TypePredicate = {
+  node: TermNode
+}
+
 // ---- Factories ----
 
 export const buildTypeVariable = (): TypeVariable => ({
@@ -73,7 +92,9 @@ export const buildTypeVariable = (): TypeVariable => ({
 export const buildConstrainedType = <T extends Type>(
   type: T,
   constraints: TypeConstraints = [],
+  predicates: TypePredicate[] = [],
 ): ConstrainedType<T> => ({
   type,
   constraints,
+  predicates,
 })
