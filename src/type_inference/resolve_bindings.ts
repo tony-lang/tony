@@ -58,19 +58,14 @@ const findTypedNode = <T extends SyntaxNode>(
   scope: TypedFileScope,
 ): Answer<T> => {
   const nodeHeritage = buildNodeHeritage(node)
-  return nodeHeritage.reduce<Answer<SyntaxNode>>(
-    (typedNode, node) => {
-      const typedChild = typedNode.childNodes.find(
-        (child) => child.node === node,
-      )
-      assert(
-        typedChild !== undefined,
-        'Typed nodes should resemble the same tree as untyped nodes.',
-      )
-      return typedChild
-    },
-    scope.typedNode,
-  ) as Answer<T>
+  return nodeHeritage.reduce<Answer<SyntaxNode>>((typedNode, node) => {
+    const typedChild = typedNode.childNodes.find((child) => child.node === node)
+    assert(
+      typedChild !== undefined,
+      'Typed nodes should resemble the same tree as untyped nodes.',
+    )
+    return typedChild
+  }, scope.typedNode) as Answer<T>
 }
 
 /**
