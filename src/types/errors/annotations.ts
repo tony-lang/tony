@@ -19,7 +19,7 @@ export enum ErrorAnnotationKind {
   MissingExternalImportTypeHint,
   RefinementTypeDeclarationOutsideRefinementType,
   Type,
-  UnknownEntry,
+  UnknownFile,
   UnknownImport,
   UnsupportedSyntax,
   UseOfTypeAsValue,
@@ -78,14 +78,15 @@ export interface TypeError {
   actual: Type
 }
 
-export interface UnknownEntryError {
-  kind: typeof ErrorAnnotationKind.UnknownEntry
-  sourcePath: AbsolutePath
+export interface UnknownFileError {
+  kind: typeof ErrorAnnotationKind.UnknownFile
+  sourcePath: AbsolutePath | RelativePath
 }
 
 export interface UnknownImportError {
   kind: typeof ErrorAnnotationKind.UnknownImport
-  sourcePath: RelativePath
+  sourcePath: AbsolutePath
+  name: string
 }
 
 export interface UnsupportedSyntaxError {
@@ -109,7 +110,7 @@ export type ErrorAnnotation =
   | MissingExternalImportTypeHintError
   | RefinementTypeDeclarationOutsideRefinementTypeError
   | TypeError
-  | UnknownEntryError
+  | UnknownFileError
   | UnknownImportError
   | UnsupportedSyntaxError
   | UseOfTypeAsValueError
@@ -164,20 +165,22 @@ export const buildMissingBindingError = (
   name,
 })
 
-export const buildUnknownEntryError = (
-  sourcePath: AbsolutePath,
-): UnknownEntryError => ({
-  kind: ErrorAnnotationKind.UnknownEntry,
-  sourcePath,
-})
-
 export const buildRefinementTypeDeclarationOutsideRefinementTypeError = (): RefinementTypeDeclarationOutsideRefinementTypeError => ({
   kind: ErrorAnnotationKind.RefinementTypeDeclarationOutsideRefinementType,
 })
 
+export const buildUnknownFileError = (
+  sourcePath: AbsolutePath | RelativePath,
+): UnknownFileError => ({
+  kind: ErrorAnnotationKind.UnknownFile,
+  sourcePath,
+})
+
 export const buildUnknownImportError = (
-  sourcePath: RelativePath,
+  sourcePath: AbsolutePath,
+  name: string,
 ): UnknownImportError => ({
   kind: ErrorAnnotationKind.UnknownImport,
   sourcePath,
+  name,
 })

@@ -1,5 +1,11 @@
+import {
+  ApplicationNode,
+  IdentifierNode,
+  InfixApplicationNode,
+  PipelineNode,
+  PrefixApplicationNode,
+} from 'tree-sitter-tony'
 import { ObjectScope } from '../analyze/scopes'
-import { TermNode } from '../parser'
 
 // ---- Types ----
 
@@ -53,7 +59,12 @@ export interface ObjectType extends ObjectScope {
   kind: typeof TypeKind.Object
 }
 
-export type Type = TypeVariable | TypeAlias | ParametricType | RefinedType | ObjectType
+export type Type =
+  | TypeVariable
+  | TypeAlias
+  | ParametricType
+  | RefinedType
+  | ObjectType
 
 /**
  * A constrained type represents a type alongside constraints on type variables.
@@ -80,7 +91,12 @@ type TypeVariableAssignment<T extends Type> = {
  * Stores a predicate on a type.
  */
 type TypePredicate = {
-  node: TermNode
+  node:
+    | ApplicationNode
+    | IdentifierNode
+    | InfixApplicationNode
+    | PipelineNode
+    | PrefixApplicationNode
 }
 
 // ---- Factories ----
@@ -92,9 +108,7 @@ export const buildTypeVariable = (): TypeVariable => ({
 export const buildConstrainedType = <T extends Type>(
   type: T,
   constraints: TypeConstraints = [],
-  predicates: TypePredicate[] = [],
 ): ConstrainedType<T> => ({
   type,
   constraints,
-  predicates,
 })

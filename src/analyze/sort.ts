@@ -1,41 +1,51 @@
 import {
-  CyclicDependencyError,
-  buildCyclicDependencyError,
-} from '../types/errors/annotations'
+  FileScope,
+  GlobalScope,
+  buildGlobalScope,
+} from '../types/analyze/scopes'
 import { LogLevel, log } from '../logger'
 import { TopologicalSortError, topologicalSort } from '../util/topological_sort'
 import { AbsolutePath } from '../types/paths'
 import { Config } from '../config'
 import { CyclicDependency } from '../types/cyclic_dependencies'
-import { FileScope } from '../types/analyze/scopes'
+import { buildCyclicDependencyError } from '../types/errors/annotations'
 import { isSamePath } from '../util/paths'
 
 export const sortFileScopes = (
   config: Config,
   fileScopes: FileScope[],
-): {
-  fileScopes: FileScope[]
-  error?: CyclicDependencyError
-} => {
+): GlobalScope<FileScope> => {
   const dependencyGraph = buildDependencyGraph(fileScopes)
 
   log(config, LogLevel.Debug, 'Built dependency graph:', dependencyGraph)
 
   try {
-    return {
-      fileScopes: topologicalSort(dependencyGraph).map(
-        getFileScope(fileScopes),
-      ),
-    }
+    const sortedFileScopes = topologicalSort(dependencyGraph).map(
+      getFileScope(fileScopes),
+    )
+    log(
+      config,
+      LogLevel.Debug,
+      'Topological sorting on files returned:',
+      sortedFileScopes.map((fileScope) => fileScope.file.path).join('>'),
+    )
+    return buildGlobalScope(sortedFileScopes)
   } catch (error: unknown) {
-    if (error instanceof TopologicalSortError)
-      return {
+    if (error instanceof TopologicalSortError) {
+      const cyclicDependency = buildCyclicDependency(
         fileScopes,
-        error: buildCyclicDependencyError(
-          buildCyclicDependency(fileScopes, error.cyclicDependency),
-        ),
-      }
-    else throw error
+        error.cyclicDependency,
+      )
+      log(
+        config,
+        LogLevel.Debug,
+        'Topological sorting failed with cyclic dependency:',
+        cyclicDependency,
+      )
+      return buildGlobalScope(fileScopes, [
+        buildCyclicDependencyError(cyclicDependency),
+      ])
+    } else throw error
   }
 }
 

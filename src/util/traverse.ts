@@ -1,6 +1,7 @@
 import { FileScope, ScopeStack } from '../types/analyze/scopes'
 import { ErrorAnnotation } from '../types/errors/annotations'
 import { SyntaxNode } from 'tree-sitter-tony'
+import { addErrorToScope } from './analyze'
 
 type State = {
   scopes: ScopeStack<FileScope>
@@ -12,10 +13,7 @@ export const addError = <T extends State>(
   error: ErrorAnnotation,
 ): T => {
   const [scope, ...parentScopes] = state.scopes
-  const newScope = {
-    ...scope,
-    errors: [...scope.errors, { node, error }],
-  }
+  const newScope = addErrorToScope(scope, node, error)
   return {
     ...state,
     scopes: [newScope, ...parentScopes],

@@ -9,7 +9,7 @@ export type ImportBindingConfig = {
   originalName?: string
 }
 
-enum BindingKind {
+export enum BindingKind {
   Term,
   Type,
 }
