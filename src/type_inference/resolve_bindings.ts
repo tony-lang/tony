@@ -59,7 +59,7 @@ const findTypedNode = <T extends SyntaxNode>(
 ): Answer<T> => {
   const nodeHeritage = buildNodeHeritage(node)
   return nodeHeritage.reduce<Answer<SyntaxNode>>(
-    (typedNode: Answer<SyntaxNode>, node) => {
+    (typedNode, node) => {
       const typedChild = typedNode.childNodes.find(
         (child) => child.node === node,
       )
