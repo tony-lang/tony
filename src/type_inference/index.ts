@@ -19,9 +19,9 @@ import {
   buildTypeVariable,
 } from '../types/type_inference/types'
 import { Config } from '../config'
+import { addErrorUnless } from '../util/traverse'
 import { assert } from '../types/errors/internal'
 import { buildIndeterminateTypeError } from '../types/errors/annotations'
-import { addErrorUnless, ensure } from '../util/traverse'
 
 type State = {
   typedFileScopes: TypedFileScope[]

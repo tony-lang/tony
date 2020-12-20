@@ -1,10 +1,9 @@
-import { Binding, buildPrimitiveTypeBindings } from './bindings'
+import { Bindings, initializeBindings } from './bindings'
 import { ErrorAnnotation, MountedErrorAnnotation } from '../errors/annotations'
 import { AbsolutePath } from '../paths'
 import { Answer } from '../type_inference/answers'
 import { ProgramNode } from 'tree-sitter-tony'
 import { SyntaxNode } from 'tree-sitter-tony'
-import { TypeVariable } from './type_variables'
 
 // ---- Types ----
 
@@ -15,7 +14,7 @@ enum ScopeKind {
 }
 
 export interface ObjectScope {
-  bindings: Binding[]
+  bindings: Bindings
 }
 
 export interface ConcreteScope extends ObjectScope {
@@ -44,8 +43,6 @@ export interface NestedScope extends ConcreteScope {
   kind: typeof ScopeKind.Nested
   scopes: NestedScope[]
   node: SyntaxNode
-  moduleName?: string
-  typeVariables: TypeVariable[]
 }
 
 export type Scope = GlobalScope<FileScope> | FileScope | NestedScope
@@ -77,7 +74,7 @@ export const buildFileScope = (
   node,
   scopes: [],
   dependencies: [],
-  bindings: buildPrimitiveTypeBindings(node),
+  bindings: initializeBindings(node),
   errors: [],
 })
 
@@ -89,22 +86,14 @@ export const buildTypedFileScope = (
   typedNode,
 })
 
-export const buildNestedScope = (
-  node: SyntaxNode,
-  moduleName?: string,
-): NestedScope => ({
+export const buildNestedScope = (node: SyntaxNode): NestedScope => ({
   kind: ScopeKind.Nested,
   node,
-  bindings: [],
-  typeVariables: [],
+  bindings: initializeBindings(),
   scopes: [],
-  moduleName,
   errors: [],
 })
 
 export const isFileScope = (
   scope: FileScope | NestedScope,
 ): scope is FileScope => scope.kind === ScopeKind.File
-
-export const isModuleScope = (scope: FileScope | NestedScope): boolean =>
-  isFileScope(scope) || !!scope.moduleName
