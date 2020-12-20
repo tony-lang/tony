@@ -255,9 +255,7 @@ const exportAndReset = (
 ]
 
 const getIdentifierName = (
-  node:
-    | IdentifierNode
-    | IdentifierPatternNameNode
+  node: IdentifierNode | IdentifierPatternNameNode,
 ): string => node.text
 
 const getTypeName = (node: TypeNode): string => node.text
