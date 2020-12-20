@@ -3,8 +3,6 @@ import {
   AbstractionBranchNode,
   AssignmentNode,
   BlockNode,
-  ConstructorDeclarationNode,
-  ConstructorNode,
   DestructuringPatternNode,
   EnumNode,
   EnumValueNode,
@@ -256,10 +254,6 @@ const getIdentifierName = (
   node: IdentifierNode | IdentifierPatternNameNode,
 ): string => node.text
 
-const getConstructorName = (
-  node: ConstructorDeclarationNode | ConstructorNode,
-): string => node.text
-
 const getTypeName = (node: TypeNode): string => node.text
 
 const getTypeVariableName = (
@@ -402,7 +396,7 @@ const handleEnum = (state: State, node: EnumNode): State => {
 
 const handleEnumValue = (state: State, node: EnumValueNode): State => {
   const { exportNextBindings: isExported } = state
-  const name = getTypeName(node.nameNode)
+  const name = getIdentifierName(node.nameNode)
   const stateWithName = traverse(state, node.nameNode)
   const stateWithBinding = addTermBinding(
     name,
@@ -578,7 +572,7 @@ const handleListComprehension = nest<ListComprehensionNode>((state, node) => {
 
 const handleNamedType = (state: State, node: NamedTypeNode): State => {
   const { exportNextBindings: isExported } = state
-  const constructor = getConstructorName(node.nameNode)
+  const constructor = getIdentifierName(node.nameNode)
   const stateWithName = traverse(state, node.nameNode)
   const stateWithType = traverse(stateWithName, node.typeNode)
   return flushTermBindings(
