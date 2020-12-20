@@ -61,7 +61,7 @@ import {
   buildIncompleteWhenPatternError,
   buildMissingBindingError,
   buildRefinementTypeDeclarationOutsideRefinementTypeError,
-  buildUnknownImportError,
+  buildUnknownFileError,
 } from '../types/errors/annotations'
 import { Config } from '../config'
 import { assert } from '../types/errors/internal'
@@ -449,7 +449,7 @@ const handleImportAndExportedImport = (isExported: boolean) =>
         fileMayBeImported,
       )
       if (resolvedSource === undefined)
-        return addError(state, node.sourceNode, buildUnknownImportError(source))
+        return addError(state, node.sourceNode, buildUnknownFileError(source))
 
       const stateWithDependency = addDependency(state, resolvedSource)
       const stateWithBindings = traverseAll(

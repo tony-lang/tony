@@ -14,14 +14,11 @@ import {
   isFileScope,
 } from '../types/analyze/scopes'
 import { LogLevel, log } from '../logger'
-import {
-  buildConstrainedType,
-  buildTypeVariable,
-} from '../types/type_inference/types'
 import { Config } from '../config'
 import { addErrorUnless } from '../util/traverse'
 import { assert } from '../types/errors/internal'
 import { buildIndeterminateTypeError } from '../types/errors/annotations'
+import { buildUnconstrainedUnknownType } from './resolve_bindings'
 
 type State = {
   typedFileScopes: TypedFileScope[]
@@ -100,7 +97,7 @@ const handleError = (
   state: State,
   node: ErrorNode,
 ): StateWithAnswers<ErrorNode> => {
-  const type = buildConstrainedType(buildTypeVariable())
+  const type = buildUnconstrainedUnknownType()
   const answer = buildAnswer(node, type)
   return [state, [answer]]
 }
