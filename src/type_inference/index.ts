@@ -269,8 +269,6 @@ const traverse = (
       throw new NotImplementedError('Tony cannot build refined types yet.')
     case SyntaxType.RefinementTypeDeclaration:
       throw new NotImplementedError('Tony cannot build refined types yet.')
-    case SyntaxType.RefinementTypeDeclarationName:
-      throw new NotImplementedError('Tony cannot build refined types yet.')
     case SyntaxType.Regex:
       throw new NotImplementedError(
         'Tony cannot infer the type of regular expressions yet.',
@@ -339,8 +337,6 @@ const traverse = (
       throw new NotImplementedError(
         'Tony cannot infer the type of type aliases yet.',
       )
-    case SyntaxType.TypeConstraint:
-      throw new NotImplementedError('This is being removed.')
     case SyntaxType.TypeDeclaration:
       throw new NotImplementedError('Tony cannot build declared types yet.')
     case SyntaxType.TypeGroup:
