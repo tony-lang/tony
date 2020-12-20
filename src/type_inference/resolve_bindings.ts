@@ -1,10 +1,4 @@
-import {
-  ConstrainedType,
-  Type,
-  TypeVariable,
-  buildConstrainedType,
-  buildTypeVariable,
-} from '../types/type_inference/types'
+import { ConstrainedType, Type } from '../types/type_inference/types'
 import {
   addErrorToScope,
   findBindingOfKind,
@@ -19,9 +13,7 @@ import { Binding } from '../types/analyze/bindings'
 import { SyntaxNode } from 'tree-sitter-tony'
 import { TypedFileScope } from '../types/analyze/scopes'
 import { assert } from '../types/errors/internal'
-
-export const buildUnconstrainedUnknownType = (): ConstrainedType<TypeVariable> =>
-  buildConstrainedType(buildTypeVariable())
+import { buildUnconstrainedUnknownType } from '../util/types'
 
 export const resolveBindingType = (
   fileScopes: TypedFileScope[],

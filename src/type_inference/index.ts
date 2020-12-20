@@ -18,7 +18,7 @@ import { Config } from '../config'
 import { addErrorUnless } from '../util/traverse'
 import { assert } from '../types/errors/internal'
 import { buildIndeterminateTypeError } from '../types/errors/annotations'
-import { buildUnconstrainedUnknownType } from './resolve_bindings'
+import { buildUnconstrainedUnknownType } from '../util/types'
 
 type State = {
   typedFileScopes: TypedFileScope[]
