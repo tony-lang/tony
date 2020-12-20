@@ -19,6 +19,9 @@ import {
   ListComprehensionNode,
   NamedTypeNode,
   ProgramNode,
+  RefinementTypeDeclarationNameNode,
+  RefinementTypeDeclarationNode,
+  RefinementTypeNode,
   ShorthandMemberPatternNode,
   SyntaxNode,
   SyntaxType,
@@ -57,6 +60,7 @@ import {
   buildImportOutsideFileScopeError,
   buildIncompleteWhenPatternError,
   buildMissingBindingError,
+  buildRefinementTypeDeclarationOutsideRefinementTypeError,
   buildUnknownImportError,
 } from '../types/errors/annotations'
 import { Config } from '../config'
@@ -251,7 +255,10 @@ const exportAndReset = (
 ]
 
 const getIdentifierName = (
-  node: IdentifierNode | IdentifierPatternNameNode,
+  node:
+    | IdentifierNode
+    | IdentifierPatternNameNode
+    | RefinementTypeDeclarationNameNode,
 ): string => node.text
 
 const getTypeName = (node: TypeNode): string => node.text
@@ -306,6 +313,10 @@ const traverse = (state: State, node: SyntaxNode): State => {
       return handleNamedType(state, node)
     case SyntaxType.ShorthandMemberPattern:
       return handleIdentifierPatternAndShorthandMemberPattern(state, node)
+    case SyntaxType.RefinementType:
+      return handleRefinementType(state, node)
+    case SyntaxType.RefinementTypeDeclaration:
+      return handleRefinementTypeDeclaration(state, node)
     case SyntaxType.TypeAlias:
       return handleTypeAlias(state, node)
     case SyntaxType.TypeVariable:
@@ -328,7 +339,11 @@ const handleAbstractionBranch = nest<AbstractionBranchNode>((state, node) => {
     stateWithTypeParameters,
     node.elementNodes,
   )
-  const stateWithFlushedBindings = flushTermBindings(stateWithParameters)
+  const stateWithRestParameter = conditionalApply(traverse)(
+    stateWithParameters,
+    node.restNode,
+  )
+  const stateWithFlushedBindings = flushTermBindings(stateWithRestParameter)
   return traverse(
     {
       ...stateWithFlushedBindings,
@@ -579,6 +594,26 @@ const handleNamedType = (state: State, node: NamedTypeNode): State => {
     addTermBinding(constructor, true, isExported)(stateWithType, node),
   )
 }
+
+const handleRefinementType = nest<RefinementTypeNode>((state, node) => {
+  const stateWithGenerator = flushTermBindings(
+    traverse(state, node.generatorNode),
+  )
+  return traverseAll(stateWithGenerator, node.predicateNodes)
+})
+
+const handleRefinementTypeDeclaration = ensure<
+  State,
+  RefinementTypeDeclarationNode
+>(
+  (state) => state.scopes[0].node.type === SyntaxType.RefinementType,
+  (state, node) => {
+    const name = getIdentifierName(node.nameNode)
+    const stateWithConstraint = traverse(state, node.constraintNode)
+    return addTermBinding(name, true)(stateWithConstraint, node)
+  },
+  buildRefinementTypeDeclarationOutsideRefinementTypeError(),
+)
 
 const handleTypeAlias = nest<TypeAliasNode>((state, node) => {
   const { exportNextBindings: isExported } = state

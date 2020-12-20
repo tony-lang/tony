@@ -11,6 +11,7 @@ enum ScopeKind {
   Global,
   File,
   Nested,
+  RefinementType,
 }
 
 export interface ObjectScope {
@@ -94,6 +95,6 @@ export const buildNestedScope = (node: SyntaxNode): NestedScope => ({
   errors: [],
 })
 
-export const isFileScope = (
-  scope: FileScope | NestedScope,
-): scope is FileScope => scope.kind === ScopeKind.File
+export const isFileScope = <T extends FileScope>(
+  scope: T | NestedScope,
+): scope is T => scope.kind === ScopeKind.File

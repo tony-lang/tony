@@ -17,6 +17,7 @@ export enum ErrorAnnotationKind {
   IndeterminateType,
   MissingBinding,
   MissingExternalImportTypeHint,
+  RefinementTypeDeclarationOutsideRefinementType,
   Type,
   UnknownEntry,
   UnknownImport,
@@ -67,6 +68,10 @@ export interface MissingExternalImportTypeHintError {
   binding: Binding
 }
 
+export interface RefinementTypeDeclarationOutsideRefinementTypeError {
+  kind: typeof ErrorAnnotationKind.RefinementTypeDeclarationOutsideRefinementType
+}
+
 export interface TypeError {
   kind: typeof ErrorAnnotationKind.Type
   expected: Type
@@ -102,6 +107,7 @@ export type ErrorAnnotation =
   | IndeterminateTypeError
   | MissingBindingError
   | MissingExternalImportTypeHintError
+  | RefinementTypeDeclarationOutsideRefinementTypeError
   | TypeError
   | UnknownEntryError
   | UnknownImportError
@@ -163,6 +169,10 @@ export const buildUnknownEntryError = (
 ): UnknownEntryError => ({
   kind: ErrorAnnotationKind.UnknownEntry,
   sourcePath,
+})
+
+export const buildRefinementTypeDeclarationOutsideRefinementTypeError = (): RefinementTypeDeclarationOutsideRefinementTypeError => ({
+  kind: ErrorAnnotationKind.RefinementTypeDeclarationOutsideRefinementType,
 })
 
 export const buildUnknownImportError = (
