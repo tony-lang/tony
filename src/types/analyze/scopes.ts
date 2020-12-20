@@ -1,4 +1,4 @@
-import { Bindings, initializeBindings } from './bindings'
+import { Bindings, TypedBindings, initializeBindings } from './bindings'
 import { ErrorAnnotation, MountedErrorAnnotation } from '../errors/annotations'
 import { AbsolutePath } from '../paths'
 import { Answer } from '../type_inference/answers'
@@ -38,6 +38,7 @@ export interface FileScope extends ConcreteScope {
 
 export interface TypedFileScope extends FileScope {
   typedNode: Answer<ProgramNode>
+  typedBindings: TypedBindings
 }
 
 export interface NestedScope extends ConcreteScope {
@@ -82,9 +83,11 @@ export const buildFileScope = (
 export const buildTypedFileScope = (
   fileScope: FileScope,
   typedNode: Answer<ProgramNode>,
+  typedBindings: TypedBindings,
 ): TypedFileScope => ({
   ...fileScope,
   typedNode,
+  typedBindings,
 })
 
 export const buildNestedScope = (node: SyntaxNode): NestedScope => ({

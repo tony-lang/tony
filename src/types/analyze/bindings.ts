@@ -1,3 +1,4 @@
+import { ConstrainedType, Type } from '../type_inference/types'
 import { ProgramNode, SyntaxNode } from 'tree-sitter-tony'
 import { AbsolutePath } from '../paths'
 import { PRIMITIVE_TYPES } from '../../constants'
@@ -9,7 +10,7 @@ export type ImportBindingConfig = {
   originalName?: string
 }
 
-export enum BindingKind {
+enum BindingKind {
   Term,
   Type,
 }
@@ -20,6 +21,9 @@ interface AbstractBinding {
   isExported: boolean
   importedFrom?: ImportBindingConfig
 }
+interface AbstractTypedBinding extends AbstractBinding {
+  type: ConstrainedType<Type>
+}
 
 export interface TermBinding extends AbstractBinding {
   kind: typeof BindingKind.Term
@@ -29,6 +33,7 @@ export interface TermBinding extends AbstractBinding {
    */
   isImplicit: boolean
 }
+export interface TypedTermBinding extends TermBinding, AbstractTypedBinding {}
 
 export interface TypeBinding extends AbstractBinding {
   kind: typeof BindingKind.Type
@@ -38,12 +43,18 @@ export interface TypeBinding extends AbstractBinding {
    */
   isPrimitive: boolean
 }
+export interface TypedTypeBinding extends TypeBinding, AbstractTypedBinding {}
 
 export type Binding = TermBinding | TypeBinding
+export type TypedBinding = TypedTermBinding | TypedTypeBinding
 
 export type Bindings = {
-  terms: TermBinding[]
-  types: TypeBinding[]
+  [BindingKind.Term]: TermBinding[]
+  [BindingKind.Type]: TypeBinding[]
+}
+export type TypedBindings = {
+  [BindingKind.Term]: TypedTermBinding[]
+  [BindingKind.Type]: TypedTypeBinding[]
 }
 
 // ---- Factories ----
@@ -102,11 +113,24 @@ export const buildBindings = (
   terms: TermBinding[],
   types: TypeBinding[],
 ): Bindings => ({
-  terms: [...from.terms, ...terms],
-  types: [...from.types, ...types],
+  [BindingKind.Term]: [...from[BindingKind.Term], ...terms],
+  [BindingKind.Type]: [...from[BindingKind.Type], ...types],
 })
 
 export const initializeBindings = (node?: ProgramNode): Bindings => ({
-  terms: [],
-  types: node ? buildPrimitiveTypeBindings(node) : [],
+  [BindingKind.Term]: [],
+  [BindingKind.Type]: node ? buildPrimitiveTypeBindings(node) : [],
 })
+
+export const getTerms = <
+  T extends TermBinding,
+  U extends Record<BindingKind.Term, T[]>
+>(
+  bindings: U,
+): T[] => bindings[BindingKind.Term]
+export const getTypes = <
+  T extends TypeBinding,
+  U extends Record<BindingKind.Type, T[]>
+>(
+  bindings: U,
+): T[] => bindings[BindingKind.Type]

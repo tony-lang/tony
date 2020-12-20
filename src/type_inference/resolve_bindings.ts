@@ -1,27 +1,21 @@
+import { Binding, TypedBinding, TypedBindings } from '../types/analyze/bindings'
 import { ConstrainedType, Type } from '../types/type_inference/types'
-import {
-  addErrorToScope,
-  findBindingOfKind,
-  findFileScope,
-} from '../util/analyze'
+import { FileScope, TypedFileScope } from '../types/analyze/scopes'
+import { addErrorToScope, findFileScope, findItemByName } from '../util/analyze'
 import {
   buildUnknownFileError,
   buildUnknownImportError,
 } from '../types/errors/annotations'
-import { Answer } from '../types/type_inference/answers'
-import { Binding } from '../types/analyze/bindings'
-import { SyntaxNode } from 'tree-sitter-tony'
-import { TypedFileScope } from '../types/analyze/scopes'
-import { assert } from '../types/errors/internal'
 import { buildUnconstrainedUnknownType } from '../util/types'
 
 export const resolveBindingType = (
   fileScopes: TypedFileScope[],
+  bindings: TypedBindings[],
   binding: Binding,
-  scope: TypedFileScope,
-): [type: ConstrainedType<Type>, newScope: TypedFileScope] => {
+  scope: FileScope,
+): [type: ConstrainedType<Type>, newScope: FileScope] => {
   if (binding.importedFrom === undefined)
-    return [resolveBindingTypeWithinScope(binding, scope), scope]
+    return [resolveBindingTypeWithinScope(bindings, binding), scope]
 
   const { file, originalName } = binding.importedFrom
   const importedBindingName = originalName || binding.name
@@ -32,9 +26,10 @@ export const resolveBindingType = (
       addErrorToScope(scope, binding.node, buildUnknownFileError(file)),
     ]
 
-  const importedBinding = findBindingOfKind(binding.kind)(importedBindingName, [
-    fileScope,
-  ])
+  const importedBinding = findTypedBindingOf([fileScope.typedBindings], {
+    ...binding,
+    name: importedBindingName,
+  })
   if (importedBinding === undefined || !importedBinding.isExported)
     return [
       buildUnconstrainedUnknownType(),
@@ -45,38 +40,26 @@ export const resolveBindingType = (
       ),
     ]
 
-  return [resolveBindingTypeWithinScope(importedBinding, fileScope), scope]
+  return [importedBinding.type, scope]
 }
 
 const resolveBindingTypeWithinScope = (
+  bindings: TypedBindings[],
   binding: Binding,
-  scope: TypedFileScope,
-): ConstrainedType<Type> => findTypedNode(binding.node, scope).type
+): ConstrainedType<Type> => {
+  const typedBinding = findTypedBindingOf(bindings, binding)
+  return typedBinding?.type || buildUnconstrainedUnknownType()
+}
 
-const findTypedNode = <T extends SyntaxNode>(
-  node: T,
-  scope: TypedFileScope,
-): Answer<T> => {
-  const nodeHeritage = buildNodeHeritage(node)
-  return nodeHeritage.reduce<Answer<SyntaxNode>>((typedNode, node) => {
-    const typedChild = typedNode.childNodes.find((child) => child.node === node)
-    assert(
-      typedChild !== undefined,
-      'Typed nodes should resemble the same tree as untyped nodes.',
+const findTypedBindingOf = (
+  bindings: TypedBindings[],
+  reference: Binding,
+): TypedBinding | undefined =>
+  bindings.reduce<TypedBinding | undefined>((binding, bindings) => {
+    if (binding !== undefined) return binding
+
+    return findItemByName<TypedBinding>(
+      reference.name,
+      bindings[reference.kind],
     )
-    return typedChild
-  }, scope.typedNode) as Answer<T>
-}
-
-/**
- * Returns an array resembling the heritage of a node from the program node to
- * the given node.
- */
-const buildNodeHeritage = (
-  node: SyntaxNode,
-  heritage: SyntaxNode[] = [],
-): SyntaxNode[] => {
-  const newHeritage = [node, ...heritage]
-  if (node.parent === null) return newHeritage
-  return buildNodeHeritage(node.parent, newHeritage)
-}
+  }, undefined)

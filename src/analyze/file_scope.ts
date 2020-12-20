@@ -19,7 +19,6 @@ import {
   ListComprehensionNode,
   NamedTypeNode,
   ProgramNode,
-  RefinementTypeDeclarationNameNode,
   RefinementTypeDeclarationNode,
   RefinementTypeNode,
   ShorthandMemberPatternNode,
@@ -46,6 +45,7 @@ import {
   buildImportBindingConfig,
   buildTermBinding,
   buildTypeBinding,
+  getTerms,
 } from '../types/analyze/bindings'
 import { addError, conditionalApply, ensure } from '../util/traverse'
 import {
@@ -258,7 +258,6 @@ const getIdentifierName = (
   node:
     | IdentifierNode
     | IdentifierPatternNameNode
-    | RefinementTypeDeclarationNameNode,
 ): string => node.text
 
 const getTypeName = (node: TypeNode): string => node.text
@@ -609,8 +608,8 @@ const handleRefinementTypeDeclaration = ensure<
   (state) => state.scopes[0].node.type === SyntaxType.RefinementType,
   (state, node) => {
     const name = getIdentifierName(node.nameNode)
-    const stateWithConstraint = traverse(state, node.constraintNode)
-    return addTermBinding(name, true)(stateWithConstraint, node)
+    const stateWithConstraints = traverseAll(state, node.constraintNodes)
+    return addTermBinding(name, true)(stateWithConstraints, node)
   },
   buildRefinementTypeDeclarationOutsideRefinementTypeError(),
 )
@@ -643,7 +642,7 @@ const handleTypeVariableDeclaration = (
   const name = getTypeVariableName(node.nameNode)
   const stateWithName = traverse(state, node.nameNode)
   const stateWithBinding = addTypeBinding(name, true)(stateWithName, node)
-  return conditionalApply(traverse)(stateWithBinding, node.constraintNode)
+  return conditionalApply(traverseAll)(stateWithBinding, node.constraintNodes)
 }
 
 const handleWhen = nest<WhenNode>((state, node) => {
@@ -672,8 +671,8 @@ const handleWhen = nest<WhenNode>((state, node) => {
       )
 
       const missingBindings = bindingsMissingFrom(
-        scope.bindings.terms,
-        accScope.bindings.terms,
+        getTerms(scope.bindings),
+        getTerms(accScope.bindings),
       )
       if (missingBindings.length > 0)
         return addError(
