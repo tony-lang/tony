@@ -19,7 +19,6 @@ import {
   ListComprehensionNode,
   NamedTypeNode,
   ProgramNode,
-  RefinementTypeDeclarationNameNode,
   RefinementTypeDeclarationNode,
   RefinementTypeNode,
   ShorthandMemberPatternNode,
@@ -255,10 +254,7 @@ const exportAndReset = (
 ]
 
 const getIdentifierName = (
-  node:
-    | IdentifierNode
-    | IdentifierPatternNameNode
-    | RefinementTypeDeclarationNameNode,
+  node: IdentifierNode | IdentifierPatternNameNode,
 ): string => node.text
 
 const getTypeName = (node: TypeNode): string => node.text
@@ -609,8 +605,8 @@ const handleRefinementTypeDeclaration = ensure<
   (state) => state.scopes[0].node.type === SyntaxType.RefinementType,
   (state, node) => {
     const name = getIdentifierName(node.nameNode)
-    const stateWithConstraint = traverse(state, node.constraintNode)
-    return addTermBinding(name, true)(stateWithConstraint, node)
+    const stateWithConstraints = traverseAll(state, node.constraintNodes)
+    return addTermBinding(name, true)(stateWithConstraints, node)
   },
   buildRefinementTypeDeclarationOutsideRefinementTypeError(),
 )
@@ -643,7 +639,7 @@ const handleTypeVariableDeclaration = (
   const name = getTypeVariableName(node.nameNode)
   const stateWithName = traverse(state, node.nameNode)
   const stateWithBinding = addTypeBinding(name, true)(stateWithName, node)
-  return conditionalApply(traverse)(stateWithBinding, node.constraintNode)
+  return conditionalApply(traverseAll)(stateWithBinding, node.constraintNodes)
 }
 
 const handleWhen = nest<WhenNode>((state, node) => {
