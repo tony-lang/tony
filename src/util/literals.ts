@@ -1,4 +1,4 @@
-import { StringPatternNode } from 'tree-sitter-tony'
+import { RawStringNode } from 'tree-sitter-tony'
 
-export const parseStringPattern = (node: StringPatternNode): string =>
+export const parseStringPattern = (node: RawStringNode): string =>
   eval(node.text)
