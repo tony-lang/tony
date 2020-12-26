@@ -13,6 +13,7 @@ enum TypeKind {
   Alias,
   Object,
   Parametric,
+  Primitive,
   Refined,
   Variable,
 }
@@ -59,7 +60,7 @@ export interface ObjectType extends ObjectScope {
   kind: typeof TypeKind.Object
 }
 
-export enum PrimitiveType {
+export enum PrimitiveTypeName {
   Boolean,
   Number,
   RegExp,
@@ -68,6 +69,11 @@ export enum PrimitiveType {
    * The type of operations that do not return anything.
    */
   Void,
+}
+
+export interface PrimitiveType {
+  kind: typeof TypeKind.Primitive
+  name: PrimitiveTypeName
 }
 
 export type Type =
@@ -115,6 +121,11 @@ type TypePredicate = {
 
 export const buildTypeVariable = (): TypeVariable => ({
   kind: TypeKind.Variable,
+})
+
+export const buildPrimitiveType = (name: PrimitiveTypeName): PrimitiveType => ({
+  kind: TypeKind.Primitive,
+  name,
 })
 
 export const buildConstrainedType = <T extends Type>(

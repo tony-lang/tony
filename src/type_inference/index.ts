@@ -1,9 +1,10 @@
 import {
   ConstrainedType,
-  PrimitiveType,
+  PrimitiveTypeName,
   Type,
   TypeConstraints,
   buildConstrainedType,
+  buildPrimitiveType,
   buildTypeConstraints,
 } from '../types/type_inference/types'
 import {
@@ -134,7 +135,10 @@ const buildEmptyAnswer = <T extends SyntaxNode>(
 ): Answer<T> =>
   buildAnswer(
     state,
-    buildTypedNode(node, buildConstrainedType(PrimitiveType.Void)),
+    buildTypedNode(
+      node,
+      buildConstrainedType(buildPrimitiveType(PrimitiveTypeName.Void)),
+    ),
   )
 
 const wrapAnswer = <T extends SyntaxNode>(
@@ -150,9 +154,6 @@ const wrapAnswer = <T extends SyntaxNode>(
       getTypedNodesFromAnswers(childNodes),
     ),
   )
-
-const flattenAnswers = <T extends SyntaxNode>(answers: Answers<T>[]) =>
-  answers.reduce<Answers<T>>((acc, answer) => [...acc, ...answer], [])
 
 const filterAnswers = <T extends SyntaxNode>(
   answers: Answers<T>,
@@ -179,7 +180,7 @@ const filterAnswers = <T extends SyntaxNode>(
 }
 
 const reduceAnswers = <T extends SyntaxNode>(answers: Answers<T>[]) =>
-  filterAnswers(flattenAnswers(answers))
+  filterAnswers(answers.flat())
 
 const forAllAnswers = <T extends SyntaxNode, U extends SyntaxNode>(
   answers: Answers<T>,
