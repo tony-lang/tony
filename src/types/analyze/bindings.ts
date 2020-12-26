@@ -122,15 +122,17 @@ export const initializeBindings = (node?: ProgramNode): Bindings => ({
   [BindingKind.Type]: node ? buildPrimitiveTypeBindings(node) : [],
 })
 
-export const getTerms = <
-  T extends TermBinding,
-  U extends Record<BindingKind.Term, T[]>
->(
-  bindings: U,
+export const buildTypedBindings = (
+  terms: TypedTermBinding[],
+  types: TypedTypeBinding[],
+): TypedBindings => ({
+  [BindingKind.Term]: terms,
+  [BindingKind.Type]: types,
+})
+
+export const getTerms = <T extends TermBinding>(
+  bindings: Record<BindingKind.Term, T[]>,
 ): T[] => bindings[BindingKind.Term]
-export const getTypes = <
-  T extends TypeBinding,
-  U extends Record<BindingKind.Type, T[]>
->(
-  bindings: U,
+export const getTypes = <T extends TypeBinding>(
+  bindings: Record<BindingKind.Type, T[]>,
 ): T[] => bindings[BindingKind.Type]

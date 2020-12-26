@@ -18,6 +18,10 @@ export interface ObjectScope {
   bindings: Bindings
 }
 
+export interface TypedObjectScope {
+  typedBindings: TypedBindings
+}
+
 export interface ConcreteScope extends ObjectScope {
   errors: MountedErrorAnnotation[]
 }
@@ -39,9 +43,8 @@ export interface FileScope extends RecursiveScope<NestedScope>, ConcreteScope {
   dependencies: AbsolutePath[]
 }
 
-export interface TypedFileScope extends FileScope {
+export interface TypedFileScope extends FileScope, TypedObjectScope {
   typedNode: TypedNode<ProgramNode>
-  typedBindings: TypedBindings
 }
 
 export interface NestedScope

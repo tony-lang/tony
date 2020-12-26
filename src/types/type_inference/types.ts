@@ -5,11 +5,11 @@ import {
   PipelineNode,
   PrefixApplicationNode,
 } from 'tree-sitter-tony'
-import { ObjectScope } from '../analyze/scopes'
+import { TypedObjectScope } from '../analyze/scopes'
 
 // ---- Types ----
 
-enum TypeKind {
+export enum TypeKind {
   Alias,
   Object,
   Parametric,
@@ -56,7 +56,7 @@ export interface RefinedType {
 /**
  * An object type represents the scope of an object (e.g. its properties).
  */
-export interface ObjectType extends ObjectScope {
+export interface ObjectType extends TypedObjectScope {
   kind: typeof TypeKind.Object
 }
 
