@@ -1,7 +1,10 @@
-import { ConstrainedType, Type } from '../type_inference/types'
+import {
+  ConstrainedType,
+  PrimitiveTypeName,
+  Type,
+} from '../type_inference/types'
 import { ProgramNode, SyntaxNode } from 'tree-sitter-tony'
 import { AbsolutePath } from '../paths'
-import { PRIMITIVE_TYPES } from '../../constants'
 
 // ---- Types ----
 
@@ -99,14 +102,16 @@ export const buildTypeBinding = (
 })
 
 const buildPrimitiveTypeBindings = (node: ProgramNode): TypeBinding[] =>
-  PRIMITIVE_TYPES.map((name) => ({
-    kind: BindingKind.Type,
-    name,
-    node,
-    isExported: false,
-    isVariable: false,
-    isPrimitive: true,
-  }))
+  Object.values(PrimitiveTypeName)
+    .filter((value) => typeof value === 'string')
+    .map((name) => ({
+      kind: BindingKind.Type,
+      name: name as string,
+      node,
+      isExported: false,
+      isVariable: false,
+      isPrimitive: true,
+    }))
 
 export const buildBindings = (
   from: Bindings,
