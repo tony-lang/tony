@@ -59,12 +59,24 @@ export interface ObjectType extends ObjectScope {
   kind: typeof TypeKind.Object
 }
 
+export enum PrimitiveType {
+  Boolean,
+  Number,
+  RegExp,
+  String,
+  /**
+   * The type of operations that do not return anything.
+   */
+  Void,
+}
+
 export type Type =
   | TypeVariable
   | TypeAlias
   | ParametricType
   | RefinedType
   | ObjectType
+  | PrimitiveType
 
 /**
  * A constrained type represents a type alongside constraints on type variables.
@@ -112,3 +124,7 @@ export const buildConstrainedType = <T extends Type>(
   type,
   constraints,
 })
+
+export const buildTypeConstraints = (
+  constraints: TypeVariableAssignment<Type>[] = [],
+): TypeConstraints => constraints

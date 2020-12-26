@@ -1,5 +1,6 @@
 import {
   ConstrainedType,
+  TypeConstraints,
   TypeVariable,
   buildConstrainedType,
   buildTypeVariable,
@@ -7,3 +8,8 @@ import {
 
 export const buildUnconstrainedUnknownType = (): ConstrainedType<TypeVariable> =>
   buildConstrainedType(buildTypeVariable())
+
+export const buildConstrainedUnknownType = (
+  constraints: TypeConstraints,
+): ConstrainedType<TypeVariable> =>
+  buildConstrainedType(buildTypeVariable(), constraints)

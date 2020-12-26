@@ -1,9 +1,10 @@
 import { AbsolutePath, RelativePath } from '../paths'
+import { ConstrainedType, Type } from '../type_inference/types'
 import { ProgramNode, SyntaxNode } from 'tree-sitter-tony'
-import { Answers } from '../type_inference/answers'
 import { Binding } from '../analyze/bindings'
 import { CyclicDependency } from '../cyclic_dependencies'
-import { Type } from '../type_inference/types'
+import { TypedNode } from '../type_inference/nodes'
+import { flattenConstrainedType } from '../../type_inference/constraints'
 
 // ---- Types ----
 
@@ -55,7 +56,7 @@ export interface IncompleteWhenPatternError {
 
 export interface IndeterminateTypeError {
   kind: typeof ErrorAnnotationKind.IndeterminateType
-  answers: Answers<ProgramNode>
+  answers: TypedNode<ProgramNode>[]
 }
 
 export interface MissingBindingError {
@@ -152,7 +153,7 @@ export const buildIncompleteWhenPatternError = (
 })
 
 export const buildIndeterminateTypeError = (
-  answers: Answers<ProgramNode>,
+  answers: TypedNode<ProgramNode>[],
 ): IndeterminateTypeError => ({
   kind: ErrorAnnotationKind.IndeterminateType,
   answers,
@@ -167,6 +168,21 @@ export const buildMissingBindingError = (
 
 export const buildRefinementTypeDeclarationOutsideRefinementTypeError = (): RefinementTypeDeclarationOutsideRefinementTypeError => ({
   kind: ErrorAnnotationKind.RefinementTypeDeclarationOutsideRefinementType,
+})
+
+export const buildTypeError = (expected: Type, actual: Type): TypeError => ({
+  kind: ErrorAnnotationKind.Type,
+  expected,
+  actual,
+})
+
+export const buildTypeErrorFromConstrainedType = (
+  expected: ConstrainedType<Type>,
+  actual: ConstrainedType<Type>,
+): TypeError => ({
+  kind: ErrorAnnotationKind.Type,
+  expected: flattenConstrainedType(expected),
+  actual: flattenConstrainedType(actual),
 })
 
 export const buildUnknownFileError = (

@@ -9,7 +9,7 @@ import {
  * unifying all shared constraints.
  */
 export const unifyConstraints = (
-  constraints: TypeConstraints[],
+  ...constraints: TypeConstraints[]
 ): TypeConstraints => {}
 
 /**
@@ -20,3 +20,7 @@ export const applyConstraints = <T extends Type>(
   type: T,
   constraints: TypeConstraints,
 ): ConstrainedType<T> => {}
+
+export const flattenConstrainedType = <T extends Type>(
+  type: ConstrainedType<T>,
+): T => applyConstraints(type.type, type.constraints).type

@@ -1,5 +1,11 @@
-import { Answers, buildAnswer } from '../types/type_inference/answers'
-import { ConstrainedType, Type } from '../types/type_inference/types'
+import {
+  ConstrainedType,
+  PrimitiveType,
+  Type,
+  TypeConstraints,
+  buildConstrainedType,
+  buildTypeConstraints,
+} from '../types/type_inference/types'
 import {
   ErrorNode,
   ProgramNode,
@@ -16,13 +22,23 @@ import {
 } from '../types/analyze/scopes'
 import { LogLevel, log } from '../logger'
 import { NotImplementedError, assert } from '../types/errors/internal'
+import { TypedNode, buildTypedNode } from '../types/type_inference/nodes'
+import {
+  buildIndeterminateTypeError,
+  buildTypeErrorFromConstrainedType,
+} from '../types/errors/annotations'
 import { Config } from '../config'
 import { TypedBindings } from '../types/analyze/bindings'
 import { addErrorUnless } from '../util/traverse'
-import { buildIndeterminateTypeError } from '../types/errors/annotations'
-import { buildUnconstrainedUnknownType } from '../util/types'
+import { buildConstrainedUnknownType } from '../util/types'
+import { collectErrors } from '../errors'
+import { isInstanceOf } from './instances'
+import { unifyConstraints } from './constraints'
 
-type DownState = {
+type State = {
+  /**
+   * A list of file scopes that are already typed.
+   */
   typedFileScopes: TypedFileScope[]
   /**
    * A stack of all scopes starting with the closest scope and ending with the
@@ -33,19 +49,22 @@ type DownState = {
    * A stack of typed bindings for each scope on the scope stack.
    */
   bindings: TypedBindings[]
-  /**
-   * The initial type for type inference on the given node.
-   */
-  type: ConstrainedType<Type>
 }
-type UpState<T extends SyntaxNode> = {
-  state: DownState
-  /**
-   * Represents a disjunction of possible type annotations for a given syntax
-   * node. Answers are empty on the way down the stack.
-   */
-  answers: Answers<T>
+
+/**
+ * An answer represents a type annotation for a given node in the syntax tree
+ * alongside a state.
+ */
+type Answer<T extends SyntaxNode> = {
+  state: State
+  typedNode: TypedNode<T>
 }
+
+/**
+ * Represents a disjunction of possible type annotations. for a given node in
+ * the syntax tree.
+ */
+type Answers<T extends SyntaxNode> = Answer<T>[]
 
 export const inferTypes = (
   config: Config,
@@ -68,48 +87,189 @@ const inferTypesOfFile = (
   typedFileScopes: TypedFileScope[],
   fileScope: FileScope,
 ): TypedFileScope => {
-  const initialState: DownState = {
+  const initialState: State = {
     typedFileScopes,
     scopes: [fileScope],
     bindings: [],
-    type: buildUnconstrainedUnknownType(),
   }
-
-  const { state, answers } = handleProgram(initialState, fileScope.node)
+  const answers = handleProgram(initialState, fileScope.node)
   const [answer] = answers
   const {
     scopes: [finalFileScope],
     bindings: [finalTypedBindings],
-  } = addErrorUnless<DownState>(
+  } = addErrorUnless<State>(
     answers.length === 1,
-    buildIndeterminateTypeError(answers),
-  )(state, fileScope.node)
+    buildIndeterminateTypeError(getTypedNodesFromAnswers(answers)),
+  )(answer.state, fileScope.node)
   assert(
     isFileScope(finalFileScope),
     'Traverse should arrive at the top-level file scope.',
   )
 
-  return buildTypedFileScope(finalFileScope, answer, finalTypedBindings)
+  return buildTypedFileScope(
+    finalFileScope,
+    answer.typedNode,
+    finalTypedBindings,
+  )
 }
 
-const buildUpState = <T extends SyntaxNode>(
-  state: DownState,
-  answers: Answers<T> = [],
-): UpState<T> => ({
+const getTypedNodesFromAnswers = <T extends SyntaxNode>(answers: Answers<T>) =>
+  answers.map((answer) => answer.typedNode)
+
+const getTypeConstraintsFromAnswers = <T extends SyntaxNode>(
+  answers: Answers<T>,
+) => answers.map((answer) => answer.typedNode.type.constraints)
+
+const buildAnswer = <T extends SyntaxNode>(
+  state: State,
+  typedNode: TypedNode<T>,
+): Answer<T> => ({
   state,
-  answers,
+  typedNode,
 })
 
-const traverse = (state: DownState, node: SyntaxNode): UpState<SyntaxNode> => {
+const buildEmptyAnswer = <T extends SyntaxNode>(
+  state: State,
+  node: T,
+): Answer<T> =>
+  buildAnswer(
+    state,
+    buildTypedNode(node, buildConstrainedType(PrimitiveType.Void)),
+  )
+
+const wrapAnswer = <T extends SyntaxNode>(
+  node: T,
+  childNodes: Answers<SyntaxNode>,
+  answer: Answer<SyntaxNode>,
+): Answer<T> =>
+  buildAnswer(
+    answer.state,
+    buildTypedNode(
+      node,
+      answer.typedNode.type,
+      getTypedNodesFromAnswers(childNodes),
+    ),
+  )
+
+const flattenAnswers = <T extends SyntaxNode>(answers: Answers<T>[]) =>
+  answers.reduce<Answers<T>>((acc, answer) => [...acc, ...answer], [])
+
+const filterAnswers = <T extends SyntaxNode>(
+  answers: Answers<T>,
+): Answers<T> => {
+  assert(answers.length > 0, 'There must always be at least one answer.')
+
+  // Remove answers with errors if there are some answers without errors.
+  const answersWithNoOfErrors: [
+    answer: Answer<T>,
+    numberOfErrors: number,
+  ][] = answers.map((answer) => [
+    answer,
+    collectErrors(answer.state.scopes[0]).length,
+  ])
+  const answersWithoutErrors = answersWithNoOfErrors.filter(([, n]) => n === 0)
+  if (answersWithoutErrors.length > 0)
+    return answersWithoutErrors.map(([answer]) => answer)
+
+  // Proceed with the answer with the fewest errors if all answers have errors.
+  const answersSortedByNoOfErrors = answersWithNoOfErrors.sort(
+    ([, a], [, b]) => a - b,
+  )
+  return [answersSortedByNoOfErrors.map(([answer]) => answer)[0]]
+}
+
+const reduceAnswers = <T extends SyntaxNode>(answers: Answers<T>[]) =>
+  filterAnswers(flattenAnswers(answers))
+
+const forAllAnswers = <T extends SyntaxNode, U extends SyntaxNode>(
+  answers: Answers<T>,
+  callback: (answer: Answer<T>) => Answers<U>,
+) => reduceAnswers(answers.map((answer) => callback(answer)))
+
+const traverseAll = <T extends SyntaxNode>(
+  nodes: T[],
+  initialState: State,
+  typeFactory: (
+    constraints: TypeConstraints,
+    node: T,
+  ) => ConstrainedType<Type> = buildConstrainedUnknownType,
+) =>
+  nodes.reduce<Answers<T>>((answers, node) => {
+    const typeConstraints =
+      answers.length > 0
+        ? getTypeConstraintsFromAnswers(answers)
+        : [buildTypeConstraints()]
+    return reduceAnswers(
+      typeConstraints.map((constraint) => {
+        const type = typeFactory(constraint, node)
+        return traverse(initialState, node, type) as Answers<T>
+      }),
+    )
+  }, [])
+
+const unifyConstraintsWithTypedNode = <T extends SyntaxNode>(
+  typedNode: TypedNode<T>,
+  constraints: TypeConstraints,
+): TypedNode<T> => {
+  const unifiedConstraints = unifyConstraints(
+    constraints,
+    typedNode.type.constraints,
+  )
+  return {
+    ...typedNode,
+    type: {
+      ...typedNode.type,
+      constraints: unifiedConstraints,
+    },
+  }
+}
+
+const ensureIsInstanceOf = <T extends SyntaxNode>(
+  node: T,
+  answer: Answer<T>,
+  generalType: ConstrainedType<Type>,
+): Answer<T> => {
+  const [predicate, constraints] = isInstanceOf(
+    answer.typedNode.type,
+    generalType,
+  )
+  const error = buildTypeErrorFromConstrainedType(
+    generalType,
+    answer.typedNode.type,
+  )
+  const stateWithError = addErrorUnless<State>(predicate, error)(
+    answer.state,
+    node,
+  )
+  const typedNode = unifyConstraintsWithTypedNode(answer.typedNode, constraints)
+  return buildAnswer(stateWithError, typedNode)
+}
+
+const traverse = <T extends SyntaxNode>(
+  state: State,
+  node: T,
+  type: ConstrainedType<Type>,
+): Answers<T> => {
+  const answers = handleNode(state, node, type) as Answers<T>
+  return forAllAnswers(answers, (answer) => [
+    ensureIsInstanceOf(node, answer, type),
+  ])
+}
+
+const handleNode = (
+  state: State,
+  node: SyntaxNode,
+  type: ConstrainedType<Type>,
+): Answers<SyntaxNode> => {
   assert(node.isNamed, 'The types of unnamed nodes should not be inferred.')
 
   switch (node.type) {
     case SyntaxType.ERROR:
-      return handleError(state, node)
+      return handleError(state, node, type)
     case SyntaxType.Comment:
-      return buildUpState(state)
+      return [buildEmptyAnswer(state, node)]
     case SyntaxType.HashBangLine:
-      return buildUpState(state)
+      return [buildEmptyAnswer(state, node)]
 
     case SyntaxType.Abstraction:
       throw new NotImplementedError(
@@ -372,13 +532,21 @@ const traverse = (state: DownState, node: SyntaxNode): UpState<SyntaxNode> => {
   }
 }
 
-const handleError = (state: DownState, node: ErrorNode): UpState<ErrorNode> => {
-  const type = buildUnconstrainedUnknownType()
-  const answer = buildAnswer(node, type)
-  return buildUpState(state, [answer])
+const handleError = (
+  state: State,
+  node: ErrorNode,
+  type: ConstrainedType<Type>,
+): Answers<ErrorNode> => {
+  const typedNode = buildTypedNode(node, type)
+  return [buildAnswer(state, typedNode)]
 }
 
 const handleProgram = (
-  state: DownState,
+  state: State,
   node: ProgramNode,
-): UpState<ProgramNode> => {}
+): Answers<ProgramNode> => {
+  const termAnswers = traverseAll(node.termNodes, state)
+  return forAllAnswers(termAnswers, (termAnswer) => [
+    wrapAnswer(node, termAnswers, termAnswer),
+  ])
+}
