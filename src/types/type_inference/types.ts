@@ -100,7 +100,7 @@ export type TypeConstraints = TypeVariableAssignment<Type>[]
 /**
  * Maps a type variable to its most general type.
  */
-type TypeVariableAssignment<T extends Type> = {
+export type TypeVariableAssignment<T extends Type> = {
   typeVariable: TypeVariable
   type: T
 }
