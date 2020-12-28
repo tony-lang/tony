@@ -7,14 +7,7 @@ import {
   TypeVariableAssignment,
   buildConstrainedType,
 } from '../types/type_inference/types'
-import {
-  TypedBindings,
-  TypedTermBinding,
-  TypedTypeBinding,
-  buildTypedBindings,
-  getTerms,
-  getTypes,
-} from '../types/analyze/bindings'
+import { TypedTermBinding } from '../types/analyze/bindings'
 import { unify } from './unification'
 
 /**
@@ -54,9 +47,18 @@ export const applyConstraints = (
   constraints: TypeConstraints,
 ): Type => {
   switch (type.kind) {
-    case TypeKind.Alias:
-    case TypeKind.Refined:
-      return { ...type, type: applyConstraints(type.type, constraints) }
+    case TypeKind.Intersection:
+    case TypeKind.Parametric:
+    case TypeKind.Union:
+      return {
+        ...type,
+        parameters: type.parameters.map((type) =>
+          applyConstraints(type, constraints),
+        ),
+      }
+    case TypeKind.NamedVariable:
+    case TypeKind.UnnamedVariable:
+      return getConstraintOf(constraints, type)?.type || type
     case TypeKind.Object:
       return {
         ...type,
@@ -65,36 +67,26 @@ export const applyConstraints = (
           constraints,
         ),
       }
-    case TypeKind.Parametric:
-      return {
-        ...type,
-        parameters: type.parameters.map((type) =>
-          applyConstraints(type, constraints),
-        ),
-      }
-    case TypeKind.Primitive:
+    case TypeKind.Refined:
+      return { ...type, type: applyConstraints(type.type, constraints) }
+
+    case TypeKind.Boolean:
+    case TypeKind.Number:
+    case TypeKind.RegExp:
+    case TypeKind.String:
+    case TypeKind.Void:
       return type
-    case TypeKind.Variable:
-      return getConstraintOf(constraints, type)?.type || type
   }
 }
 
 const applyConstraintsToBindings = (
-  bindings: TypedBindings,
+  bindings: TypedTermBinding[],
   constraints: TypeConstraints,
-): TypedBindings =>
-  buildTypedBindings(
-    getTerms<TypedTermBinding>(bindings).map(
-      applyConstraintsToBinding(constraints),
-    ),
-    getTypes<TypedTypeBinding>(bindings).map(
-      applyConstraintsToBinding(constraints),
-    ),
-  )
+): TypedTermBinding[] => bindings.map(applyConstraintsToBinding(constraints))
 
-const applyConstraintsToBinding = <T extends { type: ConstrainedType<Type> }>(
-  constraints: TypeConstraints,
-) => (binding: T): T => ({
+const applyConstraintsToBinding = (constraints: TypeConstraints) => (
+  binding: TypedTermBinding,
+): TypedTermBinding => ({
   ...binding,
   type: buildConstrainedType(
     applyConstraints(

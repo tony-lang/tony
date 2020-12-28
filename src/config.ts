@@ -1,4 +1,4 @@
-import { AbsolutePath, buildAbsolutePath } from './types/paths'
+import { AbsolutePath, buildAbsolutePath } from './types/path'
 import { getOutFilename } from './util/paths'
 
 export type Config = {

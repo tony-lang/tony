@@ -1,17 +1,18 @@
-import { Binding, TypedBinding, TypedBindings } from '../types/analyze/bindings'
 import { ConstrainedType, Type } from '../types/type_inference/types'
 import { FileScope, TypedFileScope } from '../types/analyze/scopes'
-import { addErrorToScope, findFileScope, findItemByName } from '../util/analyze'
+import { TermBinding, TypedTermBinding } from '../types/analyze/bindings'
+import { addErrorToScope, findFileScope } from '../util/scopes'
 import {
   buildUnknownFileError,
   buildUnknownImportError,
 } from '../types/errors/annotations'
 import { buildUnconstrainedUnknownType } from '../util/types'
+import { findBinding } from '../util/bindings'
 
-export const resolveBindingType = (
+export const resolveTermBindingType = (
   fileScopes: TypedFileScope[],
-  bindings: TypedBindings[],
-  binding: Binding,
+  bindings: TypedTermBinding[][],
+  binding: TermBinding,
   scope: FileScope,
 ): [type: ConstrainedType<Type>, newScope: FileScope] => {
   if (binding.importedFrom === undefined)
@@ -26,10 +27,9 @@ export const resolveBindingType = (
       addErrorToScope(scope, binding.node, buildUnknownFileError(file)),
     ]
 
-  const importedBinding = findTypedBindingOf([fileScope.typedBindings], {
-    ...binding,
-    name: importedBindingName,
-  })
+  const importedBinding = findBinding(importedBindingName, [
+    fileScope.typedBindings,
+  ])
   if (importedBinding === undefined || !importedBinding.isExported)
     return [
       buildUnconstrainedUnknownType(),
@@ -44,22 +44,9 @@ export const resolveBindingType = (
 }
 
 const resolveBindingTypeWithinScope = (
-  bindings: TypedBindings[],
-  binding: Binding,
+  bindings: TypedTermBinding[][],
+  binding: TermBinding,
 ): ConstrainedType<Type> => {
-  const typedBinding = findTypedBindingOf(bindings, binding)
+  const typedBinding = findBinding(binding.name, bindings)
   return typedBinding?.type || buildUnconstrainedUnknownType()
 }
-
-const findTypedBindingOf = (
-  bindings: TypedBindings[],
-  reference: Binding,
-): TypedBinding | undefined =>
-  bindings.reduce<TypedBinding | undefined>((binding, bindings) => {
-    if (binding !== undefined) return binding
-
-    return findItemByName<TypedBinding>(
-      reference.name,
-      bindings[reference.kind],
-    )
-  }, undefined)

@@ -5,34 +5,47 @@ import {
   PipelineNode,
   PrefixApplicationNode,
 } from 'tree-sitter-tony'
+import { PrimitiveType } from './primitive_types'
 import { TypedObjectScope } from '../analyze/scopes'
 
 // ---- Types ----
 
 export enum TypeKind {
-  Alias,
+  Intersection,
+  NamedVariable,
   Object,
   Parametric,
-  Primitive,
   Refined,
-  Variable,
+  Union,
+  UnnamedVariable,
+
+  // Literals
+  Boolean,
+  Number,
+  RegExp,
+  String,
+  Void,
 }
 
+/**
+ * Unnamed type variables represent internal type variables not occurring in the
+ * code.
+ */
+interface UnnamedTypeVariable {
+  kind: typeof TypeKind.UnnamedVariable
+}
+/**
+ * Named type variables represent a type variable that is given a concrete name
+ * in the code..
+ */
+interface NamedTypeVariable {
+  kind: typeof TypeKind.NamedVariable
+  name: string
+}
 /**
  * A type variable represents any type.
  */
-export interface TypeVariable {
-  kind: typeof TypeKind.Variable
-}
-
-/**
- * A type alias represents an existing type under a new name.
- */
-export interface TypeAlias {
-  kind: typeof TypeKind.Alias
-  name: string
-  type: Type
-}
+export type TypeVariable = UnnamedTypeVariable | NamedTypeVariable
 
 /**
  * A parametric type represents a concrete type that may depend on other types.
@@ -60,29 +73,33 @@ export interface ObjectType extends TypedObjectScope {
   kind: typeof TypeKind.Object
 }
 
-export enum PrimitiveTypeName {
-  Boolean,
-  Number,
-  RegExp,
-  String,
-  /**
-   * The type of operations that do not return anything.
-   */
-  Void,
+/**
+ * A union type represents the type of any of its parameters.
+ */
+export interface UnionType {
+  kind: typeof TypeKind.Union
+  parameters: Type[]
 }
 
-export interface PrimitiveType {
-  kind: typeof TypeKind.Primitive
-  name: PrimitiveTypeName
+/**
+ * An intersection type represents all types that can be assigned to all of its
+ * parameters.
+ */
+export interface IntersectionType {
+  kind: typeof TypeKind.Intersection
+  parameters: Type[]
 }
 
 export type Type =
   | TypeVariable
-  | TypeAlias
   | ParametricType
   | RefinedType
   | ObjectType
+  | UnionType
+  | IntersectionType
   | PrimitiveType
+
+export type NamedType = NamedTypeVariable | ParametricType | PrimitiveType
 
 /**
  * A constrained type represents a type alongside constraints on type variables.
@@ -119,13 +136,22 @@ type TypePredicate = {
 
 // ---- Factories ----
 
-export const buildTypeVariable = (): TypeVariable => ({
-  kind: TypeKind.Variable,
+export const buildUnnamedTypeVariable = (): UnnamedTypeVariable => ({
+  kind: TypeKind.UnnamedVariable,
 })
 
-export const buildPrimitiveType = (name: PrimitiveTypeName): PrimitiveType => ({
-  kind: TypeKind.Primitive,
+export const buildNamedTypeVariable = (name: string): NamedTypeVariable => ({
+  kind: TypeKind.NamedVariable,
   name,
+})
+
+export const buildParametricType = (
+  name: string,
+  parameters: Type[] = [],
+): ParametricType => ({
+  kind: TypeKind.Parametric,
+  name,
+  parameters,
 })
 
 export const buildConstrainedType = <T extends Type>(

@@ -1,8 +1,8 @@
-import { AbsolutePath, RelativePath } from '../paths'
+import { AbsolutePath, RelativePath } from '../path'
 import { ConstrainedType, Type } from '../type_inference/types'
 import { ProgramNode, SyntaxNode } from 'tree-sitter-tony'
-import { Binding } from '../analyze/bindings'
-import { CyclicDependency } from '../cyclic_dependencies'
+import { CyclicDependency } from '../cyclic_dependency'
+import { TermBinding } from '../analyze/bindings'
 import { TypedNode } from '../type_inference/nodes'
 import { flattenConstrainedType } from '../../type_inference/constraints'
 
@@ -66,7 +66,7 @@ export interface MissingBindingError {
 
 export interface MissingExternalImportTypeHintError {
   kind: typeof ErrorAnnotationKind.MissingExternalImportTypeHint
-  binding: Binding
+  binding: TermBinding
 }
 
 export interface RefinementTypeDeclarationOutsideRefinementTypeError {

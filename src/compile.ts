@@ -1,6 +1,6 @@
 import { ConfigOptions, buildConfig } from './config'
 import { LogLevel, log } from './logger'
-import { AbsolutePath } from './types/paths'
+import { AbsolutePath } from './types/path'
 import { analyze } from './analyze'
 import { generateCode } from './code_generation'
 import { inferTypes } from './type_inference'

@@ -15,6 +15,13 @@ export const IMPORT_FILE_EXTENSIONS = [
 // parser
 export const OPERATOR_REGEX = /(==|[!@$%^&*|<>~*\\\-+/.])[!@$%^&*|<>~*\\\-+/.=]*/
 
+// primitive types
+export const BOOLEAN_TYPE_NAME = 'Boolean'
+export const NUMBER_TYPE_NAME = 'Number'
+export const REG_EXP_TYPE_NAME = 'RegExp'
+export const STRING_TYPE_NAME = 'String'
+export const VOID_TYPE_NAME = 'Void'
+
 // standard library
 const STDLIB_PATH = path.join(__dirname, 'stdlib')
 export const DEFAULT_IMPORTS = `import * as stdlib from '${STDLIB_PATH}'`

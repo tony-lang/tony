@@ -1,4 +1,4 @@
-import { CyclicDependency } from '../types/cyclic_dependencies'
+import { CyclicDependency } from '../types/cyclic_dependency'
 
 /**
  * Adjacency lists where where for each index in the list the corresponding

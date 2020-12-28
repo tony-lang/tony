@@ -5,9 +5,9 @@ import {
 } from '../types/analyze/scopes'
 import { LogLevel, log } from '../logger'
 import { TopologicalSortError, topologicalSort } from '../util/topological_sort'
-import { AbsolutePath } from '../types/paths'
+import { AbsolutePath } from '../types/path'
 import { Config } from '../config'
-import { CyclicDependency } from '../types/cyclic_dependencies'
+import { CyclicDependency } from '../types/cyclic_dependency'
 import { buildCyclicDependencyError } from '../types/errors/annotations'
 import { isSamePath } from '../util/paths'
 

@@ -1,10 +1,8 @@
 import {
   ConstrainedType,
-  PrimitiveTypeName,
   Type,
   TypeConstraints,
   buildConstrainedType,
-  buildPrimitiveType,
   buildTypeConstraints,
 } from '../types/type_inference/types'
 import {
@@ -16,7 +14,7 @@ import {
 import {
   FileScope,
   GlobalScope,
-  ScopeStack,
+  NestedScope,
   TypedFileScope,
   buildTypedFileScope,
   isFileScope,
@@ -28,8 +26,10 @@ import {
   buildIndeterminateTypeError,
   buildTypeErrorFromConstrainedType,
 } from '../types/errors/annotations'
+import { Buffer } from '../types/buffer'
 import { Config } from '../config'
-import { TypedBindings } from '../types/analyze/bindings'
+import { TypedTermBinding } from '../types/analyze/bindings'
+import { VOID_TYPE } from '../types/type_inference/primitive_types'
 import { addErrorUnless } from '../util/traverse'
 import { buildConstrainedUnknownType } from '../util/types'
 import { collectErrors } from '../errors'
@@ -45,11 +45,11 @@ type State = {
    * A stack of all scopes starting with the closest scope and ending with the
    * symbol table.
    */
-  scopes: ScopeStack<FileScope>
+  scopes: Buffer<FileScope | NestedScope>
   /**
-   * A stack of typed bindings for each scope on the scope stack.
+   * A list of typed bindings for each scope on the scope stack.
    */
-  bindings: TypedBindings[]
+  bindings: Buffer<TypedTermBinding[]>
 }
 
 /**
@@ -133,13 +133,7 @@ const buildEmptyAnswer = <T extends SyntaxNode>(
   state: State,
   node: T,
 ): Answer<T> =>
-  buildAnswer(
-    state,
-    buildTypedNode(
-      node,
-      buildConstrainedType(buildPrimitiveType(PrimitiveTypeName.Void)),
-    ),
-  )
+  buildAnswer(state, buildTypedNode(node, buildConstrainedType(VOID_TYPE)))
 
 const wrapAnswer = <T extends SyntaxNode>(
   node: T,

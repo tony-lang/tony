@@ -1,5 +1,5 @@
 import { LogLevel, log } from '../logger'
-import { AbsolutePath } from '../types/paths'
+import { AbsolutePath } from '../types/path'
 import { Config } from '../config'
 import { FileScope } from '../types/analyze/scopes'
 import { ProgramNode } from 'tree-sitter-tony'
