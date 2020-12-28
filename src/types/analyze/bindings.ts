@@ -1,14 +1,37 @@
+import { ConstrainedType, Type } from '../type_inference/types'
 import {
-  ConstrainedType,
-  ParametricType,
-  Type,
-  TypeVariable,
-} from '../type_inference/types'
+  DestructuringPatternNode,
+  EnumNode,
+  EnumValueNode,
+  GeneratorNode,
+  IdentifierPatternNode,
+  ImportTypeNode,
+  InterfaceNode,
+  NamedTypeNode,
+  RefinementTypeDeclarationNode,
+  ShorthandMemberPatternNode,
+  TypeAliasNode,
+  TypeVariableDeclarationNode,
+} from 'tree-sitter-tony'
 import { AbsolutePath } from '../path'
-import { PrimitiveType } from '../type_inference/primitive_types'
-import { SyntaxNode } from 'tree-sitter-tony'
 
 // ---- Types ----
+
+export type TermBindingNode =
+  | DestructuringPatternNode
+  | EnumValueNode
+  | GeneratorNode
+  | IdentifierPatternNode
+  | ShorthandMemberPatternNode
+  | NamedTypeNode
+  | RefinementTypeDeclarationNode
+
+export type TypeBindingNode =
+  | EnumNode
+  | ImportTypeNode
+  | InterfaceNode
+  | TypeAliasNode
+  | TypeVariableDeclarationNode
 
 export type ImportBindingConfig = {
   file: AbsolutePath
@@ -22,13 +45,13 @@ enum BindingKind {
 
 interface AbstractBinding {
   name: string
-  node: SyntaxNode
   isExported: boolean
   importedFrom?: ImportBindingConfig
 }
 
 export interface TermBinding extends AbstractBinding {
   kind: typeof BindingKind.Term
+  node: TermBindingNode
   /**
    * A binding is implicit when it stems from a generator, parameter or case,
    * but not when it stems from an assignment. Used for code generation.
@@ -42,7 +65,7 @@ export interface TypedTermBinding extends TermBinding {
 
 export interface TypeBinding extends AbstractBinding {
   kind: typeof BindingKind.Type
-  type: TypeVariable | ParametricType | PrimitiveType
+  node: TypeBindingNode
 }
 
 // ---- Factories ----
@@ -57,7 +80,7 @@ export const buildImportBindingConfig = (
 
 export const buildTermBinding = (
   name: string,
-  node: SyntaxNode,
+  node: TermBindingNode,
   isImplicit: boolean,
   isExported = false,
   importedFrom?: ImportBindingConfig,
@@ -72,14 +95,12 @@ export const buildTermBinding = (
 
 export const buildTypeBinding = (
   name: string,
-  type: TypeVariable | ParametricType | PrimitiveType,
-  node: SyntaxNode,
+  node: TypeBindingNode,
   isExported = false,
   importedFrom?: ImportBindingConfig,
 ): TypeBinding => ({
   kind: BindingKind.Type,
   name,
-  type,
   node,
   isExported,
   importedFrom,

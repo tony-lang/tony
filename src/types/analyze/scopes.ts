@@ -22,12 +22,15 @@ export interface TypedObjectScope {
   typedBindings: TypedTermBinding[]
 }
 
-export interface ConcreteScope extends ObjectScope {
+export interface ScopeWithTypes extends ObjectScope {
   typeBindings: TypeBinding[]
+}
+
+export interface ScopeWithErrors {
   errors: MountedErrorAnnotation[]
 }
 
-export interface RecursiveScope<T extends ConcreteScope> {
+export interface RecursiveScope<T> {
   scopes: T[]
 }
 
@@ -37,7 +40,10 @@ export interface GlobalScope<T extends FileScope | TypedFileScope>
   errors: ErrorAnnotation[]
 }
 
-export interface FileScope extends RecursiveScope<NestedScope>, ConcreteScope {
+export interface FileScope
+  extends RecursiveScope<NestedScope>,
+    ScopeWithTypes,
+    ScopeWithErrors {
   kind: typeof ScopeKind.File
   file: AbsolutePath
   node: ProgramNode
@@ -50,7 +56,8 @@ export interface TypedFileScope extends FileScope, TypedObjectScope {
 
 export interface NestedScope
   extends RecursiveScope<NestedScope>,
-    ConcreteScope {
+    ScopeWithTypes,
+    ScopeWithErrors {
   kind: typeof ScopeKind.Nested
   node: SyntaxNode
 }

@@ -25,6 +25,7 @@ import {
   SyntaxNode,
   SyntaxType,
   TypeAliasNode,
+  TypeNode,
   TypeVariableDeclarationNameNode,
   TypeVariableDeclarationNode,
   TypeVariableNode,
@@ -40,6 +41,8 @@ import {
 import {
   ImportBindingConfig,
   TermBinding,
+  TermBindingNode,
+  TypeBindingNode,
   buildImportBindingConfig,
   buildTermBinding,
   buildTypeBinding,
@@ -58,11 +61,8 @@ import { findBinding, itemsMissingFrom } from '../util/bindings'
 import { getTermBindings, getTypeBindings } from '../util/scopes'
 import { Buffer } from '../types/buffer'
 import { Config } from '../config'
-import { NamedType } from '../types/type_inference/types'
 import { assert } from '../types/errors/internal'
-import { buildNamedType } from './build_type'
 import { fileMayBeImported } from '../util/paths'
-import { getNameOfType } from '../util/types'
 import { parseStringPattern } from '../util/literals'
 import { resolveRelativePath } from './resolve'
 
@@ -195,16 +195,7 @@ const addTermBinding = (
   isExported = false,
   importedFrom?: ImportBindingConfig,
 ) =>
-  ensure<
-    State,
-    | DestructuringPatternNode
-    | EnumValueNode
-    | GeneratorNode
-    | IdentifierPatternNode
-    | ShorthandMemberPatternNode
-    | NamedTypeNode
-    | RefinementTypeDeclarationNode
-  >(
+  ensure<State, TermBindingNode>(
     (state) =>
       findBinding(name, [state.termBindings]) === undefined &&
       findBinding(name, state.scopes.map(getTermBindings)) === undefined,
@@ -225,29 +216,15 @@ const addTermBinding = (
   )
 
 const addTypeBinding = (
-  type: NamedType,
+  name: string,
   isExported = false,
   importedFrom?: ImportBindingConfig,
 ) =>
-  ensure<
-    State,
-    | EnumNode
-    | ImportTypeNode
-    | InterfaceNode
-    | TypeAliasNode
-    | TypeVariableDeclarationNode
-  >(
+  ensure<State, TypeBindingNode>(
     (state) =>
-      findBinding(getNameOfType(type), state.scopes.map(getTypeBindings)) ===
-      undefined,
+      findBinding(name, state.scopes.map(getTypeBindings)) === undefined,
     (state, node) => {
-      const binding = buildTypeBinding(
-        getNameOfType(type),
-        type,
-        node,
-        isExported,
-        importedFrom,
-      )
+      const binding = buildTypeBinding(name, node, isExported, importedFrom)
       const [scope, ...parentScopes] = state.scopes
       const newScope = {
         ...scope,
@@ -258,7 +235,7 @@ const addTypeBinding = (
         scopes: [newScope, ...parentScopes],
       }
     },
-    buildDuplicateBindingError(getNameOfType(type)),
+    buildDuplicateBindingError(name),
   )
 
 const exportAndReset = (
@@ -271,6 +248,8 @@ const exportAndReset = (
 const getIdentifierName = (
   node: IdentifierNode | IdentifierPatternNameNode,
 ): string => node.text
+
+const getTypeName = (node: TypeNode): string => node.text
 
 const getTypeVariableName = (
   node: TypeVariableNode | TypeVariableDeclarationNameNode,
@@ -407,10 +386,10 @@ const handleDestructuringPattern = (
 
 const handleEnum = (state: State, node: EnumNode): State => {
   const { exportNextBindings: isExported } = state
-  const type = buildNamedType(state.scopes, node.nameNode)
+  const name = getTypeName(node.nameNode)
   const stateWithName = traverse(state, node.nameNode)
   const stateWithValues = traverseAll(stateWithName, node.valueNodes)
-  const stateWithBinding = addTypeBinding(type, isExported)(
+  const stateWithBinding = addTypeBinding(name, isExported)(
     { ...stateWithValues, exportNextBindings: false },
     node,
   )
@@ -552,11 +531,9 @@ const handleImportType = (state: State, node: ImportTypeNode): State => {
     exportNextBindings: isExported,
     importNextBindingsFrom: importedFrom,
   } = state
-  const originalType = buildNamedType(state.scopes, node.nameNode)
+  const originalName = getTypeName(node.nameNode)
   const stateWithName = traverse(state, node.nameNode)
-  const type = node.asNode
-    ? buildNamedType(state.scopes, node.asNode)
-    : originalType
+  const name = node.asNode ? getTypeName(node.asNode) : originalName
   const stateWithAs = conditionalApply(traverse)(stateWithName, node.asNode)
 
   assert(
@@ -564,15 +541,15 @@ const handleImportType = (state: State, node: ImportTypeNode): State => {
     'Within an import statement, there should be an import config.',
   )
 
-  return addTypeBinding(type, isExported, {
+  return addTypeBinding(name, isExported, {
     ...importedFrom,
-    originalName: getNameOfType(originalType),
+    originalName,
   })(stateWithAs, node)
 }
 
 const handleInterface = nest<InterfaceNode>((state, node) => {
   const [isExported, stateWithoutExport] = exportAndReset(state)
-  const type = buildNamedType(state.scopes, node.nameNode.nameNode)
+  const name = getTypeName(node.nameNode.nameNode)
   const stateWithName = traverse(stateWithoutExport, node.nameNode)
   const stateWithMembers = traverseAll(
     {
@@ -581,7 +558,7 @@ const handleInterface = nest<InterfaceNode>((state, node) => {
     },
     node.memberNodes,
   )
-  return addTypeBinding(type, isExported)(stateWithMembers, node)
+  return addTypeBinding(name, isExported)(stateWithMembers, node)
 })
 
 const handleListComprehension = nest<ListComprehensionNode>((state, node) => {
@@ -627,10 +604,10 @@ const handleRefinementTypeDeclaration = ensure<
 
 const handleTypeAlias = nest<TypeAliasNode>((state, node) => {
   const { exportNextBindings: isExported } = state
-  const type = buildNamedType(state.scopes, node.nameNode.nameNode)
+  const name = getTypeName(node.nameNode.nameNode)
   const stateWithName = traverse(state, node.nameNode)
   const stateWithType = traverse(stateWithName, node.typeNode)
-  const stateWithBinding = addTypeBinding(type, isExported)(stateWithType, node)
+  const stateWithBinding = addTypeBinding(name, isExported)(stateWithType, node)
   return { ...stateWithBinding, exportNextBindings: undefined }
 })
 
@@ -646,9 +623,9 @@ const handleTypeVariableDeclaration = (
   state: State,
   node: TypeVariableDeclarationNode,
 ): State => {
-  const type = buildNamedType(state.scopes, node.nameNode)
+  const name = getTypeVariableName(node.nameNode)
   const stateWithName = traverse(state, node.nameNode)
-  const stateWithBinding = addTypeBinding(type, true)(stateWithName, node)
+  const stateWithBinding = addTypeBinding(name, true)(stateWithName, node)
   return conditionalApply(traverseAll)(stateWithBinding, node.constraintNodes)
 }
 

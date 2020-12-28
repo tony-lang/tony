@@ -1,5 +1,9 @@
-import { ConstrainedType, Type } from '../types/type_inference/types'
-import { flattenConstrainedType } from './constraints'
+import {
+  ConstrainedType,
+  Type,
+  buildConstrainedType,
+} from '../types/type_inference/types'
+import { flattenConstrainedType, unifyConstraints } from './constraints'
 
 /**
  * Given a set of types, return the most general type such that all types in
@@ -7,7 +11,13 @@ import { flattenConstrainedType } from './constraints'
  */
 export const unify = (
   ...types: ConstrainedType<Type>[]
-): ConstrainedType<Type> =>
-  unconstrainedUnify(types.map(flattenConstrainedType))
+): ConstrainedType<Type> => {
+  const constrainedType = unconstrainedUnify(types.map(flattenConstrainedType))
+  const unifiedConstraints = unifyConstraints(
+    constrainedType.constraints,
+    ...types.map((type) => type.constraints),
+  )
+  return buildConstrainedType(constrainedType.type, unifiedConstraints)
+}
 
 const unconstrainedUnify = (types: Type[]): ConstrainedType<Type> => {}
