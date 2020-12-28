@@ -1,10 +1,12 @@
 import {
   ConstrainedType,
-  PrimitiveTypeName,
+  ParametricType,
   Type,
+  TypeVariable,
 } from '../type_inference/types'
-import { ProgramNode, SyntaxNode } from 'tree-sitter-tony'
-import { AbsolutePath } from '../paths'
+import { AbsolutePath } from '../path'
+import { PrimitiveType } from '../type_inference/primitive_types'
+import { SyntaxNode } from 'tree-sitter-tony'
 
 // ---- Types ----
 
@@ -24,40 +26,23 @@ interface AbstractBinding {
   isExported: boolean
   importedFrom?: ImportBindingConfig
 }
-interface AbstractTypedBinding extends AbstractBinding {
-  type: ConstrainedType<Type>
-}
 
 export interface TermBinding extends AbstractBinding {
   kind: typeof BindingKind.Term
   /**
    * A binding is implicit when it stems from a generator, parameter or case,
-   * but not when it stems from an assignment or a module.
+   * but not when it stems from an assignment. Used for code generation.
    */
   isImplicit: boolean
 }
-export interface TypedTermBinding extends TermBinding, AbstractTypedBinding {}
+
+export interface TypedTermBinding extends TermBinding {
+  type: ConstrainedType<Type>
+}
 
 export interface TypeBinding extends AbstractBinding {
   kind: typeof BindingKind.Type
-  isVariable: boolean
-  /**
-   * A binding is primitive if it represents one of the primitive types.
-   */
-  isPrimitive: boolean
-}
-export interface TypedTypeBinding extends TypeBinding, AbstractTypedBinding {}
-
-export type Binding = TermBinding | TypeBinding
-export type TypedBinding = TypedTermBinding | TypedTypeBinding
-
-export type Bindings = {
-  [BindingKind.Term]: TermBinding[]
-  [BindingKind.Type]: TypeBinding[]
-}
-export type TypedBindings = {
-  [BindingKind.Term]: TypedTermBinding[]
-  [BindingKind.Type]: TypedTypeBinding[]
+  type: TypeVariable | ParametricType | PrimitiveType
 }
 
 // ---- Factories ----
@@ -87,57 +72,15 @@ export const buildTermBinding = (
 
 export const buildTypeBinding = (
   name: string,
+  type: TypeVariable | ParametricType | PrimitiveType,
   node: SyntaxNode,
-  isVariable: boolean,
   isExported = false,
   importedFrom?: ImportBindingConfig,
 ): TypeBinding => ({
   kind: BindingKind.Type,
   name,
+  type,
   node,
   isExported,
   importedFrom,
-  isVariable,
-  isPrimitive: false,
 })
-
-const buildPrimitiveTypeBindings = (node: ProgramNode): TypeBinding[] =>
-  Object.values(PrimitiveTypeName)
-    .filter((value) => typeof value === 'string')
-    .map((name) => ({
-      kind: BindingKind.Type,
-      name: name as string,
-      node,
-      isExported: false,
-      isVariable: false,
-      isPrimitive: true,
-    }))
-
-export const buildBindings = (
-  from: Bindings,
-  terms: TermBinding[],
-  types: TypeBinding[],
-): Bindings => ({
-  [BindingKind.Term]: [...from[BindingKind.Term], ...terms],
-  [BindingKind.Type]: [...from[BindingKind.Type], ...types],
-})
-
-export const initializeBindings = (node?: ProgramNode): Bindings => ({
-  [BindingKind.Term]: [],
-  [BindingKind.Type]: node ? buildPrimitiveTypeBindings(node) : [],
-})
-
-export const buildTypedBindings = (
-  terms: TypedTermBinding[],
-  types: TypedTypeBinding[],
-): TypedBindings => ({
-  [BindingKind.Term]: terms,
-  [BindingKind.Type]: types,
-})
-
-export const getTerms = <T extends TermBinding>(
-  bindings: Record<BindingKind.Term, T[]>,
-): T[] => bindings[BindingKind.Term]
-export const getTypes = <T extends TypeBinding>(
-  bindings: Record<BindingKind.Type, T[]>,
-): T[] => bindings[BindingKind.Type]

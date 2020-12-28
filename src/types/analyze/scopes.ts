@@ -1,6 +1,6 @@
-import { Bindings, TypedBindings, initializeBindings } from './bindings'
 import { ErrorAnnotation, MountedErrorAnnotation } from '../errors/annotations'
-import { AbsolutePath } from '../paths'
+import { TermBinding, TypeBinding, TypedTermBinding } from './bindings'
+import { AbsolutePath } from '../path'
 import { ProgramNode } from 'tree-sitter-tony'
 import { SyntaxNode } from 'tree-sitter-tony'
 import { TypedNode } from '../type_inference/nodes'
@@ -15,14 +15,15 @@ enum ScopeKind {
 }
 
 export interface ObjectScope {
-  bindings: Bindings
+  bindings: TermBinding[]
 }
 
 export interface TypedObjectScope {
-  typedBindings: TypedBindings
+  typedBindings: TypedTermBinding[]
 }
 
 export interface ConcreteScope extends ObjectScope {
+  typeBindings: TypeBinding[]
   errors: MountedErrorAnnotation[]
 }
 
@@ -61,8 +62,6 @@ export type TypedScope =
   | TypedFileScope
   | NestedScope
 
-export type ScopeStack<T extends FileScope> = (T | NestedScope)[]
-
 // ---- Factories ----
 
 export const buildGlobalScope = <T extends FileScope | TypedFileScope>(
@@ -83,14 +82,15 @@ export const buildFileScope = (
   node,
   scopes: [],
   dependencies: [],
-  bindings: initializeBindings(node),
+  bindings: [],
+  typeBindings: [],
   errors: [],
 })
 
 export const buildTypedFileScope = (
   fileScope: FileScope,
   typedNode: TypedNode<ProgramNode>,
-  typedBindings: TypedBindings,
+  typedBindings: TypedTermBinding[],
 ): TypedFileScope => ({
   ...fileScope,
   typedNode,
@@ -100,7 +100,8 @@ export const buildTypedFileScope = (
 export const buildNestedScope = (node: SyntaxNode): NestedScope => ({
   kind: ScopeKind.Nested,
   node,
-  bindings: initializeBindings(),
+  bindings: [],
+  typeBindings: [],
   scopes: [],
   errors: [],
 })

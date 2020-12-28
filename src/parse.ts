@@ -1,6 +1,6 @@
 import { LogLevel, log } from './logger'
 import TreeSitterTony, { Tree } from 'tree-sitter-tony'
-import { AbsolutePath } from './types/paths'
+import { AbsolutePath } from './types/path'
 import { Config } from './config'
 import Parser from 'tree-sitter'
 import { readFile } from './util/paths'

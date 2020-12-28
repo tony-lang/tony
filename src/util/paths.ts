@@ -1,4 +1,4 @@
-import { AbsolutePath, Path } from '../types/paths'
+import { AbsolutePath, Path } from '../types/path'
 import {
   FILE_EXTENSION,
   FILE_EXTENSION_REGEX,

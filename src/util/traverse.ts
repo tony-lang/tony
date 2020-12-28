@@ -1,10 +1,11 @@
-import { FileScope, ScopeStack } from '../types/analyze/scopes'
+import { FileScope, NestedScope } from '../types/analyze/scopes'
+import { Buffer } from '../types/buffer'
 import { ErrorAnnotation } from '../types/errors/annotations'
 import { SyntaxNode } from 'tree-sitter-tony'
-import { addErrorToScope } from './analyze'
+import { addErrorToScope } from './scopes'
 
 type State = {
-  scopes: ScopeStack<FileScope>
+  scopes: Buffer<FileScope | NestedScope>
 }
 
 export const addError = <T extends State>(

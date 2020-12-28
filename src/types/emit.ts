@@ -1,4 +1,4 @@
-import { AbsolutePath } from './paths'
+import { AbsolutePath } from './path'
 
 type FileEmit = {
   originalFile: AbsolutePath
