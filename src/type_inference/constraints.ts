@@ -68,6 +68,7 @@ export const applyConstraints = (
         ),
       }
     case TypeKind.Refined:
+    case TypeKind.Tagged:
       return { ...type, type: applyConstraints(type.type, constraints) }
 
     case TypeKind.Boolean:

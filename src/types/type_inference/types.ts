@@ -16,6 +16,7 @@ export enum TypeKind {
   Object,
   Parametric,
   Refined,
+  Tagged,
   Union,
   UnnamedVariable,
 
@@ -67,6 +68,16 @@ export interface RefinedType {
 }
 
 /**
+ * A tagged type represents a type alongside a tag used to construct values of
+ * that type.
+ */
+export interface TaggedType {
+  kind: typeof TypeKind.Tagged
+  tag: string
+  type: Type
+}
+
+/**
  * An object type represents the scope of an object (e.g. its properties).
  */
 export interface ObjectType extends TypedObjectScope {
@@ -93,6 +104,7 @@ export interface IntersectionType {
 export type Type =
   | TypeVariable
   | ParametricType
+  | TaggedType
   | RefinedType
   | ObjectType
   | UnionType

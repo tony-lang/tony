@@ -63,7 +63,7 @@ import { Buffer } from '../types/buffer'
 import { Config } from '../config'
 import { assert } from '../types/errors/internal'
 import { fileMayBeImported } from '../util/paths'
-import { parseStringPattern } from '../util/literals'
+import { parseRawString } from '../util/literals'
 import { resolveRelativePath } from './resolve'
 
 type State = {
@@ -428,7 +428,7 @@ const handleImportAndExportedImport = (isExported: boolean) =>
       const source = buildRelativePath(
         state.file,
         '..',
-        parseStringPattern(node.sourceNode),
+        parseRawString(node.sourceNode),
       )
       const resolvedSource = resolveRelativePath(
         state.config,
