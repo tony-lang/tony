@@ -56,8 +56,7 @@ export const applyConstraints = (
           applyConstraints(type, constraints),
         ),
       }
-    case TypeKind.NamedVariable:
-    case TypeKind.UnnamedVariable:
+    case TypeKind.Variable:
       return getConstraintOf(constraints, type)?.type || type
     case TypeKind.Object:
       return {

@@ -1,4 +1,9 @@
-import { ConstrainedType, Type } from '../type_inference/types'
+import {
+  ConstrainedType,
+  ParametricType,
+  Type,
+  TypeVariable,
+} from '../type_inference/types'
 import {
   DestructuringPatternNode,
   EnumNode,
@@ -14,6 +19,7 @@ import {
   TypeVariableDeclarationNode,
 } from 'tree-sitter-tony'
 import { AbsolutePath } from '../path'
+import { buildTypeBindingType } from '../../analyze/build_type'
 
 // ---- Types ----
 
@@ -28,14 +34,13 @@ export type TermBindingNode =
 
 export type TypeBindingNode =
   | EnumNode
-  | ImportTypeNode
   | InterfaceNode
   | TypeAliasNode
   | TypeVariableDeclarationNode
 
-export type ImportBindingConfig = {
-  file: AbsolutePath
-  originalName?: string
+type AbstractBinding = {
+  name: string
+  isExported: boolean
 }
 
 enum BindingKind {
@@ -43,13 +48,7 @@ enum BindingKind {
   Type,
 }
 
-interface AbstractBinding {
-  name: string
-  isExported: boolean
-  importedFrom?: ImportBindingConfig
-}
-
-export interface TermBinding extends AbstractBinding {
+type AbstractTermBinding = AbstractBinding & {
   kind: typeof BindingKind.Term
   node: TermBindingNode
   /**
@@ -59,49 +58,109 @@ export interface TermBinding extends AbstractBinding {
   isImplicit: boolean
 }
 
-export interface TypedTermBinding extends TermBinding {
+type AbstractTypeBinding = AbstractBinding & {
+  kind: typeof BindingKind.Type
+}
+
+enum BindingLocation {
+  Imported,
+  Local,
+}
+
+export type ImportedBinding = {
+  location: typeof BindingLocation.Imported
+  file: AbsolutePath
+  originalName?: string
+}
+
+export type LocalBinding = {
+  location: typeof BindingLocation.Local
+}
+
+export type ImportedTermBinding = AbstractTermBinding & ImportedBinding
+export type LocalTermBinding = AbstractTermBinding & LocalBinding
+export type TermBinding = ImportedTermBinding | LocalTermBinding
+export type TypedTermBinding = TermBinding & {
   type: ConstrainedType<Type>
 }
 
-export interface TypeBinding extends AbstractBinding {
-  kind: typeof BindingKind.Type
-  node: TypeBindingNode
-}
+export type ImportedTypeBinding = AbstractTypeBinding &
+  ImportedBinding & { node: ImportTypeNode }
+export type LocalTypeBinding = AbstractTypeBinding &
+  LocalBinding & {
+    node: TypeBindingNode
+    type: ConstrainedType<TypeVariable | ParametricType>
+  }
+export type TypeBinding = ImportedTypeBinding | LocalTypeBinding
 
 // ---- Factories ----
 
-export const buildImportBindingConfig = (
+export const buildImportedTermBinding = (
   file: AbsolutePath,
-  originalName?: string,
-): ImportBindingConfig => ({
+  name: string,
+  originalName: string | undefined,
+  node: TermBindingNode,
+  isImplicit: boolean,
+  isExported = false,
+): ImportedTermBinding => ({
+  kind: BindingKind.Term,
+  location: BindingLocation.Imported,
+  name,
+  node,
+  isExported,
+  isImplicit,
   file,
   originalName,
 })
 
-export const buildTermBinding = (
+export const buildLocalTermBinding = (
   name: string,
   node: TermBindingNode,
   isImplicit: boolean,
   isExported = false,
-  importedFrom?: ImportBindingConfig,
-): TermBinding => ({
+): LocalTermBinding => ({
   kind: BindingKind.Term,
+  location: BindingLocation.Local,
   name,
   node,
   isExported,
-  importedFrom,
   isImplicit,
 })
 
-export const buildTypeBinding = (
+export const buildImportedTypeBinding = (
+  file: AbsolutePath,
   name: string,
-  node: TypeBindingNode,
+  originalName: string | undefined,
+  node: ImportTypeNode,
   isExported = false,
-  importedFrom?: ImportBindingConfig,
-): TypeBinding => ({
+): ImportedTypeBinding => ({
   kind: BindingKind.Type,
+  location: BindingLocation.Imported,
   name,
   node,
   isExported,
-  importedFrom,
+  file,
+  originalName,
 })
+
+export const buildLocalTypeBinding = (
+  typeBindings: TypeBinding[][],
+  name: string,
+  node: TypeBindingNode,
+  isExported = false,
+): LocalTypeBinding => ({
+  kind: BindingKind.Type,
+  location: BindingLocation.Local,
+  name,
+  node,
+  isExported,
+  type: buildTypeBindingType(typeBindings)(node),
+})
+
+export const isImportedBinding = (binding: {
+  location: BindingLocation
+}): binding is ImportedBinding => binding.location === BindingLocation.Imported
+
+export const isLocalBinding = (binding: {
+  location: BindingLocation
+}): binding is LocalBinding => binding.location === BindingLocation.Local

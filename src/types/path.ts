@@ -7,12 +7,12 @@ enum PathKind {
   Relative,
 }
 
-export interface AbsolutePath {
+export type AbsolutePath = {
   kind: typeof PathKind.Absolute
   path: string
 }
 
-export interface RelativePath {
+export type RelativePath = {
   kind: typeof PathKind.Relative
   path: string
   mount: AbsolutePath

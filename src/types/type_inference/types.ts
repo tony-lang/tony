@@ -12,13 +12,12 @@ import { TypedObjectScope } from '../analyze/scopes'
 
 export enum TypeKind {
   Intersection,
-  NamedVariable,
   Object,
   Parametric,
   Refined,
   Tagged,
   Union,
-  UnnamedVariable,
+  Variable,
 
   // Literals
   Boolean,
@@ -29,29 +28,16 @@ export enum TypeKind {
 }
 
 /**
- * Unnamed type variables represent internal type variables not occurring in the
- * code.
- */
-interface UnnamedTypeVariable {
-  kind: typeof TypeKind.UnnamedVariable
-}
-/**
- * Named type variables represent a type variable that is given a concrete name
- * in the code..
- */
-interface NamedTypeVariable {
-  kind: typeof TypeKind.NamedVariable
-  name: string
-}
-/**
  * A type variable represents any type.
  */
-export type TypeVariable = UnnamedTypeVariable | NamedTypeVariable
+export type TypeVariable = {
+  kind: typeof TypeKind.Variable
+}
 
 /**
  * A parametric type represents a concrete type that may depend on other types.
  */
-export interface ParametricType {
+export type ParametricType = {
   kind: typeof TypeKind.Parametric
   name: string
   parameters: Type[]
@@ -61,7 +47,7 @@ export interface ParametricType {
  * A refined type represents a type alongside some predicates on values of that
  * type.
  */
-export interface RefinedType {
+export type RefinedType = {
   kind: typeof TypeKind.Refined
   type: Type
   predicates: TypePredicate[]
@@ -71,7 +57,7 @@ export interface RefinedType {
  * A tagged type represents a type alongside a tag used to construct values of
  * that type.
  */
-export interface TaggedType {
+export type TaggedType = {
   kind: typeof TypeKind.Tagged
   tag: string
   type: Type
@@ -80,14 +66,14 @@ export interface TaggedType {
 /**
  * An object type represents the scope of an object (e.g. its properties).
  */
-export interface ObjectType extends TypedObjectScope {
+export type ObjectType = TypedObjectScope & {
   kind: typeof TypeKind.Object
 }
 
 /**
  * A union type represents the type of any of its parameters.
  */
-export interface UnionType {
+export type UnionType = {
   kind: typeof TypeKind.Union
   parameters: Type[]
 }
@@ -96,7 +82,7 @@ export interface UnionType {
  * An intersection type represents all types that can be assigned to all of its
  * parameters.
  */
-export interface IntersectionType {
+export type IntersectionType = {
   kind: typeof TypeKind.Intersection
   parameters: Type[]
 }
@@ -110,8 +96,6 @@ export type Type =
   | UnionType
   | IntersectionType
   | PrimitiveType
-
-export type NamedType = NamedTypeVariable | ParametricType | PrimitiveType
 
 /**
  * A constrained type represents a type alongside constraints on type variables.
@@ -148,13 +132,8 @@ type TypePredicate = {
 
 // ---- Factories ----
 
-export const buildUnnamedTypeVariable = (): UnnamedTypeVariable => ({
-  kind: TypeKind.UnnamedVariable,
-})
-
-export const buildNamedTypeVariable = (name: string): NamedTypeVariable => ({
-  kind: TypeKind.NamedVariable,
-  name,
+export const buildTypeVariable = (): TypeVariable => ({
+  kind: TypeKind.Variable,
 })
 
 export const buildParametricType = (

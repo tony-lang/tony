@@ -26,75 +26,75 @@ export enum ErrorAnnotationKind {
   UseOfTypeAsValue,
 }
 
-export interface CyclicDependencyError {
+export type CyclicDependencyError = {
   kind: typeof ErrorAnnotationKind.CyclicDependency
   cyclicDependency: CyclicDependency<AbsolutePath>
 }
 
-export interface DuplicateBindingError {
+export type DuplicateBindingError = {
   kind: typeof ErrorAnnotationKind.DuplicateBinding
   name: string
 }
 
-export interface ExportOutsideFileScopeError {
+export type ExportOutsideFileScopeError = {
   kind: typeof ErrorAnnotationKind.ExportOutsideFileScope
 }
 
-export interface ExternalTypeImportError {
+export type ExternalTypeImportError = {
   kind: typeof ErrorAnnotationKind.ExternalTypeImport
   type: Type
 }
 
-export interface ImportOutsideFileScopeError {
+export type ImportOutsideFileScopeError = {
   kind: typeof ErrorAnnotationKind.ImportOutsideFileScope
 }
 
-export interface IncompleteWhenPatternError {
+export type IncompleteWhenPatternError = {
   kind: typeof ErrorAnnotationKind.IncompleteWhenPattern
   missingBindings: string[]
 }
 
-export interface IndeterminateTypeError {
+export type IndeterminateTypeError = {
   kind: typeof ErrorAnnotationKind.IndeterminateType
   answers: TypedNode<ProgramNode>[]
 }
 
-export interface MissingBindingError {
+export type MissingBindingError = {
   kind: typeof ErrorAnnotationKind.MissingBinding
   name: string
 }
 
-export interface MissingExternalImportTypeHintError {
+export type MissingExternalImportTypeHintError = {
   kind: typeof ErrorAnnotationKind.MissingExternalImportTypeHint
   binding: TermBinding
 }
 
-export interface RefinementTypeDeclarationOutsideRefinementTypeError {
+export type RefinementTypeDeclarationOutsideRefinementTypeError = {
   kind: typeof ErrorAnnotationKind.RefinementTypeDeclarationOutsideRefinementType
 }
 
-export interface TypeError {
+export type TypeError = {
   kind: typeof ErrorAnnotationKind.Type
   expected: Type
   actual: Type
 }
 
-export interface UnknownFileError {
+export type UnknownFileError = {
   kind: typeof ErrorAnnotationKind.UnknownFile
   sourcePath: AbsolutePath | RelativePath
 }
 
-export interface UnknownImportError {
+export type UnknownImportError = {
   kind: typeof ErrorAnnotationKind.UnknownImport
   sourcePath: AbsolutePath
   name: string
 }
 
-export interface UnsupportedSyntaxError {
+export type UnsupportedSyntaxError = {
   kind: typeof ErrorAnnotationKind.UnsupportedSyntax
 }
 
-export interface UseOfTypeAsValueError {
+export type UseOfTypeAsValueError = {
   kind: typeof ErrorAnnotationKind.UseOfTypeAsValue
   type: Type
 }

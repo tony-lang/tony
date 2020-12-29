@@ -26,7 +26,6 @@ import {
   buildIndeterminateTypeError,
   buildTypeErrorFromConstrainedType,
 } from '../types/errors/annotations'
-import { Buffer } from '../types/buffer'
 import { Config } from '../config'
 import { TypedTermBinding } from '../types/analyze/bindings'
 import { VOID_TYPE } from '../types/type_inference/primitive_types'
@@ -45,11 +44,11 @@ type State = {
    * A stack of all scopes starting with the closest scope and ending with the
    * symbol table.
    */
-  scopes: Buffer<FileScope | NestedScope>
+  scopes: (FileScope | NestedScope)[]
   /**
    * A list of typed bindings for each scope on the scope stack.
    */
-  bindings: Buffer<TypedTermBinding[]>
+  bindings: TypedTermBinding[][]
 }
 
 /**

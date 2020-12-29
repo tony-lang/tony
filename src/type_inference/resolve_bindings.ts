@@ -1,10 +1,15 @@
 import { ConstrainedType, Type } from '../types/type_inference/types'
-import { ScopeWithErrors, TypedFileScope } from '../types/analyze/scopes'
 import {
+  LocalBinding,
+  LocalTermBinding,
+  LocalTypeBinding,
   TermBinding,
   TypeBinding,
   TypedTermBinding,
+  isImportedBinding,
+  isLocalBinding,
 } from '../types/analyze/bindings'
+import { ScopeWithErrors, TypedFileScope } from '../types/analyze/scopes'
 import {
   addErrorToScope,
   findFileScope,
@@ -15,13 +20,10 @@ import {
   buildUnknownFileError,
   buildUnknownImportError,
 } from '../types/errors/annotations'
-import { Buffer } from '../types/buffer'
-import { SyntaxType } from 'tree-sitter-tony'
 import { assert } from '../types/errors/internal'
 import { buildUnconstrainedUnknownType } from '../util/types'
 import { findBinding } from '../util/bindings'
 import { isSamePath } from '../util/paths'
-import { resolveType } from './resolve_type'
 
 type StrongBinding<T extends TermBinding | TypeBinding> = T extends TermBinding
   ? TypedTermBinding
@@ -35,30 +37,34 @@ const resolveBindingType = <
   U extends ScopeWithErrors
 >(
   getBindings: (fileScope: TypedFileScope) => StrongBinding<T>[],
-  resolveTypeWithinScope: (
-    bindings: Buffer<StrongBinding<T>[]>,
-    binding: WeakBinding<T>,
+  resolveLocalBindingType: (
+    binding: WeakBinding<T> & LocalBinding,
+    bindings: StrongBinding<T>[][],
   ) => ConstrainedType<Type>,
 ) => (
   fileScopes: TypedFileScope[],
   scope: U,
-  bindings: Buffer<StrongBinding<T>[]>,
+  bindings: StrongBinding<T>[][],
   binding: WeakBinding<T>,
 ): [
   type: ConstrainedType<Type>,
   newScope: U,
   newFileScopes: TypedFileScope[],
 ] => {
-  if (binding.importedFrom === undefined)
-    return [resolveTypeWithinScope(bindings, binding), scope, fileScopes]
+  if (isLocalBinding(binding))
+    return [resolveLocalBindingType(binding, bindings), scope, fileScopes]
 
-  const { file, originalName } = binding.importedFrom
-  const importedBindingName = originalName || binding.name
-  const fileScope = findFileScope(fileScopes, file)
+  assert(
+    isImportedBinding(binding),
+    'When a binding is not local it must be imported.',
+  )
+
+  const importedBindingName = binding.originalName || binding.name
+  const fileScope = findFileScope(fileScopes, binding.file)
   if (fileScope === undefined)
     return [
       buildUnconstrainedUnknownType(),
-      addErrorToScope(scope, binding.node, buildUnknownFileError(file)),
+      addErrorToScope(scope, binding.node, buildUnknownFileError(binding.file)),
       fileScopes,
     ]
 
@@ -70,7 +76,7 @@ const resolveBindingType = <
       addErrorToScope(
         scope,
         binding.node,
-        buildUnknownImportError(file, importedBindingName),
+        buildUnknownImportError(binding.file, importedBindingName),
       ),
       fileScopes,
     ]
@@ -78,7 +84,7 @@ const resolveBindingType = <
   const [type, newFileScope, newFileScopes] = resolveBindingType<
     T,
     TypedFileScope
-  >(getBindings, resolveTypeWithinScope)(
+  >(getBindings, resolveLocalBindingType)(
     fileScopes,
     fileScope,
     importedBindings,
@@ -91,8 +97,8 @@ const resolveBindingType = <
 }
 
 const resolveTermBindingTypeWithinScope = (
-  bindings: Buffer<TypedTermBinding[]>,
-  binding: TermBinding,
+  binding: LocalTermBinding,
+  bindings: TypedTermBinding[][],
 ) => {
   const typedBinding = findBinding(binding.name, bindings)
   return typedBinding?.type || buildUnconstrainedUnknownType()
@@ -103,15 +109,8 @@ export const resolveTermBindingType = resolveBindingType<
   ScopeWithErrors
 >(getTypedTermBindings, resolveTermBindingTypeWithinScope)
 
-const resolveTypeBindingTypeWithinScope = (
-  typeBindings: Buffer<TypeBinding[]>,
-  typeBinding: TypeBinding,
-) => {
-  assert(
-    typeBinding.node.type !== SyntaxType.ImportType,
-    'Bindings arising from an ImportTypeNode should have an import binding config.',
-  )
-  return resolveType(typeBindings, typeBinding.node)
+const resolveTypeBindingTypeWithinScope = (typeBinding: LocalTypeBinding) => {
+  return typeBinding.type
 }
 
 export const resolveTypeBindingType = resolveBindingType<

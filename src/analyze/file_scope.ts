@@ -10,7 +10,6 @@ import {
   ExportedImportNode,
   GeneratorNode,
   IdentifierNode,
-  IdentifierPatternNameNode,
   IdentifierPatternNode,
   ImportIdentifierNode,
   ImportNode,
@@ -25,8 +24,6 @@ import {
   SyntaxNode,
   SyntaxType,
   TypeAliasNode,
-  TypeNode,
-  TypeVariableDeclarationNameNode,
   TypeVariableDeclarationNode,
   TypeVariableNode,
   WhenNode,
@@ -39,13 +36,13 @@ import {
   isFileScope,
 } from '../types/analyze/scopes'
 import {
-  ImportBindingConfig,
   TermBinding,
   TermBindingNode,
   TypeBindingNode,
-  buildImportBindingConfig,
-  buildTermBinding,
-  buildTypeBinding,
+  buildImportedTermBinding,
+  buildImportedTypeBinding,
+  buildLocalTermBinding,
+  buildLocalTypeBinding,
 } from '../types/analyze/bindings'
 import { addError, conditionalApply, ensure } from '../util/traverse'
 import {
@@ -58,13 +55,19 @@ import {
   buildUnknownFileError,
 } from '../types/errors/annotations'
 import { findBinding, itemsMissingFrom } from '../util/bindings'
+import {
+  getIdentifierName,
+  getTypeName,
+  getTypeVariableName,
+  parseRawString,
+} from '../util/parse'
 import { getTermBindings, getTypeBindings } from '../util/scopes'
-import { Buffer } from '../types/buffer'
 import { Config } from '../config'
 import { assert } from '../types/errors/internal'
 import { fileMayBeImported } from '../util/paths'
-import { parseRawString } from '../util/literals'
 import { resolveRelativePath } from './resolve'
+
+type ImportedBindingConfig = { file: AbsolutePath; originalName?: string }
 
 type State = {
   config: Config
@@ -73,12 +76,12 @@ type State = {
    * A stack of all scopes starting with the closest scope and ending with the
    * symbol table. Scopes are collected recursively.
    */
-  scopes: Buffer<FileScope | NestedScope>
+  scopes: (FileScope | NestedScope)[]
   /**
    * Buffered term-level bindings that have been defined but should not be
    * accessed yet (e.g. within patterns).
    */
-  termBindings: Buffer<TermBinding>
+  termBindings: TermBinding[]
   /**
    * When enabled the next declared bindings will be exported.
    */
@@ -87,7 +90,7 @@ type State = {
    * When enabled the next declared bindings will be imported from the given
    * path.
    */
-  importNextBindingsFrom?: ImportBindingConfig
+  importNextBindingsFrom?: ImportedBindingConfig
   /**
    * When enabled the next bindings stemming from identifier patterns will be
    * implicit.
@@ -193,20 +196,23 @@ const addTermBinding = (
   name: string,
   isImplicit: boolean,
   isExported = false,
-  importedFrom?: ImportBindingConfig,
+  importedFrom?: ImportedBindingConfig,
 ) =>
   ensure<State, TermBindingNode>(
     (state) =>
       findBinding(name, [state.termBindings]) === undefined &&
       findBinding(name, state.scopes.map(getTermBindings)) === undefined,
     (state, node) => {
-      const binding = buildTermBinding(
-        name,
-        node,
-        isImplicit,
-        isExported,
-        importedFrom,
-      )
+      const binding = importedFrom
+        ? buildImportedTermBinding(
+            importedFrom.file,
+            name,
+            importedFrom.originalName,
+            node,
+            isImplicit,
+            isExported,
+          )
+        : buildLocalTermBinding(name, node, isImplicit, isExported)
       return {
         ...state,
         termBindings: [...state.termBindings, binding],
@@ -218,13 +224,26 @@ const addTermBinding = (
 const addTypeBinding = (
   name: string,
   isExported = false,
-  importedFrom?: ImportBindingConfig,
+  importedFrom?: ImportedBindingConfig,
 ) =>
-  ensure<State, TypeBindingNode>(
+  ensure<State, TypeBindingNode | ImportTypeNode>(
     (state) =>
       findBinding(name, state.scopes.map(getTypeBindings)) === undefined,
     (state, node) => {
-      const binding = buildTypeBinding(name, node, isExported, importedFrom)
+      const binding = importedFrom
+        ? buildImportedTypeBinding(
+            importedFrom.file,
+            name,
+            importedFrom.originalName,
+            node as ImportTypeNode,
+            isExported,
+          )
+        : buildLocalTypeBinding(
+            state.scopes.map(getTypeBindings),
+            name,
+            node as TypeBindingNode,
+            isExported,
+          )
       const [scope, ...parentScopes] = state.scopes
       const newScope = {
         ...scope,
@@ -244,16 +263,6 @@ const exportAndReset = (
   !!state.exportNextBindings,
   { ...state, exportNextBindings: undefined },
 ]
-
-const getIdentifierName = (
-  node: IdentifierNode | IdentifierPatternNameNode,
-): string => node.text
-
-const getTypeName = (node: TypeNode): string => node.text
-
-const getTypeVariableName = (
-  node: TypeVariableNode | TypeVariableDeclarationNameNode,
-): string => node.text
 
 const traverseAll = (state: State, nodes: SyntaxNode[]): State =>
   nodes.reduce((acc, child) => traverse(acc, child), state)
@@ -443,7 +452,7 @@ const handleImportAndExportedImport = (isExported: boolean) =>
         {
           ...stateWithDependency,
           exportNextBindings: isExported,
-          importNextBindingsFrom: buildImportBindingConfig(resolvedSource),
+          importNextBindingsFrom: { file: resolvedSource },
         },
         node.importNodes,
       )

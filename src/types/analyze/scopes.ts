@@ -14,45 +14,46 @@ enum ScopeKind {
   RefinementType,
 }
 
-export interface ObjectScope {
+export type ObjectScope = {
   bindings: TermBinding[]
 }
 
-export interface TypedObjectScope {
+export type TypedObjectScope = {
   typedBindings: TypedTermBinding[]
 }
 
-export interface ScopeWithTypes extends ObjectScope {
+export type ScopeWithTypes = ObjectScope & {
   typeBindings: TypeBinding[]
 }
 
-export interface ScopeWithErrors {
+export type ScopeWithErrors = {
   errors: MountedErrorAnnotation[]
 }
 
-export interface RecursiveScope<T> {
+export type RecursiveScope<T> = {
   scopes: T[]
 }
 
-export interface GlobalScope<T extends FileScope | TypedFileScope>
-  extends RecursiveScope<T> {
+export type GlobalScope<
+  T extends FileScope | TypedFileScope
+> = RecursiveScope<T> & {
   kind: typeof ScopeKind.Global
   errors: ErrorAnnotation[]
 }
 
-export interface FileScope
-  extends RecursiveScope<NestedScope>,
-    ScopeWithTypes,
-    ScopeWithErrors {
-  kind: typeof ScopeKind.File
-  file: AbsolutePath
-  node: ProgramNode
-  dependencies: AbsolutePath[]
-}
+export type FileScope = RecursiveScope<NestedScope> &
+  ScopeWithTypes &
+  ScopeWithErrors & {
+    kind: typeof ScopeKind.File
+    file: AbsolutePath
+    node: ProgramNode
+    dependencies: AbsolutePath[]
+  }
 
-export interface TypedFileScope extends FileScope, TypedObjectScope {
-  typedNode: TypedNode<ProgramNode>
-}
+export type TypedFileScope = FileScope &
+  TypedObjectScope & {
+    typedNode: TypedNode<ProgramNode>
+  }
 
 export interface NestedScope
   extends RecursiveScope<NestedScope>,
@@ -61,13 +62,6 @@ export interface NestedScope
   kind: typeof ScopeKind.Nested
   node: SyntaxNode
 }
-
-export type Scope = GlobalScope<FileScope> | FileScope | NestedScope
-
-export type TypedScope =
-  | GlobalScope<TypedFileScope>
-  | TypedFileScope
-  | NestedScope
 
 // ---- Factories ----
 

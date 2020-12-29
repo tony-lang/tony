@@ -1,50 +1,36 @@
 import {
-  BOOLEAN_TYPE_NAME,
-  NUMBER_TYPE_NAME,
-  REG_EXP_TYPE_NAME,
-  STRING_TYPE_NAME,
-  VOID_TYPE_NAME,
-} from '../constants'
-import {
   ConstrainedType,
-  NamedType,
+  Type,
   TypeConstraints,
-  TypeKind,
   TypeVariable,
   buildConstrainedType,
-  buildUnnamedTypeVariable,
+  buildTypeVariable,
 } from '../types/type_inference/types'
-import { PrimitiveType } from '../types/type_inference/primitive_types'
+import { unifyConstraints } from '../type_inference/constraints'
 
 export const buildUnconstrainedUnknownType = (): ConstrainedType<TypeVariable> =>
-  buildConstrainedType(buildUnnamedTypeVariable())
+  buildConstrainedType(buildTypeVariable())
 
 export const buildConstrainedUnknownType = (
   constraints: TypeConstraints,
 ): ConstrainedType<TypeVariable> =>
-  buildConstrainedType(buildUnnamedTypeVariable(), constraints)
+  buildConstrainedType(buildTypeVariable(), constraints)
 
-export const getNameOfType = (type: NamedType): string => {
-  switch (type.kind) {
-    case TypeKind.Parametric:
-    case TypeKind.NamedVariable:
-      return type.name
-    default:
-      return getNameOfPrimitiveType(type)
-  }
+export const buildConstrainedUnknownTypeFromTypes = (
+  types: Type[],
+): ConstrainedType<TypeVariable> => {
+  const typeVariable = buildTypeVariable()
+  return buildConstrainedType(
+    typeVariable,
+    types.map((type) => ({ typeVariable, type })),
+  )
 }
 
-const getNameOfPrimitiveType = (type: PrimitiveType): string => {
-  switch (type.kind) {
-    case TypeKind.Boolean:
-      return BOOLEAN_TYPE_NAME
-    case TypeKind.Number:
-      return NUMBER_TYPE_NAME
-    case TypeKind.RegExp:
-      return REG_EXP_TYPE_NAME
-    case TypeKind.String:
-      return STRING_TYPE_NAME
-    case TypeKind.Void:
-      return VOID_TYPE_NAME
-  }
-}
+export const reduceConstraints = <T extends Type>(
+  ...constrainedTypes: ConstrainedType<T>[]
+): [types: T[], constraints: TypeConstraints] => [
+  constrainedTypes.map((constrainedType) => constrainedType.type),
+  unifyConstraints(
+    ...constrainedTypes.map((constrainedType) => constrainedType.constraints),
+  ),
+]

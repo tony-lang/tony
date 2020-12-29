@@ -5,5 +5,5 @@ import { ConstrainedType, Type } from '../types/type_inference/types'
  * the set are instances of that type.
  */
 export const generalize = (
-  types: ConstrainedType<Type>[],
+  ...types: ConstrainedType<Type>[]
 ): ConstrainedType<Type> => {}

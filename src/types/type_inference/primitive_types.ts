@@ -2,26 +2,26 @@ import { TypeKind } from './types'
 
 // ---- Types ----
 
-interface BooleanType {
+type BooleanType = {
   kind: typeof TypeKind.Boolean
 }
 
-interface NumberType {
+type NumberType = {
   kind: typeof TypeKind.Number
 }
 
-interface RegExpType {
+type RegExpType = {
   kind: typeof TypeKind.RegExp
 }
 
-interface StringType {
+type StringType = {
   kind: typeof TypeKind.String
 }
 
 /**
  * The type of operations that do not return anything.
  */
-interface VoidType {
+type VoidType = {
   kind: typeof TypeKind.Void
 }
 
