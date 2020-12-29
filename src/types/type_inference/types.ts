@@ -4,6 +4,7 @@ import {
   InfixApplicationNode,
   PipelineNode,
   PrefixApplicationNode,
+  SyntaxNode,
 } from 'tree-sitter-tony'
 import { PrimitiveType } from './primitive_types'
 import { TypedObjectScope } from '../analyze/scopes'
@@ -11,6 +12,8 @@ import { TypedObjectScope } from '../analyze/scopes'
 // ---- Types ----
 
 export enum TypeKind {
+  Curried,
+  Generic,
   Intersection,
   Object,
   Parametric,
@@ -35,12 +38,32 @@ export type TypeVariable = {
 }
 
 /**
- * A parametric type represents a concrete type that may depend on other types.
+ * A curried type represents an abstraction parametrized by the `from` type and
+ * returning the `to` type.
+ */
+export type CurriedType = {
+  kind: typeof TypeKind.Curried
+  from: Type
+  to: Type
+}
+
+/**
+ * A generic type represents a type that may depend on other types.
+ */
+export type GenericType = {
+  kind: typeof TypeKind.Generic
+  name: string
+  typeParameters: Type[]
+}
+
+/**
+ * A parametric type represents a concrete instance of a parametric type.
  */
 export type ParametricType = {
   kind: typeof TypeKind.Parametric
   name: string
-  parameters: Type[]
+  typeArguments: Type[]
+  termArguments: SyntaxNode[]
 }
 
 /**
@@ -89,6 +112,8 @@ export type IntersectionType = {
 
 export type Type =
   | TypeVariable
+  | CurriedType
+  | GenericType
   | ParametricType
   | TaggedType
   | RefinedType
@@ -136,12 +161,41 @@ export const buildTypeVariable = (): TypeVariable => ({
   kind: TypeKind.Variable,
 })
 
+export const buildCurriedType = (from: Type, to: Type): CurriedType => ({
+  kind: TypeKind.Curried,
+  from,
+  to,
+})
+
+export const buildGenericType = (
+  name: string,
+  typeParameters: Type[],
+): GenericType => ({
+  kind: TypeKind.Generic,
+  name,
+  typeParameters,
+})
+
 export const buildParametricType = (
   name: string,
-  parameters: Type[] = [],
+  typeArguments: Type[],
+  termArguments: SyntaxNode[],
 ): ParametricType => ({
   kind: TypeKind.Parametric,
   name,
+  typeArguments,
+  termArguments,
+})
+
+export const buildIntersectionType = (
+  parameters: Type[] = [],
+): IntersectionType => ({
+  kind: TypeKind.Intersection,
+  parameters,
+})
+
+export const buildUnionType = (parameters: Type[] = []): UnionType => ({
+  kind: TypeKind.Union,
   parameters,
 })
 

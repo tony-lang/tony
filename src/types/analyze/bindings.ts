@@ -1,6 +1,6 @@
 import {
   ConstrainedType,
-  ParametricType,
+  GenericType,
   Type,
   TypeVariable,
 } from '../type_inference/types'
@@ -89,7 +89,7 @@ export type ImportedTypeBinding = AbstractTypeBinding &
 export type LocalTypeBinding = AbstractTypeBinding &
   LocalBinding & {
     node: TypeBindingNode
-    type: ConstrainedType<TypeVariable | ParametricType>
+    type: ConstrainedType<TypeVariable | GenericType>
   }
 export type TypeBinding = ImportedTypeBinding | LocalTypeBinding
 

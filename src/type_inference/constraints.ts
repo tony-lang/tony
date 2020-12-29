@@ -47,12 +47,31 @@ export const applyConstraints = (
   constraints: TypeConstraints,
 ): Type => {
   switch (type.kind) {
+    case TypeKind.Curried:
+      return {
+        ...type,
+        from: applyConstraints(type.from, constraints),
+        to: applyConstraints(type.to, constraints),
+      }
+    case TypeKind.Generic:
+      return {
+        ...type,
+        typeParameters: type.typeParameters.map((type) =>
+          applyConstraints(type, constraints),
+        ),
+      }
     case TypeKind.Intersection:
-    case TypeKind.Parametric:
     case TypeKind.Union:
       return {
         ...type,
         parameters: type.parameters.map((type) =>
+          applyConstraints(type, constraints),
+        ),
+      }
+    case TypeKind.Parametric:
+      return {
+        ...type,
+        typeArguments: type.typeArguments.map((type) =>
           applyConstraints(type, constraints),
         ),
       }

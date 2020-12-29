@@ -1,10 +1,15 @@
 import {
   ConstrainedType,
-  ParametricType,
+  GenericType,
   Type,
+  TypeKind,
   TypeVariable,
   buildConstrainedType,
+  buildCurriedType,
+  buildGenericType,
+  buildIntersectionType,
   buildParametricType,
+  buildUnionType,
 } from '../types/type_inference/types'
 import {
   CurriedTypeNode,
@@ -53,7 +58,7 @@ type InternalTypeNode =
  */
 export const buildTypeBindingType = (typeBindings: TypeBinding[][]) => (
   node: TypeBindingNode,
-): ConstrainedType<TypeVariable | ParametricType> => {
+): ConstrainedType<TypeVariable | GenericType> => {
   switch (node.type) {
     case SyntaxType.Enum:
       return handleTypeNode(node.nameNode)
@@ -66,19 +71,21 @@ export const buildTypeBindingType = (typeBindings: TypeBinding[][]) => (
 }
 
 const handleTypeNode = (node: TypeNode) =>
-  buildConstrainedType(buildParametricType(getTypeName(node)))
+  buildConstrainedType(buildGenericType(getTypeName(node), []))
 
 const handleTypeDeclaration = (
   typeBindings: TypeBinding[][],
   node: TypeDeclarationNode,
 ) => {
   const name = getTypeName(node.nameNode)
-  const constrainedParameters = node.parameterNodes.map(
+  const constrainedTypeParameters = node.parameterNodes.map(
     buildTypeBindingType(typeBindings),
   )
-  const [parameters, constraints] = reduceConstraints(...constrainedParameters)
+  const [typeParameters, constraints] = reduceConstraints(
+    ...constrainedTypeParameters,
+  )
   return buildConstrainedType(
-    buildParametricType(name, parameters),
+    buildGenericType(name, typeParameters),
     constraints,
   )
 }
@@ -97,4 +104,56 @@ const handleTypeVariableDeclaration = (
  */
 export const buildType = (typeBindings: TypeBinding[][]) => (
   node: InternalTypeNode,
-): Type => {}
+): Type => {
+  switch (node.type) {
+    case SyntaxType.CurriedType:
+      return handleCurriedType(typeBindings, node)
+    case SyntaxType.IntersectionType:
+      return handleIntersectionType(typeBindings, node)
+    case SyntaxType.ParametricType:
+      return handleParametricType(typeBindings, node)
+    case SyntaxType.UnionType:
+      return handleUnionType(typeBindings, node)
+  }
+}
+
+const handleCurriedType = (
+  typeBindings: TypeBinding[][],
+  node: CurriedTypeNode,
+) =>
+  buildCurriedType(
+    buildType(typeBindings)(node.fromNode),
+    buildType(typeBindings)(node.toNode),
+  )
+
+const handleIntersectionType = (
+  typeBindings: TypeBinding[][],
+  node: IntersectionTypeNode,
+) => {
+  const leftType = buildType(typeBindings)(node.leftNode)
+  const rightType = buildType(typeBindings)(node.rightNode)
+  if (rightType.kind === TypeKind.Intersection)
+    return buildIntersectionType([leftType, ...rightType.parameters])
+  else return buildIntersectionType([leftType, rightType])
+}
+
+const handleParametricType = (
+  typeBindings: TypeBinding[][],
+  node: ParametricTypeNode,
+) => {
+  const name = getTypeName(node.nameNode)
+  const typeArguments = node.argumentNodes.map(buildType(typeBindings))
+  const termArguments = node.elementNodes
+  return buildParametricType(name, typeArguments, termArguments)
+}
+
+const handleUnionType = (
+  typeBindings: TypeBinding[][],
+  node: UnionTypeNode,
+) => {
+  const leftType = buildType(typeBindings)(node.leftNode)
+  const rightType = buildType(typeBindings)(node.rightNode)
+  if (rightType.kind === TypeKind.Union)
+    return buildUnionType([leftType, ...rightType.parameters])
+  else return buildUnionType([leftType, rightType])
+}
