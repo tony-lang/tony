@@ -15,6 +15,7 @@ export enum TypeKind {
   Curried,
   Generic,
   Intersection,
+  Map,
   Object,
   Parametric,
   Refined,
@@ -94,6 +95,16 @@ export type ObjectType = TypedObjectScope & {
 }
 
 /**
+ * A map type represents the scope of a mapping from values of a key type to
+ * values of a value type.
+ */
+export type MapType = {
+  kind: typeof TypeKind.Map
+  key: Type
+  value: Type
+}
+
+/**
  * A union type represents the type of any of its parameters.
  */
 export type UnionType = {
@@ -118,6 +129,7 @@ export type Type =
   | TaggedType
   | RefinedType
   | ObjectType
+  | MapType
   | UnionType
   | IntersectionType
   | PrimitiveType

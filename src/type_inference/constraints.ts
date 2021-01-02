@@ -68,6 +68,12 @@ export const applyConstraints = (
           applyConstraints(type, constraints),
         ),
       }
+    case TypeKind.Map:
+      return {
+        ...type,
+        key: applyConstraints(type.key, constraints),
+        value: applyConstraints(type.value, constraints),
+      }
     case TypeKind.Parametric:
       return {
         ...type,
