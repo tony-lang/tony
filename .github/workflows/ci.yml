@@ -18,11 +18,11 @@ jobs:
           node-version: ${{ matrix.node }}
       - name: Install dependencies
         run: yarn install
-      - name: TypeScript & Build
-        run: yarn build
+      # - name: TypeScript & Build
+      #   run: yarn build
       - name: Prettier
         run: yarn prettierlint
-      - name: ESLint
-        run: yarn eslint
+      # - name: ESLint
+      #   run: yarn eslint
       # - name: Tests
       #   run: sudo yarn test
