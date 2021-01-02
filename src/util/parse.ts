@@ -2,6 +2,7 @@ import {
   IdentifierNode,
   IdentifierPatternNameNode,
   RawStringNode,
+  ShorthandMemberIdentifierNode,
   TypeNode,
   TypeVariableDeclarationNameNode,
   TypeVariableNode,
@@ -10,7 +11,10 @@ import {
 export const parseRawString = (node: RawStringNode): string => eval(node.text)
 
 export const getIdentifierName = (
-  node: IdentifierNode | IdentifierPatternNameNode,
+  node:
+    | IdentifierNode
+    | IdentifierPatternNameNode
+    | ShorthandMemberIdentifierNode,
 ): string => node.text
 
 export const getTypeName = (node: TypeNode): string => node.text

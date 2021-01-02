@@ -6,6 +6,7 @@ import {
   PrefixApplicationNode,
   SyntaxNode,
 } from 'tree-sitter-tony'
+import { TermBinding, TypedTermBinding } from '../analyze/bindings'
 import { PrimitiveType } from './primitive_types'
 import { TypedObjectScope } from '../analyze/scopes'
 
@@ -20,6 +21,7 @@ export enum TypeKind {
   Parametric,
   Refined,
   Tagged,
+  Term,
   Union,
   Variable,
 
@@ -34,7 +36,7 @@ export enum TypeKind {
 /**
  * A type variable represents any type.
  */
-export type TypeVariable = {
+export interface TypeVariable {
   kind: typeof TypeKind.Variable
 }
 
@@ -42,38 +44,48 @@ export type TypeVariable = {
  * A curried type represents an abstraction parametrized by the `from` type and
  * returning the `to` type.
  */
-export type CurriedType = {
+export interface CurriedType<T extends Type> {
   kind: typeof TypeKind.Curried
-  from: Type
-  to: Type
+  from: T
+  to: T
 }
 
 /**
  * A generic type represents a type that may depend on other types.
  */
-export type GenericType = {
+export interface GenericType {
   kind: typeof TypeKind.Generic
   name: string
-  typeParameters: Type[]
+  typeParameters: TypeVariable[]
 }
 
 /**
- * A parametric type represents a concrete instance of a parametric type.
+ * A parametric type represents a concrete instance of an unresolved parametric
+ * type.
  */
-export type ParametricType = {
+export interface ParametricType {
   kind: typeof TypeKind.Parametric
   name: string
-  typeArguments: Type[]
+  typeArguments: UnresolvedType[]
   termArguments: SyntaxNode[]
+}
+
+/**
+ * A term type represents an unresolved type of a binding (resulting from
+ * typeof's).
+ */
+export interface TermType {
+  kind: typeof TypeKind.Term
+  binding: TermBinding
 }
 
 /**
  * A refined type represents a type alongside some predicates on values of that
  * type.
  */
-export type RefinedType = {
+export interface RefinedType<T extends Type> {
   kind: typeof TypeKind.Refined
-  type: Type
+  type: T
   predicates: TypePredicate[]
 }
 
@@ -81,16 +93,19 @@ export type RefinedType = {
  * A tagged type represents a type alongside a tag used to construct values of
  * that type.
  */
-export type TaggedType = {
+export interface TaggedType<T extends Type> {
   kind: typeof TypeKind.Tagged
   tag: string
-  type: Type
+  type: T
 }
 
 /**
  * An object type represents the scope of an object (e.g. its properties).
  */
-export type ObjectType = TypedObjectScope & {
+// export type UnresolvedObjectType = TypedObjectScope<UnresolvedType> & {
+//   kind: typeof TypeKind.Object
+// }
+export interface ObjectType<T extends Type> extends TypedObjectScope<T> {
   kind: typeof TypeKind.Object
 }
 
@@ -98,54 +113,70 @@ export type ObjectType = TypedObjectScope & {
  * A map type represents the scope of a mapping from values of a key type to
  * values of a value type.
  */
-export type MapType = {
+export interface MapType<T extends Type> {
   kind: typeof TypeKind.Map
-  key: Type
-  value: Type
+  key: T
+  value: T
 }
 
 /**
  * A union type represents the type of any of its parameters.
  */
-export type UnionType = {
+export interface UnionType<T extends Type> {
   kind: typeof TypeKind.Union
-  parameters: Type[]
+  parameters: T[]
 }
 
 /**
  * An intersection type represents all types that can be assigned to all of its
  * parameters.
  */
-export type IntersectionType = {
+export interface IntersectionType<T extends Type> {
   kind: typeof TypeKind.Intersection
-  parameters: Type[]
+  parameters: T[]
 }
 
-export type Type =
+export type DeclaredType = TypeVariable | GenericType
+export type UnresolvedType =
   | TypeVariable
-  | CurriedType
-  | GenericType
-  | ParametricType
-  | TaggedType
-  | RefinedType
-  | ObjectType
-  | MapType
-  | UnionType
-  | IntersectionType
+  | CurriedType<UnresolvedType>
+  | TaggedType<UnresolvedType>
+  | RefinedType<UnresolvedType>
+  | ObjectType<UnresolvedType>
+  | MapType<UnresolvedType>
+  | UnionType<UnresolvedType>
+  | IntersectionType<UnresolvedType>
   | PrimitiveType
+  | ParametricType
+  | TermType
+export type ResolvedType =
+  | TypeVariable
+  | CurriedType<ResolvedType>
+  | TaggedType<ResolvedType>
+  | RefinedType<ResolvedType>
+  | ObjectType<ResolvedType>
+  | MapType<ResolvedType>
+  | UnionType<ResolvedType>
+  | IntersectionType<ResolvedType>
+  | PrimitiveType
+export type Type = UnresolvedType | ResolvedType
 
 /**
  * A constrained type represents a type alongside constraints on type variables.
  */
-export type ConstrainedType<T extends Type> = {
+export type ConstrainedType<T extends DeclaredType | Type, U extends Type> = {
   type: T
-  constraints: TypeConstraints
+  constraints: TypeConstraints<U>
 }
+export type ResolvedConstrainedType = ConstrainedType<
+  ResolvedType,
+  ResolvedType
+>
 
 /**
  * A set of assignments of type variables to their most general type.
  */
-export type TypeConstraints = TypeVariableAssignment<Type>[]
+export type TypeConstraints<T extends Type> = TypeVariableAssignment<T>[]
 
 /**
  * Maps a type variable to its most general type.
@@ -155,16 +186,18 @@ export type TypeVariableAssignment<T extends Type> = {
   type: T
 }
 
+type TypePredicateNode =
+  | ApplicationNode
+  | IdentifierNode
+  | InfixApplicationNode
+  | PipelineNode
+  | PrefixApplicationNode
+
 /**
  * Stores a predicate on a type.
  */
 type TypePredicate = {
-  node:
-    | ApplicationNode
-    | IdentifierNode
-    | InfixApplicationNode
-    | PipelineNode
-    | PrefixApplicationNode
+  node: TypePredicateNode
 }
 
 // ---- Factories ----
@@ -173,7 +206,10 @@ export const buildTypeVariable = (): TypeVariable => ({
   kind: TypeKind.Variable,
 })
 
-export const buildCurriedType = (from: Type, to: Type): CurriedType => ({
+export const buildCurriedType = <T extends Type>(
+  from: T,
+  to: T,
+): CurriedType<T> => ({
   kind: TypeKind.Curried,
   from,
   to,
@@ -181,7 +217,7 @@ export const buildCurriedType = (from: Type, to: Type): CurriedType => ({
 
 export const buildGenericType = (
   name: string,
-  typeParameters: Type[],
+  typeParameters: TypeVariable[],
 ): GenericType => ({
   kind: TypeKind.Generic,
   name,
@@ -190,7 +226,7 @@ export const buildGenericType = (
 
 export const buildParametricType = (
   name: string,
-  typeArguments: Type[],
+  typeArguments: UnresolvedType[],
   termArguments: SyntaxNode[],
 ): ParametricType => ({
   kind: TypeKind.Parametric,
@@ -199,26 +235,53 @@ export const buildParametricType = (
   termArguments,
 })
 
-export const buildIntersectionType = (
-  parameters: Type[] = [],
-): IntersectionType => ({
+export const buildTaggedType = <T extends Type>(
+  tag: string,
+  type: T,
+): TaggedType<T> => ({
+  kind: TypeKind.Tagged,
+  tag,
+  type,
+})
+
+export const buildObjectType = <T extends Type>(
+  typedBindings: TypedTermBinding<T>[] = [],
+): ObjectType<T> => ({
+  kind: TypeKind.Object,
+  typedBindings,
+})
+
+export const buildMapType = <T extends Type>(key: T, value: T): MapType<T> => ({
+  kind: TypeKind.Map,
+  key,
+  value,
+})
+
+export const buildIntersectionType = <T extends Type>(
+  parameters: T[] = [],
+): IntersectionType<T> => ({
   kind: TypeKind.Intersection,
   parameters,
 })
 
-export const buildUnionType = (parameters: Type[] = []): UnionType => ({
+export const buildUnionType = <T extends Type>(
+  parameters: T[] = [],
+): UnionType<T> => ({
   kind: TypeKind.Union,
   parameters,
 })
 
-export const buildConstrainedType = <T extends Type>(
+export const buildConstrainedType = <
+  T extends DeclaredType | Type,
+  U extends Type
+>(
   type: T,
-  constraints: TypeConstraints = [],
-): ConstrainedType<T> => ({
+  constraints: TypeConstraints<U> = [],
+): ConstrainedType<T, U> => ({
   type,
   constraints,
 })
 
-export const buildTypeConstraints = (
-  constraints: TypeVariableAssignment<Type>[] = [],
-): TypeConstraints => constraints
+export const buildTypeConstraints = <T extends Type>(
+  constraints: TypeVariableAssignment<T>[] = [],
+): TypeConstraints<T> => constraints

@@ -1,5 +1,6 @@
 import {
   ConstrainedType,
+  DeclaredType,
   Type,
   TypeConstraints,
   TypeVariable,
@@ -8,17 +9,19 @@ import {
 } from '../types/type_inference/types'
 import { unifyConstraints } from '../type_inference/constraints'
 
-export const buildUnconstrainedUnknownType = (): ConstrainedType<TypeVariable> =>
+export const buildUnconstrainedUnknownType = <
+  T extends Type
+>(): ConstrainedType<TypeVariable, T> =>
   buildConstrainedType(buildTypeVariable())
 
-export const buildConstrainedUnknownType = (
-  constraints: TypeConstraints,
-): ConstrainedType<TypeVariable> =>
+export const buildConstrainedUnknownType = <T extends Type>(
+  constraints: TypeConstraints<T>,
+): ConstrainedType<TypeVariable, T> =>
   buildConstrainedType(buildTypeVariable(), constraints)
 
-export const buildConstrainedUnknownTypeFromTypes = (
-  types: Type[],
-): ConstrainedType<TypeVariable> => {
+export const buildConstrainedUnknownTypeFromTypes = <T extends Type>(
+  types: T[],
+): ConstrainedType<TypeVariable, T> => {
   const typeVariable = buildTypeVariable()
   return buildConstrainedType(
     typeVariable,
@@ -26,9 +29,12 @@ export const buildConstrainedUnknownTypeFromTypes = (
   )
 }
 
-export const reduceConstraints = <T extends Type>(
-  ...constrainedTypes: ConstrainedType<T>[]
-): [types: T[], constraints: TypeConstraints] => [
+export const reduceConstraintTypes = <
+  T extends DeclaredType | Type,
+  U extends Type
+>(
+  ...constrainedTypes: ConstrainedType<T, U>[]
+): [types: T[], constraints: TypeConstraints<U>] => [
   constrainedTypes.map((constrainedType) => constrainedType.type),
   unifyConstraints(
     ...constrainedTypes.map((constrainedType) => constrainedType.constraints),

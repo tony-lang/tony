@@ -1,5 +1,7 @@
 import {
   ConstrainedType,
+  ResolvedConstrainedType,
+  ResolvedType,
   Type,
   buildConstrainedType,
 } from '../types/type_inference/types'
@@ -9,9 +11,17 @@ import { flattenConstrainedType, unifyConstraints } from './constraints'
  * Given a set of types, return the most general type such that all types in
  * the set are instances of that type.
  */
+export const unifyUnresolved = <T extends Type, U extends Type>(
+  ...types: ConstrainedType<T, U>[]
+): ConstrainedType<T, U> => {}
+
+/**
+ * Given a set of types, return the most general type such that all types in
+ * the set are instances of that type.
+ */
 export const unify = (
-  ...types: ConstrainedType<Type>[]
-): ConstrainedType<Type> => {
+  ...types: ResolvedConstrainedType[]
+): ResolvedConstrainedType => {
   const constrainedType = unconstrainedUnify(types.map(flattenConstrainedType))
   const unifiedConstraints = unifyConstraints(
     constrainedType.constraints,
@@ -20,4 +30,6 @@ export const unify = (
   return buildConstrainedType(constrainedType.type, unifiedConstraints)
 }
 
-const unconstrainedUnify = (types: Type[]): ConstrainedType<Type> => {}
+const unconstrainedUnify = (
+  types: ResolvedType[],
+): ResolvedConstrainedType => {}

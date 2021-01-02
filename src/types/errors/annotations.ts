@@ -1,6 +1,6 @@
 import { AbsolutePath, RelativePath } from '../path'
-import { ConstrainedType, Type } from '../type_inference/types'
 import { ProgramNode, SyntaxNode } from 'tree-sitter-tony'
+import { ResolvedConstrainedType, Type } from '../type_inference/types'
 import { CyclicDependency } from '../cyclic_dependency'
 import { TermBinding } from '../analyze/bindings'
 import { TypedNode } from '../type_inference/nodes'
@@ -177,8 +177,8 @@ export const buildTypeError = (expected: Type, actual: Type): TypeError => ({
 })
 
 export const buildTypeErrorFromConstrainedType = (
-  expected: ConstrainedType<Type>,
-  actual: ConstrainedType<Type>,
+  expected: ResolvedConstrainedType,
+  actual: ResolvedConstrainedType,
 ): TypeError => ({
   kind: ErrorAnnotationKind.Type,
   expected: flattenConstrainedType(expected),
