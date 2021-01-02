@@ -1,4 +1,12 @@
-import { ConstrainedType, Type } from '../types/type_inference/types'
+import {
+  ConstrainedType,
+  DeclaredType,
+  ResolvedType,
+  Type,
+  TypeVariable,
+  UnresolvedType,
+  buildConstrainedType,
+} from '../types/type_inference/types'
 import {
   LocalBinding,
   LocalTermBinding,
@@ -26,7 +34,7 @@ import { findBinding } from '../util/bindings'
 import { isSamePath } from '../util/paths'
 
 type StrongBinding<T extends TermBinding | TypeBinding> = T extends TermBinding
-  ? TypedTermBinding
+  ? TypedTermBinding<ResolvedType>
   : TypeBinding
 type WeakBinding<T extends TermBinding | TypeBinding> = T extends TermBinding
   ? TermBinding
@@ -34,20 +42,21 @@ type WeakBinding<T extends TermBinding | TypeBinding> = T extends TermBinding
 
 const resolveBindingType = <
   T extends TermBinding | TypeBinding,
-  U extends ScopeWithErrors
+  U extends ScopeWithErrors,
+  V extends DeclaredType | Type
 >(
   getBindings: (fileScope: TypedFileScope) => StrongBinding<T>[],
   resolveLocalBindingType: (
     binding: WeakBinding<T> & LocalBinding,
     bindings: StrongBinding<T>[][],
-  ) => ConstrainedType<Type>,
+  ) => ConstrainedType<V, UnresolvedType>,
 ) => (
   fileScopes: TypedFileScope[],
   scope: U,
   bindings: StrongBinding<T>[][],
   binding: WeakBinding<T>,
 ): [
-  type: ConstrainedType<Type>,
+  type: ConstrainedType<V | TypeVariable, UnresolvedType>,
   newScope: U,
   newFileScopes: TypedFileScope[],
 ] => {
@@ -83,7 +92,8 @@ const resolveBindingType = <
 
   const [type, newFileScope, newFileScopes] = resolveBindingType<
     T,
-    TypedFileScope
+    TypedFileScope,
+    V
   >(getBindings, resolveLocalBindingType)(
     fileScopes,
     fileScope,
@@ -98,7 +108,7 @@ const resolveBindingType = <
 
 const resolveTermBindingTypeWithinScope = (
   binding: LocalTermBinding,
-  bindings: TypedTermBinding[][],
+  bindings: TypedTermBinding<ResolvedType>[][],
 ) => {
   const typedBinding = findBinding(binding.name, bindings)
   return typedBinding?.type || buildUnconstrainedUnknownType()
@@ -106,14 +116,25 @@ const resolveTermBindingTypeWithinScope = (
 
 export const resolveTermBindingType = resolveBindingType<
   TermBinding,
-  ScopeWithErrors
+  ScopeWithErrors,
+  Type
 >(getTypedTermBindings, resolveTermBindingTypeWithinScope)
 
-const resolveTypeBindingTypeWithinScope = (typeBinding: LocalTypeBinding) => {
-  return typeBinding.type
-}
+const resolveTypeBindingTypeWithinScope = (typeBinding: LocalTypeBinding) =>
+  buildConstrainedType(typeBinding.type, typeBinding.constraints)
 
 export const resolveTypeBindingType = resolveBindingType<
   TypeBinding,
-  ScopeWithErrors
+  ScopeWithErrors,
+  DeclaredType
 >(getTypeBindings, resolveTypeBindingTypeWithinScope)
+
+const resolveTypeBindingValueTypeWithinScope = (
+  typeBinding: LocalTypeBinding,
+) => buildConstrainedType(typeBinding.value, typeBinding.constraints)
+
+export const resolveTypeBindingValueType = resolveBindingType<
+  TypeBinding,
+  ScopeWithErrors,
+  UnresolvedType
+>(getTypeBindings, resolveTypeBindingValueTypeWithinScope)

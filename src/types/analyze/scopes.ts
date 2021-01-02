@@ -1,4 +1,5 @@
 import { ErrorAnnotation, MountedErrorAnnotation } from '../errors/annotations'
+import { ResolvedType, Type } from '../type_inference/types'
 import { TermBinding, TypeBinding, TypedTermBinding } from './bindings'
 import { AbsolutePath } from '../path'
 import { ProgramNode } from 'tree-sitter-tony'
@@ -18,8 +19,8 @@ export type ObjectScope = {
   bindings: TermBinding[]
 }
 
-export type TypedObjectScope = {
-  typedBindings: TypedTermBinding[]
+export type TypedObjectScope<T extends Type> = {
+  typedBindings: TypedTermBinding<T>[]
 }
 
 export type ScopeWithTypes = ObjectScope & {
@@ -51,7 +52,7 @@ export type FileScope = RecursiveScope<NestedScope> &
   }
 
 export type TypedFileScope = FileScope &
-  TypedObjectScope & {
+  TypedObjectScope<ResolvedType> & {
     typedNode: TypedNode<ProgramNode>
   }
 
@@ -91,7 +92,7 @@ export const buildFileScope = (
 export const buildTypedFileScope = (
   fileScope: FileScope,
   typedNode: TypedNode<ProgramNode>,
-  typedBindings: TypedTermBinding[],
+  typedBindings: TypedTermBinding<ResolvedType>[],
 ): TypedFileScope => ({
   ...fileScope,
   typedNode,

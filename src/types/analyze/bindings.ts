@@ -1,8 +1,10 @@
 import {
   ConstrainedType,
-  GenericType,
+  DeclaredType,
+  ResolvedType,
   Type,
-  TypeVariable,
+  TypeConstraints,
+  UnresolvedType,
 } from '../type_inference/types'
 import {
   DestructuringPatternNode,
@@ -12,14 +14,18 @@ import {
   IdentifierPatternNode,
   ImportTypeNode,
   InterfaceNode,
-  NamedTypeNode,
+  MemberTypeNode,
   RefinementTypeDeclarationNode,
   ShorthandMemberPatternNode,
+  TaggedTypeNode,
   TypeAliasNode,
   TypeVariableDeclarationNode,
 } from 'tree-sitter-tony'
+import {
+  buildTypeBindingType,
+  buildTypeBindingValueType,
+} from '../../analyze/build_type'
 import { AbsolutePath } from '../path'
-import { buildTypeBindingType } from '../../analyze/build_type'
 
 // ---- Types ----
 
@@ -29,8 +35,9 @@ export type TermBindingNode =
   | GeneratorNode
   | IdentifierPatternNode
   | ShorthandMemberPatternNode
-  | NamedTypeNode
+  | TaggedTypeNode
   | RefinementTypeDeclarationNode
+  | MemberTypeNode
 
 export type TypeBindingNode =
   | EnumNode
@@ -80,8 +87,8 @@ export type LocalBinding = {
 export type ImportedTermBinding = AbstractTermBinding & ImportedBinding
 export type LocalTermBinding = AbstractTermBinding & LocalBinding
 export type TermBinding = ImportedTermBinding | LocalTermBinding
-export type TypedTermBinding = TermBinding & {
-  type: ConstrainedType<Type>
+export type TypedTermBinding<T extends Type> = TermBinding & {
+  type: ConstrainedType<T, ResolvedType>
 }
 
 export type ImportedTypeBinding = AbstractTypeBinding &
@@ -89,7 +96,9 @@ export type ImportedTypeBinding = AbstractTypeBinding &
 export type LocalTypeBinding = AbstractTypeBinding &
   LocalBinding & {
     node: TypeBindingNode
-    type: ConstrainedType<TypeVariable | GenericType>
+    type: DeclaredType
+    value: UnresolvedType
+    constraints: TypeConstraints<UnresolvedType>
   }
 export type TypeBinding = ImportedTypeBinding | LocalTypeBinding
 
@@ -127,6 +136,14 @@ export const buildLocalTermBinding = (
   isImplicit,
 })
 
+export const buildTypedTermBinding = <T extends Type>(
+  binding: TermBinding,
+  type: ConstrainedType<T, ResolvedType>,
+): TypedTermBinding<T> => ({
+  ...binding,
+  type,
+})
+
 export const buildImportedTypeBinding = (
   file: AbsolutePath,
   name: string,
@@ -148,14 +165,20 @@ export const buildLocalTypeBinding = (
   name: string,
   node: TypeBindingNode,
   isExported = false,
-): LocalTypeBinding => ({
-  kind: BindingKind.Type,
-  location: BindingLocation.Local,
-  name,
-  node,
-  isExported,
-  type: buildTypeBindingType(typeBindings)(node),
-})
+): LocalTypeBinding => {
+  const constrainedType = buildTypeBindingType(typeBindings)(node)
+
+  return {
+    kind: BindingKind.Type,
+    location: BindingLocation.Local,
+    name,
+    node,
+    isExported,
+    type: constrainedType.type,
+    value: buildTypeBindingValueType(typeBindings)(node),
+    constraints: constrainedType.constraints,
+  }
+}
 
 export const isImportedBinding = (binding: {
   location: BindingLocation

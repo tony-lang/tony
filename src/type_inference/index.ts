@@ -1,11 +1,4 @@
 import {
-  ConstrainedType,
-  Type,
-  TypeConstraints,
-  buildConstrainedType,
-  buildTypeConstraints,
-} from '../types/type_inference/types'
-import {
   ErrorNode,
   ProgramNode,
   SyntaxNode,
@@ -21,6 +14,13 @@ import {
 } from '../types/analyze/scopes'
 import { LogLevel, log } from '../logger'
 import { NotImplementedError, assert } from '../types/errors/internal'
+import {
+  ResolvedConstrainedType,
+  ResolvedType,
+  TypeConstraints,
+  buildConstrainedType,
+  buildTypeConstraints,
+} from '../types/type_inference/types'
 import { TypedNode, buildTypedNode } from '../types/type_inference/nodes'
 import {
   buildIndeterminateTypeError,
@@ -48,7 +48,7 @@ type State = {
   /**
    * A list of typed bindings for each scope on the scope stack.
    */
-  bindings: TypedTermBinding[][]
+  bindings: TypedTermBinding<ResolvedType>[][]
 }
 
 /**
@@ -184,15 +184,15 @@ const traverseAll = <T extends SyntaxNode>(
   nodes: T[],
   initialState: State,
   typeFactory: (
-    constraints: TypeConstraints,
+    constraints: TypeConstraints<ResolvedType>,
     node: T,
-  ) => ConstrainedType<Type> = buildConstrainedUnknownType,
+  ) => ResolvedConstrainedType = buildConstrainedUnknownType,
 ) =>
   nodes.reduce<Answers<T>>((answers, node) => {
     const typeConstraints =
       answers.length > 0
         ? getTypeConstraintsFromAnswers(answers)
-        : [buildTypeConstraints()]
+        : [buildTypeConstraints<ResolvedType>()]
     return reduceAnswers(
       typeConstraints.map((constraint) => {
         const type = typeFactory(constraint, node)
@@ -203,7 +203,7 @@ const traverseAll = <T extends SyntaxNode>(
 
 const unifyConstraintsWithTypedNode = <T extends SyntaxNode>(
   typedNode: TypedNode<T>,
-  constraints: TypeConstraints,
+  constraints: TypeConstraints<ResolvedType>,
 ): TypedNode<T> => {
   const unifiedConstraints = unifyConstraints(
     constraints,
@@ -221,7 +221,7 @@ const unifyConstraintsWithTypedNode = <T extends SyntaxNode>(
 const ensureIsInstanceOf = <T extends SyntaxNode>(
   node: T,
   answer: Answer<T>,
-  generalType: ConstrainedType<Type>,
+  generalType: ResolvedConstrainedType,
 ): Answer<T> => {
   const [predicate, constraints] = isInstanceOf(
     answer.typedNode.type,
@@ -242,7 +242,7 @@ const ensureIsInstanceOf = <T extends SyntaxNode>(
 const traverse = <T extends SyntaxNode>(
   state: State,
   node: T,
-  type: ConstrainedType<Type>,
+  type: ResolvedConstrainedType,
 ): Answers<T> => {
   const answers = handleNode(state, node, type) as Answers<T>
   return forAllAnswers(answers, (answer) => [
@@ -253,7 +253,7 @@ const traverse = <T extends SyntaxNode>(
 const handleNode = (
   state: State,
   node: SyntaxNode,
-  type: ConstrainedType<Type>,
+  type: ResolvedConstrainedType,
 ): Answers<SyntaxNode> => {
   assert(node.isNamed, 'The types of unnamed nodes should not be inferred.')
 
@@ -387,6 +387,8 @@ const handleNode = (
       )
     case SyntaxType.ListType:
       throw new NotImplementedError('Tony cannot build list types yet.')
+    case SyntaxType.MapType:
+      throw new NotImplementedError('Tony cannot build map types yet.')
     case SyntaxType.Member:
       throw new NotImplementedError(
         'Tony cannot infer the type of members yet.',
@@ -397,16 +399,6 @@ const handleNode = (
       )
     case SyntaxType.MemberType:
       throw new NotImplementedError('Tony cannot build member types yet.')
-    case SyntaxType.NamedPattern:
-      throw new NotImplementedError(
-        'Tony cannot infer the type of named patterns yet.',
-      )
-    case SyntaxType.NamedType:
-      throw new NotImplementedError('Tony cannot build named types yet.')
-    case SyntaxType.NamedValue:
-      throw new NotImplementedError(
-        'Tony cannot infer the type of named values yet.',
-      )
     case SyntaxType.Number:
       throw new NotImplementedError(
         'Tony cannot infer the type of numbers yet.',
@@ -489,6 +481,16 @@ const handleNode = (
       )
     case SyntaxType.StructType:
       throw new NotImplementedError('Tony cannot build struct types yet.')
+    case SyntaxType.TaggedPattern:
+      throw new NotImplementedError(
+        'Tony cannot infer the type of tagged patterns yet.',
+      )
+    case SyntaxType.TaggedType:
+      throw new NotImplementedError('Tony cannot build tagged types yet.')
+    case SyntaxType.TaggedValue:
+      throw new NotImplementedError(
+        'Tony cannot infer the type of tagged values yet.',
+      )
     case SyntaxType.Tuple:
       throw new NotImplementedError('Tony cannot infer the type of tuples yet.')
     case SyntaxType.TuplePattern:
@@ -529,7 +531,7 @@ const handleNode = (
 const handleError = (
   state: State,
   node: ErrorNode,
-  type: ConstrainedType<Type>,
+  type: ResolvedConstrainedType,
 ): Answers<ErrorNode> => {
   const typedNode = buildTypedNode(node, type)
   return [buildAnswer(state, typedNode)]

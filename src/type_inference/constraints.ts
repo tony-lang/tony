@@ -1,5 +1,6 @@
 import {
-  ConstrainedType,
+  ResolvedConstrainedType,
+  ResolvedType,
   Type,
   TypeConstraints,
   TypeKind,
@@ -8,24 +9,24 @@ import {
   buildConstrainedType,
 } from '../types/type_inference/types'
 import { TypedTermBinding } from '../types/analyze/bindings'
-import { unify } from './unification'
+import { unifyUnresolved } from './unification'
 
 /**
  * Given a set of constraints, obtains a most general set of type constraints by
  * unifying all shared constraints.
  */
-export const unifyConstraints = (
-  ...constraints: TypeConstraints[]
-): TypeConstraints =>
+export const unifyConstraints = <T extends Type>(
+  ...constraints: TypeConstraints<T>[]
+): TypeConstraints<T> =>
   constraints.reduce(
     (acc, constraints) =>
       constraints.reduce((acc, constraint) => {
         const matchingConstraint = getConstraintOf(acc, constraint.typeVariable)
         if (matchingConstraint === undefined) return [...acc, constraint]
 
-        const newConstraint: TypeVariableAssignment<Type> = {
+        const newConstraint: TypeVariableAssignment<T> = {
           typeVariable: constraint.typeVariable,
-          type: unify(
+          type: unifyUnresolved(
             buildConstrainedType(matchingConstraint.type, acc),
             buildConstrainedType(constraint.type, constraints),
           ).type,
@@ -43,22 +44,15 @@ export const unifyConstraints = (
  * the most general type under the given constraints.
  */
 export const applyConstraints = (
-  type: Type,
-  constraints: TypeConstraints,
-): Type => {
+  type: ResolvedType,
+  constraints: TypeConstraints<ResolvedType>,
+): ResolvedType => {
   switch (type.kind) {
     case TypeKind.Curried:
       return {
         ...type,
         from: applyConstraints(type.from, constraints),
         to: applyConstraints(type.to, constraints),
-      }
-    case TypeKind.Generic:
-      return {
-        ...type,
-        typeParameters: type.typeParameters.map((type) =>
-          applyConstraints(type, constraints),
-        ),
       }
     case TypeKind.Intersection:
     case TypeKind.Union:
@@ -73,13 +67,6 @@ export const applyConstraints = (
         ...type,
         key: applyConstraints(type.key, constraints),
         value: applyConstraints(type.value, constraints),
-      }
-    case TypeKind.Parametric:
-      return {
-        ...type,
-        typeArguments: type.typeArguments.map((type) =>
-          applyConstraints(type, constraints),
-        ),
       }
     case TypeKind.Variable:
       return getConstraintOf(constraints, type)?.type || type
@@ -105,13 +92,16 @@ export const applyConstraints = (
 }
 
 const applyConstraintsToBindings = (
-  bindings: TypedTermBinding[],
-  constraints: TypeConstraints,
-): TypedTermBinding[] => bindings.map(applyConstraintsToBinding(constraints))
+  bindings: TypedTermBinding<ResolvedType>[],
+  constraints: TypeConstraints<ResolvedType>,
+): TypedTermBinding<ResolvedType>[] =>
+  bindings.map(applyConstraintsToBinding(constraints))
 
-const applyConstraintsToBinding = (constraints: TypeConstraints) => (
-  binding: TypedTermBinding,
-): TypedTermBinding => ({
+const applyConstraintsToBinding = (
+  constraints: TypeConstraints<ResolvedType>,
+) => (
+  binding: TypedTermBinding<ResolvedType>,
+): TypedTermBinding<ResolvedType> => ({
   ...binding,
   type: buildConstrainedType(
     applyConstraints(
@@ -125,11 +115,12 @@ const applyConstraintsToBinding = (constraints: TypeConstraints) => (
 /**
  * Applies a constrained type to its constraints.
  */
-export const flattenConstrainedType = (type: ConstrainedType<Type>): Type =>
-  applyConstraints(type.type, type.constraints)
+export const flattenConstrainedType = (
+  type: ResolvedConstrainedType,
+): ResolvedType => applyConstraints(type.type, type.constraints)
 
-const getConstraintOf = (
-  constraints: TypeConstraints,
+const getConstraintOf = <T extends Type>(
+  constraints: TypeConstraints<T>,
   typeVariable: TypeVariable,
-): TypeVariableAssignment<Type> | undefined =>
+): TypeVariableAssignment<T> | undefined =>
   constraints.find((constraint) => constraint.typeVariable === typeVariable)

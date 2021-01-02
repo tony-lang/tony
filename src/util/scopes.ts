@@ -13,6 +13,7 @@ import {
 import { AbsolutePath } from '../types/path'
 import { ErrorAnnotation } from '../types/errors/annotations'
 import { SyntaxNode } from 'tree-sitter-tony'
+import { Type } from '../types/type_inference/types'
 import { isSamePath } from './paths'
 
 export const findFileScope = <T extends FileScope>(
@@ -32,8 +33,8 @@ export const addErrorToScope = <T extends ScopeWithErrors>(
 
 export const getTermBindings = (scope: ObjectScope): TermBinding[] =>
   scope.bindings
-export const getTypedTermBindings = (
-  scope: TypedObjectScope,
-): TypedTermBinding[] => scope.typedBindings
+export const getTypedTermBindings = <T extends Type>(
+  scope: TypedObjectScope<T>,
+): TypedTermBinding<T>[] => scope.typedBindings
 export const getTypeBindings = (scope: ScopeWithTypes): TypeBinding[] =>
   scope.typeBindings
