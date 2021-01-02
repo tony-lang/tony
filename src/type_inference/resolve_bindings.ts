@@ -114,6 +114,9 @@ const resolveTermBindingTypeWithinScope = (
   return typedBinding?.type || buildUnconstrainedUnknownType()
 }
 
+/**
+ * Returns the type of a term binding.
+ */
 export const resolveTermBindingType = resolveBindingType<
   TermBinding,
   ScopeWithErrors,
@@ -123,6 +126,9 @@ export const resolveTermBindingType = resolveBindingType<
 const resolveTypeBindingTypeWithinScope = (typeBinding: LocalTypeBinding) =>
   buildConstrainedType(typeBinding.type, typeBinding.constraints)
 
+/**
+ * Returns the type declared by a type binding.
+ */
 export const resolveTypeBindingType = resolveBindingType<
   TypeBinding,
   ScopeWithErrors,
@@ -133,6 +139,9 @@ const resolveTypeBindingValueTypeWithinScope = (
   typeBinding: LocalTypeBinding,
 ) => buildConstrainedType(typeBinding.value, typeBinding.constraints)
 
+/**
+ * Returns the type represented by a type binding.
+ */
 export const resolveTypeBindingValueType = resolveBindingType<
   TypeBinding,
   ScopeWithErrors,
