@@ -1,8 +1,9 @@
 import { AbsolutePath, RelativePath } from '../path'
 import { ProgramNode, SyntaxNode } from 'tree-sitter-tony'
-import { ResolvedConstrainedType, Type } from '../type_inference/types'
 import { CyclicDependency } from '../cyclic_dependency'
+import { ResolvedConstrainedType } from '../type_inference/constraints'
 import { TermBinding } from '../analyze/bindings'
+import { Type } from '../type_inference/types'
 import { TypedNode } from '../type_inference/nodes'
 import { flattenConstrainedType } from '../../type_inference/constraints'
 

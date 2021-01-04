@@ -1,14 +1,16 @@
 import {
   Property,
-  ResolvedConstrainedType,
   ResolvedType,
   Type,
-  TypeConstraints,
   TypeKind,
   TypeVariable,
+} from '../types/type_inference/types'
+import {
+  ResolvedConstrainedType,
+  TypeConstraints,
   TypeVariableAssignment,
   buildConstrainedType,
-} from '../types/type_inference/types'
+} from '../types/type_inference/constraints'
 import { unifyUnresolved } from './unification'
 
 /**

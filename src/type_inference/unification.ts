@@ -1,10 +1,9 @@
 import {
   ConstrainedType,
   ResolvedConstrainedType,
-  ResolvedType,
-  Type,
   buildConstrainedType,
-} from '../types/type_inference/types'
+} from '../types/type_inference/constraints'
+import { ResolvedType, Type } from '../types/type_inference/types'
 import { flattenConstrainedType, unifyConstraints } from './constraints'
 
 /**

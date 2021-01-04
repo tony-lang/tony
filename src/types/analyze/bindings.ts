@@ -1,9 +1,8 @@
+import { ConstrainedType, TypeConstraints } from '../type_inference/constraints'
 import {
-  ConstrainedType,
   DeclaredType,
   ResolvedType,
   Type,
-  TypeConstraints,
   UnresolvedType,
 } from '../type_inference/types'
 import {

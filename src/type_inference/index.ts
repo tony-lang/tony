@@ -16,17 +16,17 @@ import { LogLevel, log } from '../logger'
 import { NotImplementedError, assert } from '../types/errors/internal'
 import {
   ResolvedConstrainedType,
-  ResolvedType,
   TypeConstraints,
   buildConstrainedType,
   buildTypeConstraints,
-} from '../types/type_inference/types'
+} from '../types/type_inference/constraints'
 import { TypedNode, buildTypedNode } from '../types/type_inference/nodes'
 import {
   buildIndeterminateTypeError,
   buildTypeErrorFromConstrainedType,
 } from '../types/errors/annotations'
 import { Config } from '../config'
+import { ResolvedType } from '../types/type_inference/types'
 import { TypedTermBinding } from '../types/analyze/bindings'
 import { VOID_TYPE } from '../types/type_inference/primitive_types'
 import { addErrorUnless } from '../util/traverse'

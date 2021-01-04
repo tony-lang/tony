@@ -11,7 +11,7 @@ import { TypeBinding, TypedTermBinding } from '../types/analyze/bindings'
  * actual type.
  */
 export const resolveType = (
-  typedBindings: TypedTermBinding<Type>[][],
-  typeBindings: TypeBinding[][],
+  typedTerms: TypedTermBinding<Type>[][],
+  types: TypeBinding[][],
   type: UnresolvedType,
 ): ResolvedType => {}

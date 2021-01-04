@@ -1,20 +1,7 @@
 import {
   ConstrainedType,
-  DeclaredType,
-  TypeKind,
-  UnresolvedType,
   buildConstrainedType,
-  buildCurriedType,
-  buildGenericType,
-  buildIntersectionType,
-  buildLiteralType,
-  buildMapType,
-  buildObjectType,
-  buildParametricType,
-  buildProperty,
-  buildTaggedType,
-  buildUnionType,
-} from '../types/type_inference/types'
+} from '../types/type_inference/constraints'
 import {
   CurriedTypeNode,
   IntersectionTypeNode,
@@ -36,6 +23,21 @@ import {
   TypeofNode,
   UnionTypeNode,
 } from 'tree-sitter-tony'
+import {
+  DeclaredType,
+  TypeKind,
+  UnresolvedType,
+  buildCurriedType,
+  buildGenericType,
+  buildIntersectionType,
+  buildLiteralType,
+  buildMapType,
+  buildObjectType,
+  buildParametricType,
+  buildProperty,
+  buildTaggedType,
+  buildUnionType,
+} from '../types/type_inference/types'
 import { TypeBinding, TypeBindingNode } from '../types/analyze/bindings'
 import {
   buildConstrainedUnknownTypeFromTypes,

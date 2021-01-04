@@ -1,10 +1,12 @@
 import {
   ConstrainedType,
+  TypeConstraints,
+  buildConstrainedType,
+} from '../types/type_inference/constraints'
+import {
   DeclaredType,
   Type,
-  TypeConstraints,
   TypeVariable,
-  buildConstrainedType,
   buildTypeVariable,
 } from '../types/type_inference/types'
 import { unifyConstraints } from '../type_inference/constraints'

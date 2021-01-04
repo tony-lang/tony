@@ -176,31 +176,6 @@ export type ResolvedType =
   | PrimitiveType
 export type Type = UnresolvedType | ResolvedType
 
-/**
- * A constrained type represents a type alongside constraints on type variables.
- */
-export type ConstrainedType<T extends DeclaredType | Type, U extends Type> = {
-  type: T
-  constraints: TypeConstraints<U>
-}
-export type ResolvedConstrainedType = ConstrainedType<
-  ResolvedType,
-  ResolvedType
->
-
-/**
- * A set of assignments of type variables to their most general type.
- */
-export type TypeConstraints<T extends Type> = TypeVariableAssignment<T>[]
-
-/**
- * Maps a type variable to its most general type.
- */
-export type TypeVariableAssignment<T extends Type> = {
-  typeVariable: TypeVariable
-  type: T
-}
-
 // ---- Factories ----
 
 export const buildTypeVariable = (): TypeVariable => ({
@@ -252,7 +227,10 @@ export const buildRefinedTerm = (name: string): RefinedTerm => ({
 
 export const buildLiteralType = (value: Literal): RefinedType<RefinedTerm> =>
   buildRefinedType(buildRefinedTerm('value'), [
-    buildEqualityPredicate(buildBindingValue('value'), buildLiteralValue(value)),
+    buildEqualityPredicate(
+      buildBindingValue('value'),
+      buildLiteralValue(value),
+    ),
   ])
 
 export const buildTaggedType = <T extends Type>(
@@ -299,18 +277,3 @@ export const buildUnionType = <T extends Type>(
   kind: TypeKind.Union,
   parameters,
 })
-
-export const buildConstrainedType = <
-  T extends DeclaredType | Type,
-  U extends Type
->(
-  type: T,
-  constraints: TypeConstraints<U> = [],
-): ConstrainedType<T, U> => ({
-  type,
-  constraints,
-})
-
-export const buildTypeConstraints = <T extends Type>(
-  constraints: TypeVariableAssignment<T>[] = [],
-): TypeConstraints<T> => constraints

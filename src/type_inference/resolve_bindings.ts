@@ -1,11 +1,13 @@
 import {
   ConstrainedType,
+  buildConstrainedType,
+} from '../types/type_inference/constraints'
+import {
   DeclaredType,
   ResolvedType,
   Type,
   TypeVariable,
   UnresolvedType,
-  buildConstrainedType,
 } from '../types/type_inference/types'
 import {
   LocalBinding,

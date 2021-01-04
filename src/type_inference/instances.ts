@@ -1,8 +1,8 @@
 import {
   ResolvedConstrainedType,
-  ResolvedType,
   TypeConstraints,
-} from '../types/type_inference/types'
+} from '../types/type_inference/constraints'
+import { ResolvedType } from '../types/type_inference/types'
 
 /**
  * Given a specific and a general type, determines whether the specific type is

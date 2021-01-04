@@ -1,4 +1,4 @@
-import { ResolvedConstrainedType } from './types'
+import { ResolvedConstrainedType } from './constraints'
 import { SyntaxNode } from 'tree-sitter-tony'
 
 // ---- Types ----
