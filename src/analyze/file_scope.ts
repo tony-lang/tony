@@ -61,7 +61,7 @@ import {
   getTypeVariableName,
   parseRawString,
 } from '../util/parse'
-import { getTermBindings, getTypeBindings } from '../util/scopes'
+import { getTerms, getTypes } from '../util/scopes'
 import { Config } from '../config'
 import { assert } from '../types/errors/internal'
 import { fileMayBeImported } from '../util/paths'
@@ -81,7 +81,7 @@ type State = {
    * Buffered term-level bindings that have been defined but should not be
    * accessed yet (e.g. within patterns).
    */
-  termBindings: TermBinding[]
+  terms: TermBinding[]
   /**
    * When enabled the next declared bindings will be exported.
    */
@@ -113,7 +113,7 @@ export const constructFileScope = (
     config,
     file,
     scopes: [initialFileScope],
-    termBindings: [],
+    terms: [],
   }
 
   const {
@@ -183,12 +183,12 @@ const flushTermBindings = (state: State): State => {
   const [scope, ...parentScopes] = state.scopes
   const newScope = {
     ...scope,
-    bindings: [...scope.bindings, ...state.termBindings],
+    terms: [...scope.terms, ...state.terms],
   }
   return {
     ...state,
     scopes: [newScope, ...parentScopes],
-    termBindings: [],
+    terms: [],
   }
 }
 
@@ -200,8 +200,8 @@ const addTermBinding = (
 ) =>
   ensure<State, TermBindingNode>(
     (state) =>
-      findBinding(name, [state.termBindings]) === undefined &&
-      findBinding(name, state.scopes.map(getTermBindings)) === undefined,
+      findBinding(name, [state.terms]) === undefined &&
+      findBinding(name, state.scopes.map(getTerms)) === undefined,
     (state, node) => {
       const binding = importedFrom
         ? buildImportedTermBinding(
@@ -215,7 +215,7 @@ const addTermBinding = (
         : buildLocalTermBinding(name, node, isImplicit, isExported)
       return {
         ...state,
-        termBindings: [...state.termBindings, binding],
+        terms: [...state.terms, binding],
       }
     },
     buildDuplicateBindingError(name),
@@ -227,8 +227,7 @@ const addTypeBinding = (
   importedFrom?: ImportedBindingConfig,
 ) =>
   ensure<State, TypeBindingNode | ImportTypeNode>(
-    (state) =>
-      findBinding(name, state.scopes.map(getTypeBindings)) === undefined,
+    (state) => findBinding(name, state.scopes.map(getTypes)) === undefined,
     (state, node) => {
       const binding = importedFrom
         ? buildImportedTypeBinding(
@@ -239,7 +238,7 @@ const addTypeBinding = (
             isExported,
           )
         : buildLocalTypeBinding(
-            state.scopes.map(getTypeBindings),
+            state.scopes.map(getTypes),
             name,
             node as TypeBindingNode,
             isExported,
@@ -247,7 +246,7 @@ const addTypeBinding = (
       const [scope, ...parentScopes] = state.scopes
       const newScope = {
         ...scope,
-        typeBindings: [...scope.typeBindings, binding],
+        types: [...scope.types, binding],
       }
       return {
         ...state,
@@ -477,7 +476,7 @@ const handleGenerator = (state: State, node: GeneratorNode): State => {
 
 const handleIdentifier = (state: State, node: IdentifierNode): State => {
   const name = getIdentifierName(node)
-  const binding = findBinding(name, state.scopes.map(getTermBindings))
+  const binding = findBinding(name, state.scopes.map(getTerms))
 
   if (binding) return state
   return addError(state, node, buildMissingBindingError(name))
@@ -622,7 +621,7 @@ const handleTypeAlias = nest<TypeAliasNode>((state, node) => {
 
 const handleTypeVariable = (state: State, node: TypeVariableNode): State => {
   const name = getTypeVariableName(node)
-  const binding = findBinding(name, state.scopes.map(getTypeBindings))
+  const binding = findBinding(name, state.scopes.map(getTypes))
 
   if (binding) return state
   return addError(state, node, buildMissingBindingError(name))
@@ -664,8 +663,8 @@ const handleWhen = nest<WhenNode>((state, node) => {
       )
 
       const missingBindings = itemsMissingFrom(
-        scope.bindings,
-        accScope.bindings,
+        getTerms(scope),
+        getTerms(accScope),
       )
       if (missingBindings.length > 0)
         return addError(

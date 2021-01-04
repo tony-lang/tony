@@ -1,14 +1,12 @@
+import { Literal, PrimitiveType } from './primitive_types'
 import {
-  ApplicationNode,
-  IdentifierNode,
-  InfixApplicationNode,
-  PipelineNode,
-  PrefixApplicationNode,
-  SyntaxNode,
-} from 'tree-sitter-tony'
-import { TermBinding, TypedTermBinding } from '../analyze/bindings'
-import { PrimitiveType } from './primitive_types'
-import { TypedObjectScope } from '../analyze/scopes'
+  Predicate,
+  buildBindingValue,
+  buildEqualityPredicate,
+  buildLiteralValue,
+} from './predicates'
+import { SyntaxNode } from 'tree-sitter-tony'
+import { TermBinding } from '../analyze/bindings'
 
 // ---- Types ----
 
@@ -20,6 +18,7 @@ export enum TypeKind {
   Object,
   Parametric,
   Refined,
+  RefinedTerm,
   Tagged,
   Term,
   Union,
@@ -86,7 +85,16 @@ export interface TermType {
 export interface RefinedType<T extends Type> {
   kind: typeof TypeKind.Refined
   type: T
-  predicates: TypePredicate[]
+  predicates: Predicate[]
+}
+
+/**
+ * A refined term represents a term binding nested within a refined type
+ * constrained by predicates.
+ */
+export interface RefinedTerm {
+  kind: typeof TypeKind.RefinedTerm
+  name: string
 }
 
 /**
@@ -100,23 +108,28 @@ export interface TaggedType<T extends Type> {
 }
 
 /**
+ * A property represents the mapping of a key to a value.
+ */
+export type Property<T extends Type, U extends Type> = {
+  key: T
+  value: U
+}
+
+/**
  * An object type represents the scope of an object (e.g. its properties).
  */
-// export type UnresolvedObjectType = TypedObjectScope<UnresolvedType> & {
-//   kind: typeof TypeKind.Object
-// }
-export interface ObjectType<T extends Type> extends TypedObjectScope<T> {
+export interface ObjectType<T extends Type, U extends Type> {
   kind: typeof TypeKind.Object
+  properties: Property<T, U>[]
 }
 
 /**
  * A map type represents the scope of a mapping from values of a key type to
  * values of a value type.
  */
-export interface MapType<T extends Type> {
+export interface MapType<T extends Type, U extends Type> {
   kind: typeof TypeKind.Map
-  key: T
-  value: T
+  property: Property<T, U>
 }
 
 /**
@@ -142,8 +155,9 @@ export type UnresolvedType =
   | CurriedType<UnresolvedType>
   | TaggedType<UnresolvedType>
   | RefinedType<UnresolvedType>
-  | ObjectType<UnresolvedType>
-  | MapType<UnresolvedType>
+  | RefinedTerm
+  | ObjectType<UnresolvedType, UnresolvedType>
+  | MapType<UnresolvedType, UnresolvedType>
   | UnionType<UnresolvedType>
   | IntersectionType<UnresolvedType>
   | PrimitiveType
@@ -154,8 +168,9 @@ export type ResolvedType =
   | CurriedType<ResolvedType>
   | TaggedType<ResolvedType>
   | RefinedType<ResolvedType>
-  | ObjectType<ResolvedType>
-  | MapType<ResolvedType>
+  | RefinedTerm
+  | ObjectType<ResolvedType, ResolvedType>
+  | MapType<ResolvedType, ResolvedType>
   | UnionType<ResolvedType>
   | IntersectionType<ResolvedType>
   | PrimitiveType
@@ -184,20 +199,6 @@ export type TypeConstraints<T extends Type> = TypeVariableAssignment<T>[]
 export type TypeVariableAssignment<T extends Type> = {
   typeVariable: TypeVariable
   type: T
-}
-
-type TypePredicateNode =
-  | ApplicationNode
-  | IdentifierNode
-  | InfixApplicationNode
-  | PipelineNode
-  | PrefixApplicationNode
-
-/**
- * Stores a predicate on a type.
- */
-type TypePredicate = {
-  node: TypePredicateNode
 }
 
 // ---- Factories ----
@@ -235,6 +236,25 @@ export const buildParametricType = (
   termArguments,
 })
 
+export const buildRefinedType = <T extends Type>(
+  type: T,
+  predicates: Predicate[],
+): RefinedType<T> => ({
+  kind: TypeKind.Refined,
+  type,
+  predicates,
+})
+
+export const buildRefinedTerm = (name: string): RefinedTerm => ({
+  kind: TypeKind.RefinedTerm,
+  name,
+})
+
+export const buildLiteralType = (value: Literal): RefinedType<RefinedTerm> =>
+  buildRefinedType(buildRefinedTerm('x'), [
+    buildEqualityPredicate(buildBindingValue('x'), buildLiteralValue(value)),
+  ])
+
 export const buildTaggedType = <T extends Type>(
   tag: string,
   type: T,
@@ -244,17 +264,26 @@ export const buildTaggedType = <T extends Type>(
   type,
 })
 
-export const buildObjectType = <T extends Type>(
-  typedBindings: TypedTermBinding<T>[] = [],
-): ObjectType<T> => ({
-  kind: TypeKind.Object,
-  typedBindings,
-})
-
-export const buildMapType = <T extends Type>(key: T, value: T): MapType<T> => ({
-  kind: TypeKind.Map,
+export const buildProperty = <T extends Type, U extends Type>(
+  key: T,
+  value: U,
+): Property<T, U> => ({
   key,
   value,
+})
+
+export const buildObjectType = <T extends Type, U extends Type>(
+  properties: Property<T, U>[],
+): ObjectType<T, U> => ({
+  kind: TypeKind.Object,
+  properties,
+})
+
+export const buildMapType = <T extends Type, U extends Type>(
+  property: Property<T, U>,
+): MapType<T, U> => ({
+  kind: TypeKind.Map,
+  property,
 })
 
 export const buildIntersectionType = <T extends Type>(

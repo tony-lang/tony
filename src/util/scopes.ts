@@ -1,9 +1,9 @@
 import {
   FileScope,
-  ObjectScope,
   ScopeWithErrors,
+  ScopeWithTerms,
+  ScopeWithTypedTerms,
   ScopeWithTypes,
-  TypedObjectScope,
 } from '../types/analyze/scopes'
 import {
   TermBinding,
@@ -31,10 +31,8 @@ export const addErrorToScope = <T extends ScopeWithErrors>(
   errors: [...scope.errors, { node, error }],
 })
 
-export const getTermBindings = (scope: ObjectScope): TermBinding[] =>
-  scope.bindings
-export const getTypedTermBindings = <T extends Type>(
-  scope: TypedObjectScope<T>,
-): TypedTermBinding<T>[] => scope.typedBindings
-export const getTypeBindings = (scope: ScopeWithTypes): TypeBinding[] =>
-  scope.typeBindings
+export const getTerms = (scope: ScopeWithTerms): TermBinding[] => scope.terms
+export const getTypedTerms = <T extends Type>(
+  scope: ScopeWithTypedTerms<T>,
+): TypedTermBinding<T>[] => scope.typedTerms
+export const getTypes = (scope: ScopeWithTypes): TypeBinding[] => scope.types
