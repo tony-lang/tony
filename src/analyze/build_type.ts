@@ -7,9 +7,11 @@ import {
   buildCurriedType,
   buildGenericType,
   buildIntersectionType,
+  buildLiteralType,
   buildMapType,
   buildObjectType,
   buildParametricType,
+  buildProperty,
   buildTaggedType,
   buildUnionType,
 } from '../types/type_inference/types'
@@ -34,12 +36,7 @@ import {
   TypeofNode,
   UnionTypeNode,
 } from 'tree-sitter-tony'
-import {
-  TypeBinding,
-  TypeBindingNode,
-  buildLocalTermBinding,
-  buildTypedTermBinding,
-} from '../types/analyze/bindings'
+import { TypeBinding, TypeBindingNode } from '../types/analyze/bindings'
 import {
   buildConstrainedUnknownTypeFromTypes,
   reduceConstraintTypes,
@@ -67,7 +64,7 @@ type InternalTypeNode =
  * Given a node in the syntax tree and a stack of type bindings, returns the
  * type defined by the node.
  */
-export const buildTypeBindingType = (typeBindings: TypeBinding[][]) => (
+export const buildTypeBindingType = (types: TypeBinding[][]) => (
   node: TypeBindingNode,
 ): ConstrainedType<DeclaredType, UnresolvedType> => {
   switch (node.type) {
@@ -75,9 +72,9 @@ export const buildTypeBindingType = (typeBindings: TypeBinding[][]) => (
       return handleTypeNode(node.nameNode)
     case SyntaxType.Interface:
     case SyntaxType.TypeAlias:
-      return handleTypeDeclaration(typeBindings, node.nameNode)
+      return handleTypeDeclaration(types, node.nameNode)
     case SyntaxType.TypeVariableDeclaration:
-      return handleTypeVariableDeclaration(typeBindings, node)
+      return handleTypeVariableDeclaration(types, node)
   }
 }
 
@@ -85,12 +82,12 @@ const handleTypeNode = (node: TypeNode) =>
   buildConstrainedType(buildGenericType(getTypeName(node), []))
 
 const handleTypeDeclaration = (
-  typeBindings: TypeBinding[][],
+  types: TypeBinding[][],
   node: TypeDeclarationNode,
 ) => {
   const name = getTypeName(node.nameNode)
   const constrainedTypeParameters = node.parameterNodes.map((child) =>
-    handleTypeVariableDeclaration(typeBindings, child),
+    handleTypeVariableDeclaration(types, child),
   )
   const [typeParameters, constraints] = reduceConstraintTypes(
     ...constrainedTypeParameters,
@@ -102,10 +99,10 @@ const handleTypeDeclaration = (
 }
 
 const handleTypeVariableDeclaration = (
-  typeBindings: TypeBinding[][],
+  types: TypeBinding[][],
   node: TypeVariableDeclarationNode,
 ) => {
-  const constraints = node.constraintNodes.map(buildType(typeBindings))
+  const constraints = node.constraintNodes.map(buildType(types))
   return buildConstrainedUnknownTypeFromTypes(constraints)
 }
 
@@ -113,7 +110,7 @@ const handleTypeVariableDeclaration = (
  * Given a node in the syntax tree and a stack of type bindings, returns the
  * type represented by the type binding.
  */
-export const buildTypeBindingValueType = (typeBindings: TypeBinding[][]) => (
+export const buildTypeBindingValueType = (types: TypeBinding[][]) => (
   node: TypeBindingNode,
 ): UnresolvedType => {}
 
@@ -121,97 +118,97 @@ export const buildTypeBindingValueType = (typeBindings: TypeBinding[][]) => (
  * Given a node in the syntax tree and a stack of type bindings, returns the
  * type represented by the node.
  */
-export const buildType = (typeBindings: TypeBinding[][]) => (
+export const buildType = (types: TypeBinding[][]) => (
   node: InternalTypeNode,
 ): UnresolvedType => {
   switch (node.type) {
     case SyntaxType.CurriedType:
-      return handleCurriedType(typeBindings, node)
+      return handleCurriedType(types, node)
     case SyntaxType.IntersectionType:
-      return handleIntersectionType(typeBindings, node)
+      return handleIntersectionType(types, node)
     case SyntaxType.ListType:
-      return handleListType(typeBindings, node)
+      return handleListType(types, node)
     case SyntaxType.MapType:
-      return handleMapType(typeBindings, node)
-    case SyntaxType.TaggedType:
-      return handleTaggedType(typeBindings, node)
+      return handleMapType(types, node)
     case SyntaxType.ParametricType:
-      return handleParametricType(typeBindings, node)
+      return handleParametricType(types, node)
     case SyntaxType.StructType:
-      return handleStructType(typeBindings, node)
+      return handleStructType(types, node)
+    case SyntaxType.TaggedType:
+      return handleTaggedType(types, node)
+    case SyntaxType.TupleType:
+      return handleTupleType(types, node)
     case SyntaxType.UnionType:
-      return handleUnionType(typeBindings, node)
+      return handleUnionType(types, node)
   }
 }
 
-const handleCurriedType = (
-  typeBindings: TypeBinding[][],
-  node: CurriedTypeNode,
-) =>
+const handleCurriedType = (types: TypeBinding[][], node: CurriedTypeNode) =>
   buildCurriedType(
-    buildType(typeBindings)(node.fromNode),
-    buildType(typeBindings)(node.toNode),
+    buildType(types)(node.fromNode),
+    buildType(types)(node.toNode),
   )
 
 const handleIntersectionType = (
-  typeBindings: TypeBinding[][],
+  types: TypeBinding[][],
   node: IntersectionTypeNode,
 ) => {
-  const leftType = buildType(typeBindings)(node.leftNode)
-  const rightType = buildType(typeBindings)(node.rightNode)
+  const leftType = buildType(types)(node.leftNode)
+  const rightType = buildType(types)(node.rightNode)
   if (rightType.kind === TypeKind.Intersection)
     return buildIntersectionType([leftType, ...rightType.parameters])
   else return buildIntersectionType([leftType, rightType])
 }
 
-const handleListType = (typeBindings: TypeBinding[][], node: ListTypeNode) =>
-  buildMapType(NUMBER_TYPE, buildType(typeBindings)(node.elementNode))
+const handleListType = (types: TypeBinding[][], node: ListTypeNode) =>
+  buildMapType(buildProperty(NUMBER_TYPE, buildType(types)(node.elementNode)))
 
-const handleMapType = (typeBindings: TypeBinding[][], node: MapTypeNode) =>
+const handleMapType = (types: TypeBinding[][], node: MapTypeNode) =>
   buildMapType(
-    buildType(typeBindings)(node.keyNode),
-    buildType(typeBindings)(node.valueNode),
+    buildProperty(
+      buildType(types)(node.keyNode),
+      buildType(types)(node.valueNode),
+    ),
   )
 
 const handleParametricType = (
-  typeBindings: TypeBinding[][],
+  types: TypeBinding[][],
   node: ParametricTypeNode,
 ) => {
   const name = getTypeName(node.nameNode)
-  const typeArguments = node.argumentNodes.map(buildType(typeBindings))
+  const typeArguments = node.argumentNodes.map(buildType(types))
   const termArguments = node.elementNodes
   return buildParametricType(name, typeArguments, termArguments)
 }
 
-const handleStructType = (
-  typeBindings: TypeBinding[][],
-  node: StructTypeNode,
-) => buildObjectType(node.memberNodes.map(handleMemberTypeNode(typeBindings)))
+const handleStructType = (types: TypeBinding[][], node: StructTypeNode) =>
+  buildObjectType(node.memberNodes.map(handleMemberTypeNode(types)))
 
-const handleUnionType = (
-  typeBindings: TypeBinding[][],
-  node: UnionTypeNode,
-) => {
-  const leftType = buildType(typeBindings)(node.leftNode)
-  const rightType = buildType(typeBindings)(node.rightNode)
+const handleTaggedType = (types: TypeBinding[][], node: TaggedTypeNode) =>
+  buildTaggedType(
+    getIdentifierName(node.nameNode),
+    buildType(types)(node.typeNode),
+  )
+
+const handleTupleType = (types: TypeBinding[][], node: TupleTypeNode) =>
+  buildObjectType(
+    node.elementNodes.map((elementNode, i) =>
+      buildProperty(buildLiteralType(i), buildType(types)(elementNode)),
+    ),
+  )
+
+const handleUnionType = (types: TypeBinding[][], node: UnionTypeNode) => {
+  const leftType = buildType(types)(node.leftNode)
+  const rightType = buildType(types)(node.rightNode)
   if (rightType.kind === TypeKind.Union)
     return buildUnionType([leftType, ...rightType.parameters])
   else return buildUnionType([leftType, rightType])
 }
 
-const handleMemberTypeNode = (typeBindings: TypeBinding[][]) => (
+const handleMemberTypeNode = (types: TypeBinding[][]) => (
   node: MemberTypeNode,
 ) =>
-  buildTypedTermBinding(
-    buildLocalTermBinding(getIdentifierName(node.keyNode), node, false),
-    buildConstrainedType(buildType(typeBindings)(node.valueNode)),
-  )
-
-const handleTaggedType = (
-  typeBindings: TypeBinding[][],
-  node: TaggedTypeNode,
-) =>
-  buildTaggedType(
-    getIdentifierName(node.nameNode),
-    buildType(typeBindings)(node.typeNode),
+  buildProperty(
+    buildLiteralType(getIdentifierName(node.keyNode)),
+    buildType(types)(node.valueNode),
   )

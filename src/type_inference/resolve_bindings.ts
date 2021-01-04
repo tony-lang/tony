@@ -21,8 +21,8 @@ import { ScopeWithErrors, TypedFileScope } from '../types/analyze/scopes'
 import {
   addErrorToScope,
   findFileScope,
-  getTypeBindings,
-  getTypedTermBindings,
+  getTypedTerms,
+  getTypes,
 } from '../util/scopes'
 import {
   buildUnknownFileError,
@@ -121,7 +121,7 @@ export const resolveTermBindingType = resolveBindingType<
   TermBinding,
   ScopeWithErrors,
   Type
->(getTypedTermBindings, resolveTermBindingTypeWithinScope)
+>(getTypedTerms, resolveTermBindingTypeWithinScope)
 
 const resolveTypeBindingTypeWithinScope = (typeBinding: LocalTypeBinding) =>
   buildConstrainedType(typeBinding.type, typeBinding.constraints)
@@ -133,7 +133,7 @@ export const resolveTypeBindingType = resolveBindingType<
   TypeBinding,
   ScopeWithErrors,
   DeclaredType
->(getTypeBindings, resolveTypeBindingTypeWithinScope)
+>(getTypes, resolveTypeBindingTypeWithinScope)
 
 const resolveTypeBindingValueTypeWithinScope = (
   typeBinding: LocalTypeBinding,
@@ -146,4 +146,4 @@ export const resolveTypeBindingValueType = resolveBindingType<
   TypeBinding,
   ScopeWithErrors,
   UnresolvedType
->(getTypeBindings, resolveTypeBindingValueTypeWithinScope)
+>(getTypes, resolveTypeBindingValueTypeWithinScope)

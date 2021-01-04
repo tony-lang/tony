@@ -2,6 +2,8 @@ import { TypeKind } from './types'
 
 // ---- Types ----
 
+export type Literal = string | number | boolean | RegExp
+
 type BooleanType = {
   kind: typeof TypeKind.Boolean
 }

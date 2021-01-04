@@ -15,16 +15,16 @@ enum ScopeKind {
   RefinementType,
 }
 
-export type ObjectScope = {
-  bindings: TermBinding[]
+export type ScopeWithTerms = {
+  terms: TermBinding[]
 }
 
-export type TypedObjectScope<T extends Type> = {
-  typedBindings: TypedTermBinding<T>[]
+export type ScopeWithTypedTerms<T extends Type> = {
+  typedTerms: TypedTermBinding<T>[]
 }
 
-export type ScopeWithTypes = ObjectScope & {
-  typeBindings: TypeBinding[]
+export type ScopeWithTypes = {
+  types: TypeBinding[]
 }
 
 export type ScopeWithErrors = {
@@ -43,6 +43,7 @@ export type GlobalScope<
 }
 
 export type FileScope = RecursiveScope<NestedScope> &
+  ScopeWithTerms &
   ScopeWithTypes &
   ScopeWithErrors & {
     kind: typeof ScopeKind.File
@@ -52,12 +53,13 @@ export type FileScope = RecursiveScope<NestedScope> &
   }
 
 export type TypedFileScope = FileScope &
-  TypedObjectScope<ResolvedType> & {
+  ScopeWithTypedTerms<ResolvedType> & {
     typedNode: TypedNode<ProgramNode>
   }
 
 export interface NestedScope
   extends RecursiveScope<NestedScope>,
+    ScopeWithTerms,
     ScopeWithTypes,
     ScopeWithErrors {
   kind: typeof ScopeKind.Nested
@@ -84,26 +86,26 @@ export const buildFileScope = (
   node,
   scopes: [],
   dependencies: [],
-  bindings: [],
-  typeBindings: [],
+  terms: [],
+  types: [],
   errors: [],
 })
 
 export const buildTypedFileScope = (
   fileScope: FileScope,
   typedNode: TypedNode<ProgramNode>,
-  typedBindings: TypedTermBinding<ResolvedType>[],
+  typedTerms: TypedTermBinding<ResolvedType>[],
 ): TypedFileScope => ({
   ...fileScope,
   typedNode,
-  typedBindings,
+  typedTerms,
 })
 
 export const buildNestedScope = (node: SyntaxNode): NestedScope => ({
   kind: ScopeKind.Nested,
   node,
-  bindings: [],
-  typeBindings: [],
+  terms: [],
+  types: [],
   scopes: [],
   errors: [],
 })

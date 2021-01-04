@@ -1,4 +1,5 @@
 import {
+  Property,
   ResolvedConstrainedType,
   ResolvedType,
   Type,
@@ -8,7 +9,6 @@ import {
   TypeVariableAssignment,
   buildConstrainedType,
 } from '../types/type_inference/types'
-import { TypedTermBinding } from '../types/analyze/bindings'
 import { unifyUnresolved } from './unification'
 
 /**
@@ -65,23 +65,22 @@ export const applyConstraints = (
     case TypeKind.Map:
       return {
         ...type,
-        key: applyConstraints(type.key, constraints),
-        value: applyConstraints(type.value, constraints),
+        property: applyConstraintsToProperty(type.property, constraints),
       }
     case TypeKind.Variable:
       return getConstraintOf(constraints, type)?.type || type
     case TypeKind.Object:
       return {
         ...type,
-        typedBindings: applyConstraintsToBindings(
-          type.typedBindings,
-          constraints,
+        properties: type.properties.map((property) =>
+          applyConstraintsToProperty(property, constraints),
         ),
       }
     case TypeKind.Refined:
     case TypeKind.Tagged:
       return { ...type, type: applyConstraints(type.type, constraints) }
 
+    case TypeKind.RefinedTerm:
     case TypeKind.Boolean:
     case TypeKind.Number:
     case TypeKind.RegExp:
@@ -91,25 +90,12 @@ export const applyConstraints = (
   }
 }
 
-const applyConstraintsToBindings = (
-  bindings: TypedTermBinding<ResolvedType>[],
+const applyConstraintsToProperty = (
+  property: Property<ResolvedType, ResolvedType>,
   constraints: TypeConstraints<ResolvedType>,
-): TypedTermBinding<ResolvedType>[] =>
-  bindings.map(applyConstraintsToBinding(constraints))
-
-const applyConstraintsToBinding = (
-  constraints: TypeConstraints<ResolvedType>,
-) => (
-  binding: TypedTermBinding<ResolvedType>,
-): TypedTermBinding<ResolvedType> => ({
-  ...binding,
-  type: buildConstrainedType(
-    applyConstraints(
-      binding.type.type,
-      unifyConstraints(constraints, binding.type.constraints),
-    ),
-    binding.type.constraints,
-  ),
+): Property<ResolvedType, ResolvedType> => ({
+  key: applyConstraints(property.key, constraints),
+  value: applyConstraints(property.value, constraints),
 })
 
 /**
