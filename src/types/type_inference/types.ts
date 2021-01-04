@@ -251,8 +251,8 @@ export const buildRefinedTerm = (name: string): RefinedTerm => ({
 })
 
 export const buildLiteralType = (value: Literal): RefinedType<RefinedTerm> =>
-  buildRefinedType(buildRefinedTerm('x'), [
-    buildEqualityPredicate(buildBindingValue('x'), buildLiteralValue(value)),
+  buildRefinedType(buildRefinedTerm('value'), [
+    buildEqualityPredicate(buildBindingValue('value'), buildLiteralValue(value)),
   ])
 
 export const buildTaggedType = <T extends Type>(
