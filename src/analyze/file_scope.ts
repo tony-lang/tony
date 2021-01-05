@@ -594,8 +594,8 @@ const handleRefinementTypeDeclaration = ensure<
   (state) => state.scopes[0].node.type === SyntaxType.RefinementType,
   (state, node) => {
     const name = getIdentifierName(node.nameNode)
-    const stateWithConstraints = traverseAll(state, node.constraintNodes)
-    return addTermBinding(name, true)(stateWithConstraints, node)
+    const stateWithType = traverse(state, node.typeNode)
+    return addTermBinding(name, true)(stateWithType, node)
   },
   buildRefinementTypeDeclarationOutsideRefinementTypeError(),
 )
