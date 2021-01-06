@@ -375,6 +375,10 @@ const handleNode = (
       )
     case SyntaxType.IntersectionType:
       throw new NotImplementedError('Tony cannot build intersection types yet.')
+    case SyntaxType.LeftSection:
+      throw new NotImplementedError(
+        'Tony cannot infer the type of left sections yet.',
+      )
     case SyntaxType.List:
       throw new NotImplementedError('Tony cannot infer the type of lists yet.')
     case SyntaxType.ListComprehension:
@@ -446,6 +450,10 @@ const handleNode = (
     case SyntaxType.Return:
       throw new NotImplementedError(
         'Tony cannot infer the type of returns yet.',
+      )
+    case SyntaxType.RightSection:
+      throw new NotImplementedError(
+        'Tony cannot infer the type of right sections yet.',
       )
     case SyntaxType.ShorthandAccessIdentifier:
       throw new NotImplementedError(
