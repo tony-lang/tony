@@ -1,11 +1,9 @@
-import { TermBinding, TypeBinding } from '../types/analyze/bindings'
-
 type Item = { name: string }
 
 const findItemByName = <T extends Item>(name: string, items: T[]) =>
   items.find((item) => item.name === name)
 
-export const findBinding = <T extends TermBinding | TypeBinding>(
+export const findBinding = <T extends Item>(
   name: string,
   bindingsStack: T[][],
 ): T | undefined =>

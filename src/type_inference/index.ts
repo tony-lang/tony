@@ -9,6 +9,7 @@ import {
   GlobalScope,
   NestedScope,
   TypedFileScope,
+  TypedNestedScope,
   buildTypedFileScope,
   isFileScope,
 } from '../types/analyze/scopes'
@@ -27,7 +28,7 @@ import {
 } from '../types/errors/annotations'
 import { Config } from '../config'
 import { ResolvedType } from '../types/type_inference/types'
-import { TypedTermBinding } from '../types/analyze/bindings'
+import { TypeAssignment } from '../types/analyze/bindings'
 import { VOID_TYPE } from '../types/type_inference/primitive_types'
 import { addErrorUnless } from '../util/traverse'
 import { buildConstrainedUnknownType } from '../util/types'
@@ -46,9 +47,13 @@ type State = {
    */
   scopes: (FileScope | NestedScope)[]
   /**
-   * A list of typed bindings for each scope on the scope stack.
+   * A list of type assignments for each scope on the scope stack.
    */
-  bindings: TypedTermBinding<ResolvedType>[][]
+  typeAssignments: TypeAssignment<ResolvedType>[][]
+  /**
+   * A list of already visited and typed direct child scopes.
+   */
+  typedScopes: TypedNestedScope[]
 }
 
 /**
@@ -90,13 +95,15 @@ const inferTypesOfFile = (
   const initialState: State = {
     typedFileScopes,
     scopes: [fileScope],
-    bindings: [],
+    typeAssignments: [[]],
+    typedScopes: [],
   }
   const answers = handleProgram(initialState, fileScope.node)
   const [answer] = answers
   const {
     scopes: [finalFileScope],
-    bindings: [finalTypedBindings],
+    typeAssignments: [finalTypeAssignments],
+    typedScopes,
   } = addErrorUnless<State>(
     answers.length === 1,
     buildIndeterminateTypeError(getTypedNodesFromAnswers(answers)),
@@ -108,8 +115,9 @@ const inferTypesOfFile = (
 
   return buildTypedFileScope(
     finalFileScope,
+    typedScopes,
     answer.typedNode,
-    finalTypedBindings,
+    finalTypeAssignments,
   )
 }
 

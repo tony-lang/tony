@@ -14,8 +14,8 @@ import {
   LocalTermBinding,
   LocalTypeBinding,
   TermBinding,
+  TypeAssignment,
   TypeBinding,
-  TypedTermBinding,
   isImportedBinding,
   isLocalBinding,
 } from '../types/analyze/bindings'
@@ -23,7 +23,7 @@ import { ScopeWithErrors, TypedFileScope } from '../types/analyze/scopes'
 import {
   addErrorToScope,
   findFileScope,
-  getTypedTerms,
+  getTypeAssignments,
   getTypes,
 } from '../util/scopes'
 import {
@@ -36,7 +36,7 @@ import { findBinding } from '../util/bindings'
 import { isSamePath } from '../util/paths'
 
 type StrongBinding<T extends TermBinding | TypeBinding> = T extends TermBinding
-  ? TypedTermBinding<ResolvedType>
+  ? TypeAssignment<ResolvedType>
   : TypeBinding
 type WeakBinding<T extends TermBinding | TypeBinding> = T extends TermBinding
   ? TermBinding
@@ -110,10 +110,10 @@ const resolveBindingType = <
 
 const resolveTermBindingTypeWithinScope = (
   binding: LocalTermBinding,
-  bindings: TypedTermBinding<ResolvedType>[][],
+  typeAssignments: TypeAssignment<ResolvedType>[][],
 ) => {
-  const typedBinding = findBinding(binding.name, bindings)
-  return typedBinding?.type || buildUnconstrainedUnknownType()
+  const typeAssignment = findBinding(binding.name, typeAssignments)
+  return typeAssignment?.type || buildUnconstrainedUnknownType()
 }
 
 /**
@@ -123,7 +123,7 @@ export const resolveTermBindingType = resolveBindingType<
   TermBinding,
   ScopeWithErrors,
   Type
->(getTypedTerms, resolveTermBindingTypeWithinScope)
+>(getTypeAssignments, resolveTermBindingTypeWithinScope)
 
 const resolveTypeBindingTypeWithinScope = (typeBinding: LocalTypeBinding) =>
   buildConstrainedType(typeBinding.type, typeBinding.constraints)
