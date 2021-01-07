@@ -1,6 +1,6 @@
 import { ErrorAnnotation, MountedErrorAnnotation } from '../errors/annotations'
 import { ResolvedType, Type } from '../type_inference/types'
-import { TermBinding, TypeBinding, TypedTermBinding } from './bindings'
+import { TermBinding, TypeAssignment, TypeBinding } from './bindings'
 import { AbsolutePath } from '../path'
 import { ProgramNode } from 'tree-sitter-tony'
 import { SyntaxNode } from 'tree-sitter-tony'
@@ -19,8 +19,8 @@ export type ScopeWithTerms = {
   terms: TermBinding[]
 }
 
-export type ScopeWithTypedTerms<T extends Type> = {
-  typedTerms: TypedTermBinding<T>[]
+export type TypingEnvironment<T extends Type> = {
+  typeAssignments: TypeAssignment<T>[]
 }
 
 export type ScopeWithTypes = {
@@ -53,17 +53,25 @@ export type FileScope = RecursiveScope<NestedScope> &
   }
 
 export type TypedFileScope = FileScope &
-  ScopeWithTypedTerms<ResolvedType> & {
+  RecursiveScope<TypedNestedScope> &
+  TypingEnvironment<ResolvedType> & {
     typedNode: TypedNode<ProgramNode>
   }
 
-export interface NestedScope
+export interface NestedScope<T extends SyntaxNode = SyntaxNode>
   extends RecursiveScope<NestedScope>,
     ScopeWithTerms,
     ScopeWithTypes,
     ScopeWithErrors {
   kind: typeof ScopeKind.Nested
-  node: SyntaxNode
+  node: T
+}
+
+export interface TypedNestedScope<T extends SyntaxNode = SyntaxNode>
+  extends NestedScope<T>,
+    TypingEnvironment<ResolvedType> {
+  scopes: TypedNestedScope[]
+  typedNode: TypedNode<T>
 }
 
 // ---- Factories ----
@@ -93,12 +101,14 @@ export const buildFileScope = (
 
 export const buildTypedFileScope = (
   fileScope: FileScope,
+  scopes: TypedNestedScope[],
   typedNode: TypedNode<ProgramNode>,
-  typedTerms: TypedTermBinding<ResolvedType>[],
+  typeAssignments: TypeAssignment<ResolvedType>[],
 ): TypedFileScope => ({
   ...fileScope,
+  scopes,
   typedNode,
-  typedTerms,
+  typeAssignments,
 })
 
 export const buildNestedScope = (node: SyntaxNode): NestedScope => ({
@@ -108,6 +118,18 @@ export const buildNestedScope = (node: SyntaxNode): NestedScope => ({
   types: [],
   scopes: [],
   errors: [],
+})
+
+export const buildTypedNestedScope = <T extends SyntaxNode>(
+  scope: NestedScope<T>,
+  scopes: TypedNestedScope[],
+  typedNode: TypedNode<T>,
+  typeAssignments: TypeAssignment<ResolvedType>[],
+): TypedNestedScope<T> => ({
+  ...scope,
+  scopes,
+  typedNode,
+  typeAssignments,
 })
 
 export const isFileScope = <T extends FileScope>(

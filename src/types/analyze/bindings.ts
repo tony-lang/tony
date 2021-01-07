@@ -86,9 +86,6 @@ export type LocalBinding = {
 export type ImportedTermBinding = AbstractTermBinding & ImportedBinding
 export type LocalTermBinding = AbstractTermBinding & LocalBinding
 export type TermBinding = ImportedTermBinding | LocalTermBinding
-export type TypedTermBinding<T extends Type> = TermBinding & {
-  type: ConstrainedType<T, ResolvedType>
-}
 
 export type ImportedTypeBinding = AbstractTypeBinding &
   ImportedBinding & { node: ImportTypeNode }
@@ -100,6 +97,13 @@ export type LocalTypeBinding = AbstractTypeBinding &
     constraints: TypeConstraints<UnresolvedType>
   }
 export type TypeBinding = ImportedTypeBinding | LocalTypeBinding
+
+/**
+ * A type assignment assigns a type to a term binding.
+ */
+export type TypeAssignment<T extends Type> = TermBinding & {
+  type: ConstrainedType<T, ResolvedType>
+}
 
 // ---- Factories ----
 
@@ -133,14 +137,6 @@ export const buildLocalTermBinding = (
   node,
   isExported,
   isImplicit,
-})
-
-export const buildTypedTermBinding = <T extends Type>(
-  binding: TermBinding,
-  type: ConstrainedType<T, ResolvedType>,
-): TypedTermBinding<T> => ({
-  ...binding,
-  type,
 })
 
 export const buildImportedTypeBinding = (
@@ -178,6 +174,14 @@ export const buildLocalTypeBinding = (
     constraints: constrainedType.constraints,
   }
 }
+
+export const buildTypeAssignment = <T extends Type>(
+  binding: TermBinding,
+  type: ConstrainedType<T, ResolvedType>,
+): TypeAssignment<T> => ({
+  ...binding,
+  type,
+})
 
 export const isImportedBinding = (binding: {
   location: BindingLocation

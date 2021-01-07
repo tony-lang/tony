@@ -3,7 +3,7 @@ import {
   Type,
   UnresolvedType,
 } from '../types/type_inference/types'
-import { TypeBinding, TypedTermBinding } from '../types/analyze/bindings'
+import { TypeAssignment, TypeBinding } from '../types/analyze/bindings'
 
 /**
  * Given a stack of typed term bindings, a stack of type bindings and a type,
@@ -11,7 +11,7 @@ import { TypeBinding, TypedTermBinding } from '../types/analyze/bindings'
  * actual type.
  */
 export const resolveType = (
-  typedTerms: TypedTermBinding<Type>[][],
+  typedTerms: TypeAssignment<Type>[][],
   types: TypeBinding[][],
   type: UnresolvedType,
 ): ResolvedType => {}
