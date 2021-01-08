@@ -8,7 +8,6 @@ import {
   BlockNode,
   BooleanNode,
   CaseNode,
-  CommentNode,
   CurriedTypeNode,
   DestructuringPatternNode,
   ElseIfNode,
@@ -103,8 +102,6 @@ import { isInstanceOf } from './instances'
 import { unifyConstraints } from './constraints'
 
 type TermNode =
-  | ErrorNode
-  | CommentNode
   | AbstractionNode
   | AbstractionBranchNode
   | AccessNode
@@ -165,6 +162,7 @@ type TermNode =
   | TypeAliasNode
   | TypeHintNode
   | WhenNode
+  | ErrorNode
 
 type State = {
   /**
@@ -396,8 +394,6 @@ const handleNode = (
   switch (node.type) {
     case SyntaxType.ERROR:
       return handleError(state, node, type)
-    case SyntaxType.Comment:
-      return [buildEmptyAnswer(state, node)]
 
     case SyntaxType.Abstraction:
       throw new NotImplementedError(
