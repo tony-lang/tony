@@ -1,9 +1,76 @@
 import {
+  AbstractionBranchNode,
+  AbstractionNode,
+  AccessNode,
+  ApplicationNode,
+  ArgumentNode,
+  AssignmentNode,
+  BlockNode,
+  BooleanNode,
+  CaseNode,
+  CommentNode,
+  CurriedTypeNode,
+  DestructuringPatternNode,
+  ElseIfNode,
+  EnumNode,
+  EnumValueNode,
   ErrorNode,
+  ExportNode,
+  ExportedImportNode,
+  GeneratorNode,
+  GroupNode,
+  IdentifierNode,
+  IdentifierPatternNameNode,
+  IdentifierPatternNode,
+  IfNode,
+  ImplementNode,
+  ImportIdentifierNode,
+  ImportNode,
+  ImportTypeNode,
+  InfixApplicationNode,
+  InterfaceNode,
+  InterpolationNode,
+  LeftSectionNode,
+  ListComprehensionNode,
+  ListNode,
+  ListPatternNode,
+  MemberNode,
+  MemberPatternNode,
+  NumberNode,
+  PatternGroupNode,
+  PipelineNode,
+  PrefixApplicationNode,
   ProgramNode,
-  SyntaxNode,
+  RawStringNode,
+  RegexNode,
+  RestNode,
+  ReturnNode,
+  RightSectionNode,
+  ShorthandAccessIdentifierNode,
+  ShorthandMemberIdentifierNode,
+  ShorthandMemberNode,
+  ShorthandMemberPatternNode,
+  SpreadNode,
+  StringNode,
+  StructNode,
+  StructPatternNode,
   SyntaxType,
+  TaggedPatternNode,
+  TaggedValueNode,
+  TupleNode,
+  TuplePatternNode,
+  TypeAliasNode,
+  TypeHintNode,
+  WhenNode,
 } from 'tree-sitter-tony'
+import {
+  BOOLEAN_TYPE,
+  NUMBER_TYPE,
+  PrimitiveType,
+  REG_EXP_TYPE,
+  STRING_TYPE,
+  VOID_TYPE,
+} from '../types/type_inference/primitive_types'
 import {
   FileScope,
   GlobalScope,
@@ -29,12 +96,75 @@ import {
 import { Config } from '../config'
 import { ResolvedType } from '../types/type_inference/types'
 import { TypeAssignment } from '../types/analyze/bindings'
-import { VOID_TYPE } from '../types/type_inference/primitive_types'
 import { addErrorUnless } from '../util/traverse'
 import { buildConstrainedUnknownType } from '../util/types'
 import { collectErrors } from '../errors'
 import { isInstanceOf } from './instances'
 import { unifyConstraints } from './constraints'
+
+type TermNode =
+  | ErrorNode
+  | CommentNode
+  | AbstractionNode
+  | AbstractionBranchNode
+  | AccessNode
+  | ApplicationNode
+  | ArgumentNode
+  | AssignmentNode
+  | BlockNode
+  | BooleanNode
+  | CaseNode
+  | CurriedTypeNode
+  | DestructuringPatternNode
+  | ElseIfNode
+  | EnumNode
+  | EnumValueNode
+  | ExportNode
+  | ExportedImportNode
+  | GeneratorNode
+  | GroupNode
+  | IdentifierNode
+  | IdentifierPatternNode
+  | IdentifierPatternNameNode
+  | IfNode
+  | ImplementNode
+  | ImportNode
+  | ImportIdentifierNode
+  | ImportTypeNode
+  | InfixApplicationNode
+  | InterfaceNode
+  | InterpolationNode
+  | LeftSectionNode
+  | ListNode
+  | ListComprehensionNode
+  | ListPatternNode
+  | MemberNode
+  | MemberPatternNode
+  | NumberNode
+  | PatternGroupNode
+  | PipelineNode
+  | PrefixApplicationNode
+  | ProgramNode
+  | RawStringNode
+  | RegexNode
+  | RestNode
+  | ReturnNode
+  | RightSectionNode
+  | ShorthandAccessIdentifierNode
+  | ShorthandMemberNode
+  | ShorthandMemberIdentifierNode
+  | ShorthandMemberPatternNode
+  | SpreadNode
+  | StringNode
+  | StructNode
+  | StructPatternNode
+  | TaggedPatternNode
+  | TaggedValueNode
+  | TupleNode
+  | TuplePatternNode
+  | TypeAliasNode
+  | TypeHintNode
+  | WhenNode
 
 type State = {
   /**
@@ -60,7 +190,7 @@ type State = {
  * An answer represents a type annotation for a given node in the syntax tree
  * alongside a state.
  */
-type Answer<T extends SyntaxNode> = {
+type Answer<T extends TermNode> = {
   state: State
   typedNode: TypedNode<T>
 }
@@ -69,7 +199,7 @@ type Answer<T extends SyntaxNode> = {
  * Represents a disjunction of possible type annotations. for a given node in
  * the syntax tree.
  */
-type Answers<T extends SyntaxNode> = Answer<T>[]
+type Answers<T extends TermNode> = Answer<T>[]
 
 export const inferTypes = (
   config: Config,
@@ -121,14 +251,14 @@ const inferTypesOfFile = (
   )
 }
 
-const getTypedNodesFromAnswers = <T extends SyntaxNode>(answers: Answers<T>) =>
+const getTypedNodesFromAnswers = <T extends TermNode>(answers: Answers<T>) =>
   answers.map((answer) => answer.typedNode)
 
-const getTypeConstraintsFromAnswers = <T extends SyntaxNode>(
+const getTypeConstraintsFromAnswers = <T extends TermNode>(
   answers: Answers<T>,
 ) => answers.map((answer) => answer.typedNode.type.constraints)
 
-const buildAnswer = <T extends SyntaxNode>(
+const buildAnswer = <T extends TermNode>(
   state: State,
   typedNode: TypedNode<T>,
 ): Answer<T> => ({
@@ -136,16 +266,18 @@ const buildAnswer = <T extends SyntaxNode>(
   typedNode,
 })
 
-const buildEmptyAnswer = <T extends SyntaxNode>(
+const buildPrimitiveAnswer = <T extends TermNode>(type: PrimitiveType) => (
   state: State,
   node: T,
 ): Answer<T> =>
-  buildAnswer(state, buildTypedNode(node, buildConstrainedType(VOID_TYPE)))
+  buildAnswer(state, buildTypedNode(node, buildConstrainedType(type)))
 
-const wrapAnswer = <T extends SyntaxNode>(
+const buildEmptyAnswer = buildPrimitiveAnswer(VOID_TYPE)
+
+const wrapAnswer = <T extends TermNode>(
   node: T,
-  childNodes: Answers<SyntaxNode>,
-  answer: Answer<SyntaxNode>,
+  childNodes: Answers<TermNode>,
+  answer: Answer<TermNode>,
 ): Answer<T> =>
   buildAnswer(
     answer.state,
@@ -156,9 +288,7 @@ const wrapAnswer = <T extends SyntaxNode>(
     ),
   )
 
-const filterAnswers = <T extends SyntaxNode>(
-  answers: Answers<T>,
-): Answers<T> => {
+const filterAnswers = <T extends TermNode>(answers: Answers<T>): Answers<T> => {
   assert(answers.length > 0, 'There must always be at least one answer.')
 
   // Remove answers with errors if there are some answers without errors.
@@ -180,15 +310,15 @@ const filterAnswers = <T extends SyntaxNode>(
   return [answersSortedByNoOfErrors.map(([answer]) => answer)[0]]
 }
 
-const reduceAnswers = <T extends SyntaxNode>(answers: Answers<T>[]) =>
+const reduceAnswers = <T extends TermNode>(answers: Answers<T>[]) =>
   filterAnswers(answers.flat())
 
-const forAllAnswers = <T extends SyntaxNode, U extends SyntaxNode>(
+const forAllAnswers = <T extends TermNode, U extends TermNode>(
   answers: Answers<T>,
   callback: (answer: Answer<T>) => Answers<U>,
 ) => reduceAnswers(answers.map((answer) => callback(answer)))
 
-const traverseAll = <T extends SyntaxNode>(
+const traverseAll = <T extends TermNode>(
   nodes: T[],
   initialState: State,
   typeFactory: (
@@ -209,7 +339,7 @@ const traverseAll = <T extends SyntaxNode>(
     )
   }, [])
 
-const unifyConstraintsWithTypedNode = <T extends SyntaxNode>(
+const unifyConstraintsWithTypedNode = <T extends TermNode>(
   typedNode: TypedNode<T>,
   constraints: TypeConstraints<ResolvedType>,
 ): TypedNode<T> => {
@@ -226,7 +356,7 @@ const unifyConstraintsWithTypedNode = <T extends SyntaxNode>(
   }
 }
 
-const ensureIsInstanceOf = <T extends SyntaxNode>(
+const ensureIsInstanceOf = <T extends TermNode>(
   node: T,
   answer: Answer<T>,
   generalType: ResolvedConstrainedType,
@@ -247,7 +377,7 @@ const ensureIsInstanceOf = <T extends SyntaxNode>(
   return buildAnswer(stateWithError, typedNode)
 }
 
-const traverse = <T extends SyntaxNode>(
+const traverse = <T extends TermNode>(
   state: State,
   node: T,
   type: ResolvedConstrainedType,
@@ -260,17 +390,13 @@ const traverse = <T extends SyntaxNode>(
 
 const handleNode = (
   state: State,
-  node: SyntaxNode,
+  node: TermNode,
   type: ResolvedConstrainedType,
-): Answers<SyntaxNode> => {
-  assert(node.isNamed, 'The types of unnamed nodes should not be inferred.')
-
+): Answers<TermNode> => {
   switch (node.type) {
     case SyntaxType.ERROR:
       return handleError(state, node, type)
     case SyntaxType.Comment:
-      return [buildEmptyAnswer(state, node)]
-    case SyntaxType.HashBangLine:
       return [buildEmptyAnswer(state, node)]
 
     case SyntaxType.Abstraction:
@@ -300,9 +426,7 @@ const handleNode = (
     case SyntaxType.Block:
       throw new NotImplementedError('Tony cannot infer the type of blocks yet.')
     case SyntaxType.Boolean:
-      throw new NotImplementedError(
-        'Tony cannot infer the type of booleans yet.',
-      )
+      return [buildPrimitiveAnswer(BOOLEAN_TYPE)(state, node)]
     case SyntaxType.Case:
       throw new NotImplementedError('Tony cannot infer the type of cases yet.')
     case SyntaxType.CurriedType:
@@ -320,10 +444,6 @@ const handleNode = (
     case SyntaxType.EnumValue:
       throw new NotImplementedError(
         'Tony cannot infer the type of enum values yet.',
-      )
-    case SyntaxType.EscapeSequence:
-      throw new NotImplementedError(
-        'Tony cannot infer the type of escape sequences yet.',
       )
     case SyntaxType.Export:
       throw new NotImplementedError(
@@ -381,8 +501,6 @@ const handleNode = (
       throw new NotImplementedError(
         'Tony cannot infer the type of interpolations yet.',
       )
-    case SyntaxType.IntersectionType:
-      throw new NotImplementedError('Tony cannot build intersection types yet.')
     case SyntaxType.LeftSection:
       throw new NotImplementedError(
         'Tony cannot infer the type of left sections yet.',
@@ -397,10 +515,6 @@ const handleNode = (
       throw new NotImplementedError(
         'Tony cannot infer the type of list patterns yet.',
       )
-    case SyntaxType.ListType:
-      throw new NotImplementedError('Tony cannot build list types yet.')
-    case SyntaxType.MapType:
-      throw new NotImplementedError('Tony cannot build map types yet.')
     case SyntaxType.Member:
       throw new NotImplementedError(
         'Tony cannot infer the type of members yet.',
@@ -409,14 +523,8 @@ const handleNode = (
       throw new NotImplementedError(
         'Tony cannot infer the type of member patterns yet.',
       )
-    case SyntaxType.MemberType:
-      throw new NotImplementedError('Tony cannot build member types yet.')
     case SyntaxType.Number:
-      throw new NotImplementedError(
-        'Tony cannot infer the type of numbers yet.',
-      )
-    case SyntaxType.ParametricType:
-      throw new NotImplementedError('Tony cannot build parametric types yet.')
+      return [buildPrimitiveAnswer(NUMBER_TYPE)(state, node)]
     case SyntaxType.PatternGroup:
       throw new NotImplementedError(
         'Tony cannot infer the type of pattern groups yet.',
@@ -432,25 +540,9 @@ const handleNode = (
     case SyntaxType.Program:
       return handleProgram(state, node)
     case SyntaxType.RawString:
-      throw new NotImplementedError(
-        'Tony cannot infer the type of raw strings yet.',
-      )
-    case SyntaxType.RefinementType:
-      throw new NotImplementedError('Tony cannot build refined types yet.')
-    case SyntaxType.RefinementTypeDeclaration:
-      throw new NotImplementedError('Tony cannot build refined types yet.')
+      return [buildPrimitiveAnswer(STRING_TYPE)(state, node)]
     case SyntaxType.Regex:
-      throw new NotImplementedError(
-        'Tony cannot infer the type of regular expressions yet.',
-      )
-    case SyntaxType.RegexFlags:
-      throw new NotImplementedError(
-        'Tony cannot infer the type of regular expressions yet.',
-      )
-    case SyntaxType.RegexPattern:
-      throw new NotImplementedError(
-        'Tony cannot infer the type of regular expressions yet.',
-      )
+      return [buildPrimitiveAnswer(REG_EXP_TYPE)(state, node)]
     case SyntaxType.Rest:
       throw new NotImplementedError(
         'Tony cannot infer the type of rest parameters yet.',
@@ -495,14 +587,10 @@ const handleNode = (
       throw new NotImplementedError(
         'Tony cannot infer the type of struct patterns yet.',
       )
-    case SyntaxType.StructType:
-      throw new NotImplementedError('Tony cannot build struct types yet.')
     case SyntaxType.TaggedPattern:
       throw new NotImplementedError(
         'Tony cannot infer the type of tagged patterns yet.',
       )
-    case SyntaxType.TaggedType:
-      throw new NotImplementedError('Tony cannot build tagged types yet.')
     case SyntaxType.TaggedValue:
       throw new NotImplementedError(
         'Tony cannot infer the type of tagged values yet.',
@@ -513,32 +601,14 @@ const handleNode = (
       throw new NotImplementedError(
         'Tony cannot infer the type of tuple patterns yet.',
       )
-    case SyntaxType.TupleType:
-      throw new NotImplementedError('Tony cannot build tuple types yet.')
-    case SyntaxType.Type:
-      throw new NotImplementedError('Tony cannot build types yet.')
     case SyntaxType.TypeAlias:
       throw new NotImplementedError(
         'Tony cannot infer the type of type aliases yet.',
       )
-    case SyntaxType.TypeDeclaration:
-      throw new NotImplementedError('Tony cannot build declared types yet.')
-    case SyntaxType.TypeGroup:
-      throw new NotImplementedError('Tony cannot build type groups yet.')
     case SyntaxType.TypeHint:
       throw new NotImplementedError(
         'Tony cannot infer the type of type hints yet.',
       )
-    case SyntaxType.TypeVariable:
-      throw new NotImplementedError('Tony cannot build type variables yet.')
-    case SyntaxType.TypeVariableDeclaration:
-      throw new NotImplementedError('Tony cannot build type variables yet.')
-    case SyntaxType.TypeVariableDeclarationName:
-      throw new NotImplementedError('Tony cannot build type variables yet.')
-    case SyntaxType.Typeof:
-      throw new NotImplementedError('Tony cannot build typeofs yet.')
-    case SyntaxType.UnionType:
-      throw new NotImplementedError('Tony cannot build union types yet.')
     case SyntaxType.When:
       throw new NotImplementedError('Tony cannot infer the type of whens yet.')
   }
