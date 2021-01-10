@@ -11,6 +11,7 @@ import { TermBinding } from '../analyze/bindings'
 // ---- Types ----
 
 export enum TypeKind {
+  Access,
   Conditional,
   Curried,
   Generic,
@@ -141,6 +142,15 @@ export interface IntersectionType<T extends Type> {
 }
 
 /**
+ * An access type represents the type of a property of an object type.
+ */
+export interface AccessType {
+  kind: typeof TypeKind.Access
+  type: UnresolvedType
+  property: UnresolvedType
+}
+
+/**
  * A conditional type reduces to one of two types depending on whether a given
  * type fulfills some constraints.
  */
@@ -163,6 +173,7 @@ export type UnresolvedType =
   | UnionType<UnresolvedType>
   | IntersectionType<UnresolvedType>
   | PrimitiveType
+  | AccessType
   | ConditionalType
   | ParametricType
   | TermType
@@ -274,6 +285,15 @@ export const buildUnionType = <T extends Type>(
 ): UnionType<T> => ({
   kind: TypeKind.Union,
   parameters,
+})
+
+export const buildAccessType = (
+  type: UnresolvedType,
+  property: UnresolvedType,
+): AccessType => ({
+  kind: TypeKind.Access,
+  type,
+  property,
 })
 
 export const buildConditionalType = (

@@ -1,14 +1,19 @@
 import {
   AccessTypeNode,
+  BooleanNode,
   ConditionalTypeNode,
   CurriedTypeNode,
+  IdentifierNode,
   IntersectionTypeNode,
   ListTypeNode,
   MapTypeNode,
   MemberTypeNode,
+  NumberNode,
   ParametricTypeNode,
   RefinementTypeDeclarationNode,
   RefinementTypeNode,
+  RegexNode,
+  StringNode,
   StructTypeNode,
   SubtractionTypeNode,
   SyntaxNode,
@@ -38,6 +43,7 @@ import {
   RefinedType,
   TypeKind,
   UnresolvedType,
+  buildAccessType,
   buildConditionalType,
   buildCurriedType,
   buildGenericType,
@@ -86,6 +92,13 @@ type InternalTypeNode =
   | TypeVariableNode
   | TypeofNode
   | UnionTypeNode
+
+type ImmediateTermNode =
+  | BooleanNode
+  | IdentifierNode
+  | NumberNode
+  | RegexNode
+  | StringNode
 
 type State = {
   scopes: (ScopeWithErrors & ScopeWithTerms & ScopeWithTypes)[]
@@ -182,7 +195,7 @@ export const buildType = <T extends State>(
 ): Return<T, UnresolvedType> => {
   switch (node.type) {
     case SyntaxType.AccessType:
-      throw new NotImplementedError('Tony cannot build access types yet.')
+      return handleAccessType(state, node)
     case SyntaxType.ConditionalType:
       return handleConditionalType(state, node)
     case SyntaxType.CurriedType:
@@ -226,6 +239,19 @@ export const buildTypes = <T extends State>(
   state: T,
   nodes: InternalTypeNode[],
 ): Return<T, UnresolvedType[]> => withState(state, nodes, buildType)
+
+
+const handleAccessType = <T extends State>(
+  state: T,
+  node: AccessTypeNode,
+): Return<T, UnresolvedType> => {
+  const [stateWithType, type] = buildType(state, node.typeNode)
+  const [stateWithProperty, propertyType] = handleTerm(
+    stateWithType,
+    node.valueNode,
+  )
+  return [stateWithProperty, buildAccessType(type, propertyType)]
+}
 
 const handleConditionalType = <T extends State>(
   state: T,
@@ -366,24 +392,7 @@ const handleTypeVariable = <T extends State>(
 const handleTypeof = <T extends State>(
   state: T,
   node: TypeofNode,
-): Return<T, UnresolvedType> => {
-  switch (node.valueNode.type) {
-    case SyntaxType.Boolean:
-      return [state, BOOLEAN_TYPE]
-    case SyntaxType.Number:
-      return [state, NUMBER_TYPE]
-    case SyntaxType.Regex:
-      return [state, REG_EXP_TYPE]
-    case SyntaxType.String:
-      return [state, STRING_TYPE]
-  }
-
-  const name = getIdentifierName(node.valueNode)
-  const binding = findBinding(name, state.scopes.map(getTerms))
-  if (binding) return [state, buildTermType(binding)]
-  // fallback to any type, the missing binding error is already added elsewhere
-  return [state, buildTypeVariable()]
-}
+): Return<T, UnresolvedType> => handleTerm(state, node.valueNode)
 
 const handleUnionType = <T extends State>(
   state: T,
@@ -407,4 +416,26 @@ const handleMemberTypeNode = <T extends State>(
     stateWithValue,
     buildProperty(buildLiteralType(getIdentifierName(node.keyNode)), value),
   ]
+}
+
+const handleTerm = <T extends State>(
+  state: T,
+  node: ImmediateTermNode,
+): Return<T, UnresolvedType> => {
+  switch (node.type) {
+    case SyntaxType.Boolean:
+      return [state, BOOLEAN_TYPE]
+    case SyntaxType.Number:
+      return [state, NUMBER_TYPE]
+    case SyntaxType.Regex:
+      return [state, REG_EXP_TYPE]
+    case SyntaxType.String:
+      return [state, STRING_TYPE]
+  }
+
+  const name = getIdentifierName(node)
+  const binding = findBinding(name, state.scopes.map(getTerms))
+  if (binding) return [state, buildTermType(binding)]
+  // fallback to any type, the missing binding error is already added elsewhere
+  return [state, buildTypeVariable()]
 }
