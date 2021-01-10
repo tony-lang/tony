@@ -11,6 +11,7 @@ import { TermBinding } from '../analyze/bindings'
 // ---- Types ----
 
 export enum TypeKind {
+  Conditional,
   Curried,
   Generic,
   Intersection,
@@ -139,6 +140,18 @@ export interface IntersectionType<T extends Type> {
   parameters: T[]
 }
 
+/**
+ * A conditional type reduces to one of two types depending on whether a given
+ * type fulfills some constraints.
+ */
+export interface ConditionalType {
+  kind: typeof TypeKind.Conditional
+  type: UnresolvedType
+  constraints: UnresolvedType[]
+  consequence: UnresolvedType
+  alternative: UnresolvedType
+}
+
 export type DeclaredType = TypeVariable | GenericType
 export type UnresolvedType =
   | TypeVariable
@@ -150,6 +163,7 @@ export type UnresolvedType =
   | UnionType<UnresolvedType>
   | IntersectionType<UnresolvedType>
   | PrimitiveType
+  | ConditionalType
   | ParametricType
   | TermType
 export type ResolvedType =
@@ -260,4 +274,17 @@ export const buildUnionType = <T extends Type>(
 ): UnionType<T> => ({
   kind: TypeKind.Union,
   parameters,
+})
+
+export const buildConditionalType = (
+  type: UnresolvedType,
+  constraints: UnresolvedType[],
+  consequence: UnresolvedType,
+  alternative: UnresolvedType,
+): ConditionalType => ({
+  kind: TypeKind.Conditional,
+  type,
+  constraints,
+  consequence,
+  alternative,
 })
