@@ -21,6 +21,7 @@ export enum TypeKind {
   Parametric,
   Refined,
   RefinedTerm,
+  Subtraction,
   Tagged,
   Term,
   Union,
@@ -142,7 +143,7 @@ export interface IntersectionType<T extends Type> {
 }
 
 /**
- * An access type represents the type of a property of an object type.
+ * An access type reduces to the type a property of an object type maps to.
  */
 export interface AccessType {
   kind: typeof TypeKind.Access
@@ -162,6 +163,16 @@ export interface ConditionalType {
   alternative: UnresolvedType
 }
 
+/**
+ * A subtraction type reduces to the union including all members of the left
+ * union that do not appear in the right union.
+ */
+export interface SubtractionType {
+  kind: typeof TypeKind.Subtraction
+  left: UnresolvedType
+  right: UnresolvedType
+}
+
 export type DeclaredType = TypeVariable | GenericType
 export type UnresolvedType =
   | TypeVariable
@@ -176,6 +187,7 @@ export type UnresolvedType =
   | AccessType
   | ConditionalType
   | ParametricType
+  | SubtractionType
   | TermType
 export type ResolvedType =
   | TypeVariable
@@ -307,4 +319,13 @@ export const buildConditionalType = (
   constraints,
   consequence,
   alternative,
+})
+
+export const buildSubtractionType = (
+  left: UnresolvedType,
+  right: UnresolvedType,
+): SubtractionType => ({
+  kind: TypeKind.Subtraction,
+  left,
+  right,
 })

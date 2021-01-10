@@ -53,6 +53,7 @@ import {
   buildObjectType,
   buildParametricType,
   buildProperty,
+  buildSubtractionType,
   buildTermType,
   buildTypeVariable,
   buildUnionType,
@@ -215,7 +216,7 @@ export const buildType = <T extends State>(
     case SyntaxType.StructType:
       return handleStructType(state, node)
     case SyntaxType.SubtractionType:
-      throw new NotImplementedError('Tony cannot build subtraction types yet.')
+      return handleSubtractionType(state, node)
     case SyntaxType.TaggedType:
       return handleTaggedType(state, node)
     case SyntaxType.TupleType:
@@ -348,6 +349,15 @@ const handleStructType = <T extends State>(
     handleMemberTypeNode,
   )
   return [stateWithMembers, buildObjectType(properties)]
+}
+
+const handleSubtractionType = <T extends State>(
+  state: T,
+  node: SubtractionTypeNode,
+): Return<T, UnresolvedType> => {
+  const [stateWithLeft, left] = buildType(state, node.leftNode)
+  const [stateWithRight, right] = buildType(stateWithLeft, node.rightNode)
+  return [stateWithRight, buildSubtractionType(left, right)]
 }
 
 const handleTaggedType = <T extends State>(
