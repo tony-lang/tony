@@ -45,6 +45,7 @@ import {
   buildImportedTypeBinding,
   buildLocalTermBinding,
   buildLocalTypeBinding,
+  buildTypeVariableBinding,
 } from '../types/analyze/bindings'
 import { addError, conditionalApply, ensure } from '../util/traverse'
 import {
@@ -63,13 +64,19 @@ import {
   getTypeVariableName,
   parseRawString,
 } from '../util/parse'
-import { getTerms, getTypes } from '../util/scopes'
+import { getTerms, getTypeVariables, getTypes } from '../util/scopes'
 import { Config } from '../config'
 import { assert } from '../types/errors/internal'
 import { fileMayBeImported } from '../util/paths'
 import { resolveRelativePath } from './resolve'
 import { isPrimitiveTypeName } from '../types/type_inference/primitive_types'
-import { buildAliasType, buildAliasedType } from './build_type'
+import { buildAliasType, buildAliasedType, buildTypes } from './build_type'
+import {
+  buildTypeConstraints,
+  buildTypeVariableAssignment,
+} from '../types/type_inference/constraints'
+import { buildTypeVariable } from '../types/type_inference/types'
+import { buildTypeConstraintsFromTypes } from '../util/types'
 
 type ImportedBindingConfig = { file: AbsolutePath; originalName?: string }
 
@@ -255,6 +262,35 @@ const addTypeBinding = (
     buildDuplicateBindingError(name),
   )
 
+const addTypeVariableBinding = (name: string) =>
+  ensure<State, TypeVariableDeclarationNode>(
+    (state) =>
+      findBinding(name, state.scopes.map(getTypeVariables)) === undefined,
+    (state, node) => {
+      const [stateWithConstraints, constraints] = buildTypes(
+        state,
+        node.constraintNodes,
+      )
+      const typeVariable = buildTypeVariable()
+      const binding = buildTypeVariableBinding(
+        name,
+        node,
+        typeVariable,
+        buildTypeConstraintsFromTypes(typeVariable, constraints),
+      )
+      const [scope, ...parentScopes] = stateWithConstraints.scopes
+      const newScope = {
+        ...scope,
+        typeVariables: [...scope.typeVariables, binding],
+      }
+      return {
+        ...stateWithConstraints,
+        scopes: [newScope, ...parentScopes],
+      }
+    },
+    buildDuplicateBindingError(name),
+  )
+
 const buildTypeBinding = (
   state: State,
   node: TypeBindingNode | ImportTypeNode,
@@ -274,10 +310,15 @@ const buildTypeBinding = (
       ),
     ]
 
-  return buildTypes(state, name, node as TypeBindingNode, isExported)
+  return buildTypesForLocalBinding(
+    state,
+    name,
+    node as TypeBindingNode,
+    isExported,
+  )
 }
 
-const buildTypes = (
+const buildTypesForLocalBinding = (
   state: State,
   name: string,
   node: TypeBindingNode,
@@ -290,14 +331,7 @@ const buildTypes = (
   )
   return [
     stateWithAliasedType,
-    buildLocalTypeBinding(
-      name,
-      aliasType.type,
-      aliasedType,
-      aliasType.constraints,
-      node,
-      isExported,
-    ),
+    buildLocalTypeBinding(name, aliasType, aliasedType, node, isExported),
   ]
 }
 
@@ -666,7 +700,7 @@ const handleTypeVariableDeclaration = (
 ): State => {
   const name = getTypeVariableName(node.nameNode)
   const stateWithName = traverse(state, node.nameNode)
-  const stateWithBinding = addTypeBinding(name, true)(stateWithName, node)
+  const stateWithBinding = addTypeVariableBinding(name)(stateWithName, node)
   return conditionalApply(traverseAll)(stateWithBinding, node.constraintNodes)
 }
 

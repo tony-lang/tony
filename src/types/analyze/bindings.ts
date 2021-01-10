@@ -3,7 +3,9 @@ import {
   DeclaredType,
   ResolvedType,
   Type,
+  TypeVariable,
   UnresolvedType,
+  buildTypeVariable,
 } from '../type_inference/types'
 import {
   DestructuringPatternNode,
@@ -35,11 +37,7 @@ export type TermBindingNode =
   | RefinementTypeDeclarationNode
   | MemberTypeNode
 
-export type TypeBindingNode =
-  | EnumNode
-  | InterfaceNode
-  | TypeAliasNode
-  | TypeVariableDeclarationNode
+export type TypeBindingNode = EnumNode | InterfaceNode | TypeAliasNode
 
 type AbstractBinding = {
   name: string
@@ -49,6 +47,7 @@ type AbstractBinding = {
 enum BindingKind {
   Term,
   Type,
+  TypeVariable,
 }
 
 type AbstractTermBinding = AbstractBinding & {
@@ -89,11 +88,17 @@ export type ImportedTypeBinding = AbstractTypeBinding &
 export type LocalTypeBinding = AbstractTypeBinding &
   LocalBinding & {
     node: TypeBindingNode
-    type: DeclaredType
-    value: UnresolvedType
-    constraints: TypeConstraints<UnresolvedType>
+    value: DeclaredType
+    alias: UnresolvedType
   }
 export type TypeBinding = ImportedTypeBinding | LocalTypeBinding
+
+export type TypeVariableBinding = AbstractBinding & {
+  kind: typeof BindingKind.TypeVariable
+  node: TypeVariableDeclarationNode
+  value: TypeVariable
+  constraints: TypeConstraints<UnresolvedType>
+}
 
 /**
  * A type assignment assigns a type to a term binding.
@@ -154,9 +159,8 @@ export const buildImportedTypeBinding = (
 
 export const buildLocalTypeBinding = (
   name: string,
-  type: DeclaredType,
-  value: UnresolvedType,
-  constraints: TypeConstraints<UnresolvedType>,
+  value: DeclaredType,
+  alias: UnresolvedType,
   node: TypeBindingNode,
   isExported = false,
 ): LocalTypeBinding => ({
@@ -165,7 +169,20 @@ export const buildLocalTypeBinding = (
   name,
   node,
   isExported,
-  type,
+  value,
+  alias,
+})
+
+export const buildTypeVariableBinding = (
+  name: string,
+  node: TypeVariableDeclarationNode,
+  value: TypeVariable,
+  constraints: TypeConstraints<UnresolvedType>,
+): TypeVariableBinding => ({
+  kind: BindingKind.TypeVariable,
+  name,
+  node,
+  isExported: false,
   value,
   constraints,
 })

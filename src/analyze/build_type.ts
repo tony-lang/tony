@@ -45,20 +45,28 @@ import {
   buildProperty,
   buildUnionType,
 } from '../types/type_inference/types'
-import { TypeBinding, TypeBindingNode } from '../types/analyze/bindings'
 import {
-  buildConstrainedUnknownTypeFromTypes,
-  reduceConstraintTypes,
-} from '../util/types'
-import { getIdentifierName, getTypeName } from '../util/parse'
+  LocalTypeBinding,
+  TypeBinding,
+  TypeBindingNode,
+} from '../types/analyze/bindings'
+import { reduceConstraintTypes } from '../util/types'
+import {
+  getIdentifierName,
+  getTypeName,
+  getTypeVariableName,
+} from '../util/parse'
 import {
   NUMBER_TYPE,
   buildPrimitiveType,
   isPrimitiveTypeName,
 } from '../types/type_inference/primitive_types'
-import { ScopeWithErrors } from '../types/analyze/scopes'
+import { ScopeWithErrors, ScopeWithTypes } from '../types/analyze/scopes'
 import { addErrorUnless } from '../util/traverse'
 import { buildPrimitiveTypeArgumentsError } from '../types/errors/annotations'
+import { findBinding } from '../util/bindings'
+import { getTypeVariables, getTypes } from '../util/scopes'
+import { assert } from '../types/errors/internal'
 
 type InternalTypeNode =
   | AccessTypeNode
@@ -80,7 +88,7 @@ type InternalTypeNode =
   | UnionTypeNode
 
 type State = {
-  scopes: ScopeWithErrors[]
+  scopes: (ScopeWithErrors & ScopeWithTypes)[]
 }
 
 type Return<T extends State, U> = [newState: T, type: U]
@@ -99,64 +107,55 @@ const withState = <T extends State, U extends SyntaxNode, V>(
   )
 
 /**
- * Given a node in the syntax tree and some state, returns the
- * type defined by the node.
+ * Given a node in the syntax tree and some state, returns the type defined by
+ * the node.
  */
 export const buildAliasType = <T extends State>(
   state: T,
   node: TypeBindingNode,
-): Return<T, ConstrainedType<DeclaredType, UnresolvedType>> => {
+): Return<T, DeclaredType> => {
   switch (node.type) {
     case SyntaxType.Enum:
       return [state, handleTypeNode(node.nameNode)]
     case SyntaxType.Interface:
     case SyntaxType.TypeAlias:
       return handleTypeDeclaration(state, node.nameNode)
-    case SyntaxType.TypeVariableDeclaration:
-      return handleTypeVariableDeclaration(state, node)
   }
 }
 
 const handleTypeNode = (node: TypeNode) =>
-  buildConstrainedType(buildGenericType(getTypeName(node), []))
+  buildGenericType(getTypeName(node), [])
 
 const handleTypeDeclaration = <T extends State>(
   state: T,
   node: TypeDeclarationNode,
-): Return<T, ConstrainedType<DeclaredType, UnresolvedType>> => {
+): Return<T, DeclaredType> => {
   const name = getTypeName(node.nameNode)
-  const [stateWithParameters, constrainedTypeParameters] = withState(
-    state,
-    node.parameterNodes,
-    handleTypeVariableDeclaration,
+  const typeParameters = node.parameterNodes.map((child) =>
+    findTypeVariable(state, child),
   )
-  const [typeParameters, constraints] = reduceConstraintTypes(
-    ...constrainedTypeParameters,
-  )
-  return [
-    stateWithParameters,
-    buildConstrainedType(buildGenericType(name, typeParameters), constraints),
-  ]
+  return [state, buildGenericType(name, typeParameters)]
 }
 
-const handleTypeVariableDeclaration = <T extends State>(
+const findTypeVariable = <T extends State>(
   state: T,
   node: TypeVariableDeclarationNode,
-): Return<T, ConstrainedType<TypeVariable, UnresolvedType>> => {
-  const [stateWithConstraints, constraints] = withState(
-    state,
-    node.constraintNodes,
-    buildType,
+) => {
+  const name = getTypeVariableName(node.nameNode)
+  const typeVariableBinding = findBinding(
+    name,
+    state.scopes.map(getTypeVariables),
   )
-  return [
-    stateWithConstraints,
-    buildConstrainedUnknownTypeFromTypes(constraints),
-  ]
+  assert(
+    typeVariableBinding !== undefined,
+    'Type variables should be added to the scope before relevant types are built.',
+  )
+  return typeVariableBinding.value
 }
 
 /**
- * Given a node in the syntax tree and some state, returns the
- * type represented by the type binding.
+ * Given a node in the syntax tree and some state, returns the type represented
+ * by the type binding.
  */
 export const buildAliasedType = <T extends State>(
   state: T,
@@ -164,8 +163,8 @@ export const buildAliasedType = <T extends State>(
 ): Return<T, UnresolvedType> => {}
 
 /**
- * Given a node in the syntax tree and some state, returns the
- * type represented by the node.
+ * Given a node in the syntax tree and some state, returns the type represented
+ * by the node.
  */
 export const buildType = <T extends State>(
   state: T,
@@ -192,6 +191,15 @@ export const buildType = <T extends State>(
       return handleUnionType(state, node)
   }
 }
+
+/**
+ * Given nodes in the syntax tree and some state, returns the types represented
+ * by the nodes.
+ */
+export const buildTypes = <T extends State>(
+  state: T,
+  nodes: InternalTypeNode[],
+): Return<T, UnresolvedType[]> => withState(state, nodes, buildType)
 
 const handleCurriedType = <T extends State>(
   state: T,
@@ -248,10 +256,9 @@ const handleParametricType = <T extends State>(
     return [stateWithError, buildPrimitiveType(name)]
   }
 
-  const [stateWithTypeArguments, typeArguments] = withState(
+  const [stateWithTypeArguments, typeArguments] = buildTypes(
     state,
     node.argumentNodes,
-    buildType,
   )
   const termArguments = node.elementNodes
   return [
@@ -291,11 +298,7 @@ const handleTupleType = <T extends State>(
   state: T,
   node: TupleTypeNode,
 ): Return<T, UnresolvedType> => {
-  const [stateWithElements, elementTypes] = withState(
-    state,
-    node.elementNodes,
-    buildType,
-  )
+  const [stateWithElements, elementTypes] = buildTypes(state, node.elementNodes)
   return [
     stateWithElements,
     buildObjectType(

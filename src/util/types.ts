@@ -2,6 +2,7 @@ import {
   ConstrainedType,
   TypeConstraints,
   buildConstrainedType,
+  buildTypeVariableAssignment,
 } from '../types/type_inference/constraints'
 import {
   DeclaredType,
@@ -21,15 +22,13 @@ export const buildConstrainedUnknownType = <T extends Type>(
 ): ConstrainedType<TypeVariable, T> =>
   buildConstrainedType(buildTypeVariable(), constraints)
 
-export const buildConstrainedUnknownTypeFromTypes = <T extends Type>(
-  types: T[],
-): ConstrainedType<TypeVariable, T> => {
-  const typeVariable = buildTypeVariable()
-  return buildConstrainedType(
-    typeVariable,
-    types.map((type) => ({ typeVariable, type })),
+export const buildTypeConstraintsFromTypes = <T extends Type>(
+  typeVariable: TypeVariable,
+  constraints: T[] = [],
+): TypeConstraints<T> =>
+  constraints.map((constraint) =>
+    buildTypeVariableAssignment(typeVariable, constraint),
   )
-}
 
 export const reduceConstraintTypes = <
   T extends DeclaredType | Type,
