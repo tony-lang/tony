@@ -66,7 +66,7 @@ import { addErrorUnless } from '../util/traverse'
 import { buildPrimitiveTypeArgumentsError } from '../types/errors/annotations'
 import { findBinding } from '../util/bindings'
 import { getTypeVariables, getTypes } from '../util/scopes'
-import { assert } from '../types/errors/internal'
+import { assert, NotImplementedError } from '../types/errors/internal'
 
 type InternalTypeNode =
   | AccessTypeNode
@@ -171,6 +171,14 @@ export const buildType = <T extends State>(
   node: InternalTypeNode,
 ): Return<T, UnresolvedType> => {
   switch (node.type) {
+    case SyntaxType.AccessType:
+      throw new NotImplementedError(
+        'Tony cannot build access types yet.',
+      )
+    case SyntaxType.ConditionalType:
+      throw new NotImplementedError(
+        'Tony cannot build conditional types yet.',
+      )
     case SyntaxType.CurriedType:
       return handleCurriedType(state, node)
     case SyntaxType.IntersectionType:
@@ -181,12 +189,36 @@ export const buildType = <T extends State>(
       return handleMapType(state, node)
     case SyntaxType.ParametricType:
       return handleParametricType(state, node)
+    case SyntaxType.RefinementType:
+      throw new NotImplementedError(
+        'Tony cannot build refinement types yet.',
+      )
+    case SyntaxType.RefinementTypeDeclaration:
+      throw new NotImplementedError(
+        'Tony cannot build refinement types yet.',
+      )
     case SyntaxType.StructType:
       return handleStructType(state, node)
+    case SyntaxType.SubtractionType:
+      throw new NotImplementedError(
+        'Tony cannot build subtraction types yet.',
+      )
     case SyntaxType.TaggedType:
       return handleTaggedType(state, node)
     case SyntaxType.TupleType:
       return handleTupleType(state, node)
+    case SyntaxType.TypeGroup:
+      throw new NotImplementedError(
+        'Tony cannot build type groups yet.',
+      )
+    case SyntaxType.TypeVariable:
+      throw new NotImplementedError(
+        'Tony cannot build type variables yet.',
+      )
+    case SyntaxType.Typeof:
+      throw new NotImplementedError(
+        'Tony cannot build typeofs yet.',
+      )
     case SyntaxType.UnionType:
       return handleUnionType(state, node)
   }
