@@ -58,7 +58,7 @@ import {
   buildRefinementTypeDeclarationOutsideRefinementTypeError,
   buildUnknownFileError,
 } from '../types/errors/annotations'
-import { findBinding, itemsMissingFrom } from '../util/bindings'
+import { findBinding, findBindings, itemsMissingFrom } from '../util/bindings'
 import {
   getIdentifierName,
   getTypeName,
@@ -204,29 +204,26 @@ const addTermBinding = (
   isImplicit: boolean,
   isExported = false,
   importedFrom?: ImportedBindingConfig,
-) =>
-  ensure<State, TermBindingNode>(
-    (state) =>
-      findBinding(name, [state.terms]) === undefined &&
-      findBinding(name, state.scopes.map(getTerms)) === undefined,
-    (state, node) => {
-      const binding = importedFrom
-        ? buildImportedTermBinding(
-            importedFrom.file,
-            name,
-            importedFrom.originalName,
-            node,
-            isImplicit,
-            isExported,
-          )
-        : buildLocalTermBinding(name, node, isImplicit, isExported)
-      return {
-        ...state,
-        terms: [...state.terms, binding],
-      }
-    },
-    buildDuplicateBindingError(name),
-  )
+) => (state: State, node: TermBindingNode) => {
+  const index =
+    findBindings(name, [state.terms]).length +
+    findBindings(name, state.scopes.map(getTerms)).length
+  const binding = importedFrom
+    ? buildImportedTermBinding(
+        importedFrom.file,
+        name,
+        index,
+        importedFrom.originalName,
+        node,
+        isImplicit,
+        isExported,
+      )
+    : buildLocalTermBinding(name, index, node, isImplicit, isExported)
+  return {
+    ...state,
+    terms: [...state.terms, binding],
+  }
+}
 
 const addTypeBinding = (
   name: string,
@@ -549,6 +546,8 @@ const handleGenerator = (state: State, node: GeneratorNode): State => {
 
 const handleIdentifier = (state: State, node: IdentifierNode): State => {
   const name = getIdentifierName(node)
+  // there may be multiple bindings, but here we only check that at least one
+  // binding exists
   const binding = findBinding(name, state.scopes.map(getTerms))
 
   if (binding) return state

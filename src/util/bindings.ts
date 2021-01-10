@@ -3,15 +3,30 @@ type Item = { name: string }
 const findItemByName = <T extends Item>(name: string, items: T[]) =>
   items.find((item) => item.name === name)
 
+const findItemsByName = <T extends Item>(name: string, items: T[]) =>
+  items.filter((item) => item.name === name)
+
+const findItem = <T extends Item, U>(
+  name: string,
+  itemsStack: T[][],
+  find: (name: string, items: T[]) => U,
+  init: U,
+) =>
+  itemsStack.reduce<U>((item, items) => {
+    if (item !== undefined) return item
+
+    return find(name, items)
+  }, init)
+
 export const findBinding = <T extends Item>(
   name: string,
   bindingsStack: T[][],
-): T | undefined =>
-  bindingsStack.reduce<T | undefined>((binding, bindings) => {
-    if (binding !== undefined) return binding
+): T | undefined => findItem(name, bindingsStack, findItemByName, undefined)
 
-    return findItemByName(name, bindings)
-  }, undefined)
+export const findBindings = <T extends Item>(
+  name: string,
+  bindingsStack: T[][],
+): T[] => findItem(name, bindingsStack, findItemsByName, [])
 
 /**
  * Returns the items (1) is missing from (2).
