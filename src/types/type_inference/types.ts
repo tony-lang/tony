@@ -98,16 +98,6 @@ export interface RefinedTerm {
 }
 
 /**
- * A tagged type represents a type alongside a tag used to construct values of
- * that type.
- */
-export interface TaggedType<T extends Type> {
-  kind: typeof TypeKind.Tagged
-  tag: string
-  type: T
-}
-
-/**
  * A property represents the mapping of a key to a value.
  */
 export type Property<T extends Type, U extends Type> = {
@@ -153,7 +143,6 @@ export type DeclaredType = TypeVariable | GenericType
 export type UnresolvedType =
   | TypeVariable
   | CurriedType<UnresolvedType>
-  | TaggedType<UnresolvedType>
   | RefinedType<UnresolvedType>
   | RefinedTerm
   | ObjectType<UnresolvedType, UnresolvedType>
@@ -166,7 +155,6 @@ export type UnresolvedType =
 export type ResolvedType =
   | TypeVariable
   | CurriedType<ResolvedType>
-  | TaggedType<ResolvedType>
   | RefinedType<ResolvedType>
   | RefinedTerm
   | ObjectType<ResolvedType, ResolvedType>
@@ -232,15 +220,6 @@ export const buildLiteralType = (value: Literal): RefinedType<RefinedTerm> =>
       buildLiteralValue(value),
     ),
   ])
-
-export const buildTaggedType = <T extends Type>(
-  tag: string,
-  type: T,
-): TaggedType<T> => ({
-  kind: TypeKind.Tagged,
-  tag,
-  type,
-})
 
 export const buildProperty = <T extends Type, U extends Type>(
   key: T,
