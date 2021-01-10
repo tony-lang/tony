@@ -43,3 +43,11 @@ export const buildConstrainedType = <
 export const buildTypeConstraints = <T extends Type>(
   constraints: TypeVariableAssignment<T>[] = [],
 ): TypeConstraints<T> => constraints
+
+export const buildTypeVariableAssignment = <T extends Type>(
+  typeVariable: TypeVariable,
+  type: T,
+): TypeVariableAssignment<T> => ({
+  typeVariable,
+  type,
+})

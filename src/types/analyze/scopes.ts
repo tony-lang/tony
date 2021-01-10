@@ -10,7 +10,12 @@ import {
 } from 'tree-sitter-tony'
 import { ErrorAnnotation, MountedErrorAnnotation } from '../errors/annotations'
 import { ResolvedType, Type } from '../type_inference/types'
-import { TermBinding, TypeAssignment, TypeBinding } from './bindings'
+import {
+  TermBinding,
+  TypeAssignment,
+  TypeBinding,
+  TypeVariableBinding,
+} from './bindings'
 import { AbsolutePath } from '../path'
 import { TypedNode } from '../type_inference/nodes'
 
@@ -42,6 +47,7 @@ export type TypingEnvironment<T extends Type> = {
 
 export type ScopeWithTypes = {
   types: TypeBinding[]
+  typeVariables: TypeVariableBinding[]
 }
 
 export type ScopeWithErrors = {
@@ -113,6 +119,7 @@ export const buildFileScope = (
   dependencies: [],
   terms: [],
   types: [],
+  typeVariables: [],
   errors: [],
 })
 
@@ -133,6 +140,7 @@ export const buildNestedScope = (node: NestingNode): NestedScope => ({
   node,
   terms: [],
   types: [],
+  typeVariables: [],
   scopes: [],
   errors: [],
 })

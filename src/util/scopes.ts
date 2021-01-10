@@ -10,6 +10,7 @@ import {
   TermBinding,
   TypeAssignment,
   TypeBinding,
+  TypeVariableBinding,
 } from '../types/analyze/bindings'
 import { AbsolutePath } from '../types/path'
 import { ErrorAnnotation } from '../types/errors/annotations'
@@ -34,6 +35,9 @@ export const addErrorToScope = <T extends ScopeWithErrors>(
 
 export const getTerms = (scope: ScopeWithTerms): TermBinding[] => scope.terms
 export const getTypes = (scope: ScopeWithTypes): TypeBinding[] => scope.types
+export const getTypeVariables = (
+  scope: ScopeWithTypes,
+): TypeVariableBinding[] => scope.typeVariables
 export const getTypeAssignments = <T extends Type>(
   scope: TypingEnvironment<T>,
 ): TypeAssignment<T>[] => scope.typeAssignments

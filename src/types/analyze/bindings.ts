@@ -3,6 +3,7 @@ import {
   DeclaredType,
   ResolvedType,
   Type,
+  TypeVariable,
   UnresolvedType,
 } from '../type_inference/types'
 import {
@@ -20,10 +21,6 @@ import {
   TypeAliasNode,
   TypeVariableDeclarationNode,
 } from 'tree-sitter-tony'
-import {
-  buildTypeBindingType,
-  buildTypeBindingValueType,
-} from '../../analyze/build_type'
 import { AbsolutePath } from '../path'
 
 // ---- Types ----
@@ -38,11 +35,7 @@ export type TermBindingNode =
   | RefinementTypeDeclarationNode
   | MemberTypeNode
 
-export type TypeBindingNode =
-  | EnumNode
-  | InterfaceNode
-  | TypeAliasNode
-  | TypeVariableDeclarationNode
+export type TypeBindingNode = EnumNode | InterfaceNode | TypeAliasNode
 
 type AbstractBinding = {
   name: string
@@ -52,6 +45,7 @@ type AbstractBinding = {
 enum BindingKind {
   Term,
   Type,
+  TypeVariable,
 }
 
 type AbstractTermBinding = AbstractBinding & {
@@ -92,11 +86,17 @@ export type ImportedTypeBinding = AbstractTypeBinding &
 export type LocalTypeBinding = AbstractTypeBinding &
   LocalBinding & {
     node: TypeBindingNode
-    type: DeclaredType
-    value: UnresolvedType
-    constraints: TypeConstraints<UnresolvedType>
+    value: DeclaredType
+    alias: UnresolvedType
   }
 export type TypeBinding = ImportedTypeBinding | LocalTypeBinding
+
+export type TypeVariableBinding = AbstractBinding & {
+  kind: typeof BindingKind.TypeVariable
+  node: TypeVariableDeclarationNode
+  value: TypeVariable
+  constraints: TypeConstraints<UnresolvedType>
+}
 
 /**
  * A type assignment assigns a type to a term binding.
@@ -156,24 +156,34 @@ export const buildImportedTypeBinding = (
 })
 
 export const buildLocalTypeBinding = (
-  typeBindings: TypeBinding[][],
   name: string,
+  value: DeclaredType,
+  alias: UnresolvedType,
   node: TypeBindingNode,
   isExported = false,
-): LocalTypeBinding => {
-  const constrainedType = buildTypeBindingType(typeBindings)(node)
+): LocalTypeBinding => ({
+  kind: BindingKind.Type,
+  location: BindingLocation.Local,
+  name,
+  node,
+  isExported,
+  value,
+  alias,
+})
 
-  return {
-    kind: BindingKind.Type,
-    location: BindingLocation.Local,
-    name,
-    node,
-    isExported,
-    type: constrainedType.type,
-    value: buildTypeBindingValueType(typeBindings)(node),
-    constraints: constrainedType.constraints,
-  }
-}
+export const buildTypeVariableBinding = (
+  name: string,
+  node: TypeVariableDeclarationNode,
+  value: TypeVariable,
+  constraints: TypeConstraints<UnresolvedType>,
+): TypeVariableBinding => ({
+  kind: BindingKind.TypeVariable,
+  name,
+  node,
+  isExported: false,
+  value,
+  constraints,
+})
 
 export const buildTypeAssignment = <T extends Type>(
   binding: TermBinding,

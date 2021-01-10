@@ -125,27 +125,26 @@ export const resolveTermBindingType = resolveBindingType<
   Type
 >(getTypeAssignments, resolveTermBindingTypeWithinScope)
 
-const resolveTypeBindingTypeWithinScope = (typeBinding: LocalTypeBinding) =>
-  buildConstrainedType(typeBinding.type, typeBinding.constraints)
+const resolveAliasTypeWithinScope = (typeBinding: LocalTypeBinding) =>
+  buildConstrainedType(typeBinding.value)
 
 /**
  * Returns the type declared by a type binding.
  */
-export const resolveTypeBindingType = resolveBindingType<
+export const resolveAliasType = resolveBindingType<
   TypeBinding,
   ScopeWithErrors,
   DeclaredType
->(getTypes, resolveTypeBindingTypeWithinScope)
+>(getTypes, resolveAliasTypeWithinScope)
 
-const resolveTypeBindingValueTypeWithinScope = (
-  typeBinding: LocalTypeBinding,
-) => buildConstrainedType(typeBinding.value, typeBinding.constraints)
+const resolveAliasedTypeWithinScope = (typeBinding: LocalTypeBinding) =>
+  buildConstrainedType(typeBinding.alias)
 
 /**
  * Returns the type represented by a type binding.
  */
-export const resolveTypeBindingValueType = resolveBindingType<
+export const resolveAliasedType = resolveBindingType<
   TypeBinding,
   ScopeWithErrors,
   UnresolvedType
->(getTypes, resolveTypeBindingValueTypeWithinScope)
+>(getTypes, resolveAliasedTypeWithinScope)
