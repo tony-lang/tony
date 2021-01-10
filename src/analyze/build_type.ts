@@ -160,7 +160,21 @@ const findTypeVariable = <T extends State>(
 export const buildAliasedType = <T extends State>(
   state: T,
   node: TypeBindingNode,
-): Return<T, UnresolvedType> => {}
+): Return<T, UnresolvedType> => {
+  switch (node.type) {
+    case SyntaxType.Enum:
+      // return union of typeofs of enum values
+      throw new NotImplementedError(
+        'Tony cannot handle enums yet.',
+      )
+    case SyntaxType.Interface:
+      throw new NotImplementedError(
+        'Tony cannot handle interfaces yet.',
+      )
+    case SyntaxType.TypeAlias:
+      return buildType(state, node.typeNode)
+  }
+}
 
 /**
  * Given a node in the syntax tree and some state, returns the type represented
