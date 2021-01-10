@@ -64,7 +64,7 @@ type PrimitiveTypeName =
 
 // ---- Factories ----
 
-export const buildPrimitiveType = (name: PrimitiveTypeName): PrimitiveType => {
+export const findPrimitiveType = (name: PrimitiveTypeName): PrimitiveType => {
   switch (name) {
     case BOOLEAN_TYPE_NAME:
       return BOOLEAN_TYPE

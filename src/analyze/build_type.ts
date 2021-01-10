@@ -39,14 +39,19 @@ import {
   buildParametricType,
   buildProperty,
   buildUnionType,
+  buildTermType,
+  buildTypeVariable,
 } from '../types/type_inference/types'
 import {
   NUMBER_TYPE,
-  buildPrimitiveType,
+  findPrimitiveType,
   isPrimitiveTypeName,
+  BOOLEAN_TYPE,
+  REG_EXP_TYPE,
+  STRING_TYPE,
 } from '../types/type_inference/primitive_types'
 import { NotImplementedError, assert } from '../types/errors/internal'
-import { ScopeWithErrors, ScopeWithTypes } from '../types/analyze/scopes'
+import { ScopeWithErrors, ScopeWithTerms, ScopeWithTypes } from '../types/analyze/scopes'
 import {
   getIdentifierName,
   getTypeName,
@@ -56,7 +61,7 @@ import { TypeBindingNode } from '../types/analyze/bindings'
 import { addErrorUnless } from '../util/traverse'
 import { buildPrimitiveTypeArgumentsError } from '../types/errors/annotations'
 import { findBinding } from '../util/bindings'
-import { getTypeVariables } from '../util/scopes'
+import { getTerms, getTypeVariables } from '../util/scopes'
 
 type InternalTypeNode =
   | AccessTypeNode
@@ -78,7 +83,7 @@ type InternalTypeNode =
   | UnionTypeNode
 
 type State = {
-  scopes: (ScopeWithErrors & ScopeWithTypes)[]
+  scopes: (ScopeWithErrors & ScopeWithTerms & ScopeWithTypes)[]
 }
 
 type Return<T extends State, U> = [newState: T, type: U]
@@ -202,7 +207,7 @@ export const buildType = <T extends State>(
     case SyntaxType.TypeVariable:
       return handleTypeVariable(state, node)
     case SyntaxType.Typeof:
-      throw new NotImplementedError('Tony cannot build typeofs yet.')
+      return handleTypeof(state, node)
     case SyntaxType.UnionType:
       return handleUnionType(state, node)
   }
@@ -269,7 +274,7 @@ const handleParametricType = <T extends State>(
       node.argumentNodes.length === 0 && node.elementNodes.length === 0,
       buildPrimitiveTypeArgumentsError(),
     )(state, node)
-    return [stateWithError, buildPrimitiveType(name)]
+    return [stateWithError, findPrimitiveType(name)]
   }
 
   const [stateWithTypeArguments, typeArguments] = buildTypes(
@@ -334,6 +339,28 @@ const handleTypeVariable = <T extends State>(
   state: T,
   node: TypeVariableNode,
 ): Return<T, UnresolvedType> => [state, findTypeVariable(state, node)]
+
+const handleTypeof = <T extends State>(
+  state: T,
+  node: TypeofNode,
+): Return<T, UnresolvedType> => {
+  switch (node.valueNode.type) {
+    case SyntaxType.Boolean:
+      return [state, BOOLEAN_TYPE]
+    case SyntaxType.Number:
+      return [state, NUMBER_TYPE]
+    case SyntaxType.Regex:
+      return [state, REG_EXP_TYPE]
+    case SyntaxType.String:
+      return [state, STRING_TYPE]
+  }
+
+  const name = getIdentifierName(node.valueNode)
+  const binding = findBinding(name, state.scopes.map(getTerms))
+  if (binding) return [state, buildTermType(binding)]
+  // fallback to any type, the missing binding error is already added elsewhere
+  return [state, buildTypeVariable()]
+}
 
 const handleUnionType = <T extends State>(
   state: T,

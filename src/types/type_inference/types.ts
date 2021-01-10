@@ -70,7 +70,7 @@ export interface ParametricType {
 }
 
 /**
- * A term type represents an unresolved type of a binding (resulting from
+ * A term type represents an unresolved type of a node (resulting from
  * typeof's).
  */
 export interface TermType {
@@ -197,6 +197,13 @@ export const buildParametricType = (
   name,
   typeArguments,
   termArguments,
+})
+
+export const buildTermType = (
+  binding: TermBinding,
+): TermType => ({
+  kind: TypeKind.Term,
+  binding,
 })
 
 export const buildRefinedType = <T extends Type>(
