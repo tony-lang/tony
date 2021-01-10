@@ -198,7 +198,7 @@ export const buildType = <T extends State>(
     case SyntaxType.TupleType:
       return handleTupleType(state, node)
     case SyntaxType.TypeGroup:
-      throw new NotImplementedError('Tony cannot build type groups yet.')
+      return handleTypeGroup(state, node)
     case SyntaxType.TypeVariable:
       return handleTypeVariable(state, node)
     case SyntaxType.Typeof:
@@ -324,6 +324,11 @@ const handleTupleType = <T extends State>(
     ),
   ]
 }
+
+const handleTypeGroup = <T extends State>(
+  state: T,
+  node: TypeGroupNode,
+): Return<T, UnresolvedType> => buildType(state, node.typeNode)
 
 const handleTypeVariable = <T extends State>(
   state: T,
