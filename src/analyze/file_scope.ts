@@ -22,7 +22,6 @@ import {
   ShorthandMemberPatternNode,
   SyntaxNode,
   SyntaxType,
-  TaggedTypeNode,
   TypeAliasNode,
   TypeVariableDeclarationNode,
   TypeVariableNode,
@@ -311,8 +310,6 @@ const traverse = (state: State, node: SyntaxNode): State => {
       return handleRefinementType(state, node)
     case SyntaxType.RefinementTypeDeclaration:
       return handleRefinementTypeDeclaration(state, node)
-    case SyntaxType.TaggedType:
-      return handleTaggedType(state, node)
     case SyntaxType.TypeAlias:
       return handleTypeAlias(state, node)
     case SyntaxType.TypeVariable:
@@ -599,16 +596,6 @@ const handleRefinementTypeDeclaration = ensure<
   },
   buildRefinementTypeDeclarationOutsideRefinementTypeError(),
 )
-
-const handleTaggedType = (state: State, node: TaggedTypeNode): State => {
-  const { exportNextBindings: isExported } = state
-  const constructor = getIdentifierName(node.nameNode)
-  const stateWithName = traverse(state, node.nameNode)
-  const stateWithType = traverse(stateWithName, node.typeNode)
-  return flushTermBindings(
-    addTermBinding(constructor, true, isExported)(stateWithType, node),
-  )
-}
 
 const handleTypeAlias = nest<TypeAliasNode>((state, node) => {
   const { exportNextBindings: isExported } = state

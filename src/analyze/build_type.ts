@@ -1,8 +1,6 @@
 import {
-  ConstrainedType,
-  buildConstrainedType,
-} from '../types/type_inference/constraints'
-import {
+  AccessTypeNode,
+  ConditionalTypeNode,
   CurriedTypeNode,
   IntersectionTypeNode,
   ListTypeNode,
@@ -12,6 +10,7 @@ import {
   RefinementTypeDeclarationNode,
   RefinementTypeNode,
   StructTypeNode,
+  SubtractionTypeNode,
   SyntaxType,
   TaggedTypeNode,
   TupleTypeNode,
@@ -24,6 +23,10 @@ import {
   UnionTypeNode,
 } from 'tree-sitter-tony'
 import {
+  ConstrainedType,
+  buildConstrainedType,
+} from '../types/type_inference/constraints'
+import {
   DeclaredType,
   TypeKind,
   UnresolvedType,
@@ -35,7 +38,6 @@ import {
   buildObjectType,
   buildParametricType,
   buildProperty,
-  buildTaggedType,
   buildUnionType,
 } from '../types/type_inference/types'
 import { TypeBinding, TypeBindingNode } from '../types/analyze/bindings'
@@ -47,6 +49,8 @@ import { getIdentifierName, getTypeName } from '../util/parse'
 import { NUMBER_TYPE } from '../types/type_inference/primitive_types'
 
 type InternalTypeNode =
+  | AccessTypeNode
+  | ConditionalTypeNode
   | CurriedTypeNode
   | IntersectionTypeNode
   | ListTypeNode
@@ -55,6 +59,7 @@ type InternalTypeNode =
   | RefinementTypeNode
   | RefinementTypeDeclarationNode
   | StructTypeNode
+  | SubtractionTypeNode
   | TaggedTypeNode
   | TupleTypeNode
   | TypeGroupNode
@@ -186,18 +191,26 @@ const handleParametricType = (
 const handleStructType = (types: TypeBinding[][], node: StructTypeNode) =>
   buildObjectType(node.memberNodes.map(handleMemberTypeNode(types)))
 
-const handleTaggedType = (types: TypeBinding[][], node: TaggedTypeNode) =>
-  buildTaggedType(
-    getIdentifierName(node.nameNode),
-    buildType(types)(node.typeNode),
-  )
-
 const handleTupleType = (types: TypeBinding[][], node: TupleTypeNode) =>
   buildObjectType(
     node.elementNodes.map((elementNode, i) =>
       buildProperty(buildLiteralType(i), buildType(types)(elementNode)),
     ),
   )
+
+const handleTaggedType = (types: TypeBinding[][], node: TaggedTypeNode) => {
+  const tag = buildProperty(
+    buildLiteralType('tag'),
+    buildLiteralType(getIdentifierName(node.nameNode)),
+  )
+  if (node.typeNode === undefined) return buildObjectType([tag])
+
+  const value = buildProperty(
+    buildLiteralType('value'),
+    buildType(types)(node.typeNode),
+  )
+  return buildObjectType([tag, value])
+}
 
 const handleUnionType = (types: TypeBinding[][], node: UnionTypeNode) => {
   const leftType = buildType(types)(node.leftNode)
