@@ -66,6 +66,7 @@ import { Config } from '../config'
 import { assert } from '../types/errors/internal'
 import { fileMayBeImported } from '../util/paths'
 import { resolveRelativePath } from './resolve'
+import { isPrimitiveTypeName } from '../types/type_inference/primitive_types'
 
 type ImportedBindingConfig = { file: AbsolutePath; originalName?: string }
 
@@ -227,7 +228,9 @@ const addTypeBinding = (
   importedFrom?: ImportedBindingConfig,
 ) =>
   ensure<State, TypeBindingNode | ImportTypeNode>(
-    (state) => findBinding(name, state.scopes.map(getTypes)) === undefined,
+    (state) =>
+      findBinding(name, state.scopes.map(getTypes)) === undefined &&
+      !isPrimitiveTypeName(name),
     (state, node) => {
       const binding = importedFrom
         ? buildImportedTypeBinding(

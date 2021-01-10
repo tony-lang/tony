@@ -46,7 +46,11 @@ import {
   reduceConstraintTypes,
 } from '../util/types'
 import { getIdentifierName, getTypeName } from '../util/parse'
-import { NUMBER_TYPE } from '../types/type_inference/primitive_types'
+import {
+  NUMBER_TYPE,
+  buildPrimitiveType,
+  isPrimitiveTypeName,
+} from '../types/type_inference/primitive_types'
 
 type InternalTypeNode =
   | AccessTypeNode
@@ -71,7 +75,7 @@ type InternalTypeNode =
  * Given a node in the syntax tree and a stack of type bindings, returns the
  * type defined by the node.
  */
-export const buildTypeBindingType = (types: TypeBinding[][]) => (
+export const buildAliasType = (types: TypeBinding[][]) => (
   node: TypeBindingNode,
 ): ConstrainedType<DeclaredType, UnresolvedType> => {
   switch (node.type) {
@@ -117,7 +121,7 @@ const handleTypeVariableDeclaration = (
  * Given a node in the syntax tree and a stack of type bindings, returns the
  * type represented by the type binding.
  */
-export const buildTypeBindingValueType = (types: TypeBinding[][]) => (
+export const buildAliasedType = (types: TypeBinding[][]) => (
   node: TypeBindingNode,
 ): UnresolvedType => {}
 
@@ -183,6 +187,11 @@ const handleParametricType = (
   node: ParametricTypeNode,
 ) => {
   const name = getTypeName(node.nameNode)
+  if (isPrimitiveTypeName(name)) {
+    // TODO: add error if there are type or term arguments
+    return buildPrimitiveType(name)
+  }
+
   const typeArguments = node.argumentNodes.map(buildType(types))
   const termArguments = node.elementNodes
   return buildParametricType(name, typeArguments, termArguments)

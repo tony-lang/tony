@@ -20,10 +20,7 @@ import {
   TypeAliasNode,
   TypeVariableDeclarationNode,
 } from 'tree-sitter-tony'
-import {
-  buildTypeBindingType,
-  buildTypeBindingValueType,
-} from '../../analyze/build_type'
+import { buildAliasType, buildAliasedType } from '../../analyze/build_type'
 import { AbsolutePath } from '../path'
 
 // ---- Types ----
@@ -161,7 +158,7 @@ export const buildLocalTypeBinding = (
   node: TypeBindingNode,
   isExported = false,
 ): LocalTypeBinding => {
-  const constrainedType = buildTypeBindingType(typeBindings)(node)
+  const constrainedType = buildAliasType(typeBindings)(node)
 
   return {
     kind: BindingKind.Type,
@@ -170,7 +167,7 @@ export const buildLocalTypeBinding = (
     node,
     isExported,
     type: constrainedType.type,
-    value: buildTypeBindingValueType(typeBindings)(node),
+    value: buildAliasedType(typeBindings)(node),
     constraints: constrainedType.constraints,
   }
 }
