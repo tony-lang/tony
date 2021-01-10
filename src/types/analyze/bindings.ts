@@ -5,7 +5,6 @@ import {
   Type,
   TypeVariable,
   UnresolvedType,
-  buildTypeVariable,
 } from '../type_inference/types'
 import {
   DestructuringPatternNode,
@@ -22,7 +21,6 @@ import {
   TypeAliasNode,
   TypeVariableDeclarationNode,
 } from 'tree-sitter-tony'
-import { buildAliasType, buildAliasedType } from '../../analyze/build_type'
 import { AbsolutePath } from '../path'
 
 // ---- Types ----

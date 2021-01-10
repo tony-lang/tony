@@ -1,5 +1,5 @@
-import { ScopeWithErrors } from '../types/analyze/scopes'
 import { ErrorAnnotation } from '../types/errors/annotations'
+import { ScopeWithErrors } from '../types/analyze/scopes'
 import { SyntaxNode } from 'tree-sitter-tony'
 import { addErrorToScope } from './scopes'
 

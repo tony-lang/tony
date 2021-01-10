@@ -24,16 +24,11 @@ import {
   UnionTypeNode,
 } from 'tree-sitter-tony'
 import {
-  ConstrainedType,
-  buildConstrainedType,
-} from '../types/type_inference/constraints'
-import {
   DeclaredType,
   Property,
   RefinedTerm,
   RefinedType,
   TypeKind,
-  TypeVariable,
   UnresolvedType,
   buildCurriedType,
   buildGenericType,
@@ -46,27 +41,22 @@ import {
   buildUnionType,
 } from '../types/type_inference/types'
 import {
-  LocalTypeBinding,
-  TypeBinding,
-  TypeBindingNode,
-} from '../types/analyze/bindings'
-import { reduceConstraintTypes } from '../util/types'
+  NUMBER_TYPE,
+  buildPrimitiveType,
+  isPrimitiveTypeName,
+} from '../types/type_inference/primitive_types'
+import { NotImplementedError, assert } from '../types/errors/internal'
+import { ScopeWithErrors, ScopeWithTypes } from '../types/analyze/scopes'
 import {
   getIdentifierName,
   getTypeName,
   getTypeVariableName,
 } from '../util/parse'
-import {
-  NUMBER_TYPE,
-  buildPrimitiveType,
-  isPrimitiveTypeName,
-} from '../types/type_inference/primitive_types'
-import { ScopeWithErrors, ScopeWithTypes } from '../types/analyze/scopes'
+import { TypeBindingNode } from '../types/analyze/bindings'
 import { addErrorUnless } from '../util/traverse'
 import { buildPrimitiveTypeArgumentsError } from '../types/errors/annotations'
 import { findBinding } from '../util/bindings'
-import { getTypeVariables, getTypes } from '../util/scopes'
-import { assert, NotImplementedError } from '../types/errors/internal'
+import { getTypeVariables } from '../util/scopes'
 
 type InternalTypeNode =
   | AccessTypeNode
@@ -164,13 +154,9 @@ export const buildAliasedType = <T extends State>(
   switch (node.type) {
     case SyntaxType.Enum:
       // return union of typeofs of enum values
-      throw new NotImplementedError(
-        'Tony cannot handle enums yet.',
-      )
+      throw new NotImplementedError('Tony cannot handle enums yet.')
     case SyntaxType.Interface:
-      throw new NotImplementedError(
-        'Tony cannot handle interfaces yet.',
-      )
+      throw new NotImplementedError('Tony cannot handle interfaces yet.')
     case SyntaxType.TypeAlias:
       return buildType(state, node.typeNode)
   }
@@ -186,13 +172,9 @@ export const buildType = <T extends State>(
 ): Return<T, UnresolvedType> => {
   switch (node.type) {
     case SyntaxType.AccessType:
-      throw new NotImplementedError(
-        'Tony cannot build access types yet.',
-      )
+      throw new NotImplementedError('Tony cannot build access types yet.')
     case SyntaxType.ConditionalType:
-      throw new NotImplementedError(
-        'Tony cannot build conditional types yet.',
-      )
+      throw new NotImplementedError('Tony cannot build conditional types yet.')
     case SyntaxType.CurriedType:
       return handleCurriedType(state, node)
     case SyntaxType.IntersectionType:
@@ -204,35 +186,23 @@ export const buildType = <T extends State>(
     case SyntaxType.ParametricType:
       return handleParametricType(state, node)
     case SyntaxType.RefinementType:
-      throw new NotImplementedError(
-        'Tony cannot build refinement types yet.',
-      )
+      throw new NotImplementedError('Tony cannot build refinement types yet.')
     case SyntaxType.RefinementTypeDeclaration:
-      throw new NotImplementedError(
-        'Tony cannot build refinement types yet.',
-      )
+      throw new NotImplementedError('Tony cannot build refinement types yet.')
     case SyntaxType.StructType:
       return handleStructType(state, node)
     case SyntaxType.SubtractionType:
-      throw new NotImplementedError(
-        'Tony cannot build subtraction types yet.',
-      )
+      throw new NotImplementedError('Tony cannot build subtraction types yet.')
     case SyntaxType.TaggedType:
       return handleTaggedType(state, node)
     case SyntaxType.TupleType:
       return handleTupleType(state, node)
     case SyntaxType.TypeGroup:
-      throw new NotImplementedError(
-        'Tony cannot build type groups yet.',
-      )
+      throw new NotImplementedError('Tony cannot build type groups yet.')
     case SyntaxType.TypeVariable:
-      throw new NotImplementedError(
-        'Tony cannot build type variables yet.',
-      )
+      throw new NotImplementedError('Tony cannot build type variables yet.')
     case SyntaxType.Typeof:
-      throw new NotImplementedError(
-        'Tony cannot build typeofs yet.',
-      )
+      throw new NotImplementedError('Tony cannot build typeofs yet.')
     case SyntaxType.UnionType:
       return handleUnionType(state, node)
   }

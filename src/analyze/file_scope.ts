@@ -48,6 +48,7 @@ import {
   buildTypeVariableBinding,
 } from '../types/analyze/bindings'
 import { addError, conditionalApply, ensure } from '../util/traverse'
+import { buildAliasType, buildAliasedType, buildTypes } from './build_type'
 import {
   buildDuplicateBindingError,
   buildExportOutsideFileScopeError,
@@ -67,16 +68,11 @@ import {
 import { getTerms, getTypeVariables, getTypes } from '../util/scopes'
 import { Config } from '../config'
 import { assert } from '../types/errors/internal'
-import { fileMayBeImported } from '../util/paths'
-import { resolveRelativePath } from './resolve'
-import { isPrimitiveTypeName } from '../types/type_inference/primitive_types'
-import { buildAliasType, buildAliasedType, buildTypes } from './build_type'
-import {
-  buildTypeConstraints,
-  buildTypeVariableAssignment,
-} from '../types/type_inference/constraints'
-import { buildTypeVariable } from '../types/type_inference/types'
 import { buildTypeConstraintsFromTypes } from '../util/types'
+import { buildTypeVariable } from '../types/type_inference/types'
+import { fileMayBeImported } from '../util/paths'
+import { isPrimitiveTypeName } from '../types/type_inference/primitive_types'
+import { resolveRelativePath } from './resolve'
 
 type ImportedBindingConfig = { file: AbsolutePath; originalName?: string }
 
