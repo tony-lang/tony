@@ -18,7 +18,7 @@ import {
   TypeDeclarationNode,
   TypeGroupNode,
   TypeNode,
-  TypeVariableDeclarationNode,
+  TypeVariableDeclarationNameNode,
   TypeVariableNode,
   TypeofNode,
   UnionTypeNode,
@@ -96,6 +96,22 @@ const withState = <T extends State, U extends SyntaxNode, V>(
     [state, []],
   )
 
+const findTypeVariable = <T extends State>(
+  state: T,
+  node: TypeVariableNode | TypeVariableDeclarationNameNode,
+) => {
+  const name = getTypeVariableName(node)
+  const typeVariableBinding = findBinding(
+    name,
+    state.scopes.map(getTypeVariables),
+  )
+  assert(
+    typeVariableBinding !== undefined,
+    'Type variables should be added to the scope before relevant types are built.',
+  )
+  return typeVariableBinding.value
+}
+
 /**
  * Given a node in the syntax tree and some state, returns the type defined by
  * the node.
@@ -122,25 +138,9 @@ const handleTypeDeclaration = <T extends State>(
 ): Return<T, DeclaredType> => {
   const name = getTypeName(node.nameNode)
   const typeParameters = node.parameterNodes.map((child) =>
-    findTypeVariable(state, child),
+    findTypeVariable(state, child.nameNode),
   )
   return [state, buildGenericType(name, typeParameters)]
-}
-
-const findTypeVariable = <T extends State>(
-  state: T,
-  node: TypeVariableDeclarationNode,
-) => {
-  const name = getTypeVariableName(node.nameNode)
-  const typeVariableBinding = findBinding(
-    name,
-    state.scopes.map(getTypeVariables),
-  )
-  assert(
-    typeVariableBinding !== undefined,
-    'Type variables should be added to the scope before relevant types are built.',
-  )
-  return typeVariableBinding.value
 }
 
 /**
@@ -200,7 +200,7 @@ export const buildType = <T extends State>(
     case SyntaxType.TypeGroup:
       throw new NotImplementedError('Tony cannot build type groups yet.')
     case SyntaxType.TypeVariable:
-      throw new NotImplementedError('Tony cannot build type variables yet.')
+      return handleTypeVariable(state, node)
     case SyntaxType.Typeof:
       throw new NotImplementedError('Tony cannot build typeofs yet.')
     case SyntaxType.UnionType:
@@ -324,6 +324,11 @@ const handleTupleType = <T extends State>(
     ),
   ]
 }
+
+const handleTypeVariable = <T extends State>(
+  state: T,
+  node: TypeVariableNode,
+): Return<T, UnresolvedType> => [state, findTypeVariable(state, node)]
 
 const handleUnionType = <T extends State>(
   state: T,
