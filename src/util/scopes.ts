@@ -1,5 +1,6 @@
 import {
   FileScope,
+  NestedScope,
   ScopeWithErrors,
   ScopeWithTerms,
   ScopeWithTypes,
@@ -36,3 +37,8 @@ export const getTypes = (scope: ScopeWithTypes): TypeBinding[] => scope.types
 export const getTypeAssignments = <T extends Type>(
   scope: TypingEnvironment<T>,
 ): TypeAssignment<T>[] => scope.typeAssignments
+
+export const findScopeOfNode = <T extends FileScope | NestedScope>(
+  scopes: T[],
+  node: SyntaxNode,
+): T | undefined => scopes.find((scope) => scope.node === node)
