@@ -36,8 +36,10 @@ import {
   isFileScope,
 } from '../types/analyze/scopes'
 import {
+  LocalTypeBinding,
   TermBinding,
   TermBindingNode,
+  TypeBinding,
   TypeBindingNode,
   buildImportedTermBinding,
   buildImportedTypeBinding,
@@ -67,6 +69,7 @@ import { assert } from '../types/errors/internal'
 import { fileMayBeImported } from '../util/paths'
 import { resolveRelativePath } from './resolve'
 import { isPrimitiveTypeName } from '../types/type_inference/primitive_types'
+import { buildAliasType, buildAliasedType } from './build_type'
 
 type ImportedBindingConfig = { file: AbsolutePath; originalName?: string }
 
@@ -232,32 +235,71 @@ const addTypeBinding = (
       findBinding(name, state.scopes.map(getTypes)) === undefined &&
       !isPrimitiveTypeName(name),
     (state, node) => {
-      const binding = importedFrom
-        ? buildImportedTypeBinding(
-            importedFrom.file,
-            name,
-            importedFrom.originalName,
-            node as ImportTypeNode,
-            isExported,
-          )
-        : buildLocalTypeBinding(
-            state.scopes.map(getTypes),
-            name,
-            node as TypeBindingNode,
-            isExported,
-          )
-      const [scope, ...parentScopes] = state.scopes
+      const [stateWithBinding, binding] = buildTypeBinding(
+        state,
+        node,
+        name,
+        isExported,
+        importedFrom,
+      )
+      const [scope, ...parentScopes] = stateWithBinding.scopes
       const newScope = {
         ...scope,
         types: [...scope.types, binding],
       }
       return {
-        ...state,
+        ...stateWithBinding,
         scopes: [newScope, ...parentScopes],
       }
     },
     buildDuplicateBindingError(name),
   )
+
+const buildTypeBinding = (
+  state: State,
+  node: TypeBindingNode | ImportTypeNode,
+  name: string,
+  isExported: boolean,
+  importedFrom: ImportedBindingConfig | undefined,
+): [newState: State, binding: TypeBinding] => {
+  if (importedFrom)
+    return [
+      state,
+      buildImportedTypeBinding(
+        importedFrom.file,
+        name,
+        importedFrom.originalName,
+        node as ImportTypeNode,
+        isExported,
+      ),
+    ]
+
+  return buildTypes(state, name, node as TypeBindingNode, isExported)
+}
+
+const buildTypes = (
+  state: State,
+  name: string,
+  node: TypeBindingNode,
+  isExported: boolean,
+): [newState: State, binding: LocalTypeBinding] => {
+  const [stateWithAliasType, aliasType] = buildAliasType(state, node)
+  const [stateWithAliasedType, aliasedType] = buildAliasedType(
+    stateWithAliasType,
+    node,
+  )
+  return [
+    stateWithAliasedType,
+    buildLocalTypeBinding(
+      name,
+      aliasType.type,
+      aliasedType,
+      aliasType.constraints,
+      node,
+      isExported,
+    ),
+  ]
+}
 
 const exportAndReset = (
   state: State,

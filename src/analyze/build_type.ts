@@ -11,6 +11,7 @@ import {
   RefinementTypeNode,
   StructTypeNode,
   SubtractionTypeNode,
+  SyntaxNode,
   SyntaxType,
   TaggedTypeNode,
   TupleTypeNode,
@@ -28,7 +29,11 @@ import {
 } from '../types/type_inference/constraints'
 import {
   DeclaredType,
+  Property,
+  RefinedTerm,
+  RefinedType,
   TypeKind,
+  TypeVariable,
   UnresolvedType,
   buildCurriedType,
   buildGenericType,
@@ -51,6 +56,9 @@ import {
   buildPrimitiveType,
   isPrimitiveTypeName,
 } from '../types/type_inference/primitive_types'
+import { ScopeWithErrors } from '../types/analyze/scopes'
+import { addErrorUnless } from '../util/traverse'
+import { buildPrimitiveTypeArgumentsError } from '../types/errors/annotations'
 
 type InternalTypeNode =
   | AccessTypeNode
@@ -71,168 +79,253 @@ type InternalTypeNode =
   | TypeofNode
   | UnionTypeNode
 
+type State = {
+  scopes: ScopeWithErrors[]
+}
+
+type Return<T extends State, U> = [newState: T, type: U]
+
+const withState = <T extends State, U extends SyntaxNode, V>(
+  state: T,
+  nodes: U[],
+  callback: (state: T, node: U) => Return<T, V>,
+) =>
+  nodes.reduce<Return<T, V[]>>(
+    ([state, types], node) => {
+      const [newState, type] = callback(state, node)
+      return [newState, [...types, type]]
+    },
+    [state, []],
+  )
+
 /**
- * Given a node in the syntax tree and a stack of type bindings, returns the
+ * Given a node in the syntax tree and some state, returns the
  * type defined by the node.
  */
-export const buildAliasType = (types: TypeBinding[][]) => (
+export const buildAliasType = <T extends State>(
+  state: T,
   node: TypeBindingNode,
-): ConstrainedType<DeclaredType, UnresolvedType> => {
+): Return<T, ConstrainedType<DeclaredType, UnresolvedType>> => {
   switch (node.type) {
     case SyntaxType.Enum:
-      return handleTypeNode(node.nameNode)
+      return [state, handleTypeNode(node.nameNode)]
     case SyntaxType.Interface:
     case SyntaxType.TypeAlias:
-      return handleTypeDeclaration(types, node.nameNode)
+      return handleTypeDeclaration(state, node.nameNode)
     case SyntaxType.TypeVariableDeclaration:
-      return handleTypeVariableDeclaration(types, node)
+      return handleTypeVariableDeclaration(state, node)
   }
 }
 
 const handleTypeNode = (node: TypeNode) =>
   buildConstrainedType(buildGenericType(getTypeName(node), []))
 
-const handleTypeDeclaration = (
-  types: TypeBinding[][],
+const handleTypeDeclaration = <T extends State>(
+  state: T,
   node: TypeDeclarationNode,
-) => {
+): Return<T, ConstrainedType<DeclaredType, UnresolvedType>> => {
   const name = getTypeName(node.nameNode)
-  const constrainedTypeParameters = node.parameterNodes.map((child) =>
-    handleTypeVariableDeclaration(types, child),
+  const [stateWithParameters, constrainedTypeParameters] = withState(
+    state,
+    node.parameterNodes,
+    handleTypeVariableDeclaration,
   )
   const [typeParameters, constraints] = reduceConstraintTypes(
     ...constrainedTypeParameters,
   )
-  return buildConstrainedType(
-    buildGenericType(name, typeParameters),
-    constraints,
-  )
+  return [
+    stateWithParameters,
+    buildConstrainedType(buildGenericType(name, typeParameters), constraints),
+  ]
 }
 
-const handleTypeVariableDeclaration = (
-  types: TypeBinding[][],
+const handleTypeVariableDeclaration = <T extends State>(
+  state: T,
   node: TypeVariableDeclarationNode,
-) => {
-  const constraints = node.constraintNodes.map(buildType(types))
-  return buildConstrainedUnknownTypeFromTypes(constraints)
+): Return<T, ConstrainedType<TypeVariable, UnresolvedType>> => {
+  const [stateWithConstraints, constraints] = withState(
+    state,
+    node.constraintNodes,
+    buildType,
+  )
+  return [
+    stateWithConstraints,
+    buildConstrainedUnknownTypeFromTypes(constraints),
+  ]
 }
 
 /**
- * Given a node in the syntax tree and a stack of type bindings, returns the
+ * Given a node in the syntax tree and some state, returns the
  * type represented by the type binding.
  */
-export const buildAliasedType = (types: TypeBinding[][]) => (
+export const buildAliasedType = <T extends State>(
+  state: T,
   node: TypeBindingNode,
-): UnresolvedType => {}
+): Return<T, UnresolvedType> => {}
 
 /**
- * Given a node in the syntax tree and a stack of type bindings, returns the
+ * Given a node in the syntax tree and some state, returns the
  * type represented by the node.
  */
-export const buildType = (types: TypeBinding[][]) => (
+export const buildType = <T extends State>(
+  state: T,
   node: InternalTypeNode,
-): UnresolvedType => {
+): Return<T, UnresolvedType> => {
   switch (node.type) {
     case SyntaxType.CurriedType:
-      return handleCurriedType(types, node)
+      return handleCurriedType(state, node)
     case SyntaxType.IntersectionType:
-      return handleIntersectionType(types, node)
+      return handleIntersectionType(state, node)
     case SyntaxType.ListType:
-      return handleListType(types, node)
+      return handleListType(state, node)
     case SyntaxType.MapType:
-      return handleMapType(types, node)
+      return handleMapType(state, node)
     case SyntaxType.ParametricType:
-      return handleParametricType(types, node)
+      return handleParametricType(state, node)
     case SyntaxType.StructType:
-      return handleStructType(types, node)
+      return handleStructType(state, node)
     case SyntaxType.TaggedType:
-      return handleTaggedType(types, node)
+      return handleTaggedType(state, node)
     case SyntaxType.TupleType:
-      return handleTupleType(types, node)
+      return handleTupleType(state, node)
     case SyntaxType.UnionType:
-      return handleUnionType(types, node)
+      return handleUnionType(state, node)
   }
 }
 
-const handleCurriedType = (types: TypeBinding[][], node: CurriedTypeNode) =>
-  buildCurriedType(
-    buildType(types)(node.fromNode),
-    buildType(types)(node.toNode),
-  )
-
-const handleIntersectionType = (
-  types: TypeBinding[][],
-  node: IntersectionTypeNode,
-) => {
-  const leftType = buildType(types)(node.leftNode)
-  const rightType = buildType(types)(node.rightNode)
-  if (rightType.kind === TypeKind.Intersection)
-    return buildIntersectionType([leftType, ...rightType.parameters])
-  else return buildIntersectionType([leftType, rightType])
+const handleCurriedType = <T extends State>(
+  state: T,
+  node: CurriedTypeNode,
+): Return<T, UnresolvedType> => {
+  const [stateWithFrom, fromType] = buildType(state, node.fromNode)
+  const [stateWithTo, toType] = buildType(stateWithFrom, node.toNode)
+  return [stateWithTo, buildCurriedType(fromType, toType)]
 }
 
-const handleListType = (types: TypeBinding[][], node: ListTypeNode) =>
-  buildMapType(buildProperty(NUMBER_TYPE, buildType(types)(node.elementNode)))
+const handleIntersectionType = <T extends State>(
+  state: T,
+  node: IntersectionTypeNode,
+): Return<T, UnresolvedType> => {
+  const [stateWithLeft, leftType] = buildType(state, node.leftNode)
+  const [stateWithRight, rightType] = buildType(stateWithLeft, node.rightNode)
+  const type =
+    rightType.kind === TypeKind.Intersection
+      ? buildIntersectionType([leftType, ...rightType.parameters])
+      : buildIntersectionType([leftType, rightType])
+  return [stateWithRight, type]
+}
 
-const handleMapType = (types: TypeBinding[][], node: MapTypeNode) =>
-  buildMapType(
-    buildProperty(
-      buildType(types)(node.keyNode),
-      buildType(types)(node.valueNode),
-    ),
-  )
+const handleListType = <T extends State>(
+  state: T,
+  node: ListTypeNode,
+): Return<T, UnresolvedType> => {
+  const [stateWithElement, elementType] = buildType(state, node.elementNode)
+  return [
+    stateWithElement,
+    buildMapType(buildProperty(NUMBER_TYPE, elementType)),
+  ]
+}
 
-const handleParametricType = (
-  types: TypeBinding[][],
+const handleMapType = <T extends State>(
+  state: T,
+  node: MapTypeNode,
+): Return<T, UnresolvedType> => {
+  const [stateWithKey, keyType] = buildType(state, node.keyNode)
+  const [stateWithValue, valueType] = buildType(stateWithKey, node.valueNode)
+  return [stateWithValue, buildMapType(buildProperty(keyType, valueType))]
+}
+
+const handleParametricType = <T extends State>(
+  state: T,
   node: ParametricTypeNode,
-) => {
+): Return<T, UnresolvedType> => {
   const name = getTypeName(node.nameNode)
   if (isPrimitiveTypeName(name)) {
-    // TODO: add error if there are type or term arguments
-    return buildPrimitiveType(name)
+    const stateWithError = addErrorUnless<T>(
+      node.argumentNodes.length === 0 && node.elementNodes.length === 0,
+      buildPrimitiveTypeArgumentsError(),
+    )(state, node)
+    return [stateWithError, buildPrimitiveType(name)]
   }
 
-  const typeArguments = node.argumentNodes.map(buildType(types))
+  const [stateWithTypeArguments, typeArguments] = withState(
+    state,
+    node.argumentNodes,
+    buildType,
+  )
   const termArguments = node.elementNodes
-  return buildParametricType(name, typeArguments, termArguments)
+  return [
+    stateWithTypeArguments,
+    buildParametricType(name, typeArguments, termArguments),
+  ]
 }
 
-const handleStructType = (types: TypeBinding[][], node: StructTypeNode) =>
-  buildObjectType(node.memberNodes.map(handleMemberTypeNode(types)))
+const handleStructType = <T extends State>(
+  state: T,
+  node: StructTypeNode,
+): Return<T, UnresolvedType> => {
+  const [stateWithMembers, memberTypes] = withState(
+    state,
+    node.memberNodes,
+    handleMemberTypeNode,
+  )
+  return [stateWithMembers, buildObjectType(memberTypes)]
+}
 
-const handleTaggedType = (types: TypeBinding[][], node: TaggedTypeNode) => {
+const handleTaggedType = <T extends State>(
+  state: T,
+  node: TaggedTypeNode,
+): Return<T, UnresolvedType> => {
   const tag = buildProperty(
     buildLiteralType('tag'),
     buildLiteralType(getIdentifierName(node.nameNode)),
   )
-  if (node.typeNode === undefined) return buildObjectType([tag])
+  if (node.typeNode === undefined) return [state, buildObjectType([tag])]
 
-  const value = buildProperty(
-    buildLiteralType('value'),
-    buildType(types)(node.typeNode),
-  )
-  return buildObjectType([tag, value])
+  const [stateWithValue, valueType] = buildType(state, node.typeNode)
+  const value = buildProperty(buildLiteralType('value'), valueType)
+  return [stateWithValue, buildObjectType([tag, value])]
 }
 
-const handleTupleType = (types: TypeBinding[][], node: TupleTypeNode) =>
-  buildObjectType(
-    node.elementNodes.map((elementNode, i) =>
-      buildProperty(buildLiteralType(i), buildType(types)(elementNode)),
+const handleTupleType = <T extends State>(
+  state: T,
+  node: TupleTypeNode,
+): Return<T, UnresolvedType> => {
+  const [stateWithElements, elementTypes] = withState(
+    state,
+    node.elementNodes,
+    buildType,
+  )
+  return [
+    stateWithElements,
+    buildObjectType(
+      elementTypes.map((elementType, i) =>
+        buildProperty(buildLiteralType(i), elementType),
+      ),
     ),
-  )
-
-const handleUnionType = (types: TypeBinding[][], node: UnionTypeNode) => {
-  const leftType = buildType(types)(node.leftNode)
-  const rightType = buildType(types)(node.rightNode)
-  if (rightType.kind === TypeKind.Union)
-    return buildUnionType([leftType, ...rightType.parameters])
-  else return buildUnionType([leftType, rightType])
+  ]
 }
 
-const handleMemberTypeNode = (types: TypeBinding[][]) => (
+const handleUnionType = <T extends State>(
+  state: T,
+  node: UnionTypeNode,
+): Return<T, UnresolvedType> => {
+  const [stateWithLeft, leftType] = buildType(state, node.leftNode)
+  const [stateWithRight, rightType] = buildType(stateWithLeft, node.rightNode)
+  const type =
+    rightType.kind === TypeKind.Union
+      ? buildUnionType([leftType, ...rightType.parameters])
+      : buildUnionType([leftType, rightType])
+  return [stateWithRight, type]
+}
+
+const handleMemberTypeNode = <T extends State>(
+  state: T,
   node: MemberTypeNode,
-) =>
-  buildProperty(
-    buildLiteralType(getIdentifierName(node.keyNode)),
-    buildType(types)(node.valueNode),
-  )
+): Return<T, Property<RefinedType<RefinedTerm>, UnresolvedType>> => {
+  const [stateWithValue, valueType] = buildType(state, node.valueNode)
+  return [
+    stateWithValue,
+    buildProperty(buildLiteralType(getIdentifierName(node.keyNode)), valueType),
+  ]
+}

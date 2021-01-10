@@ -19,6 +19,7 @@ export enum ErrorAnnotationKind {
   IndeterminateType,
   MissingBinding,
   MissingExternalImportTypeHint,
+  PrimitiveTypeArguments,
   RefinementTypeDeclarationOutsideRefinementType,
   Type,
   UnknownFile,
@@ -70,6 +71,10 @@ export type MissingExternalImportTypeHintError = {
   binding: TermBinding
 }
 
+export type PrimitiveTypeArgumentsError = {
+  kind: typeof ErrorAnnotationKind.PrimitiveTypeArguments
+}
+
 export type RefinementTypeDeclarationOutsideRefinementTypeError = {
   kind: typeof ErrorAnnotationKind.RefinementTypeDeclarationOutsideRefinementType
 }
@@ -110,6 +115,7 @@ export type ErrorAnnotation =
   | IndeterminateTypeError
   | MissingBindingError
   | MissingExternalImportTypeHintError
+  | PrimitiveTypeArgumentsError
   | RefinementTypeDeclarationOutsideRefinementTypeError
   | TypeError
   | UnknownFileError
@@ -165,6 +171,10 @@ export const buildMissingBindingError = (
 ): MissingBindingError => ({
   kind: ErrorAnnotationKind.MissingBinding,
   name,
+})
+
+export const buildPrimitiveTypeArgumentsError = (): PrimitiveTypeArgumentsError => ({
+  kind: ErrorAnnotationKind.PrimitiveTypeArguments,
 })
 
 export const buildRefinementTypeDeclarationOutsideRefinementTypeError = (): RefinementTypeDeclarationOutsideRefinementTypeError => ({

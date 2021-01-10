@@ -153,24 +153,22 @@ export const buildImportedTypeBinding = (
 })
 
 export const buildLocalTypeBinding = (
-  typeBindings: TypeBinding[][],
   name: string,
+  type: DeclaredType,
+  value: UnresolvedType,
+  constraints: TypeConstraints<UnresolvedType>,
   node: TypeBindingNode,
   isExported = false,
-): LocalTypeBinding => {
-  const constrainedType = buildAliasType(typeBindings)(node)
-
-  return {
-    kind: BindingKind.Type,
-    location: BindingLocation.Local,
-    name,
-    node,
-    isExported,
-    type: constrainedType.type,
-    value: buildAliasedType(typeBindings)(node),
-    constraints: constrainedType.constraints,
-  }
-}
+): LocalTypeBinding => ({
+  kind: BindingKind.Type,
+  location: BindingLocation.Local,
+  name,
+  node,
+  isExported,
+  type,
+  value,
+  constraints,
+})
 
 export const buildTypeAssignment = <T extends Type>(
   binding: TermBinding,

@@ -1,4 +1,3 @@
-import { TypeofNode } from 'tree-sitter-tony'
 import { TypeKind } from './types'
 
 // ---- Types ----
