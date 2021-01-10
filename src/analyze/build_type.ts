@@ -24,6 +24,14 @@ import {
   UnionTypeNode,
 } from 'tree-sitter-tony'
 import {
+  BOOLEAN_TYPE,
+  NUMBER_TYPE,
+  REG_EXP_TYPE,
+  STRING_TYPE,
+  findPrimitiveType,
+  isPrimitiveTypeName,
+} from '../types/type_inference/primitive_types'
+import {
   DeclaredType,
   Property,
   RefinedTerm,
@@ -38,30 +46,26 @@ import {
   buildObjectType,
   buildParametricType,
   buildProperty,
-  buildUnionType,
   buildTermType,
   buildTypeVariable,
+  buildUnionType,
 } from '../types/type_inference/types'
-import {
-  NUMBER_TYPE,
-  findPrimitiveType,
-  isPrimitiveTypeName,
-  BOOLEAN_TYPE,
-  REG_EXP_TYPE,
-  STRING_TYPE,
-} from '../types/type_inference/primitive_types'
 import { NotImplementedError, assert } from '../types/errors/internal'
-import { ScopeWithErrors, ScopeWithTerms, ScopeWithTypes } from '../types/analyze/scopes'
+import {
+  ScopeWithErrors,
+  ScopeWithTerms,
+  ScopeWithTypes,
+} from '../types/analyze/scopes'
 import {
   getIdentifierName,
   getTypeName,
   getTypeVariableName,
 } from '../util/parse'
+import { getTerms, getTypeVariables } from '../util/scopes'
 import { TypeBindingNode } from '../types/analyze/bindings'
 import { addErrorUnless } from '../util/traverse'
 import { buildPrimitiveTypeArgumentsError } from '../types/errors/annotations'
 import { findBinding } from '../util/bindings'
-import { getTerms, getTypeVariables } from '../util/scopes'
 
 type InternalTypeNode =
   | AccessTypeNode

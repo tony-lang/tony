@@ -199,9 +199,7 @@ export const buildParametricType = (
   termArguments,
 })
 
-export const buildTermType = (
-  binding: TermBinding,
-): TermType => ({
+export const buildTermType = (binding: TermBinding): TermType => ({
   kind: TypeKind.Term,
   binding,
 })
