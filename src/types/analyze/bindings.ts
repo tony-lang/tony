@@ -52,6 +52,12 @@ type AbstractTermBinding = AbstractBinding & {
   kind: typeof BindingKind.Term
   node: TermBindingNode
   /**
+   * The index tracks the number of times a binding is overloaded. Among all
+   * bindings with a given name that have overlapping scopes, index is a unique
+   * identifier.
+   */
+  index: number
+  /**
    * A binding is implicit when it stems from a generator, parameter or case,
    * but not when it stems from an assignment. Used for code generation.
    */
@@ -110,6 +116,7 @@ export type TypeAssignment<T extends Type> = TermBinding & {
 export const buildImportedTermBinding = (
   file: AbsolutePath,
   name: string,
+  index: number,
   originalName: string | undefined,
   node: TermBindingNode,
   isImplicit: boolean,
@@ -118,6 +125,7 @@ export const buildImportedTermBinding = (
   kind: BindingKind.Term,
   location: BindingLocation.Imported,
   name,
+  index,
   node,
   isExported,
   isImplicit,
@@ -127,6 +135,7 @@ export const buildImportedTermBinding = (
 
 export const buildLocalTermBinding = (
   name: string,
+  index: number,
   node: TermBindingNode,
   isImplicit: boolean,
   isExported = false,
@@ -134,6 +143,7 @@ export const buildLocalTermBinding = (
   kind: BindingKind.Term,
   location: BindingLocation.Local,
   name,
+  index,
   node,
   isExported,
   isImplicit,

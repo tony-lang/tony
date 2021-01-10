@@ -78,7 +78,7 @@ export interface ParametricType {
  */
 export interface TermType {
   kind: typeof TypeKind.Term
-  binding: TermBinding
+  bindings: TermBinding[]
 }
 
 /**
@@ -236,9 +236,9 @@ export const buildParametricType = (
   termArguments,
 })
 
-export const buildTermType = (binding: TermBinding): TermType => ({
+export const buildTermType = (bindings: TermBinding[]): TermType => ({
   kind: TypeKind.Term,
-  binding,
+  bindings,
 })
 
 export const buildRefinedType = <T extends Type>(

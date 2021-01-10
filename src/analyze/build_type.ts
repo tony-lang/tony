@@ -57,7 +57,6 @@ import {
   buildProperty,
   buildSubtractionType,
   buildTermType,
-  buildTypeVariable,
   buildUnionType,
 } from '../types/type_inference/types'
 import { NotImplementedError, assert } from '../types/errors/internal'
@@ -66,6 +65,7 @@ import {
   ScopeWithTerms,
   ScopeWithTypes,
 } from '../types/analyze/scopes'
+import { findBinding, findBindings } from '../util/bindings'
 import {
   getIdentifierName,
   getTypeName,
@@ -75,7 +75,6 @@ import { getTerms, getTypeVariables } from '../util/scopes'
 import { TypeBindingNode } from '../types/analyze/bindings'
 import { addErrorUnless } from '../util/traverse'
 import { buildPrimitiveTypeArgumentsError } from '../types/errors/annotations'
-import { findBinding } from '../util/bindings'
 
 type InternalTypeNode =
   | AccessTypeNode
@@ -465,8 +464,6 @@ const handleTerm = <T extends State>(
   }
 
   const name = getIdentifierName(node)
-  const binding = findBinding(name, state.scopes.map(getTerms))
-  if (binding) return [state, buildTermType(binding)]
-  // fallback to any type, the missing binding error is already added elsewhere
-  return [state, buildTypeVariable()]
+  const bindings = findBindings(name, state.scopes.map(getTerms))
+  return [state, buildTermType(bindings)]
 }
