@@ -240,7 +240,6 @@ export const buildTypes = <T extends State>(
   nodes: InternalTypeNode[],
 ): Return<T, UnresolvedType[]> => withState(state, nodes, buildType)
 
-
 const handleAccessType = <T extends State>(
   state: T,
   node: AccessTypeNode,
