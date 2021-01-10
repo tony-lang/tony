@@ -30,6 +30,7 @@ import {
 import {
   FileScope,
   NestedScope,
+  NestingNode,
   buildFileScope,
   buildNestedScope,
   isFileScope,
@@ -144,7 +145,7 @@ const addDependency = (state: State, absolutePath: AbsolutePath): State => {
   }
 }
 
-const enterBlock = (state: State, node: SyntaxNode): State => {
+const enterBlock = (state: State, node: NestingNode): State => {
   const scope = buildNestedScope(node)
   return {
     ...state,
@@ -170,7 +171,7 @@ const leaveBlock = (state: State): State => {
   }
 }
 
-const nest = <T extends SyntaxNode>(
+const nest = <T extends NestingNode>(
   callback: (state: State, node: T) => State,
 ) => (state: State, node: T) => {
   const nestedState = enterBlock(state, node)
@@ -627,7 +628,7 @@ const handleTypeVariableDeclaration = (
 const handleWhen = nest<WhenNode>((state, node) => {
   // Build temporary scopes around patterns.
   const statesWithBindings = node.patternNodes.map((patternNode) => {
-    const nestedState = enterBlock(state, patternNode)
+    const nestedState = enterBlock(state, node)
     return flushTermBindings(
       traverse(
         {

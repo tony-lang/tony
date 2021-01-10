@@ -74,9 +74,11 @@ import {
   FileScope,
   GlobalScope,
   NestedScope,
+  NestingNode,
   TypedFileScope,
   TypedNestedScope,
   buildTypedFileScope,
+  buildTypedNestedScope,
   isFileScope,
 } from '../types/analyze/scopes'
 import { LogLevel, log } from '../logger'
@@ -98,6 +100,7 @@ import { TypeAssignment } from '../types/analyze/bindings'
 import { addErrorUnless } from '../util/traverse'
 import { buildConstrainedUnknownType } from '../util/types'
 import { collectErrors } from '../errors'
+import { findScopeOfNode } from '../util/scopes'
 import { isInstanceOf } from './instances'
 import { unifyConstraints } from './constraints'
 
@@ -179,9 +182,10 @@ type State = {
    */
   typeAssignments: TypeAssignment<ResolvedType>[][]
   /**
-   * A list of already visited and typed direct child scopes.
+   * A list of already visited and typed direct child scopes for each scope on
+   * the scope stack.
    */
-  typedScopes: TypedNestedScope[]
+  typedScopes: TypedNestedScope[][]
 }
 
 /**
@@ -231,7 +235,7 @@ const inferTypesOfFile = (
   const {
     scopes: [finalFileScope],
     typeAssignments: [finalTypeAssignments],
-    typedScopes,
+    typedScopes: [finalTypedScopes],
   } = addErrorUnless<State>(
     answers.length === 1,
     buildIndeterminateTypeError(getTypedNodesFromAnswers(answers)),
@@ -243,7 +247,7 @@ const inferTypesOfFile = (
 
   return buildTypedFileScope(
     finalFileScope,
-    typedScopes,
+    finalTypedScopes,
     answer.typedNode,
     finalTypeAssignments,
   )
@@ -315,6 +319,68 @@ const forAllAnswers = <T extends TermNode, U extends TermNode>(
   answers: Answers<T>,
   callback: (answer: Answer<T>) => Answers<U>,
 ) => reduceAnswers(answers.map((answer) => callback(answer)))
+
+const enterBlock = (state: State, node: NestingNode): State => {
+  const [scope, ...scopes] = state.scopes
+  const newScope = findScopeOfNode(scope.scopes, node)
+  assert(
+    newScope !== undefined,
+    'All scopes should have been built during analyze.',
+  )
+  return {
+    ...state,
+    scopes: [newScope, scope, ...scopes],
+    typeAssignments: [[], ...state.typeAssignments],
+    typedScopes: [[], ...state.typedScopes],
+  }
+}
+
+const leaveBlock = (answer: Answer<NestingNode & TermNode>): State => {
+  const [scope, parentScope, ...parentScopes] = answer.state.scopes
+  const [
+    typedScopes,
+    parentTypedScopes,
+    ...remainingTypedScopes
+  ] = answer.state.typedScopes
+  const [
+    typeAssignments,
+    ...remainingTypeAssignments
+  ] = answer.state.typeAssignments
+
+  assert(
+    !isFileScope(scope) &&
+      parentScope !== undefined &&
+      parentTypedScopes !== undefined,
+    'Cannot leave file-level scope.',
+  )
+
+  const typedScope = buildTypedNestedScope(
+    scope,
+    typedScopes,
+    answer.typedNode,
+    typeAssignments,
+  )
+  return {
+    ...answer.state,
+    scopes: [parentScope, ...parentScopes],
+    typedScopes: [[typedScope, ...parentTypedScopes], ...remainingTypedScopes],
+    typeAssignments: remainingTypeAssignments,
+  }
+}
+
+const nest = <T extends NestingNode & TermNode>(
+  callback: (
+    state: State,
+    node: T,
+    type: ResolvedConstrainedType,
+  ) => Answers<T>,
+) => (state: State, node: T, type: ResolvedConstrainedType) => {
+  const nestedState = enterBlock(state, node)
+  const answers = callback(nestedState, node, type)
+  return forAllAnswers(answers, (answer) => [
+    buildAnswer(leaveBlock(answer), answer.typedNode),
+  ])
+}
 
 const traverseAll = <T extends TermNode>(
   nodes: T[],

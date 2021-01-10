@@ -1,12 +1,29 @@
+import {
+  AbstractionBranchNode,
+  BlockNode,
+  InterfaceNode,
+  ListComprehensionNode,
+  ProgramNode,
+  RefinementTypeNode,
+  TypeAliasNode,
+  WhenNode,
+} from 'tree-sitter-tony'
 import { ErrorAnnotation, MountedErrorAnnotation } from '../errors/annotations'
 import { ResolvedType, Type } from '../type_inference/types'
 import { TermBinding, TypeAssignment, TypeBinding } from './bindings'
 import { AbsolutePath } from '../path'
-import { ProgramNode } from 'tree-sitter-tony'
-import { SyntaxNode } from 'tree-sitter-tony'
 import { TypedNode } from '../type_inference/nodes'
 
 // ---- Types ----
+
+export type NestingNode =
+  | AbstractionBranchNode
+  | BlockNode
+  | InterfaceNode
+  | ListComprehensionNode
+  | RefinementTypeNode
+  | TypeAliasNode
+  | WhenNode
 
 enum ScopeKind {
   Global,
@@ -58,7 +75,7 @@ export type TypedFileScope = FileScope &
     typedNode: TypedNode<ProgramNode>
   }
 
-export interface NestedScope<T extends SyntaxNode = SyntaxNode>
+export interface NestedScope<T extends NestingNode = NestingNode>
   extends RecursiveScope<NestedScope>,
     ScopeWithTerms,
     ScopeWithTypes,
@@ -67,7 +84,7 @@ export interface NestedScope<T extends SyntaxNode = SyntaxNode>
   node: T
 }
 
-export interface TypedNestedScope<T extends SyntaxNode = SyntaxNode>
+export interface TypedNestedScope<T extends NestingNode = NestingNode>
   extends NestedScope<T>,
     TypingEnvironment<ResolvedType> {
   scopes: TypedNestedScope[]
@@ -111,7 +128,7 @@ export const buildTypedFileScope = (
   typeAssignments,
 })
 
-export const buildNestedScope = (node: SyntaxNode): NestedScope => ({
+export const buildNestedScope = (node: NestingNode): NestedScope => ({
   kind: ScopeKind.Nested,
   node,
   terms: [],
@@ -120,7 +137,7 @@ export const buildNestedScope = (node: SyntaxNode): NestedScope => ({
   errors: [],
 })
 
-export const buildTypedNestedScope = <T extends SyntaxNode>(
+export const buildTypedNestedScope = <T extends NestingNode>(
   scope: NestedScope<T>,
   scopes: TypedNestedScope[],
   typedNode: TypedNode<T>,
