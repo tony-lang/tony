@@ -27,7 +27,7 @@ export const buildTypeConstraintsFromTypes = <T extends Type>(
   constraints: T[] = [],
 ): TypeConstraints<T> =>
   constraints.map((constraint) =>
-    buildTypeVariableAssignment(typeVariable, constraint),
+    buildTypeVariableAssignment([typeVariable], constraint),
   )
 
 export const reduceConstraintTypes = <

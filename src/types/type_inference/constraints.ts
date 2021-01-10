@@ -20,11 +20,11 @@ export type ResolvedConstrainedType = ConstrainedType<
 export type TypeConstraints<T extends Type> = TypeVariableAssignment<T>[]
 
 /**
- * Maps a type variable to its most general type.
+ * Maps a set of type variables to their most general type (if any).
  */
-export type TypeVariableAssignment<T extends Type> = {
-  typeVariable: TypeVariable
-  type: T
+export type TypeVariableAssignment<T extends Type = Type> = {
+  typeVariables: TypeVariable[]
+  type?: T
 }
 
 // ---- Factories ----
@@ -45,9 +45,9 @@ export const buildTypeConstraints = <T extends Type>(
 ): TypeConstraints<T> => constraints
 
 export const buildTypeVariableAssignment = <T extends Type>(
-  typeVariable: TypeVariable,
-  type: T,
+  typeVariables: TypeVariable[],
+  type?: T,
 ): TypeVariableAssignment<T> => ({
-  typeVariable,
+  typeVariables,
   type,
 })
