@@ -3,6 +3,8 @@ import {
   BooleanNode,
   ConditionalTypeNode,
   CurriedTypeNode,
+  EnumNode,
+  EnumValueNode,
   IdentifierNode,
   IntersectionTypeNode,
   ListTypeNode,
@@ -110,11 +112,11 @@ type Return<T extends State, U> = [newState: T, type: U]
 const withState = <T extends State, U extends SyntaxNode, V>(
   state: T,
   nodes: U[],
-  callback: (state: T, node: U) => Return<T, V>,
+  callback: (state: T, node: U, i: number) => Return<T, V>,
 ) =>
   nodes.reduce<Return<T, V[]>>(
-    ([state, types], node) => {
-      const [newState, type] = callback(state, node)
+    ([state, types], node, i) => {
+      const [newState, type] = callback(state, node, i)
       return [newState, [...types, type]]
     },
     [state, []],
@@ -177,13 +179,24 @@ export const buildAliasedType = <T extends State>(
 ): Return<T, UnresolvedType> => {
   switch (node.type) {
     case SyntaxType.Enum:
-      // return union of typeofs of enum values
-      throw new NotImplementedError('Tony cannot handle enums yet.')
+      return handleEnum(state, node)
     case SyntaxType.Interface:
       throw new NotImplementedError('Tony cannot handle interfaces yet.')
     case SyntaxType.TypeAlias:
       return buildType(state, node.typeNode)
   }
+}
+
+const handleEnum = <T extends State>(
+  state: T,
+  node: EnumNode,
+): Return<T, UnresolvedType> => {
+  const [stateWithValues, valueTypes] = withState(
+    state,
+    node.valueNodes,
+    handleEnumValue,
+  )
+  return [stateWithValues, buildUnionType(valueTypes)]
 }
 
 /**
@@ -346,7 +359,7 @@ const handleStructType = <T extends State>(
   const [stateWithMembers, properties] = withState(
     state,
     node.memberNodes,
-    handleMemberTypeNode,
+    handleMemberType,
   )
   return [stateWithMembers, buildObjectType(properties)]
 }
@@ -416,7 +429,16 @@ const handleUnionType = <T extends State>(
   return [stateWithRight, type]
 }
 
-const handleMemberTypeNode = <T extends State>(
+const handleEnumValue = <T extends State>(
+  state: T,
+  node: EnumValueNode,
+  i: number,
+): Return<T, UnresolvedType> => {
+  if (node.valueNode) return handleTerm(state, node.valueNode)
+  return [state, buildLiteralType(i)]
+}
+
+const handleMemberType = <T extends State>(
   state: T,
   node: MemberTypeNode,
 ): Return<T, Property<RefinedType<RefinedTerm>, UnresolvedType>> => {
