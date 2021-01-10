@@ -191,13 +191,6 @@ const handleParametricType = (
 const handleStructType = (types: TypeBinding[][], node: StructTypeNode) =>
   buildObjectType(node.memberNodes.map(handleMemberTypeNode(types)))
 
-const handleTupleType = (types: TypeBinding[][], node: TupleTypeNode) =>
-  buildObjectType(
-    node.elementNodes.map((elementNode, i) =>
-      buildProperty(buildLiteralType(i), buildType(types)(elementNode)),
-    ),
-  )
-
 const handleTaggedType = (types: TypeBinding[][], node: TaggedTypeNode) => {
   const tag = buildProperty(
     buildLiteralType('tag'),
@@ -211,6 +204,13 @@ const handleTaggedType = (types: TypeBinding[][], node: TaggedTypeNode) => {
   )
   return buildObjectType([tag, value])
 }
+
+const handleTupleType = (types: TypeBinding[][], node: TupleTypeNode) =>
+  buildObjectType(
+    node.elementNodes.map((elementNode, i) =>
+      buildProperty(buildLiteralType(i), buildType(types)(elementNode)),
+    ),
+  )
 
 const handleUnionType = (types: TypeBinding[][], node: UnionTypeNode) => {
   const leftType = buildType(types)(node.leftNode)
