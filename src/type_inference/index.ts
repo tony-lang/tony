@@ -381,6 +381,10 @@ const traverse = <T extends TermNode>(
   type: ResolvedConstrainedType,
 ): Answers<T> => {
   const answers = handleNode(state, node, type) as Answers<T>
+  assert(
+    answers.length > 0,
+    'There must always be returned at least one answer (that may contain errors).',
+  )
   return forAllAnswers(answers, (answer) => [
     ensureIsInstanceOf(node, answer, type),
   ])
