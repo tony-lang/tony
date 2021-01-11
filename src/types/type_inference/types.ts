@@ -23,6 +23,7 @@ export enum TypeKind {
   RefinedTerm,
   Subtraction,
   Tagged,
+  TemporaryVariable,
   Term,
   Union,
   Variable,
@@ -40,6 +41,13 @@ export enum TypeKind {
  */
 export interface TypeVariable {
   kind: typeof TypeKind.Variable
+}
+
+/**
+ * A type variable that is used internally and cannot be related to other types.
+ */
+export interface TemporaryTypeVariable {
+  kind: typeof TypeKind.TemporaryVariable
 }
 
 /**
@@ -173,9 +181,10 @@ export interface SubtractionType {
   right: UnresolvedType
 }
 
-export type DeclaredType = TypeVariable | GenericType
+export type DeclaredType = TypeVariable | TemporaryTypeVariable | GenericType
 export type UnresolvedType =
   | TypeVariable
+  | TemporaryTypeVariable
   | CurriedType<UnresolvedType>
   | RefinedType<UnresolvedType>
   | RefinedTerm
@@ -191,6 +200,7 @@ export type UnresolvedType =
   | TermType
 export type ResolvedType =
   | TypeVariable
+  | TemporaryTypeVariable
   | CurriedType<ResolvedType>
   | RefinedType<ResolvedType>
   | RefinedTerm
@@ -205,6 +215,10 @@ export type Type = UnresolvedType | ResolvedType
 
 export const buildTypeVariable = (): TypeVariable => ({
   kind: TypeKind.Variable,
+})
+
+export const buildTemporaryTypeVariable = (): TemporaryTypeVariable => ({
+  kind: TypeKind.TemporaryVariable,
 })
 
 export const buildCurriedType = <T extends Type>(

@@ -9,8 +9,8 @@ import {
   ResolvedConstrainedType,
   TypeConstraints,
   TypeVariableAssignment,
-  buildConstrainedType,
 } from '../types/type_inference/constraints'
+import { filterUnique, isNotUndefined } from '../util'
 import { unifyUnresolved } from './unification'
 
 /**
@@ -23,23 +23,47 @@ export const unifyConstraints = <T extends Type>(
   constraints.reduce(
     (acc, constraints) =>
       constraints.reduce((acc, constraint) => {
-        const matchingConstraint = getConstraintOf(acc, constraint.typeVariable)
-        if (matchingConstraint === undefined) return [...acc, constraint]
+        const matchingConstraints = getOverlappingConstraints(
+          acc,
+          constraint.typeVariables,
+        )
+        if (matchingConstraints.length === 0) return [...acc, constraint]
 
-        const newConstraint: TypeVariableAssignment<T> = {
-          typeVariable: constraint.typeVariable,
-          type: unifyUnresolved(
-            buildConstrainedType(matchingConstraint.type, acc),
-            buildConstrainedType(constraint.type, constraints),
-          ).type,
-        }
+        // this might be problematic because it doesn't take into account all constraints, only acc.
+        const newConstraint = mergeTypeVariableAssignments(acc, [
+          constraint,
+          ...matchingConstraints,
+        ])
         return [
-          ...acc.filter((constraint) => constraint !== matchingConstraint),
+          ...acc.filter(
+            (constraint) => !matchingConstraints.includes(constraint),
+          ),
           newConstraint,
         ]
       }, acc),
     [],
   )
+
+const mergeTypeVariableAssignments = <T extends Type>(
+  constraints: TypeConstraints<T>,
+  typeVariableAssignments: TypeVariableAssignment<T>[],
+): TypeVariableAssignment<T> => {
+  const typeVariables = filterUnique(
+    typeVariableAssignments
+      .map((typeVariableAssignment) => typeVariableAssignment.typeVariables)
+      .flat(1),
+  )
+  const types = typeVariableAssignments
+    .map((typeVariableAssignment) =>
+      typeVariableAssignment.type ? typeVariableAssignment.type : undefined,
+    )
+    .filter(isNotUndefined)
+  const type = unifyUnresolved(...types).type
+  return {
+    typeVariables,
+    type,
+  }
+}
 
 /**
  * Given a type and constraints, applies the constraints to the type to obtain
@@ -81,6 +105,7 @@ export const applyConstraints = (
     case TypeKind.Refined:
       return { ...type, type: applyConstraints(type.type, constraints) }
 
+    case TypeKind.TemporaryVariable:
     case TypeKind.RefinedTerm:
     case TypeKind.Boolean:
     case TypeKind.Number:
@@ -110,4 +135,16 @@ const getConstraintOf = <T extends Type>(
   constraints: TypeConstraints<T>,
   typeVariable: TypeVariable,
 ): TypeVariableAssignment<T> | undefined =>
-  constraints.find((constraint) => constraint.typeVariable === typeVariable)
+  constraints.find((constraint) =>
+    constraint.typeVariables.includes(typeVariable),
+  )
+
+const getOverlappingConstraints = <T extends Type>(
+  constraints: TypeConstraints<T>,
+  typeVariables: TypeVariable[],
+): TypeVariableAssignment<T>[] =>
+  constraints.filter((constraint) =>
+    typeVariables.some((typeVariable) =>
+      constraint.typeVariables.includes(typeVariable),
+    ),
+  )

@@ -10,37 +10,27 @@ import {
   Type,
   TypeKind,
   TypeVariable,
+  UnresolvedType,
 } from '../types/type_inference/types'
 import {
   buildTypeConstraintsFromTypes,
   buildUnconstrainedUnknownType,
 } from '../util/types'
-import { flattenConstrainedType, unifyConstraints } from './constraints'
+import { unifyConstraints } from './constraints'
 
 /**
  * Given a set of types, return the most general type such that all types in
  * the set are instances of that type.
  */
-export const unifyUnresolved = <T extends Type, U extends Type>(
-  ...types: ConstrainedType<T, U>[]
-): ConstrainedType<T, U> => {}
+export const unifyUnresolved = <T extends Type>(
+  ...types: T[]
+): ConstrainedType<T, UnresolvedType> => {}
 
 /**
  * Given a set of types, return the most general type such that all types in
  * the set are instances of that type.
  */
-export const unify = (
-  ...types: ResolvedConstrainedType[]
-): ResolvedConstrainedType => {
-  const constrainedType = unconstrainedUnify(types.map(flattenConstrainedType))
-  const unifiedConstraints = unifyConstraints(
-    constrainedType.constraints,
-    ...types.map((type) => type.constraints),
-  )
-  return buildConstrainedType(constrainedType.type, unifiedConstraints)
-}
-
-const unconstrainedUnify = (types: ResolvedType[]) =>
+export const unify = (types: ResolvedType[]): ResolvedConstrainedType =>
   types.reduce<ResolvedConstrainedType>((left, right) => {
     const constrainedType = unconstrainedConcreteUnify(left.type, right)
     const constraints = unifyConstraints(
@@ -57,6 +47,8 @@ const unconstrainedConcreteUnify = (
   switch (left.kind) {
     case TypeKind.Variable:
       return unifyWithTypeVariable(left, right)
+    case TypeKind.TemporaryVariable:
+      return buildConstrainedType(right)
   }
 }
 

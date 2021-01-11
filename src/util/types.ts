@@ -6,21 +6,22 @@ import {
 } from '../types/type_inference/constraints'
 import {
   DeclaredType,
+  TemporaryTypeVariable,
   Type,
   TypeVariable,
-  buildTypeVariable,
+  buildTemporaryTypeVariable,
 } from '../types/type_inference/types'
 import { unifyConstraints } from '../type_inference/constraints'
 
 export const buildUnconstrainedUnknownType = <
   T extends Type
->(): ConstrainedType<TypeVariable, T> =>
-  buildConstrainedType(buildTypeVariable())
+>(): ConstrainedType<TemporaryTypeVariable, T> =>
+  buildConstrainedType(buildTemporaryTypeVariable())
 
 export const buildConstrainedUnknownType = <T extends Type>(
   constraints: TypeConstraints<T>,
-): ConstrainedType<TypeVariable, T> =>
-  buildConstrainedType(buildTypeVariable(), constraints)
+): ConstrainedType<TemporaryTypeVariable, T> =>
+  buildConstrainedType(buildTemporaryTypeVariable(), constraints)
 
 export const buildTypeConstraintsFromTypes = <T extends Type>(
   typeVariable: TypeVariable,
