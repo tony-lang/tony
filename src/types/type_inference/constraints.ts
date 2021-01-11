@@ -20,7 +20,7 @@ export type ResolvedConstrainedType = ConstrainedType<
 /**
  * A set of assignments of type variables to their most general type.
  */
-export type TypeConstraints<T extends Type> = TypeVariableAssignment<T>[]
+export type TypeConstraints<T extends Type = Type> = TypeVariableAssignment<T>[]
 
 /**
  * Maps a set of type variables to their most general type (if any).
