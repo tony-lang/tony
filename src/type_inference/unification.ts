@@ -30,7 +30,7 @@ export const unify = <T extends State, U extends Type>(
   ...types: U[]
 ): ConstrainedType<U | TemporaryTypeVariable> =>
   types.reduce<ConstrainedType<U | TemporaryTypeVariable>>((left, right) => {
-    const constrainedType = unconstrainedConcreteUnify(
+    const constrainedType = concreteUnify(
       state,
       left.type,
       right,
@@ -43,7 +43,7 @@ export const unify = <T extends State, U extends Type>(
     return buildConstrainedType(constrainedType.type, constraints)
   }, buildUnconstrainedUnknownType())
 
-const unconstrainedConcreteUnify = <T extends State>(
+const concreteUnify = <T extends State>(
   state: T,
   left: Type,
   right: Type,
