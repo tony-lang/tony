@@ -5,7 +5,10 @@ import { DeclaredType, ResolvedType, Type, TypeVariable } from './types'
 /**
  * A constrained type represents a type alongside constraints on type variables.
  */
-export type ConstrainedType<T extends DeclaredType | Type, U extends Type> = {
+export type ConstrainedType<
+  T extends DeclaredType | Type,
+  U extends Type = Type
+> = {
   type: T
   constraints: TypeConstraints<U>
 }

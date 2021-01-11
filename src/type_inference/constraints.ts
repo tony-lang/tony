@@ -1,6 +1,7 @@
 import {
   Property,
   ResolvedType,
+  TemporaryTypeVariable,
   Type,
   TypeKind,
   TypeVariable,
@@ -11,16 +12,22 @@ import {
   TypeVariableAssignment,
 } from '../types/type_inference/constraints'
 import { filterUnique, isNotUndefined } from '../util'
-import { unifyUnresolved } from './unification'
+import { ScopeWithErrors } from '../types/analyze/scopes'
+import { unify } from './unification'
+
+type State = {
+  scopes: ScopeWithErrors[]
+}
 
 /**
  * Given a set of constraints, obtains a most general set of type constraints by
  * unifying all shared constraints.
  */
-export const unifyConstraints = <T extends Type>(
-  ...constraints: TypeConstraints<T>[]
-): TypeConstraints<T> =>
-  constraints.reduce(
+export const unifyConstraints = <T extends State, U extends Type>(
+  state: T,
+  ...constraints: TypeConstraints<U>[]
+): TypeConstraints<U | TemporaryTypeVariable> =>
+  constraints.reduce<TypeConstraints<U | TemporaryTypeVariable>>(
     (acc, constraints) =>
       constraints.reduce((acc, constraint) => {
         const matchingConstraints = getOverlappingConstraints(
@@ -29,8 +36,7 @@ export const unifyConstraints = <T extends Type>(
         )
         if (matchingConstraints.length === 0) return [...acc, constraint]
 
-        // this might be problematic because it doesn't take into account all constraints, only acc.
-        const newConstraint = mergeTypeVariableAssignments(acc, [
+        const newConstraint = mergeTypeVariableAssignments(state, [
           constraint,
           ...matchingConstraints,
         ])
@@ -44,10 +50,10 @@ export const unifyConstraints = <T extends Type>(
     [],
   )
 
-const mergeTypeVariableAssignments = <T extends Type>(
-  constraints: TypeConstraints<T>,
-  typeVariableAssignments: TypeVariableAssignment<T>[],
-): TypeVariableAssignment<T> => {
+const mergeTypeVariableAssignments = <T extends State, U extends Type>(
+  state: T,
+  typeVariableAssignments: TypeVariableAssignment<U>[],
+): TypeVariableAssignment<U | TemporaryTypeVariable> => {
   const typeVariables = filterUnique(
     typeVariableAssignments
       .map((typeVariableAssignment) => typeVariableAssignment.typeVariables)
@@ -58,7 +64,7 @@ const mergeTypeVariableAssignments = <T extends Type>(
       typeVariableAssignment.type ? typeVariableAssignment.type : undefined,
     )
     .filter(isNotUndefined)
-  const type = unifyUnresolved(...types).type
+  const type = unify(state, ...types).type
   return {
     typeVariables,
     type,
