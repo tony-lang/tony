@@ -11,7 +11,7 @@ import {
   TypeVariable,
 } from '../types/type_inference/types'
 import {
-  buildTypeConstraintsFromTypes,
+  buildTypeConstraintsFromType,
   buildUnconstrainedUnknownType,
 } from '../util/types'
 import { ScopeWithErrors } from '../types/analyze/scopes'
@@ -62,8 +62,5 @@ const unifyWithTypeVariable = (left: TypeVariable, right: Type) => {
       left,
       buildTypeConstraints([buildTypeVariableAssignment([left, right])]),
     )
-  return buildConstrainedType(
-    right,
-    buildTypeConstraintsFromTypes(left, [right]),
-  )
+  return buildConstrainedType(right, buildTypeConstraintsFromType(left, right))
 }

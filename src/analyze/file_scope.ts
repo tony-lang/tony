@@ -68,11 +68,13 @@ import {
 import { getTerms, getTypeVariables, getTypes } from '../util/scopes'
 import { Config } from '../config'
 import { assert } from '../types/errors/internal'
-import { buildTypeConstraintsFromTypes } from '../util/types'
+import { buildTypeConstraintsFromType } from '../util/types'
 import { buildTypeVariable } from '../types/type_inference/types'
 import { fileMayBeImported } from '../util/paths'
 import { isPrimitiveTypeName } from '../types/type_inference/primitive_types'
 import { resolveRelativePath } from './resolve'
+import { unify } from '../type_inference/unification'
+import { unifyConstraints } from '../type_inference/constraints'
 
 type ImportedBindingConfig = { file: AbsolutePath; originalName?: string }
 
@@ -264,12 +266,17 @@ const addTypeVariableBinding = (name: string) =>
         state,
         node.constraintNodes,
       )
+      const constraint = unify(state, ...constraints)
       const typeVariable = buildTypeVariable()
       const binding = buildTypeVariableBinding(
         name,
         node,
         typeVariable,
-        buildTypeConstraintsFromTypes(typeVariable, constraints),
+        unifyConstraints(
+          state,
+          constraint.constraints,
+          buildTypeConstraintsFromType(typeVariable, constraint.type),
+        ),
       )
       const [scope, ...parentScopes] = stateWithConstraints.scopes
       const newScope = {
