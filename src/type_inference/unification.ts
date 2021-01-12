@@ -27,6 +27,8 @@ type State = {
 /**
  * Given a set of types, return the least general type such that all types in
  * the set are instances of that type.
+ *
+ * @param U must either be ResolvedType or UnresolvedType
  */
 export const unify = <T extends State, U extends Type>(
   state: T,

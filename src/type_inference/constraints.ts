@@ -22,6 +22,8 @@ type State = {
 /**
  * Given a set of constraints, obtains a most general set of type constraints by
  * unifying all shared constraints.
+ *
+ * @param U must either be ResolvedType or UnresolvedType
  */
 export const unifyConstraints = <T extends State, U extends Type>(
   state: T,
