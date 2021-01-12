@@ -54,7 +54,7 @@ export interface TemporaryTypeVariable {
  * A curried type represents an abstraction parametrized by the `from` type and
  * returning the `to` type.
  */
-export interface CurriedType<T extends Type> {
+export interface CurriedType<T extends Type = Type> {
   kind: typeof TypeKind.Curried
   from: T
   to: T
@@ -93,7 +93,7 @@ export interface TermType {
  * A refined type represents a type alongside some predicates on values of that
  * type.
  */
-export interface RefinedType<T extends Type> {
+export interface RefinedType<T extends Type = Type> {
   kind: typeof TypeKind.Refined
   type: T
   predicates: Predicate[]
@@ -111,7 +111,7 @@ export interface RefinedTerm {
 /**
  * A property represents the mapping of a key to a value.
  */
-export type Property<T extends Type, U extends Type> = {
+export type Property<T extends Type = Type, U extends Type = Type> = {
   key: T
   value: U
 }
@@ -119,7 +119,7 @@ export type Property<T extends Type, U extends Type> = {
 /**
  * An object type represents the scope of an object (e.g. its properties).
  */
-export interface ObjectType<T extends Type, U extends Type> {
+export interface ObjectType<T extends Type = Type, U extends Type = Type> {
   kind: typeof TypeKind.Object
   properties: Property<T, U>[]
 }
@@ -128,7 +128,7 @@ export interface ObjectType<T extends Type, U extends Type> {
  * A map type represents the scope of a mapping from values of a key type to
  * values of a value type.
  */
-export interface MapType<T extends Type, U extends Type> {
+export interface MapType<T extends Type = Type, U extends Type = Type> {
   kind: typeof TypeKind.Map
   property: Property<T, U>
 }
@@ -136,7 +136,7 @@ export interface MapType<T extends Type, U extends Type> {
 /**
  * A union type represents the type of any of its parameters.
  */
-export interface UnionType<T extends Type> {
+export interface UnionType<T extends Type = Type> {
   kind: typeof TypeKind.Union
   parameters: T[]
 }
@@ -145,7 +145,7 @@ export interface UnionType<T extends Type> {
  * An intersection type represents all types that can be assigned to all of its
  * parameters.
  */
-export interface IntersectionType<T extends Type> {
+export interface IntersectionType<T extends Type = Type> {
   kind: typeof TypeKind.Intersection
   parameters: T[]
 }

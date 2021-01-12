@@ -43,7 +43,6 @@ import {
   Property,
   RefinedTerm,
   RefinedType,
-  TypeKind,
   UnresolvedType,
   buildAccessType,
   buildConditionalType,
@@ -75,6 +74,7 @@ import { getTerms, getTypeVariables } from '../util/scopes'
 import { TypeBindingNode } from '../types/analyze/bindings'
 import { addErrorUnless } from '../util/traverse'
 import { buildPrimitiveTypeArgumentsError } from '../types/errors/annotations'
+import { flattenType } from '../util/types'
 
 type InternalTypeNode =
   | AccessTypeNode
@@ -303,11 +303,7 @@ const handleIntersectionType = <T extends State>(
 ): Return<T, UnresolvedType> => {
   const [stateWithLeft, left] = buildType(state, node.leftNode)
   const [stateWithRight, right] = buildType(stateWithLeft, node.rightNode)
-  const type =
-    right.kind === TypeKind.Intersection
-      ? buildIntersectionType([left, ...right.parameters])
-      : buildIntersectionType([left, right])
-  return [stateWithRight, type]
+  return [stateWithRight, flattenType(buildIntersectionType([left, right]))]
 }
 
 const handleListType = <T extends State>(
@@ -421,11 +417,7 @@ const handleUnionType = <T extends State>(
 ): Return<T, UnresolvedType> => {
   const [stateWithLeft, left] = buildType(state, node.leftNode)
   const [stateWithRight, right] = buildType(stateWithLeft, node.rightNode)
-  const type =
-    right.kind === TypeKind.Union
-      ? buildUnionType([left, ...right.parameters])
-      : buildUnionType([left, right])
-  return [stateWithRight, type]
+  return [stateWithRight, flattenType(buildUnionType([left, right]))]
 }
 
 const handleEnumValue = <T extends State>(

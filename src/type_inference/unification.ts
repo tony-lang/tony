@@ -9,12 +9,15 @@ import {
   Type,
   TypeKind,
   TypeVariable,
+  buildIntersectionType,
 } from '../types/type_inference/types'
 import {
   buildTypeConstraintsFromType,
   buildUnconstrainedUnknownType,
+  flattenType,
 } from '../util/types'
 import { ScopeWithErrors } from '../types/analyze/scopes'
+import { normalize } from './normalization'
 import { unifyConstraints } from './constraints'
 
 type State = {
@@ -22,7 +25,7 @@ type State = {
 }
 
 /**
- * Given a set of types, return the most general type such that all types in
+ * Given a set of types, return the least general type such that all types in
  * the set are instances of that type.
  */
 export const unify = <T extends State, U extends Type>(
@@ -53,6 +56,11 @@ const concreteUnify = <T extends State>(
       return unifyWithTypeVariable(left, right)
     case TypeKind.TemporaryVariable:
       return buildConstrainedType(right)
+    default:
+      return normalize(
+        state,
+        buildConstrainedType(flattenType(buildIntersectionType([left, right]))),
+      )
   }
 }
 
