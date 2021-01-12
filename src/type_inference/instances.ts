@@ -2,7 +2,7 @@ import {
   ResolvedConstrainedType,
   TypeConstraints,
 } from '../types/type_inference/constraints'
-import { ResolvedType } from '../types/type_inference/types'
+import { Resolved } from '../types/type_inference/categories'
 
 /**
  * Given a specific and a general type, determines whether the specific type is
@@ -11,4 +11,4 @@ import { ResolvedType } from '../types/type_inference/types'
 export const isInstanceOf = (
   specific: ResolvedConstrainedType,
   general: ResolvedConstrainedType,
-): [isInstanceOf: boolean, typeConstraints: TypeConstraints<ResolvedType>] => {}
+): [isInstanceOf: boolean, typeConstraints: TypeConstraints<Resolved>] => {}

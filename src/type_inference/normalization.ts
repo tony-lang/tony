@@ -1,6 +1,6 @@
 import { ConstrainedType } from '../types/type_inference/constraints'
 import { ScopeWithErrors } from '../types/analyze/scopes'
-import { Type } from '../types/type_inference/types'
+import { Type } from '../types/type_inference/categories'
 
 type State = {
   scopes: ScopeWithErrors[]

@@ -1,9 +1,5 @@
 import {
-  DeclaredType,
-  ResolvedType,
   TemporaryTypeVariable,
-  Type,
-  UnresolvedType,
   buildTemporaryTypeVariable,
 } from '../types/type_inference/types'
 import {
@@ -30,9 +26,17 @@ import {
 import { findBinding, findBindings } from '../util/bindings'
 import { assert } from '../types/errors/internal'
 import { isSamePath } from '../util/paths'
+import {
+  Declared,
+  Resolved,
+  Type,
+  Unresolved,
+  buildDeclaredType,
+  buildResolvedType,
+} from '../types/type_inference/categories'
 
 type StrongBinding<T extends TermBinding | TypeBinding> = T extends TermBinding
-  ? TypeAssignment<ResolvedType>
+  ? TypeAssignment<Resolved>
   : TypeBinding
 type WeakBinding<T extends TermBinding | TypeBinding> = T extends TermBinding
   ? TermBinding
@@ -41,7 +45,7 @@ type WeakBinding<T extends TermBinding | TypeBinding> = T extends TermBinding
 const resolveBindingType = <
   T extends TermBinding | TypeBinding,
   U extends ScopeWithErrors,
-  V extends DeclaredType | Type,
+  V extends Declared | Type,
   W
 >(
   getBindings: (fileScope: TypedFileScope) => StrongBinding<T>[],
@@ -107,21 +111,20 @@ const resolveBindingType = <
   return [type, scope, newFileScopesWithNewFileScope]
 }
 
-const buildAnswers = <T extends Type | DeclaredType>(
-  answers?: T[],
-): (T | TemporaryTypeVariable)[] => answers || [buildTemporaryTypeVariable()]
+const buildAnswers = <T extends Type | Declared>(answers?: T[]) =>
+  answers || [buildResolvedType(buildTemporaryTypeVariable())]
 
-const buildAnswer = <T extends Type | DeclaredType>(
-  answer?: T,
-): T | TemporaryTypeVariable => answer || buildTemporaryTypeVariable()
+const buildAnswer = <T extends Type | Declared>(
+  builder: (type: TemporaryTypeVariable) => T,
+) => (answer?: T) => answer || builder(buildTemporaryTypeVariable())
 
 const resolveTermBindingTypeWithinScope = (
   binding: LocalTermBinding,
-  typeAssignments: TypeAssignment<ResolvedType>[][],
-): ResolvedType[] => {
+  typeAssignments: TypeAssignment<Resolved>[][],
+): Resolved[] => {
   const bindings = findBindings(binding.name, typeAssignments)
   if (bindings.length > 0) return bindings.map((binding) => binding.type)
-  return [buildTemporaryTypeVariable()]
+  return [buildResolvedType(buildTemporaryTypeVariable())]
 }
 
 /**
@@ -131,7 +134,7 @@ export const resolveTermBindingType = resolveBindingType<
   TermBinding,
   ScopeWithErrors,
   Type,
-  ResolvedType[]
+  Resolved[]
 >(getTypeAssignments, resolveTermBindingTypeWithinScope, buildAnswers)
 
 const resolveAliasTypeWithinScope = (typeBinding: LocalTypeBinding) =>
@@ -143,9 +146,9 @@ const resolveAliasTypeWithinScope = (typeBinding: LocalTypeBinding) =>
 export const resolveAliasType = resolveBindingType<
   TypeBinding,
   ScopeWithErrors,
-  DeclaredType,
-  DeclaredType
->(getTypes, resolveAliasTypeWithinScope, buildAnswer)
+  Declared,
+  Declared
+>(getTypes, resolveAliasTypeWithinScope, buildAnswer(buildDeclaredType))
 
 const resolveAliasedTypeWithinScope = (typeBinding: LocalTypeBinding) =>
   typeBinding.alias
@@ -156,6 +159,6 @@ const resolveAliasedTypeWithinScope = (typeBinding: LocalTypeBinding) =>
 export const resolveAliasedType = resolveBindingType<
   TypeBinding,
   ScopeWithErrors,
-  UnresolvedType,
-  UnresolvedType
->(getTypes, resolveAliasedTypeWithinScope, buildAnswer)
+  Unresolved,
+  Unresolved
+>(getTypes, resolveAliasedTypeWithinScope, buildAnswer(buildResolvedType))

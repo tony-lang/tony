@@ -6,7 +6,6 @@ import {
 } from '../types/type_inference/constraints'
 import {
   TemporaryTypeVariable,
-  Type,
   TypeKind,
   TypeVariable,
   buildIntersectionType,
@@ -19,6 +18,12 @@ import {
 import { ScopeWithErrors } from '../types/analyze/scopes'
 import { normalize } from './normalization'
 import { unifyConstraints } from './constraints'
+import {
+  Resolved,
+  Type,
+  buildResolvedType,
+  buildUnresolvedType,
+} from '../types/type_inference/categories'
 
 type State = {
   scopes: ScopeWithErrors[]
@@ -27,26 +32,27 @@ type State = {
 /**
  * Given a set of types, return the least general type such that all types in
  * the set are instances of that type.
- *
- * @param U must either be ResolvedType or UnresolvedType
  */
 export const unify = <T extends State, U extends Type>(
   state: T,
   ...types: U[]
-): ConstrainedType<U | TemporaryTypeVariable> =>
-  types.reduce<ConstrainedType<U | TemporaryTypeVariable>>((left, right) => {
-    const constrainedType = concreteUnify(
-      state,
-      left.type,
-      right,
-    ) as ConstrainedType<U>
-    const constraints = unifyConstraints(
-      state,
-      left.constraints,
-      constrainedType.constraints,
-    )
-    return buildConstrainedType(constrainedType.type, constraints)
-  }, buildUnconstrainedUnknownType())
+): ConstrainedType<U | Resolved<TemporaryTypeVariable>> =>
+  types.reduce<ConstrainedType<U | Resolved<TemporaryTypeVariable>>>(
+    (left, right) => {
+      const constrainedType = concreteUnify(
+        state,
+        left.type,
+        right,
+      ) as ConstrainedType<U>
+      const constraints = unifyConstraints(
+        state,
+        left.constraints,
+        constrainedType.constraints,
+      )
+      return buildConstrainedType(constrainedType.type, constraints)
+    },
+    buildUnconstrainedUnknownType(),
+  )
 
 const concreteUnify = <T extends State>(
   state: T,
@@ -61,7 +67,11 @@ const concreteUnify = <T extends State>(
     default:
       return normalize(
         state,
-        buildConstrainedType(flattenType(buildIntersectionType([left, right]))),
+        buildConstrainedType(
+          buildUnresolvedType(
+            flattenType(buildIntersectionType([left, right])),
+          ),
+        ),
       )
   }
 }
@@ -69,7 +79,7 @@ const concreteUnify = <T extends State>(
 const unifyWithTypeVariable = (left: TypeVariable, right: Type) => {
   if (right.kind === TypeKind.Variable)
     return buildConstrainedType(
-      left,
+      buildResolvedType(left),
       buildTypeConstraints([buildTypeVariableAssignment([left, right])]),
     )
   return buildConstrainedType(right, buildTypeConstraintsFromType(left, right))

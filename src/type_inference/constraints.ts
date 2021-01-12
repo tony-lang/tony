@@ -1,8 +1,6 @@
 import {
   Property,
-  ResolvedType,
   TemporaryTypeVariable,
-  Type,
   TypeKind,
   TypeVariable,
 } from '../types/type_inference/types'
@@ -14,6 +12,7 @@ import {
 import { filterUnique, isNotUndefined } from '../util'
 import { ScopeWithErrors } from '../types/analyze/scopes'
 import { unify } from './unification'
+import { Resolved, Type } from '../types/type_inference/categories'
 
 type State = {
   scopes: ScopeWithErrors[]
@@ -28,8 +27,8 @@ type State = {
 export const unifyConstraints = <T extends State, U extends Type>(
   state: T,
   ...constraints: TypeConstraints<U>[]
-): TypeConstraints<U | TemporaryTypeVariable> =>
-  constraints.reduce<TypeConstraints<U | TemporaryTypeVariable>>(
+): TypeConstraints<U | Resolved<TemporaryTypeVariable>> =>
+  constraints.reduce<TypeConstraints<U | Resolved<TemporaryTypeVariable>>>(
     (acc, constraints) =>
       constraints.reduce((acc, constraint) => {
         const matchingConstraints = getOverlappingConstraints(
@@ -55,7 +54,7 @@ export const unifyConstraints = <T extends State, U extends Type>(
 const mergeTypeVariableAssignments = <T extends State, U extends Type>(
   state: T,
   typeVariableAssignments: TypeVariableAssignment<U>[],
-): TypeVariableAssignment<U | TemporaryTypeVariable> => {
+): TypeVariableAssignment<U | Resolved<TemporaryTypeVariable>> => {
   const typeVariables = filterUnique(
     typeVariableAssignments
       .map((typeVariableAssignment) => typeVariableAssignment.typeVariables)
@@ -78,9 +77,9 @@ const mergeTypeVariableAssignments = <T extends State, U extends Type>(
  * the most general type under the given constraints.
  */
 export const applyConstraints = (
-  type: ResolvedType,
-  constraints: TypeConstraints<ResolvedType>,
-): ResolvedType => {
+  type: Resolved,
+  constraints: TypeConstraints<Resolved>,
+): Resolved => {
   switch (type.kind) {
     case TypeKind.Curried:
       return {
@@ -125,9 +124,9 @@ export const applyConstraints = (
 }
 
 const applyConstraintsToProperty = (
-  property: Property<ResolvedType, ResolvedType>,
-  constraints: TypeConstraints<ResolvedType>,
-): Property<ResolvedType, ResolvedType> => ({
+  property: Property<Resolved, Resolved>,
+  constraints: TypeConstraints<Resolved>,
+): Property<Resolved, Resolved> => ({
   key: applyConstraints(property.key, constraints),
   value: applyConstraints(property.value, constraints),
 })
@@ -137,7 +136,7 @@ const applyConstraintsToProperty = (
  */
 export const flattenConstrainedType = (
   type: ResolvedConstrainedType,
-): ResolvedType => applyConstraints(type.type, type.constraints)
+): Resolved => applyConstraints(type.type, type.constraints)
 
 const getConstraintOf = <T extends Type>(
   constraints: TypeConstraints<T>,

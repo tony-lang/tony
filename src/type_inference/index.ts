@@ -95,7 +95,7 @@ import {
   buildTypeErrorFromConstrainedType,
 } from '../types/errors/annotations'
 import { Config } from '../config'
-import { ResolvedType } from '../types/type_inference/types'
+import { Resolved, buildResolvedType } from '../types/type_inference/categories'
 import { TypeAssignment } from '../types/analyze/bindings'
 import { addErrorUnless } from '../util/traverse'
 import { buildConstrainedUnknownType } from '../util/types'
@@ -180,7 +180,7 @@ type State = {
   /**
    * A list of type assignments for each scope on the scope stack.
    */
-  typeAssignments: TypeAssignment<ResolvedType>[][]
+  typeAssignments: TypeAssignment<Resolved>[][]
   /**
    * A list of already visited and typed direct child scopes for each scope on
    * the scope stack.
@@ -272,7 +272,10 @@ const buildPrimitiveAnswer = <T extends TermNode>(type: PrimitiveType) => (
   state: State,
   node: T,
 ): Answer<T> =>
-  buildAnswer(state, buildTypedNode(node, buildConstrainedType(type)))
+  buildAnswer(
+    state,
+    buildTypedNode(node, buildConstrainedType(buildResolvedType(type))),
+  )
 
 const buildEmptyAnswer = buildPrimitiveAnswer(VOID_TYPE)
 
@@ -386,7 +389,7 @@ const traverseAll = <T extends TermNode>(
   nodes: T[],
   initialState: State,
   typeFactory: (
-    constraints: TypeConstraints<ResolvedType>,
+    constraints: TypeConstraints<Resolved>,
     node: T,
   ) => ResolvedConstrainedType = buildConstrainedUnknownType,
 ) =>
@@ -394,7 +397,7 @@ const traverseAll = <T extends TermNode>(
     const typeConstraints =
       answers.length > 0
         ? getTypeConstraintsFromAnswers(answers)
-        : [buildTypeConstraints<ResolvedType>()]
+        : [buildTypeConstraints<Resolved>()]
     return reduceAnswers(
       typeConstraints.map((constraint) => {
         const type = typeFactory(constraint, node)
@@ -406,7 +409,7 @@ const traverseAll = <T extends TermNode>(
 const unifyConstraintsWithTypedNode = <T extends TermNode>(
   state: State,
   typedNode: TypedNode<T>,
-  constraints: TypeConstraints<ResolvedType>,
+  constraints: TypeConstraints<Resolved>,
 ): TypedNode<T> => {
   const unifiedConstraints = unifyConstraints(
     state,

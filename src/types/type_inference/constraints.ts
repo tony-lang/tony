@@ -1,4 +1,5 @@
-import { DeclaredType, ResolvedType, Type, TypeVariable } from './types'
+import { Declared, Resolved, Type } from './categories'
+import { TypeVariable } from './types'
 
 // ---- Types ----
 
@@ -6,16 +7,13 @@ import { DeclaredType, ResolvedType, Type, TypeVariable } from './types'
  * A constrained type represents a type alongside constraints on type variables.
  */
 export type ConstrainedType<
-  T extends DeclaredType | Type,
+  T extends Declared | Type,
   U extends Type = Type
 > = {
   type: T
   constraints: TypeConstraints<U>
 }
-export type ResolvedConstrainedType = ConstrainedType<
-  ResolvedType,
-  ResolvedType
->
+export type ResolvedConstrainedType = ConstrainedType<Resolved, Resolved>
 
 /**
  * A set of assignments of type variables to their most general type.
@@ -32,10 +30,7 @@ export type TypeVariableAssignment<T extends Type = Type> = {
 
 // ---- Factories ----
 
-export const buildConstrainedType = <
-  T extends DeclaredType | Type,
-  U extends Type
->(
+export const buildConstrainedType = <T extends Declared | Type, U extends Type>(
   type: T,
   constraints: TypeConstraints<U> = [],
 ): ConstrainedType<T, U> => ({

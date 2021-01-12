@@ -1,9 +1,4 @@
-import {
-  DeclaredType,
-  Type,
-  TypeVariable,
-  UnresolvedType,
-} from '../type_inference/types'
+import { Declared, Type, Unresolved } from '../type_inference/categories'
 import {
   DestructuringPatternNode,
   EnumNode,
@@ -21,6 +16,7 @@ import {
 } from 'tree-sitter-tony'
 import { AbsolutePath } from '../path'
 import { TypeConstraints } from '../type_inference/constraints'
+import { TypeVariable } from '../type_inference/types'
 
 // ---- Types ----
 
@@ -91,8 +87,8 @@ export type ImportedTypeBinding = AbstractTypeBinding &
 export type LocalTypeBinding = AbstractTypeBinding &
   LocalBinding & {
     node: TypeBindingNode
-    value: DeclaredType
-    alias: UnresolvedType
+    value: Declared
+    alias: Unresolved
   }
 export type TypeBinding = ImportedTypeBinding | LocalTypeBinding
 
@@ -100,7 +96,7 @@ export type TypeVariableBinding = AbstractBinding & {
   kind: typeof BindingKind.TypeVariable
   node: TypeVariableDeclarationNode
   value: TypeVariable
-  constraints: TypeConstraints<UnresolvedType>
+  constraints: TypeConstraints<Unresolved>
 }
 
 /**
@@ -166,8 +162,8 @@ export const buildImportedTypeBinding = (
 
 export const buildLocalTypeBinding = (
   name: string,
-  value: DeclaredType,
-  alias: UnresolvedType,
+  value: Declared,
+  alias: Unresolved,
   node: TypeBindingNode,
   isExported = false,
 ): LocalTypeBinding => ({
@@ -184,7 +180,7 @@ export const buildTypeVariableBinding = (
   name: string,
   node: TypeVariableDeclarationNode,
   value: TypeVariable,
-  constraints: TypeConstraints<UnresolvedType>,
+  constraints: TypeConstraints<Unresolved>,
 ): TypeVariableBinding => ({
   kind: BindingKind.TypeVariable,
   name,
