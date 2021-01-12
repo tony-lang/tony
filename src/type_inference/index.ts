@@ -404,10 +404,12 @@ const traverseAll = <T extends TermNode>(
   }, [])
 
 const unifyConstraintsWithTypedNode = <T extends TermNode>(
+  state: State,
   typedNode: TypedNode<T>,
   constraints: TypeConstraints<ResolvedType>,
 ): TypedNode<T> => {
   const unifiedConstraints = unifyConstraints(
+    state,
     constraints,
     typedNode.type.constraints,
   )
@@ -437,7 +439,11 @@ const ensureIsInstanceOf = <T extends TermNode>(
     answer.state,
     node,
   )
-  const typedNode = unifyConstraintsWithTypedNode(answer.typedNode, constraints)
+  const typedNode = unifyConstraintsWithTypedNode(
+    answer.state,
+    answer.typedNode,
+    constraints,
+  )
   return buildAnswer(stateWithError, typedNode)
 }
 

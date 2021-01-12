@@ -1,7 +1,5 @@
-import { ConstrainedType, TypeConstraints } from '../type_inference/constraints'
 import {
   DeclaredType,
-  ResolvedType,
   Type,
   TypeVariable,
   UnresolvedType,
@@ -22,6 +20,7 @@ import {
   TypeVariableDeclarationNode,
 } from 'tree-sitter-tony'
 import { AbsolutePath } from '../path'
+import { TypeConstraints } from '../type_inference/constraints'
 
 // ---- Types ----
 
@@ -108,7 +107,7 @@ export type TypeVariableBinding = AbstractBinding & {
  * A type assignment assigns a type to a term binding.
  */
 export type TypeAssignment<T extends Type> = TermBinding & {
-  type: ConstrainedType<T, ResolvedType>
+  type: T
 }
 
 // ---- Factories ----
@@ -197,7 +196,7 @@ export const buildTypeVariableBinding = (
 
 export const buildTypeAssignment = <T extends Type>(
   binding: TermBinding,
-  type: ConstrainedType<T, ResolvedType>,
+  type: T,
 ): TypeAssignment<T> => ({
   ...binding,
   type,

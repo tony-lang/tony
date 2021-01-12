@@ -1,14 +1,10 @@
 import {
-  ConstrainedType,
-  ResolvedConstrainedType,
-  buildConstrainedType,
-} from '../types/type_inference/constraints'
-import {
   DeclaredType,
   ResolvedType,
+  TemporaryTypeVariable,
   Type,
-  TypeVariable,
   UnresolvedType,
+  buildTemporaryTypeVariable,
 } from '../types/type_inference/types'
 import {
   LocalBinding,
@@ -33,7 +29,6 @@ import {
 } from '../types/errors/annotations'
 import { findBinding, findBindings } from '../util/bindings'
 import { assert } from '../types/errors/internal'
-import { buildUnconstrainedUnknownType } from '../util/types'
 import { isSamePath } from '../util/paths'
 
 type StrongBinding<T extends TermBinding | TypeBinding> = T extends TermBinding
@@ -112,23 +107,21 @@ const resolveBindingType = <
   return [type, scope, newFileScopesWithNewFileScope]
 }
 
-const buildAnswers = <T extends Type | DeclaredType, U extends Type>(
-  answers?: ConstrainedType<T, U>[],
-): ConstrainedType<T | TypeVariable, U>[] =>
-  answers || [buildUnconstrainedUnknownType()]
+const buildAnswers = <T extends Type | DeclaredType>(
+  answers?: T[],
+): (T | TemporaryTypeVariable)[] => answers || [buildTemporaryTypeVariable()]
 
-const buildAnswer = <T extends Type | DeclaredType, U extends Type>(
-  answer?: ConstrainedType<T, U>,
-): ConstrainedType<T | TypeVariable, U> =>
-  answer || buildUnconstrainedUnknownType()
+const buildAnswer = <T extends Type | DeclaredType>(
+  answer?: T,
+): T | TemporaryTypeVariable => answer || buildTemporaryTypeVariable()
 
 const resolveTermBindingTypeWithinScope = (
   binding: LocalTermBinding,
   typeAssignments: TypeAssignment<ResolvedType>[][],
-): ResolvedConstrainedType[] => {
+): ResolvedType[] => {
   const bindings = findBindings(binding.name, typeAssignments)
   if (bindings.length > 0) return bindings.map((binding) => binding.type)
-  return [buildUnconstrainedUnknownType()]
+  return [buildTemporaryTypeVariable()]
 }
 
 /**
@@ -138,11 +131,11 @@ export const resolveTermBindingType = resolveBindingType<
   TermBinding,
   ScopeWithErrors,
   Type,
-  ResolvedConstrainedType[]
+  ResolvedType[]
 >(getTypeAssignments, resolveTermBindingTypeWithinScope, buildAnswers)
 
 const resolveAliasTypeWithinScope = (typeBinding: LocalTypeBinding) =>
-  buildConstrainedType(typeBinding.value)
+  typeBinding.value
 
 /**
  * Returns the type declared by a type binding.
@@ -151,11 +144,11 @@ export const resolveAliasType = resolveBindingType<
   TypeBinding,
   ScopeWithErrors,
   DeclaredType,
-  ConstrainedType<DeclaredType, Type>
+  DeclaredType
 >(getTypes, resolveAliasTypeWithinScope, buildAnswer)
 
 const resolveAliasedTypeWithinScope = (typeBinding: LocalTypeBinding) =>
-  buildConstrainedType(typeBinding.alias)
+  typeBinding.alias
 
 /**
  * Returns the type represented by a type binding.
@@ -164,5 +157,5 @@ export const resolveAliasedType = resolveBindingType<
   TypeBinding,
   ScopeWithErrors,
   UnresolvedType,
-  ConstrainedType<UnresolvedType, Type>
+  UnresolvedType
 >(getTypes, resolveAliasedTypeWithinScope, buildAnswer)

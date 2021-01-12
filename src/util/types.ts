@@ -2,42 +2,41 @@ import {
   ConstrainedType,
   TypeConstraints,
   buildConstrainedType,
+  buildTypeConstraints,
   buildTypeVariableAssignment,
 } from '../types/type_inference/constraints'
 import {
-  DeclaredType,
+  IntersectionType,
+  TemporaryTypeVariable,
   Type,
   TypeVariable,
-  buildTypeVariable,
+  UnionType,
+  buildTemporaryTypeVariable,
 } from '../types/type_inference/types'
-import { unifyConstraints } from '../type_inference/constraints'
 
 export const buildUnconstrainedUnknownType = <
   T extends Type
->(): ConstrainedType<TypeVariable, T> =>
-  buildConstrainedType(buildTypeVariable())
+>(): ConstrainedType<TemporaryTypeVariable, T> =>
+  buildConstrainedType(buildTemporaryTypeVariable())
 
 export const buildConstrainedUnknownType = <T extends Type>(
   constraints: TypeConstraints<T>,
-): ConstrainedType<TypeVariable, T> =>
-  buildConstrainedType(buildTypeVariable(), constraints)
+): ConstrainedType<TemporaryTypeVariable, T> =>
+  buildConstrainedType(buildTemporaryTypeVariable(), constraints)
 
-export const buildTypeConstraintsFromTypes = <T extends Type>(
+export const buildTypeConstraintsFromType = <T extends Type>(
   typeVariable: TypeVariable,
-  constraints: T[] = [],
+  type: T,
 ): TypeConstraints<T> =>
-  constraints.map((constraint) =>
-    buildTypeVariableAssignment(typeVariable, constraint),
-  )
+  buildTypeConstraints([buildTypeVariableAssignment([typeVariable], type)])
 
-export const reduceConstraintTypes = <
-  T extends DeclaredType | Type,
-  U extends Type
->(
-  ...constrainedTypes: ConstrainedType<T, U>[]
-): [types: T[], constraints: TypeConstraints<U>] => [
-  constrainedTypes.map((constrainedType) => constrainedType.type),
-  unifyConstraints(
-    ...constrainedTypes.map((constrainedType) => constrainedType.constraints),
-  ),
-]
+export const flattenType = <T extends UnionType | IntersectionType>(
+  type: T,
+): T => ({
+  ...type,
+  parameters: type.parameters.reduce<Type[]>((parameters, parameter) => {
+    if (parameter.kind !== type.kind) return [...parameters, parameter]
+    const flattenedParameter = flattenType(parameter)
+    return [...parameters, ...flattenedParameter.parameters]
+  }, []),
+})
