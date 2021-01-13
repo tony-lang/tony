@@ -11,6 +11,7 @@ import {
   CategorizedType,
   Type,
   TypeCategory,
+  TypeOfCategory,
   UnresolvedType,
 } from './categories'
 
@@ -19,9 +20,9 @@ import {
 /**
  * A property represents the mapping of a key to a value.
  */
-export type Property<T extends Type = Type, U extends Type = Type> = {
-  key: T
-  value: U
+export type Property<T extends TCR | TCU = TCR | TCU> = {
+  key: CategorizedType<T>
+  value: CategorizedType<T>
 }
 
 export enum TypeKind {
@@ -50,10 +51,14 @@ export enum TypeKind {
   Void,
 }
 
+type TCD = TypeCategory.Declared
+type TCR = TypeCategory.Resolved
+type TCU = TypeCategory.Unresolved
+
 /**
  * An access type reduces to the type a property of an object type maps to.
  */
-export interface AccessType extends CategorizedType<TypeCategory.Unresolved> {
+export interface AccessType extends CategorizedType<TCU> {
   kind: typeof TypeKind.Access
   type: UnresolvedType
   property: UnresolvedType
@@ -64,7 +69,7 @@ export interface AccessType extends CategorizedType<TypeCategory.Unresolved> {
  * type fulfills some constraints.
  */
 export interface ConditionalType
-  extends CategorizedType<TypeCategory.Unresolved> {
+  extends CategorizedType<TCU> {
   kind: typeof TypeKind.Conditional
   type: UnresolvedType
   constraints: UnresolvedType[]
@@ -76,17 +81,17 @@ export interface ConditionalType
  * A curried type represents an abstraction parametrized by the `from` type and
  * returning the `to` type.
  */
-export interface CurriedType<T extends Type = Type>
-  extends CategorizedType<TypeCategory.Resolved | TypeCategory.Unresolved> {
+export interface CurriedType<T extends TCR | TCU = TCR | TCU>
+  extends CategorizedType<T> {
   kind: typeof TypeKind.Curried
-  from: T
-  to: T
+  from: TypeOfCategory<T>
+  to: TypeOfCategory<T>
 }
 
 /**
  * A generic type represents a type that may depend on other types.
  */
-export interface GenericType extends CategorizedType<TypeCategory.Declared> {
+export interface GenericType extends CategorizedType<TCD> {
   kind: typeof TypeKind.Generic
   name: string
   typeParameters: TypeVariable[]
@@ -96,29 +101,30 @@ export interface GenericType extends CategorizedType<TypeCategory.Declared> {
  * An intersection type represents all types that can be assigned to all of its
  * parameters.
  */
-export interface IntersectionType<T extends Type = Type>
-  extends CategorizedType<TypeCategory.Resolved | TypeCategory.Unresolved> {
+export interface IntersectionType<T extends TCR | TCU = TCR | TCU>
+  extends CategorizedType<T> {
   kind: typeof TypeKind.Intersection
-  parameters: T[]
+  parameters: TypeOfCategory<T>[]
 }
 
 /**
  * A map type represents the scope of a mapping from values of a key type to
  * values of a value type.
  */
-export interface MapType<T extends Type = Type, U extends Type = Type>
-  extends CategorizedType<TypeCategory.Resolved | TypeCategory.Unresolved> {
+export interface MapType<T extends TCR | TCU = TCR | TCU>
+  extends CategorizedType<T> {
   kind: typeof TypeKind.Map
-  property: Property<T, U>
+  property: Property<T>
 }
 
 /**
  * An object type represents the scope of an object (e.g. its properties).
  */
-export interface ObjectType<T extends Type = Type, U extends Type = Type>
-  extends CategorizedType<TypeCategory.Resolved | TypeCategory.Unresolved> {
+export interface ObjectType<
+T extends TCR | TCU = TCR | TCU
+> extends CategorizedType<T> {
   kind: typeof TypeKind.Object
-  properties: Property<T, U>[]
+  properties: Property<T>[]
 }
 
 /**
@@ -126,7 +132,7 @@ export interface ObjectType<T extends Type = Type, U extends Type = Type>
  * type.
  */
 export interface ParametricType
-  extends CategorizedType<TypeCategory.Unresolved> {
+  extends CategorizedType<TCU> {
   kind: typeof TypeKind.Parametric
   name: string
   typeArguments: UnresolvedType[]
@@ -137,10 +143,11 @@ export interface ParametricType
  * A refined type represents a type alongside some predicates on values of that
  * type.
  */
-export interface RefinedType<T extends Type = Type>
-  extends CategorizedType<TypeCategory.Resolved | TypeCategory.Unresolved> {
+export interface RefinedType<
+T extends TCR | TCU = TCR | TCU
+> extends CategorizedType<T> {
   kind: typeof TypeKind.Refined
-  type: T
+  type: TypeOfCategory<T>
   predicates: Predicate[]
 }
 
@@ -148,8 +155,8 @@ export interface RefinedType<T extends Type = Type>
  * A refined term represents a term binding nested within a refined type
  * constrained by predicates.
  */
-export interface RefinedTerm
-  extends CategorizedType<TypeCategory.Resolved | TypeCategory.Unresolved> {
+export interface RefinedTerm<T extends TCR | TCU>
+  extends CategorizedType<T> {
   kind: typeof TypeKind.RefinedTerm
   name: string
 }
@@ -159,7 +166,7 @@ export interface RefinedTerm
  * union that do not appear in the right union.
  */
 export interface SubtractionType
-  extends CategorizedType<TypeCategory.Unresolved> {
+  extends CategorizedType<TCU> {
   kind: typeof TypeKind.Subtraction
   left: UnresolvedType
   right: UnresolvedType
@@ -168,7 +175,7 @@ export interface SubtractionType
 /**
  * A type variable that is used internally and cannot be related to other types.
  */
-export interface TemporaryTypeVariable extends CategorizedType {
+export interface TemporaryTypeVariable {
   kind: typeof TypeKind.TemporaryVariable
 }
 
@@ -176,7 +183,7 @@ export interface TemporaryTypeVariable extends CategorizedType {
  * A term type represents an unresolved type of a node (resulting from
  * typeof's).
  */
-export interface TermType extends CategorizedType<TypeCategory.Unresolved> {
+export interface TermType extends CategorizedType<TCU> {
   kind: typeof TypeKind.Term
   bindings: TermBinding[]
 }
@@ -184,7 +191,7 @@ export interface TermType extends CategorizedType<TypeCategory.Unresolved> {
 /**
  * A type variable represents any type.
  */
-export interface TypeVariable extends CategorizedType {
+export interface TypeVariable {
   kind: typeof TypeKind.Variable
 }
 
@@ -192,39 +199,39 @@ export interface TypeVariable extends CategorizedType {
  * A union type represents the type of any of its parameters.
  */
 export interface UnionType<
-  T extends TypeCategory.Resolved | TypeCategory.Unresolved =
-    | TypeCategory.Resolved
-    | TypeCategory.Unresolved
+  T extends TCR | TCU = TCR | TCU
 > extends CategorizedType<T> {
   kind: typeof TypeKind.Union
-  parameters: CategorizedType<T>[]
+  parameters: TypeOfCategory<T>[]
 }
 
 // ---- Factories ----
 
-export const buildProperty = <T extends Type, U extends Type>(
-  key: T,
-  value: U,
-): Property<T, U> => ({
+export const buildProperty = <T extends TCR | TCU>(
+  key: CategorizedType<T>,
+  value: CategorizedType<T>,
+): Property<T> => ({
   key,
   value,
 })
 
 export const buildAccessType = (
-  type: Unresolved,
-  property: Unresolved,
+  type: UnresolvedType,
+  property: UnresolvedType,
 ): AccessType => ({
+  category: TypeCategory.Unresolved,
   kind: TypeKind.Access,
   type,
   property,
 })
 
 export const buildConditionalType = (
-  type: Unresolved,
-  constraints: Unresolved[],
-  consequence: Unresolved,
-  alternative: Unresolved,
+  type: UnresolvedType,
+  constraints: UnresolvedType[],
+  consequence: UnresolvedType,
+  alternative: UnresolvedType,
 ): ConditionalType => ({
+  category: TypeCategory.Unresolved,
   kind: TypeKind.Conditional,
   type,
   constraints,
@@ -232,10 +239,12 @@ export const buildConditionalType = (
   alternative,
 })
 
-export const buildCurriedType = <T extends Type>(
-  from: T,
-  to: T,
+export const buildCurriedType = <T extends TCR | TCU>(
+  category: T,
+  from: TypeOfCategory<T>,
+  to: TypeOfCategory<T>,
 ): CurriedType<T> => ({
+  category,
   kind: TypeKind.Curried,
   from,
   to,
@@ -245,61 +254,73 @@ export const buildGenericType = (
   name: string,
   typeParameters: TypeVariable[],
 ): GenericType => ({
+  category: TypeCategory.Declared,
   kind: TypeKind.Generic,
   name,
   typeParameters,
 })
 
-export const buildIntersectionType = <T extends Type>(
-  parameters: T[] = [],
+export const buildIntersectionType = <T extends TCR | TCU>(
+  category: T,
+  parameters: TypeOfCategory<T>[] = [],
 ): IntersectionType<T> => ({
+  category,
   kind: TypeKind.Intersection,
   parameters,
 })
 
-export const buildMapType = <T extends Type, U extends Type>(
-  property: Property<T, U>,
-): MapType<T, U> => ({
+export const buildMapType = <T extends TCR | TCU>(
+  category: T,
+  property: Property<T>,
+): MapType<T> => ({
+  category,
   kind: TypeKind.Map,
   property,
 })
 
-export const buildObjectType = <T extends Type, U extends Type>(
-  properties: Property<T, U>[],
-): ObjectType<T, U> => ({
+export const buildObjectType = <T extends TCR | TCU>(
+  category: T,
+  properties: Property<T>[],
+): ObjectType<T> => ({
+  category,
   kind: TypeKind.Object,
   properties,
 })
 
 export const buildParametricType = (
   name: string,
-  typeArguments: Unresolved[],
+  typeArguments: UnresolvedType[],
   termArguments: SyntaxNode[],
 ): ParametricType => ({
+  category: TypeCategory.Unresolved,
   kind: TypeKind.Parametric,
   name,
   typeArguments,
   termArguments,
 })
 
-export const buildRefinedType = <T extends Type>(
-  type: T,
+export const buildRefinedType = <T extends TCR | TCU>(
+  category: T,
+  type: TypeOfCategory<T>,
   predicates: Predicate[],
 ): RefinedType<T> => ({
+  category,
   kind: TypeKind.Refined,
   type,
   predicates,
 })
 
-export const buildRefinedTerm = (name: string): RefinedTerm => ({
+export const buildRefinedTerm = <T extends TCR | TCU>(category: T, name: string): RefinedTerm<T> => ({
+  category,
   kind: TypeKind.RefinedTerm,
   name,
 })
 
 export const buildSubtractionType = (
-  left: Unresolved,
-  right: Unresolved,
+  left: UnresolvedType,
+  right: UnresolvedType,
 ): SubtractionType => ({
+  category: TypeCategory.Unresolved,
   kind: TypeKind.Subtraction,
   left,
   right,
@@ -310,6 +331,7 @@ export const buildTemporaryTypeVariable = (): TemporaryTypeVariable => ({
 })
 
 export const buildTermType = (bindings: TermBinding[]): TermType => ({
+  category: TypeCategory.Unresolved,
   kind: TypeKind.Term,
   bindings,
 })
@@ -318,9 +340,11 @@ export const buildTypeVariable = (): TypeVariable => ({
   kind: TypeKind.Variable,
 })
 
-export const buildUnionType = <T extends Type>(
-  parameters: T[] = [],
+export const buildUnionType = <T extends TCR | TCU>(
+  category: T,
+  parameters: TypeOfCategory<T>[] = [],
 ): UnionType<T> => ({
+  category,
   kind: TypeKind.Union,
   parameters,
 })

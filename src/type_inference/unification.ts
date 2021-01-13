@@ -19,10 +19,10 @@ import { ScopeWithErrors } from '../types/analyze/scopes'
 import { normalize } from './normalization'
 import { unifyConstraints } from './constraints'
 import {
-  Resolved,
+  ResolvedType,
   Type,
-  buildResolvedType,
-  buildUnresolvedType,
+  TypeCategory,
+  TypeOfCategory,
 } from '../types/type_inference/categories'
 
 type State = {
@@ -36,14 +36,14 @@ type State = {
 export const unify = <T extends State, U extends Type>(
   state: T,
   ...types: U[]
-): ConstrainedType<U | Resolved<TemporaryTypeVariable>> =>
-  types.reduce<ConstrainedType<U | Resolved<TemporaryTypeVariable>>>(
+): ConstrainedType<U | TemporaryTypeVariable> =>
+  types.reduce<ConstrainedType<U | TemporaryTypeVariable>>(
     (left, right) => {
       const constrainedType = concreteUnify(
         state,
         left.type,
         right,
-      ) as ConstrainedType<U>
+      )
       const constraints = unifyConstraints(
         state,
         left.constraints,
@@ -54,11 +54,11 @@ export const unify = <T extends State, U extends Type>(
     buildUnconstrainedUnknownType(),
   )
 
-const concreteUnify = <T extends State>(
+const concreteUnify = <T extends State, U extends Type>(
   state: T,
-  left: Type,
-  right: Type,
-): ConstrainedType<Type> => {
+  left: U,
+  right: U,
+): ConstrainedType<U> => {
   switch (left.kind) {
     case TypeKind.Variable:
       return unifyWithTypeVariable(left, right)

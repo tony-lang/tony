@@ -1,7 +1,5 @@
 import {
-  Resolved,
-  Type,
-  buildResolvedType,
+  Type, TypeCategory,
 } from '../types/type_inference/categories'
 import {
   ConstrainedType,
@@ -30,14 +28,14 @@ import {
 
 export const buildUnconstrainedUnknownType = <
   T extends Type
->(): ConstrainedType<Resolved<TemporaryTypeVariable>, T> =>
-  buildConstrainedType(buildResolvedType(buildTemporaryTypeVariable()))
+>(): ConstrainedType<TemporaryTypeVariable, T> =>
+  buildConstrainedType(buildTemporaryTypeVariable())
 
 export const buildConstrainedUnknownType = <T extends Type>(
   constraints: TypeConstraints<T>,
-): ConstrainedType<Resolved<TemporaryTypeVariable>, T> =>
+): ConstrainedType<TemporaryTypeVariable, T> =>
   buildConstrainedType(
-    buildResolvedType(buildTemporaryTypeVariable()),
+    buildTemporaryTypeVariable(),
     constraints,
   )
 
@@ -49,8 +47,8 @@ export const buildTypeConstraintsFromType = <T extends Type>(
 
 export const buildLiteralType = (
   value: Literal,
-): RefinedType<Resolved<RefinedTerm>> =>
-  buildRefinedType(buildResolvedType(buildRefinedTerm('value')), [
+): RefinedType<TypeCategory.Resolved> =>
+  buildRefinedType(TypeCategory.Resolved, buildRefinedTerm(TypeCategory.Resolved, 'value'), [
     buildEqualityPredicate(
       buildBindingValue('value'),
       buildLiteralValue(value),
