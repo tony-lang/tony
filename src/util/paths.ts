@@ -3,6 +3,7 @@ import {
   FILE_EXTENSION,
   FILE_EXTENSION_REGEX,
   IMPORT_FILE_EXTENSIONS,
+  JAVASCRIPT_FILE_EXTENSION_REGEX,
   TARGET_FILE_EXTENSION,
 } from '../constants'
 import fs from 'fs'
@@ -22,6 +23,9 @@ export const fileMayBeEntry = (file: AbsolutePath): boolean =>
 
 export const fileMayBeImported = (file: AbsolutePath): boolean =>
   fileHasImportExtension(file) && fileExists(file)
+
+export const fileIsExternal = (file: Path): boolean =>
+  JAVASCRIPT_FILE_EXTENSION_REGEX.test(file.path)
 
 export const readFile = (file: AbsolutePath): Promise<string> =>
   new Promise((resolve, reject) =>

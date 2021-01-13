@@ -47,17 +47,24 @@ import {
   buildLocalTypeBinding,
   buildTypeVariableBinding,
 } from '../types/analyze/bindings'
-import { addError, conditionalApply, ensure } from '../util/traverse'
+import {
+  addError,
+  addErrorUnless,
+  conditionalApply,
+  ensure,
+} from '../util/traverse'
 import { buildAliasType, buildAliasedType, buildTypes } from './build_type'
 import {
   buildDuplicateBindingError,
   buildExportOutsideFileScopeError,
+  buildExternalTypeImportError,
   buildImportOutsideFileScopeError,
   buildIncompleteWhenPatternError,
   buildMissingBindingError,
   buildRefinementTypeDeclarationOutsideRefinementTypeError,
   buildUnknownFileError,
 } from '../types/errors/annotations'
+import { fileIsExternal, fileMayBeImported } from '../util/paths'
 import { findBinding, findBindings, itemsMissingFrom } from '../util/bindings'
 import {
   getIdentifierName,
@@ -70,7 +77,6 @@ import { Config } from '../config'
 import { assert } from '../types/errors/internal'
 import { buildTypeConstraintsFromType } from '../util/types'
 import { buildTypeVariable } from '../types/type_inference/types'
-import { fileMayBeImported } from '../util/paths'
 import { isPrimitiveTypeName } from '../types/type_inference/primitive_types'
 import { resolveRelativePath } from './resolve'
 import { unify } from '../type_inference/unification'
@@ -298,24 +304,33 @@ const buildTypeBinding = (
   isExported: boolean,
   importedFrom: ImportedBindingConfig | undefined,
 ): [newState: State, binding: TypeBinding] => {
-  if (importedFrom)
+  if (importedFrom) {
+    assert(
+      node.type === SyntaxType.ImportType,
+      'node should be an imported type when importConfig is given',
+    )
     return [
-      state,
+      addErrorUnless<State>(
+        !fileIsExternal(importedFrom.file),
+        buildExternalTypeImportError(),
+      )(state, node),
       buildImportedTypeBinding(
         importedFrom.file,
         name,
         importedFrom.originalName,
-        node as ImportTypeNode,
+        node,
         isExported,
       ),
     ]
+  }
 
-  return buildTypesForLocalBinding(
-    state,
-    name,
-    node as TypeBindingNode,
-    isExported,
+  assert(
+    node.type === SyntaxType.Enum ||
+      node.type === SyntaxType.Interface ||
+      node.type === SyntaxType.TypeAlias,
+    'node should be type binding node when importConfig is not given',
   )
+  return buildTypesForLocalBinding(state, name, node, isExported)
 }
 
 const buildTypesForLocalBinding = (

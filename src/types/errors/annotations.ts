@@ -44,7 +44,6 @@ export type ExportOutsideFileScopeError = {
 
 export type ExternalTypeImportError = {
   kind: typeof ErrorAnnotationKind.ExternalTypeImport
-  type: Type
 }
 
 export type ImportOutsideFileScopeError = {
@@ -146,6 +145,10 @@ export const buildDuplicateBindingError = (
 
 export const buildExportOutsideFileScopeError = (): ExportOutsideFileScopeError => ({
   kind: ErrorAnnotationKind.ExportOutsideFileScope,
+})
+
+export const buildExternalTypeImportError = (): ExternalTypeImportError => ({
+  kind: ErrorAnnotationKind.ExternalTypeImport,
 })
 
 export const buildImportOutsideFileScopeError = (): ImportOutsideFileScopeError => ({

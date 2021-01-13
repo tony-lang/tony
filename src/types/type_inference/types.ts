@@ -68,6 +68,12 @@ export interface CurriedType<T extends Type = Type> {
   kind: typeof TypeKind.Curried
   from: T
   to: T
+  /**
+   * A curried type is external when it represents an uncurried function
+   * imported from JavaScript. Before values of this type are used, they should
+   * be curried.
+   */
+  isExternal: boolean
 }
 
 /**
@@ -208,10 +214,12 @@ export const buildConditionalType = (
 export const buildCurriedType = <T extends Type>(
   from: T,
   to: T,
+  isExternal = false,
 ): CurriedType<T> => ({
   kind: TypeKind.Curried,
   from,
   to,
+  isExternal,
 })
 
 export const buildGenericType = (

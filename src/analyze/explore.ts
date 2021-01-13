@@ -2,7 +2,8 @@ import { LogLevel, log } from '../logger'
 import { AbsolutePath } from '../types/path'
 import { Config } from '../config'
 import { FileScope } from '../types/analyze/scopes'
-import { ProgramNode } from 'tree-sitter-tony'
+import { SyntaxType } from 'tree-sitter-tony'
+import { assert } from '../types/errors/internal'
 import { constructFileScope } from './file_scope'
 import { graphSearch } from '../util/graph_search'
 import { parse } from '../parse'
@@ -29,5 +30,9 @@ const analyzeFile = async (
   log(config, LogLevel.Info, 'Building file scope of', file)
 
   const tree = await parse(config, file)
-  return constructFileScope(config, file, tree.rootNode as ProgramNode)
+  assert(
+    tree.rootNode.type === SyntaxType.Program,
+    'The root node should be a program node.',
+  )
+  return constructFileScope(config, file, tree.rootNode)
 }
