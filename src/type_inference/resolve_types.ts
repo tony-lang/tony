@@ -1,8 +1,4 @@
-import {
-  ResolvedType,
-  Type,
-  UnresolvedType,
-} from '../types/type_inference/types'
+import { ResolvedType, Type } from '../types/type_inference/categories'
 import { TypeAssignment, TypeBinding } from '../types/analyze/bindings'
 
 /**
@@ -11,7 +7,7 @@ import { TypeAssignment, TypeBinding } from '../types/analyze/bindings'
  * actual type.
  */
 export const resolveType = (
-  typedTerms: TypeAssignment<Type>[][],
+  typedTerms: TypeAssignment[][],
   types: TypeBinding[][],
-  type: UnresolvedType,
+  type: Type,
 ): ResolvedType => {}

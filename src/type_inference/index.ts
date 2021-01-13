@@ -71,6 +71,12 @@ import {
   VOID_TYPE,
 } from '../types/type_inference/primitive_types'
 import {
+  ConstrainedType,
+  TypeConstraints,
+  buildConstrainedType,
+  buildTypeConstraints,
+} from '../types/type_inference/constraints'
+import {
   FileScope,
   GlobalScope,
   NestedScope,
@@ -83,19 +89,13 @@ import {
 } from '../types/analyze/scopes'
 import { LogLevel, log } from '../logger'
 import { NotImplementedError, assert } from '../types/errors/internal'
-import {
-  ResolvedConstrainedType,
-  TypeConstraints,
-  buildConstrainedType,
-  buildTypeConstraints,
-} from '../types/type_inference/constraints'
 import { TypedNode, buildTypedNode } from '../types/type_inference/nodes'
 import {
   buildIndeterminateTypeError,
   buildTypeErrorFromConstrainedType,
 } from '../types/errors/annotations'
 import { Config } from '../config'
-import { ResolvedType } from '../types/type_inference/types'
+import { ResolvedType } from '../types/type_inference/categories'
 import { TypeAssignment } from '../types/analyze/bindings'
 import { addErrorUnless } from '../util/traverse'
 import { buildConstrainedUnknownType } from '../util/types'
@@ -180,7 +180,7 @@ type State = {
   /**
    * A list of type assignments for each scope on the scope stack.
    */
-  typeAssignments: TypeAssignment<ResolvedType>[][]
+  typeAssignments: TypeAssignment[][]
   /**
    * A list of already visited and typed direct child scopes for each scope on
    * the scope stack.
@@ -372,9 +372,9 @@ const nest = <T extends NestingNode & TermNode>(
   callback: (
     state: State,
     node: T,
-    type: ResolvedConstrainedType,
+    type: ConstrainedType<ResolvedType>,
   ) => Answers<T>,
-) => (state: State, node: T, type: ResolvedConstrainedType) => {
+) => (state: State, node: T, type: ConstrainedType<ResolvedType>) => {
   const nestedState = enterBlock(state, node)
   const answers = callback(nestedState, node, type)
   return forAllAnswers(answers, (answer) => [
@@ -386,15 +386,15 @@ const traverseAll = <T extends TermNode>(
   nodes: T[],
   initialState: State,
   typeFactory: (
-    constraints: TypeConstraints<ResolvedType>,
+    constraints: TypeConstraints,
     node: T,
-  ) => ResolvedConstrainedType = buildConstrainedUnknownType,
+  ) => ConstrainedType<ResolvedType> = buildConstrainedUnknownType,
 ) =>
   nodes.reduce<Answers<T>>((answers, node) => {
     const typeConstraints =
       answers.length > 0
         ? getTypeConstraintsFromAnswers(answers)
-        : [buildTypeConstraints<ResolvedType>()]
+        : [buildTypeConstraints()]
     return reduceAnswers(
       typeConstraints.map((constraint) => {
         const type = typeFactory(constraint, node)
@@ -406,7 +406,7 @@ const traverseAll = <T extends TermNode>(
 const unifyConstraintsWithTypedNode = <T extends TermNode>(
   state: State,
   typedNode: TypedNode<T>,
-  constraints: TypeConstraints<ResolvedType>,
+  constraints: TypeConstraints,
 ): TypedNode<T> => {
   const unifiedConstraints = unifyConstraints(
     state,
@@ -425,7 +425,7 @@ const unifyConstraintsWithTypedNode = <T extends TermNode>(
 const ensureIsInstanceOf = <T extends TermNode>(
   node: T,
   answer: Answer<T>,
-  generalType: ResolvedConstrainedType,
+  generalType: ConstrainedType<ResolvedType>,
 ): Answer<T> => {
   const [predicate, constraints] = isInstanceOf(
     answer.typedNode.type,
@@ -450,7 +450,7 @@ const ensureIsInstanceOf = <T extends TermNode>(
 const traverse = <T extends TermNode>(
   state: State,
   node: T,
-  type: ResolvedConstrainedType,
+  type: ConstrainedType<ResolvedType>,
 ): Answers<T> => {
   const answers = handleNode(state, node, type) as Answers<T>
   assert(
@@ -465,7 +465,7 @@ const traverse = <T extends TermNode>(
 const handleNode = (
   state: State,
   node: TermNode,
-  type: ResolvedConstrainedType,
+  type: ConstrainedType<ResolvedType>,
 ): Answers<TermNode> => {
   switch (node.type) {
     case SyntaxType.ERROR:
@@ -689,7 +689,7 @@ const handleNode = (
 const handleError = (
   state: State,
   node: ErrorNode,
-  type: ResolvedConstrainedType,
+  type: ConstrainedType<ResolvedType>,
 ): Answers<ErrorNode> => {
   const typedNode = buildTypedNode(node, type)
   return [buildAnswer(state, typedNode)]

@@ -1,11 +1,8 @@
 import {
   DeclaredType,
   ResolvedType,
-  TemporaryTypeVariable,
   Type,
-  UnresolvedType,
-  buildTemporaryTypeVariable,
-} from '../types/type_inference/types'
+} from '../types/type_inference/categories'
 import {
   LocalBinding,
   LocalTermBinding,
@@ -29,10 +26,11 @@ import {
 } from '../types/errors/annotations'
 import { findBinding, findBindings } from '../util/bindings'
 import { assert } from '../types/errors/internal'
+import { buildTemporaryTypeVariable } from '../types/type_inference/types'
 import { isSamePath } from '../util/paths'
 
 type StrongBinding<T extends TermBinding | TypeBinding> = T extends TermBinding
-  ? TypeAssignment<ResolvedType>
+  ? TypeAssignment
   : TypeBinding
 type WeakBinding<T extends TermBinding | TypeBinding> = T extends TermBinding
   ? TermBinding
@@ -107,17 +105,15 @@ const resolveBindingType = <
   return [type, scope, newFileScopesWithNewFileScope]
 }
 
-const buildAnswers = <T extends Type | DeclaredType>(
-  answers?: T[],
-): (T | TemporaryTypeVariable)[] => answers || [buildTemporaryTypeVariable()]
+const buildAnswers = <T extends Type | DeclaredType>(answers?: T[]) =>
+  answers || [buildTemporaryTypeVariable()]
 
-const buildAnswer = <T extends Type | DeclaredType>(
-  answer?: T,
-): T | TemporaryTypeVariable => answer || buildTemporaryTypeVariable()
+const buildAnswer = <T extends Type | DeclaredType>(answer?: T) =>
+  answer || buildTemporaryTypeVariable()
 
 const resolveTermBindingTypeWithinScope = (
   binding: LocalTermBinding,
-  typeAssignments: TypeAssignment<ResolvedType>[][],
+  typeAssignments: TypeAssignment[][],
 ): ResolvedType[] => {
   const bindings = findBindings(binding.name, typeAssignments)
   if (bindings.length > 0) return bindings.map((binding) => binding.type)
@@ -156,6 +152,6 @@ const resolveAliasedTypeWithinScope = (typeBinding: LocalTypeBinding) =>
 export const resolveAliasedType = resolveBindingType<
   TypeBinding,
   ScopeWithErrors,
-  UnresolvedType,
-  UnresolvedType
+  Type,
+  Type
 >(getTypes, resolveAliasedTypeWithinScope, buildAnswer)

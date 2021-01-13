@@ -15,7 +15,6 @@ import {
 import { AbsolutePath } from '../types/path'
 import { ErrorAnnotation } from '../types/errors/annotations'
 import { SyntaxNode } from 'tree-sitter-tony'
-import { Type } from '../types/type_inference/types'
 import { isSamePath } from './paths'
 
 export const findFileScope = <T extends FileScope>(
@@ -38,9 +37,9 @@ export const getTypes = (scope: ScopeWithTypes): TypeBinding[] => scope.types
 export const getTypeVariables = (
   scope: ScopeWithTypes,
 ): TypeVariableBinding[] => scope.typeVariables
-export const getTypeAssignments = <T extends Type>(
-  scope: TypingEnvironment<T>,
-): TypeAssignment<T>[] => scope.typeAssignments
+export const getTypeAssignments = (
+  scope: TypingEnvironment,
+): TypeAssignment[] => scope.typeAssignments
 
 export const findScopeOfNode = <T extends FileScope | NestedScope>(
   scopes: T[],

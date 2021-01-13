@@ -7,28 +7,44 @@ import {
 } from '../types/type_inference/constraints'
 import {
   IntersectionType,
+  RefinedTerm,
+  RefinedType,
   TemporaryTypeVariable,
-  Type,
   TypeVariable,
   UnionType,
+  buildRefinedTerm,
+  buildRefinedType,
   buildTemporaryTypeVariable,
 } from '../types/type_inference/types'
+import { ResolvedType, Type } from '../types/type_inference/categories'
+import {
+  buildBindingValue,
+  buildEqualityPredicate,
+  buildLiteralValue,
+} from '../types/type_inference/predicates'
+import { Literal } from '../types/type_inference/primitive_types'
 
-export const buildUnconstrainedUnknownType = <
-  T extends Type
->(): ConstrainedType<TemporaryTypeVariable, T> =>
+export const buildUnconstrainedUnknownType = (): ConstrainedType<TemporaryTypeVariable> =>
   buildConstrainedType(buildTemporaryTypeVariable())
 
-export const buildConstrainedUnknownType = <T extends Type>(
-  constraints: TypeConstraints<T>,
-): ConstrainedType<TemporaryTypeVariable, T> =>
+export const buildConstrainedUnknownType = (
+  constraints: TypeConstraints,
+): ConstrainedType<TemporaryTypeVariable> =>
   buildConstrainedType(buildTemporaryTypeVariable(), constraints)
 
-export const buildTypeConstraintsFromType = <T extends Type>(
+export const buildTypeConstraintsFromType = (
   typeVariable: TypeVariable,
-  type: T,
-): TypeConstraints<T> =>
+  type: ResolvedType,
+): TypeConstraints =>
   buildTypeConstraints([buildTypeVariableAssignment([typeVariable], type)])
+
+export const buildLiteralType = (value: Literal): RefinedType<RefinedTerm> =>
+  buildRefinedType(buildRefinedTerm('value'), [
+    buildEqualityPredicate(
+      buildBindingValue('value'),
+      buildLiteralValue(value),
+    ),
+  ])
 
 export const flattenType = <T extends UnionType | IntersectionType>(
   type: T,

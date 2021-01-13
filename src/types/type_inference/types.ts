@@ -1,14 +1,17 @@
-import { Literal, PrimitiveType } from './primitive_types'
-import {
-  Predicate,
-  buildBindingValue,
-  buildEqualityPredicate,
-  buildLiteralValue,
-} from './predicates'
+import { Predicate } from './predicates'
 import { SyntaxNode } from 'tree-sitter-tony'
 import { TermBinding } from '../analyze/bindings'
+import { Type } from './categories'
 
 // ---- Types ----
+
+/**
+ * A property represents the mapping of a key to a value.
+ */
+export type Property<T extends Type = Type> = {
+  key: T
+  value: T
+}
 
 export enum TypeKind {
   Access,
@@ -37,17 +40,24 @@ export enum TypeKind {
 }
 
 /**
- * A type variable represents any type.
+ * An access type reduces to the type a property of an object type maps to.
  */
-export interface TypeVariable {
-  kind: typeof TypeKind.Variable
+export interface AccessType {
+  kind: typeof TypeKind.Access
+  type: Type
+  property: Type
 }
 
 /**
- * A type variable that is used internally and cannot be related to other types.
+ * A conditional type reduces to one of two types depending on whether a given
+ * type fulfills some constraints.
  */
-export interface TemporaryTypeVariable {
-  kind: typeof TypeKind.TemporaryVariable
+export interface ConditionalType {
+  kind: typeof TypeKind.Conditional
+  type: Type
+  constraints: Type[]
+  consequence: Type
+  alternative: Type
 }
 
 /**
@@ -70,23 +80,40 @@ export interface GenericType {
 }
 
 /**
+ * An intersection type represents all types that can be assigned to all of its
+ * parameters.
+ */
+export interface IntersectionType<T extends Type = Type> {
+  kind: typeof TypeKind.Intersection
+  parameters: T[]
+}
+
+/**
+ * A map type represents the scope of a mapping from values of a key type to
+ * values of a value type.
+ */
+export interface MapType<T extends Type = Type> {
+  kind: typeof TypeKind.Map
+  property: Property<T>
+}
+
+/**
+ * An object type represents the scope of an object (e.g. its properties).
+ */
+export interface ObjectType<T extends Type = Type> {
+  kind: typeof TypeKind.Object
+  properties: Property<T>[]
+}
+
+/**
  * A parametric type represents a concrete instance of an unresolved parametric
  * type.
  */
 export interface ParametricType {
   kind: typeof TypeKind.Parametric
   name: string
-  typeArguments: UnresolvedType[]
+  typeArguments: Type[]
   termArguments: SyntaxNode[]
-}
-
-/**
- * A term type represents an unresolved type of a node (resulting from
- * typeof's).
- */
-export interface TermType {
-  kind: typeof TypeKind.Term
-  bindings: TermBinding[]
 }
 
 /**
@@ -109,28 +136,36 @@ export interface RefinedTerm {
 }
 
 /**
- * A property represents the mapping of a key to a value.
+ * A subtraction type reduces to the union including all members of the left
+ * union that do not appear in the right union.
  */
-export type Property<T extends Type = Type, U extends Type = Type> = {
-  key: T
-  value: U
+export interface SubtractionType {
+  kind: typeof TypeKind.Subtraction
+  left: Type
+  right: Type
 }
 
 /**
- * An object type represents the scope of an object (e.g. its properties).
+ * A type variable that is used internally and cannot be related to other types.
  */
-export interface ObjectType<T extends Type = Type, U extends Type = Type> {
-  kind: typeof TypeKind.Object
-  properties: Property<T, U>[]
+export interface TemporaryTypeVariable {
+  kind: typeof TypeKind.TemporaryVariable
 }
 
 /**
- * A map type represents the scope of a mapping from values of a key type to
- * values of a value type.
+ * A term type represents an unresolved type of a node (resulting from
+ * typeof's).
  */
-export interface MapType<T extends Type = Type, U extends Type = Type> {
-  kind: typeof TypeKind.Map
-  property: Property<T, U>
+export interface TermType {
+  kind: typeof TypeKind.Term
+  bindings: TermBinding[]
+}
+
+/**
+ * A type variable represents any type.
+ */
+export interface TypeVariable {
+  kind: typeof TypeKind.Variable
 }
 
 /**
@@ -141,84 +176,33 @@ export interface UnionType<T extends Type = Type> {
   parameters: T[]
 }
 
-/**
- * An intersection type represents all types that can be assigned to all of its
- * parameters.
- */
-export interface IntersectionType<T extends Type = Type> {
-  kind: typeof TypeKind.Intersection
-  parameters: T[]
-}
-
-/**
- * An access type reduces to the type a property of an object type maps to.
- */
-export interface AccessType {
-  kind: typeof TypeKind.Access
-  type: UnresolvedType
-  property: UnresolvedType
-}
-
-/**
- * A conditional type reduces to one of two types depending on whether a given
- * type fulfills some constraints.
- */
-export interface ConditionalType {
-  kind: typeof TypeKind.Conditional
-  type: UnresolvedType
-  constraints: UnresolvedType[]
-  consequence: UnresolvedType
-  alternative: UnresolvedType
-}
-
-/**
- * A subtraction type reduces to the union including all members of the left
- * union that do not appear in the right union.
- */
-export interface SubtractionType {
-  kind: typeof TypeKind.Subtraction
-  left: UnresolvedType
-  right: UnresolvedType
-}
-
-export type DeclaredType = TypeVariable | TemporaryTypeVariable | GenericType
-export type UnresolvedType =
-  | TypeVariable
-  | TemporaryTypeVariable
-  | CurriedType<UnresolvedType>
-  | RefinedType<UnresolvedType>
-  | RefinedTerm
-  | ObjectType<UnresolvedType, UnresolvedType>
-  | MapType<UnresolvedType, UnresolvedType>
-  | UnionType<UnresolvedType>
-  | IntersectionType<UnresolvedType>
-  | PrimitiveType
-  | AccessType
-  | ConditionalType
-  | ParametricType
-  | SubtractionType
-  | TermType
-export type ResolvedType =
-  | TypeVariable
-  | TemporaryTypeVariable
-  | CurriedType<ResolvedType>
-  | RefinedType<ResolvedType>
-  | RefinedTerm
-  | ObjectType<ResolvedType, ResolvedType>
-  | MapType<ResolvedType, ResolvedType>
-  | UnionType<ResolvedType>
-  | IntersectionType<ResolvedType>
-  | PrimitiveType
-export type Type = UnresolvedType | ResolvedType
-
 // ---- Factories ----
 
-export const buildTypeVariable = (): TypeVariable => ({
-  kind: TypeKind.Variable,
+export const buildProperty = <T extends Type>(
+  key: T,
+  value: T,
+): Property<T> => ({
+  key,
+  value,
 })
 
-export const buildTemporaryTypeVariable = (): TemporaryTypeVariable => ({
-  kind: TypeKind.TemporaryVariable,
+export const buildAccessType = (type: Type, property: Type): AccessType => ({
+  kind: TypeKind.Access,
+  type,
+  property,
+})
+
+export const buildConditionalType = (
+  type: Type,
+  constraints: Type[],
+  consequence: Type,
+  alternative: Type,
+): ConditionalType => ({
+  kind: TypeKind.Conditional,
+  type,
+  constraints,
+  consequence,
+  alternative,
 })
 
 export const buildCurriedType = <T extends Type>(
@@ -239,20 +223,36 @@ export const buildGenericType = (
   typeParameters,
 })
 
+export const buildIntersectionType = <T extends Type>(
+  parameters: T[] = [],
+): IntersectionType<T> => ({
+  kind: TypeKind.Intersection,
+  parameters,
+})
+
+export const buildMapType = <T extends Type>(
+  property: Property<T>,
+): MapType<T> => ({
+  kind: TypeKind.Map,
+  property,
+})
+
+export const buildObjectType = <T extends Type>(
+  properties: Property<T>[],
+): ObjectType<T> => ({
+  kind: TypeKind.Object,
+  properties,
+})
+
 export const buildParametricType = (
   name: string,
-  typeArguments: UnresolvedType[],
+  typeArguments: Type[],
   termArguments: SyntaxNode[],
 ): ParametricType => ({
   kind: TypeKind.Parametric,
   name,
   typeArguments,
   termArguments,
-})
-
-export const buildTermType = (bindings: TermBinding[]): TermType => ({
-  kind: TypeKind.Term,
-  bindings,
 })
 
 export const buildRefinedType = <T extends Type>(
@@ -269,41 +269,26 @@ export const buildRefinedTerm = (name: string): RefinedTerm => ({
   name,
 })
 
-export const buildLiteralType = (value: Literal): RefinedType<RefinedTerm> =>
-  buildRefinedType(buildRefinedTerm('value'), [
-    buildEqualityPredicate(
-      buildBindingValue('value'),
-      buildLiteralValue(value),
-    ),
-  ])
-
-export const buildProperty = <T extends Type, U extends Type>(
-  key: T,
-  value: U,
-): Property<T, U> => ({
-  key,
-  value,
+export const buildSubtractionType = (
+  left: Type,
+  right: Type,
+): SubtractionType => ({
+  kind: TypeKind.Subtraction,
+  left,
+  right,
 })
 
-export const buildObjectType = <T extends Type, U extends Type>(
-  properties: Property<T, U>[],
-): ObjectType<T, U> => ({
-  kind: TypeKind.Object,
-  properties,
+export const buildTemporaryTypeVariable = (): TemporaryTypeVariable => ({
+  kind: TypeKind.TemporaryVariable,
 })
 
-export const buildMapType = <T extends Type, U extends Type>(
-  property: Property<T, U>,
-): MapType<T, U> => ({
-  kind: TypeKind.Map,
-  property,
+export const buildTermType = (bindings: TermBinding[]): TermType => ({
+  kind: TypeKind.Term,
+  bindings,
 })
 
-export const buildIntersectionType = <T extends Type>(
-  parameters: T[] = [],
-): IntersectionType<T> => ({
-  kind: TypeKind.Intersection,
-  parameters,
+export const buildTypeVariable = (): TypeVariable => ({
+  kind: TypeKind.Variable,
 })
 
 export const buildUnionType = <T extends Type>(
@@ -311,35 +296,4 @@ export const buildUnionType = <T extends Type>(
 ): UnionType<T> => ({
   kind: TypeKind.Union,
   parameters,
-})
-
-export const buildAccessType = (
-  type: UnresolvedType,
-  property: UnresolvedType,
-): AccessType => ({
-  kind: TypeKind.Access,
-  type,
-  property,
-})
-
-export const buildConditionalType = (
-  type: UnresolvedType,
-  constraints: UnresolvedType[],
-  consequence: UnresolvedType,
-  alternative: UnresolvedType,
-): ConditionalType => ({
-  kind: TypeKind.Conditional,
-  type,
-  constraints,
-  consequence,
-  alternative,
-})
-
-export const buildSubtractionType = (
-  left: UnresolvedType,
-  right: UnresolvedType,
-): SubtractionType => ({
-  kind: TypeKind.Subtraction,
-  left,
-  right,
 })

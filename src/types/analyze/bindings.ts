@@ -1,9 +1,4 @@
-import {
-  DeclaredType,
-  Type,
-  TypeVariable,
-  UnresolvedType,
-} from '../type_inference/types'
+import { DeclaredType, ResolvedType, Type } from '../type_inference/categories'
 import {
   DestructuringPatternNode,
   EnumNode,
@@ -21,6 +16,7 @@ import {
 } from 'tree-sitter-tony'
 import { AbsolutePath } from '../path'
 import { TypeConstraints } from '../type_inference/constraints'
+import { TypeVariable } from '../type_inference/types'
 
 // ---- Types ----
 
@@ -92,7 +88,7 @@ export type LocalTypeBinding = AbstractTypeBinding &
   LocalBinding & {
     node: TypeBindingNode
     value: DeclaredType
-    alias: UnresolvedType
+    alias: Type
   }
 export type TypeBinding = ImportedTypeBinding | LocalTypeBinding
 
@@ -100,14 +96,14 @@ export type TypeVariableBinding = AbstractBinding & {
   kind: typeof BindingKind.TypeVariable
   node: TypeVariableDeclarationNode
   value: TypeVariable
-  constraints: TypeConstraints<UnresolvedType>
+  constraints: TypeConstraints
 }
 
 /**
  * A type assignment assigns a type to a term binding.
  */
-export type TypeAssignment<T extends Type> = TermBinding & {
-  type: T
+export type TypeAssignment = TermBinding & {
+  type: ResolvedType
 }
 
 // ---- Factories ----
@@ -167,7 +163,7 @@ export const buildImportedTypeBinding = (
 export const buildLocalTypeBinding = (
   name: string,
   value: DeclaredType,
-  alias: UnresolvedType,
+  alias: Type,
   node: TypeBindingNode,
   isExported = false,
 ): LocalTypeBinding => ({
@@ -184,7 +180,7 @@ export const buildTypeVariableBinding = (
   name: string,
   node: TypeVariableDeclarationNode,
   value: TypeVariable,
-  constraints: TypeConstraints<UnresolvedType>,
+  constraints: TypeConstraints,
 ): TypeVariableBinding => ({
   kind: BindingKind.TypeVariable,
   name,
@@ -194,10 +190,10 @@ export const buildTypeVariableBinding = (
   constraints,
 })
 
-export const buildTypeAssignment = <T extends Type>(
+export const buildTypeAssignment = (
   binding: TermBinding,
-  type: T,
-): TypeAssignment<T> => ({
+  type: ResolvedType,
+): TypeAssignment => ({
   ...binding,
   type,
 })
