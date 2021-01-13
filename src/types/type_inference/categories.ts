@@ -3,6 +3,7 @@ import {
   ConditionalType,
   CurriedType,
   GenericType,
+  InterfaceType,
   IntersectionType,
   MapType,
   ObjectType,
@@ -23,13 +24,14 @@ export type Type =
   | ResolvedType
   // overriding types
   | CurriedType<Type>
-  | RefinedType<Type>
-  | RefinedTerm
-  | ObjectType<Type>
-  | MapType<Type>
-  | UnionType<Type>
+  | InterfaceType<Type>
   | IntersectionType<Type>
+  | MapType<Type>
+  | ObjectType<Type>
   | PrimitiveType
+  | RefinedTerm
+  | RefinedType<Type>
+  | UnionType<Type>
   // solely unresolved types
   | AccessType
   | ConditionalType
@@ -39,10 +41,11 @@ export type Type =
 export type ResolvedType =
   | VariableType
   | CurriedType<ResolvedType>
-  | RefinedType<ResolvedType>
-  | RefinedTerm
-  | ObjectType<ResolvedType>
-  | MapType<ResolvedType>
-  | UnionType<ResolvedType>
+  | InterfaceType<ResolvedType>
   | IntersectionType<ResolvedType>
+  | MapType<ResolvedType>
+  | ObjectType<ResolvedType>
   | PrimitiveType
+  | RefinedTerm
+  | RefinedType<ResolvedType>
+  | UnionType<ResolvedType>

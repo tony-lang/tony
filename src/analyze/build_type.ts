@@ -6,6 +6,7 @@ import {
   EnumNode,
   EnumValueNode,
   IdentifierNode,
+  InterfaceNode,
   IntersectionTypeNode,
   ListTypeNode,
   MapTypeNode,
@@ -46,6 +47,7 @@ import {
   buildConditionalType,
   buildCurriedType,
   buildGenericType,
+  buildInterfaceType,
   buildIntersectionType,
   buildMapType,
   buildObjectType,
@@ -176,7 +178,7 @@ export const buildAliasedType = <T extends State>(
     case SyntaxType.Enum:
       return handleEnum(state, node)
     case SyntaxType.Interface:
-      throw new NotImplementedError('Tony cannot handle interfaces yet.')
+      return handleInterface(state, node)
     case SyntaxType.TypeAlias:
       return buildType(state, node.typeNode)
   }
@@ -192,6 +194,18 @@ const handleEnum = <T extends State>(
     handleEnumValue,
   )
   return [stateWithValues, buildUnionType(valueTypes)]
+}
+
+const handleInterface = <T extends State>(
+  state: T,
+  node: InterfaceNode,
+): Return<T, Type> => {
+  const [stateWithValues, memberTypes] = withState(
+    state,
+    node.memberNodes,
+    handleInterfaceMember,
+  )
+  return [stateWithValues, buildInterfaceType(memberTypes)]
 }
 
 /**

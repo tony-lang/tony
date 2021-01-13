@@ -89,6 +89,13 @@ export const applyConstraints = (
           applyConstraints(type, constraints),
         ),
       }
+    case TypeKind.Interface:
+      return {
+        ...type,
+        members: type.members.map((member) =>
+          applyConstraintsToProperty(member, constraints),
+        ),
+      }
     case TypeKind.Map:
       return {
         ...type,
