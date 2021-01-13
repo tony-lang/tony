@@ -398,7 +398,7 @@ const traverseAll = <T extends TermNode>(
     return reduceAnswers(
       typeConstraints.map((constraint) => {
         const type = typeFactory(constraint, node)
-        return traverse(initialState, node, type) as Answers<T>
+        return traverse(initialState, node, type)
       }),
     )
   }, [])
