@@ -1,41 +1,38 @@
-import { CategorizedType, TypeCategory } from './categories'
 import { TypeKind } from './types'
 
 // ---- Types ----
 
-type Category = TypeCategory.Resolved | TypeCategory.Unresolved
-
 export type Literal = string | number | boolean | RegExp
 
-type BooleanType<T extends Category = Category> = CategorizedType<T> & {
+type BooleanType = {
   kind: typeof TypeKind.Boolean
 }
 
-type NumberType<T extends Category = Category> = CategorizedType<T> & {
+type NumberType = {
   kind: typeof TypeKind.Number
 }
 
-type RegExpType<T extends Category = Category> = CategorizedType<T> & {
+type RegExpType = {
   kind: typeof TypeKind.RegExp
 }
 
-type StringType<T extends Category = Category> = CategorizedType<T> & {
+type StringType = {
   kind: typeof TypeKind.String
 }
 
 /**
  * The type of operations that do not return anything.
  */
-type VoidType<T extends Category = Category> = CategorizedType<T> & {
+type VoidType = {
   kind: typeof TypeKind.Void
 }
 
-export type PrimitiveType<T extends Category = Category> =
-  | BooleanType<T>
-  | NumberType<T>
-  | RegExpType<T>
-  | StringType<T>
-  | VoidType<T>
+export type PrimitiveType =
+  | BooleanType
+  | NumberType
+  | RegExpType
+  | StringType
+  | VoidType
 
 // ---- Constants ----
 

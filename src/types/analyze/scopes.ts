@@ -9,7 +9,6 @@ import {
   WhenNode,
 } from 'tree-sitter-tony'
 import { ErrorAnnotation, MountedErrorAnnotation } from '../errors/annotations'
-import { Resolved, Type } from '../type_inference/categories'
 import {
   TermBinding,
   TypeAssignment,
@@ -41,8 +40,8 @@ export type ScopeWithTerms = {
   terms: TermBinding[]
 }
 
-export type TypingEnvironment<T extends Type> = {
-  typeAssignments: TypeAssignment<T>[]
+export type TypingEnvironment = {
+  typeAssignments: TypeAssignment[]
 }
 
 export type ScopeWithTypes = {
@@ -77,7 +76,7 @@ export type FileScope = RecursiveScope<NestedScope> &
 
 export type TypedFileScope = FileScope &
   RecursiveScope<TypedNestedScope> &
-  TypingEnvironment<Resolved> & {
+  TypingEnvironment & {
     typedNode: TypedNode<ProgramNode>
   }
 
@@ -92,7 +91,7 @@ export interface NestedScope<T extends NestingNode = NestingNode>
 
 export interface TypedNestedScope<T extends NestingNode = NestingNode>
   extends NestedScope<T>,
-    TypingEnvironment<Resolved> {
+    TypingEnvironment {
   scopes: TypedNestedScope[]
   typedNode: TypedNode<T>
 }
@@ -127,7 +126,7 @@ export const buildTypedFileScope = (
   fileScope: FileScope,
   scopes: TypedNestedScope[],
   typedNode: TypedNode<ProgramNode>,
-  typeAssignments: TypeAssignment<Resolved>[],
+  typeAssignments: TypeAssignment[],
 ): TypedFileScope => ({
   ...fileScope,
   scopes,
@@ -149,7 +148,7 @@ export const buildTypedNestedScope = <T extends NestingNode>(
   scope: NestedScope<T>,
   scopes: TypedNestedScope[],
   typedNode: TypedNode<T>,
-  typeAssignments: TypeAssignment<Resolved>[],
+  typeAssignments: TypeAssignment[],
 ): TypedNestedScope<T> => ({
   ...scope,
   scopes,
