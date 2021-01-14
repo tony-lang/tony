@@ -22,7 +22,6 @@ import {
   IdentifierPatternNameNode,
   IdentifierPatternNode,
   IfNode,
-  ImplementNode,
   ImportIdentifierNode,
   ImportNode,
   ImportTypeNode,
@@ -127,7 +126,6 @@ type TermNode =
   | IdentifierPatternNode
   | IdentifierPatternNameNode
   | IfNode
-  | ImplementNode
   | ImportNode
   | ImportIdentifierNode
   | ImportTypeNode
@@ -545,10 +543,6 @@ const handleNode = (
       )
     case SyntaxType.If:
       throw new NotImplementedError('Tony cannot infer the type of ifs yet.')
-    case SyntaxType.Implement:
-      throw new NotImplementedError(
-        'Tony cannot infer the type of implements yet.',
-      )
     case SyntaxType.Import:
       throw new NotImplementedError(
         'Tony cannot infer the type of imports yet.',

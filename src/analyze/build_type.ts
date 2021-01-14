@@ -6,6 +6,7 @@ import {
   EnumNode,
   EnumValueNode,
   IdentifierNode,
+  InterfaceMemberNode,
   InterfaceNode,
   IntersectionTypeNode,
   ListTypeNode,
@@ -437,6 +438,17 @@ const handleEnumValue = <T extends State>(
 ): Return<T, Type> => {
   if (node.valueNode) return handleTerm(state, node.valueNode)
   return [state, buildLiteralType(i)]
+}
+
+const handleInterfaceMember = <T extends State>(
+  state: T,
+  node: InterfaceMemberNode,
+): Return<T, Property<Type>> => {
+  const [stateWithType, type] = buildType(state, node.typeNode)
+  return [
+    stateWithType,
+    buildProperty(buildLiteralType(getIdentifierName(node.nameNode)), type),
+  ]
 }
 
 const handleMemberType = <T extends State>(

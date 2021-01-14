@@ -31,6 +31,9 @@
     "url": "https://github.com/tony-lang/tony/issues"
   },
   "homepage": "https://tony-lang.github.io/",
+  "dependencies": {
+    "tree-sitter-tony": "0.2.0-alpha.29"
+  },
   "devDependencies": {
     "@types/deep-equal": "^1.0.1",
     "@types/mkdirp": "^1.0.1",
@@ -45,7 +48,6 @@
     "nodemon": "^2.0.4",
     "prettier": "^2.0.5",
     "tree-sitter": "^0.17.0",
-    "tree-sitter-tony": "0.2.0-alpha.28",
     "typescript": "^4.1.2"
   }
 }
