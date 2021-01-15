@@ -1,14 +1,16 @@
 import { AbsolutePath, Path } from '../types/path'
-import {
-  FILE_EXTENSION,
-  FILE_EXTENSION_REGEX,
-  IMPORT_FILE_EXTENSIONS,
-  JAVASCRIPT_FILE_EXTENSION_REGEX,
-  TARGET_FILE_EXTENSION,
-} from '../constants'
 import fs from 'fs'
 import mkdirp from 'mkdirp'
 import path from 'path'
+
+const FILE_EXTENSION = '.tn'
+const TARGET_FILE_EXTENSION = '.js'
+const FILE_EXTENSION_REGEX = new RegExp(`^(.+\\${FILE_EXTENSION}|[^.]+)$`)
+const JAVASCRIPT_FILE_EXTENSION_REGEX = /^.+\.js$/
+const IMPORT_FILE_EXTENSIONS = [
+  FILE_EXTENSION_REGEX,
+  JAVASCRIPT_FILE_EXTENSION_REGEX,
+]
 
 const fileExists = (file: AbsolutePath) => fs.existsSync(file.path)
 

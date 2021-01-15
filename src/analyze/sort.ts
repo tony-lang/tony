@@ -21,7 +21,7 @@ export const sortFileScopes = (
 
   try {
     const sortedFileScopes = topologicalSort(dependencyGraph).map(
-      getFileScope(fileScopes),
+      (i) => fileScopes[i],
     )
     log(
       config,
@@ -58,16 +58,14 @@ const buildDependencyGraph = (fileScopes: FileScope[]): number[][] =>
       .filter((i) => i != -1),
   )
 
-const getFileScope = (fileScopes: FileScope[]) => (i: number) => fileScopes[i]
-
 const buildCyclicDependency = (
   fileScopes: FileScope[],
   cyclicDependency: CyclicDependency<number>,
 ): CyclicDependency<AbsolutePath> => {
-  const a = getFileScope(fileScopes)(cyclicDependency.a).file
-  const b = getFileScope(fileScopes)(cyclicDependency.b).file
+  const a = fileScopes[cyclicDependency.a].file
+  const b = fileScopes[cyclicDependency.b].file
   const ancestorsOfA = cyclicDependency.ancestorsOfA
-    .map(getFileScope(fileScopes))
+    .map((i) => fileScopes[i])
     .map((fileScope) => fileScope.file)
 
   return { a, b, ancestorsOfA }
