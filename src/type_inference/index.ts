@@ -8,7 +8,6 @@ import {
   BlockNode,
   BooleanNode,
   CaseNode,
-  CurriedTypeNode,
   DestructuringPatternNode,
   ElseIfNode,
   EnumNode,
@@ -19,7 +18,6 @@ import {
   GeneratorNode,
   GroupNode,
   IdentifierNode,
-  IdentifierPatternNameNode,
   IdentifierPatternNode,
   IfNode,
   ImportIdentifierNode,
@@ -44,9 +42,6 @@ import {
   RestNode,
   ReturnNode,
   RightSectionNode,
-  ShorthandAccessIdentifierNode,
-  ShorthandMemberIdentifierNode,
-  ShorthandMemberNode,
   ShorthandMemberPatternNode,
   SpreadNode,
   StringNode,
@@ -113,7 +108,6 @@ type TermNode =
   | BlockNode
   | BooleanNode
   | CaseNode
-  | CurriedTypeNode
   | DestructuringPatternNode
   | ElseIfNode
   | EnumNode
@@ -124,7 +118,6 @@ type TermNode =
   | GroupNode
   | IdentifierNode
   | IdentifierPatternNode
-  | IdentifierPatternNameNode
   | IfNode
   | ImportNode
   | ImportIdentifierNode
@@ -148,9 +141,6 @@ type TermNode =
   | RestNode
   | ReturnNode
   | RightSectionNode
-  | ShorthandAccessIdentifierNode
-  | ShorthandMemberNode
-  | ShorthandMemberIdentifierNode
   | ShorthandMemberPatternNode
   | SpreadNode
   | StringNode
@@ -499,8 +489,6 @@ const handleNode = (
       return [buildPrimitiveAnswer(BOOLEAN_TYPE)(state, node)]
     case SyntaxType.Case:
       throw new NotImplementedError('Tony cannot infer the type of cases yet.')
-    case SyntaxType.CurriedType:
-      throw new NotImplementedError('Tony cannot build curried types yet.')
     case SyntaxType.DestructuringPattern:
       throw new NotImplementedError(
         'Tony cannot infer the type of destructuring patterns yet.',
@@ -534,10 +522,6 @@ const handleNode = (
         'Tony cannot infer the type of identifiers yet.',
       )
     case SyntaxType.IdentifierPattern:
-      throw new NotImplementedError(
-        'Tony cannot infer the type of identifier patterns yet.',
-      )
-    case SyntaxType.IdentifierPatternName:
       throw new NotImplementedError(
         'Tony cannot infer the type of identifier patterns yet.',
       )
@@ -620,18 +604,6 @@ const handleNode = (
     case SyntaxType.RightSection:
       throw new NotImplementedError(
         'Tony cannot infer the type of right sections yet.',
-      )
-    case SyntaxType.ShorthandAccessIdentifier:
-      throw new NotImplementedError(
-        'Tony cannot infer the type of shorthand access identifiers yet.',
-      )
-    case SyntaxType.ShorthandMember:
-      throw new NotImplementedError(
-        'Tony cannot infer the type of shorthand members yet.',
-      )
-    case SyntaxType.ShorthandMemberIdentifier:
-      throw new NotImplementedError(
-        'Tony cannot infer the type of shorthand member identifiers yet.',
       )
     case SyntaxType.ShorthandMemberPattern:
       throw new NotImplementedError(
