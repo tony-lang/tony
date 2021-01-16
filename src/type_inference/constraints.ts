@@ -1,10 +1,9 @@
+import { Property, TypeKind, TypeVariable } from '../types/type_inference/types'
+import { ScopeWithErrors, ScopeWithTypes } from '../types/analyze/scopes'
 import {
-  ConstrainedType,
   TypeConstraints,
   TypeVariableAssignment,
 } from '../types/type_inference/constraints'
-import { Property, TypeKind, TypeVariable } from '../types/type_inference/types'
-import { ScopeWithErrors, ScopeWithTypes } from '../types/analyze/scopes'
 import { filterUnique, isNotUndefined } from '../util'
 import { ResolvedType } from '../types/type_inference/categories'
 import { unify } from './unification'
@@ -59,7 +58,7 @@ const mergeTypeVariableAssignments = <T extends State>(
       typeVariableAssignment.type ? typeVariableAssignment.type : undefined,
     )
     .filter(isNotUndefined)
-  const type = unify(state, ...types).type
+  const [type] = unify(state, ...types)
   return {
     typeVariables,
     type,
@@ -131,13 +130,6 @@ const applyConstraintsToProperty = (
   key: applyConstraints(property.key, constraints),
   value: applyConstraints(property.value, constraints),
 })
-
-/**
- * Applies a constrained type to its constraints.
- */
-export const flattenConstrainedType = (
-  type: ConstrainedType<ResolvedType>,
-): ResolvedType => applyConstraints(type.type, type.constraints)
 
 const getConstraintOf = (
   constraints: TypeConstraints,

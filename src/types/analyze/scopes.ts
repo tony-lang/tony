@@ -5,6 +5,7 @@ import {
   ListComprehensionNode,
   ProgramNode,
   RefinementTypeNode,
+  SyntaxNode,
   TypeAliasNode,
   WhenNode,
 } from 'tree-sitter-tony'
@@ -53,6 +54,10 @@ export type ScopeWithErrors = {
   errors: MountedErrorAnnotation[]
 }
 
+export type TypedScope<T extends SyntaxNode> = {
+  typedNode: TypedNode<T>
+}
+
 export type RecursiveScope<T> = {
   scopes: T[]
 }
@@ -76,9 +81,8 @@ export type FileScope = RecursiveScope<NestedScope> &
 
 export type TypedFileScope = FileScope &
   RecursiveScope<TypedNestedScope> &
-  TypingEnvironment & {
-    typedNode: TypedNode<ProgramNode>
-  }
+  TypingEnvironment &
+  TypedScope<ProgramNode>
 
 export interface NestedScope<T extends NestingNode = NestingNode>
   extends RecursiveScope<NestedScope>,
@@ -91,9 +95,9 @@ export interface NestedScope<T extends NestingNode = NestingNode>
 
 export interface TypedNestedScope<T extends NestingNode = NestingNode>
   extends NestedScope<T>,
-    TypingEnvironment {
+    TypingEnvironment,
+    TypedScope<T> {
   scopes: TypedNestedScope[]
-  typedNode: TypedNode<T>
 }
 
 // ---- Factories ----

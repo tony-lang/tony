@@ -19,7 +19,21 @@ import {
 import { PrimitiveType } from './primitive_types'
 
 type VariableType = TypeVariable | TemporaryTypeVariable
+
 export type DeclaredType = VariableType | GenericType
+
+export type ResolvedType =
+  | VariableType
+  | CurriedType<ResolvedType>
+  | InterfaceType<ResolvedType>
+  | IntersectionType<ResolvedType>
+  | MapType<ResolvedType>
+  | ObjectType<ResolvedType>
+  | PrimitiveType
+  | RefinedTerm
+  | RefinedType<ResolvedType>
+  | UnionType<ResolvedType>
+
 export type Type =
   | ResolvedType
   // overriding types
@@ -38,14 +52,3 @@ export type Type =
   | ParametricType
   | SubtractionType
   | TermType
-export type ResolvedType =
-  | VariableType
-  | CurriedType<ResolvedType>
-  | InterfaceType<ResolvedType>
-  | IntersectionType<ResolvedType>
-  | MapType<ResolvedType>
-  | ObjectType<ResolvedType>
-  | PrimitiveType
-  | RefinedTerm
-  | RefinedType<ResolvedType>
-  | UnionType<ResolvedType>
