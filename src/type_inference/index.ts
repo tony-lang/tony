@@ -263,23 +263,24 @@ const buildPrimitiveAnswer = <T extends TermNode>(type: PrimitiveType) => (
 const buildEmptyAnswer = buildPrimitiveAnswer(VOID_TYPE)
 
 const wrapAnswer = <T extends TermNode>(
-  state: State,
   node: T,
   childNodes: Answers<TermNode>,
   answer: Answer<TermNode>,
-): Answer<T> =>
-  buildAnswer(
+): Answer<T> => {
+  const [stateWithConstraints, constraints] = unifyConstraints(
     answer.state,
+    ...childNodes.map((answer) => answer.typedNode.constraints),
+  )
+  return buildAnswer(
+    stateWithConstraints,
     buildTypedNode(
       node,
       answer.typedNode.type,
-      unifyConstraints(
-        state,
-        ...childNodes.map((answer) => answer.typedNode.constraints),
-      ),
+      constraints,
       getTypedNodesFromAnswers(childNodes),
     ),
   )
+}
 
 const filterAnswers = <T extends TermNode>(answers: Answers<T>): Answers<T> => {
   assert(answers.length > 0, 'There must always be at least one answer.')
@@ -407,27 +408,29 @@ const unifyConstraintsWithTypedNode = <T extends TermNode>(
   state: State,
   typedNode: TypedNode<T>,
   constraints: TypeConstraints,
-): TypedNode<T> => {
-  const unifiedConstraints = unifyConstraints(
+): [newState: State, typedNode: TypedNode<T>] => {
+  const [newState, unifiedConstraints] = unifyConstraints(
     state,
     constraints,
     typedNode.constraints,
   )
-  return {
-    ...typedNode,
-    constraints: unifiedConstraints,
-  }
+  return [
+    state,
+    {
+      ...typedNode,
+      constraints: unifiedConstraints,
+    },
+  ]
 }
 
 const ensureIsInstanceOf = <T extends TermNode>(
-  state: State,
   node: T,
   answer: Answer<T>,
   generalType: ResolvedType,
   constraints: TypeConstraints,
 ): Answer<T> => {
-  const [predicate, newConstraints] = isInstanceOf(
-    state,
+  const [newState, predicate, newConstraints] = isInstanceOf(
+    answer.state,
     answer.typedNode.type,
     generalType,
     constraints,
@@ -437,16 +440,16 @@ const ensureIsInstanceOf = <T extends TermNode>(
     answer.typedNode.type,
     newConstraints,
   )
-  const stateWithError = addErrorUnless<State>(predicate, error)(
-    answer.state,
-    node,
-  )
-  const typedNode = unifyConstraintsWithTypedNode(
-    answer.state,
+  const stateWithError = addErrorUnless<State>(predicate, error)(newState, node)
+  const [
+    stateWithUnifiedConstraints,
+    typedNode,
+  ] = unifyConstraintsWithTypedNode(
+    stateWithError,
     answer.typedNode,
     newConstraints,
   )
-  return buildAnswer(stateWithError, typedNode)
+  return buildAnswer(stateWithUnifiedConstraints, typedNode)
 }
 
 const traverse = <T extends TermNode>(
@@ -461,7 +464,7 @@ const traverse = <T extends TermNode>(
     'There must always be returned at least one answer (that may contain errors).',
   )
   return forAllAnswers(answers, (answer) => [
-    ensureIsInstanceOf(state, node, answer, type, constraints),
+    ensureIsInstanceOf(node, answer, type, constraints),
   ])
 }
 
@@ -684,6 +687,6 @@ const handleProgram = (
 ): Answers<ProgramNode> => {
   const termAnswers = traverseAll(node.termNodes, state)
   return forAllAnswers(termAnswers, (termAnswer) => [
-    wrapAnswer(state, node, termAnswers, termAnswer),
+    wrapAnswer(node, termAnswers, termAnswer),
   ])
 }

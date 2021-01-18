@@ -5,6 +5,8 @@ type State = {
   scopes: (ScopeWithErrors & ScopeWithTypes)[]
 }
 
+type ReturnType<T extends State> = [newState: T, type: ResolvedType]
+
 /**
  * Given a type, reduce the type until it is normal (i.e. cannot be reduced
  * further).
@@ -12,4 +14,4 @@ type State = {
 export const normalize = <T extends State>(
   state: T,
   type: Type,
-): ResolvedType => {}
+): ReturnType<T> => {}

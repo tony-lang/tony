@@ -22,7 +22,11 @@ type State = {
   scopes: (ScopeWithErrors & ScopeWithTypes)[]
 }
 
-type ReturnType = [isInstanceOf: boolean, constraints: TypeConstraints]
+type ReturnType<T extends State> = [
+  newState: T,
+  isInstanceOf: boolean,
+  constraints: TypeConstraints,
+]
 
 /**
  * Given a specific and a general type, determines whether the specific type is
@@ -33,7 +37,7 @@ export const isInstanceOf = <T extends State>(
   specific: ResolvedType,
   general: ResolvedType,
   constraints = buildTypeConstraints(),
-): ReturnType => {
+): ReturnType<T> => {
   if (specific.kind === TypeKind.Variable)
     return typeVariableIsInstanceOf(state, specific, general, constraints)
 
@@ -70,7 +74,7 @@ export const isInstanceOf = <T extends State>(
     case TypeKind.String:
     case TypeKind.TemporaryVariable:
     case TypeKind.Void:
-      return [specific === general, constraints]
+      return [state, specific === general, constraints]
   }
 }
 
@@ -79,35 +83,35 @@ const typeVariableIsInstanceOf = <T extends State>(
   typeVariable: TypeVariable,
   type: ResolvedType,
   constraints: TypeConstraints,
-): ReturnType => [
-  true,
-  unifyConstraints(
+): ReturnType<T> => {
+  const [newState, newConstraints] = unifyConstraints(
     state,
     constraints,
     buildTypeConstraintsFromType(typeVariable, type),
-  ),
-]
+  )
+  return [newState, true, newConstraints]
+}
 
 const isInstanceOfCurriedType = <T extends State>(
   state: T,
   specific: ResolvedType,
   general: CurriedType<ResolvedType>,
   constraints: TypeConstraints,
-): ReturnType => {
-  if (specific.kind !== TypeKind.Curried) return [false, constraints]
-  const [fromIsInstanceOf, constraintsWithFrom] = isInstanceOf(
+): ReturnType<T> => {
+  if (specific.kind !== TypeKind.Curried) return [state, false, constraints]
+  const [stateWithFrom, fromIsInstanceOf, constraintsWithFrom] = isInstanceOf(
     state,
     specific.from,
     general.from,
     constraints,
   )
-  const [toIsInstanceOf, constraintsWithTo] = isInstanceOf(
-    state,
+  const [stateWithTo, toIsInstanceOf, constraintsWithTo] = isInstanceOf(
+    stateWithFrom,
     specific.to,
     general.to,
     constraintsWithFrom,
   )
-  return [fromIsInstanceOf && toIsInstanceOf, constraintsWithTo]
+  return [stateWithTo, fromIsInstanceOf && toIsInstanceOf, constraintsWithTo]
 }
 
 const isInstanceOfMapType = <T extends State>(
@@ -115,7 +119,7 @@ const isInstanceOfMapType = <T extends State>(
   specific: ResolvedType,
   general: MapType<ResolvedType>,
   constraints: TypeConstraints,
-): ReturnType => {
+): ReturnType<T> => {
   if (specific.kind === TypeKind.Map)
     return propertyIsInstanceOf(
       state,
@@ -135,7 +139,7 @@ const isInstanceOfMapType = <T extends State>(
       constraints,
     )
   }
-  return [false, constraints]
+  return [state, false, constraints]
 }
 
 const isInstanceOfObjectType = <T extends State>(
@@ -143,24 +147,27 @@ const isInstanceOfObjectType = <T extends State>(
   specific: ResolvedType,
   general: ObjectType<ResolvedType>,
   constraints: TypeConstraints,
-): ReturnType => {
+): ReturnType<T> => {
   if (specific.kind === TypeKind.Map)
     return forAll(
+      state,
       general.properties,
       constraints,
-      (property, constraints) =>
+      (state, property, constraints) =>
         propertyIsInstanceOf(state, specific.property, property, constraints),
       (isInstanceOfs) => isInstanceOfs.every(Boolean),
     )
   if (specific.kind === TypeKind.Object) {
     return forAll(
+      state,
       specific.properties,
       constraints,
-      (specificProperty, constraints) =>
+      (state, specificProperty, constraints) =>
         forAll(
+          state,
           general.properties,
           constraints,
-          (generalProperty, constraints) =>
+          (state, generalProperty, constraints) =>
             propertyIsInstanceOf(
               state,
               specificProperty,
@@ -172,7 +179,7 @@ const isInstanceOfObjectType = <T extends State>(
       (isInstanceOfs) => isInstanceOfs.every(Boolean),
     )
   }
-  return [false, constraints]
+  return [state, false, constraints]
 }
 
 const propertyIsInstanceOf = <T extends State>(
@@ -180,37 +187,50 @@ const propertyIsInstanceOf = <T extends State>(
   specific: Property<ResolvedType>,
   general: Property<ResolvedType>,
   constraints: TypeConstraints,
-): ReturnType => {
-  const [keyIsInstanceOf, constraintsWithKey] = isInstanceOf(
+): ReturnType<T> => {
+  const [stateWithKey, keyIsInstanceOf, constraintsWithKey] = isInstanceOf(
     state,
     specific.key,
     general.key,
     constraints,
   )
-  const [valueIsInstanceOf, constraintsWithValue] = isInstanceOf(
-    state,
+  const [
+    stateWithValue,
+    valueIsInstanceOf,
+    constraintsWithValue,
+  ] = isInstanceOf(
+    stateWithKey,
     specific.value,
     general.value,
     constraintsWithKey,
   )
-  return [keyIsInstanceOf && valueIsInstanceOf, constraintsWithValue]
+  return [
+    stateWithValue,
+    keyIsInstanceOf && valueIsInstanceOf,
+    constraintsWithValue,
+  ]
 }
 
-const forAll = <T>(
-  types: T[],
+const forAll = <T extends State, U>(
+  state: T,
+  types: U[],
   constraints: TypeConstraints,
-  combiner: (type: T, constraints: TypeConstraints) => ReturnType,
+  combiner: (state: T, type: U, constraints: TypeConstraints) => ReturnType<T>,
   reducer: (isInstanceOfs: boolean[]) => boolean,
-): ReturnType => {
-  const [isInstanceOfs, newConstraints] = types.reduce<
-    [boolean[], TypeConstraints]
+): ReturnType<T> => {
+  const [newState, isInstanceOfs, newConstraints] = types.reduce<
+    [T, boolean[], TypeConstraints]
   >(
-    ([acc, constraints], type) => {
-      const [isInstanceOf, newConstraints] = combiner(type, constraints)
-      return [[...acc, isInstanceOf], newConstraints]
+    ([state, acc, constraints], type) => {
+      const [newState, isInstanceOf, newConstraints] = combiner(
+        state,
+        type,
+        constraints,
+      )
+      return [newState, [...acc, isInstanceOf], newConstraints]
     },
-    [[], constraints],
+    [state, [], constraints],
   )
 
-  return [reducer(isInstanceOfs), newConstraints]
+  return [newState, reducer(isInstanceOfs), newConstraints]
 }

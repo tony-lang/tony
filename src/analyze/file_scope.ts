@@ -272,28 +272,29 @@ const addTypeVariableBinding = (name: string) =>
         state,
         node.constraintNodes,
       )
-      const [constraintType, constraintsFromConstraint] = unify(
-        state,
+      const [stateWithUnify, constraintType, constraintsFromConstraint] = unify(
+        stateWithConstraints,
         ...constraints,
       )
       const typeVariable = buildTypeVariable()
+      const [stateWithTypeConstraints, typeConstraints] = unifyConstraints(
+        stateWithUnify,
+        constraintsFromConstraint,
+        buildTypeConstraintsFromType(typeVariable, constraintType),
+      )
       const binding = buildTypeVariableBinding(
         name,
         node,
         typeVariable,
-        unifyConstraints(
-          state,
-          constraintsFromConstraint,
-          buildTypeConstraintsFromType(typeVariable, constraintType),
-        ),
+        typeConstraints,
       )
-      const [scope, ...parentScopes] = stateWithConstraints.scopes
+      const [scope, ...parentScopes] = stateWithTypeConstraints.scopes
       const newScope = {
         ...scope,
         typeVariables: [...scope.typeVariables, binding],
       }
       return {
-        ...stateWithConstraints,
+        ...stateWithTypeConstraints,
         scopes: [newScope, ...parentScopes],
       }
     },
