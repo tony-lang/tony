@@ -1,10 +1,12 @@
 import {
   CurriedType,
+  IntersectionType,
   MapType,
   ObjectType,
   Property,
   TypeKind,
   TypeVariable,
+  UnionType,
   buildProperty,
   buildUnionType,
 } from '../types/type_inference/types'
@@ -40,6 +42,16 @@ export const isInstanceOf = <T extends State>(
 ): ReturnType<T> => {
   if (specific.kind === TypeKind.Variable)
     return typeVariableIsInstanceOf(state, specific, general, constraints)
+  else if (
+    specific.kind === TypeKind.Intersection ||
+    specific.kind === TypeKind.Union
+  )
+    return isInstanceOfIntersectionOrUnion(
+      state,
+      specific,
+      general,
+      constraints,
+    )
 
   switch (general.kind) {
     case TypeKind.Curried:
@@ -49,8 +61,12 @@ export const isInstanceOf = <T extends State>(
         'Cannot deduce assignability to interface types yet.',
       )
     case TypeKind.Intersection:
-      throw new NotImplementedError(
-        'Cannot deduce assignability to intersection types yet.',
+    case TypeKind.Union:
+      return isInstanceOfIntersectionOrUnion(
+        state,
+        general,
+        specific,
+        constraints,
       )
     case TypeKind.Map:
       return isInstanceOfMapType(state, specific, general, constraints)
@@ -60,10 +76,6 @@ export const isInstanceOf = <T extends State>(
     case TypeKind.RefinedTerm:
       throw new NotImplementedError(
         'Cannot deduce assignability to refined types yet.',
-      )
-    case TypeKind.Union:
-      throw new NotImplementedError(
-        'Cannot deduce assignability to union types yet.',
       )
     case TypeKind.Variable:
       return typeVariableIsInstanceOf(state, general, specific, constraints)
@@ -91,6 +103,24 @@ const typeVariableIsInstanceOf = <T extends State>(
   )
   return [newState, true, newConstraints]
 }
+
+const isInstanceOfIntersectionOrUnion = <T extends State>(
+  state: T,
+  intersectionOrUnion: IntersectionType<ResolvedType> | UnionType<ResolvedType>,
+  type: ResolvedType,
+  constraints: TypeConstraints,
+): ReturnType<T> =>
+  forAll(
+    state,
+    intersectionOrUnion.parameters,
+    constraints,
+    (state, parameter, constraints) =>
+      isInstanceOf(state, parameter, type, constraints),
+    (isInstanceOfs) =>
+      intersectionOrUnion.kind === TypeKind.Intersection
+        ? isInstanceOfs.some(Boolean)
+        : isInstanceOfs.every(Boolean),
+  )
 
 const isInstanceOfCurriedType = <T extends State>(
   state: T,

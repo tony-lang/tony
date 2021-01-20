@@ -415,7 +415,7 @@ const unifyConstraintsWithTypedNode = <T extends TermNode>(
     typedNode.constraints,
   )
   return [
-    state,
+    newState,
     {
       ...typedNode,
       constraints: unifiedConstraints,
