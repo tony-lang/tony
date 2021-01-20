@@ -16,7 +16,7 @@ export enum ErrorAnnotationKind {
   ExternalTypeImport,
   ImportOutsideFileScope,
   IncompleteWhenPattern,
-  IndeterminateType,
+  AmbiguousType,
   MissingBinding,
   MissingExternalImportTypeHint,
   PrimitiveTypeArguments,
@@ -55,8 +55,8 @@ export type IncompleteWhenPatternError = {
   missingBindings: string[]
 }
 
-export type IndeterminateTypeError = {
-  kind: typeof ErrorAnnotationKind.IndeterminateType
+export type AmbiguousTypeError = {
+  kind: typeof ErrorAnnotationKind.AmbiguousType
   answers: TypedNode<ProgramNode>[]
 }
 
@@ -111,7 +111,7 @@ export type ErrorAnnotation =
   | ExternalTypeImportError
   | ImportOutsideFileScopeError
   | IncompleteWhenPatternError
-  | IndeterminateTypeError
+  | AmbiguousTypeError
   | MissingBindingError
   | MissingExternalImportTypeHintError
   | PrimitiveTypeArgumentsError
@@ -162,10 +162,10 @@ export const buildIncompleteWhenPatternError = (
   missingBindings,
 })
 
-export const buildIndeterminateTypeError = (
+export const buildAmbiguousTypeError = (
   answers: TypedNode<ProgramNode>[],
-): IndeterminateTypeError => ({
-  kind: ErrorAnnotationKind.IndeterminateType,
+): AmbiguousTypeError => ({
+  kind: ErrorAnnotationKind.AmbiguousType,
   answers,
 })
 

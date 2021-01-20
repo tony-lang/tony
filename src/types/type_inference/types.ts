@@ -5,11 +5,13 @@ import { Type } from './categories'
 
 // ---- Types ----
 
+export type PropertyKey = RefinedType<RefinedTerm> | UnionType<PropertyKey>
+
 /**
  * A property represents the mapping of a key to a value.
  */
 export type Property<T extends Type = Type> = {
-  key: T
+  key: PropertyKey
   value: T
 }
 
@@ -97,6 +99,7 @@ export interface GenericType {
  */
 export interface InterfaceType<T extends Type = Type> {
   kind: typeof TypeKind.Interface
+  typeVariable: TypeVariable
   members: Property<T>[]
 }
 
@@ -200,7 +203,7 @@ export interface UnionType<T extends Type = Type> {
 // ---- Factories ----
 
 export const buildProperty = <T extends Type>(
-  key: T,
+  key: PropertyKey,
   value: T,
 ): Property<T> => ({
   key,
@@ -247,9 +250,11 @@ export const buildGenericType = (
 })
 
 export const buildInterfaceType = <T extends Type>(
+  typeVariable: TypeVariable,
   members: Property<T>[] = [],
 ): InterfaceType<T> => ({
   kind: TypeKind.Interface,
+  typeVariable,
   members,
 })
 

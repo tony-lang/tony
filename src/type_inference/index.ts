@@ -83,7 +83,7 @@ import {
 } from '../types/type_inference/constraints'
 import { TypedNode, buildTypedNode } from '../types/type_inference/nodes'
 import {
-  buildIndeterminateTypeError,
+  buildAmbiguousTypeError,
   buildTypeErrorFromConstrainedTypes,
 } from '../types/errors/annotations'
 import { Config } from '../config'
@@ -224,7 +224,7 @@ const inferTypesOfFile = (
     typedScopes: [finalTypedScopes],
   } = addErrorUnless<State>(
     answers.length === 1,
-    buildIndeterminateTypeError(getTypedNodesFromAnswers(answers)),
+    buildAmbiguousTypeError(getTypedNodesFromAnswers(answers)),
   )(answer.state, fileScope.node)
   assert(
     isFileScope(finalFileScope),
@@ -283,7 +283,7 @@ const wrapAnswer = <T extends TermNode>(
 }
 
 const filterAnswers = <T extends TermNode>(answers: Answers<T>): Answers<T> => {
-  assert(answers.length > 0, 'There must always be at least one answer.')
+  assert(answers.length > 0, 'The universe requires at least one answer.')
 
   // Remove answers with errors if there are some answers without errors.
   const answersWithNoOfErrors: [
