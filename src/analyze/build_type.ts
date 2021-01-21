@@ -112,7 +112,7 @@ type State = {
 type ReturnType<T extends State, U> = [
   newState: T,
   type: U,
-  deferredTypeVariableAssignments: DeferredTypeVariableAssignment[],
+  deferredAssignments: DeferredTypeVariableAssignment[],
 ]
 
 const withState = <T extends State, U extends SyntaxNode, V>(

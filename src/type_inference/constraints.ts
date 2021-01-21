@@ -65,7 +65,7 @@ const unifyAssignments = <T extends State>(
 const mergeTypeVariableAssignments = <T extends State>(
   state: T,
   typeVariableAssignments: TypeVariableAssignment[],
-): [newState: T, typeVariableAssignment: TypeVariableAssignment] => {
+): [newState: T, typeVariableAssignment: TypeVariableAssignment][] => {
   const typeVariables = filterUnique(
     typeVariableAssignments
       .map((typeVariableAssignment) => typeVariableAssignment.typeVariables)

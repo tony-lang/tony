@@ -32,8 +32,8 @@ type ReturnType<T extends State, U extends Type> = [
 export const unify = <T extends State>(
   state: T,
   ...types: Type[]
-): ReturnType<T, ResolvedType> =>
-  types.reduce<ReturnType<T, ResolvedType>>(
+): ReturnType<T, ResolvedType>[] =>
+  types.reduce<ReturnType<T, ResolvedType>[]>(
     ([state, left, constraints], right) => {
       const [stateAfterUnify, type, constraintsAfterUnify] = concreteUnify(
         state,

@@ -46,6 +46,17 @@ const forAll = <T extends State, U>(
   )
 }
 
+/**
+ * Given a specific type and some general types, determines whether the specific
+ * type is an instance of all general types.
+ */
+export const isInstanceOfAll = <T extends State>(
+  state: T,
+  specific: ResolvedType,
+  general: ResolvedType[],
+  constraints = buildTypeConstraints(),
+): ReturnType<T>[] => forAll(state, general, constraints, (state, general, constraints) => isInstanceOf(state, specific, general, constraints))
+
 const forSome = <T extends State, U>(
   state: T,
   types: U[],
