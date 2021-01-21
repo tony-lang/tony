@@ -1,6 +1,5 @@
 import { Predicate } from './predicates'
 import { SyntaxNode } from 'tree-sitter-tony'
-import { TermBinding } from '../analyze/bindings'
 import { Type } from './categories'
 
 // ---- Types ----
@@ -27,7 +26,6 @@ export enum TypeKind {
   Subtraction,
   Tagged,
   TemporaryVariable,
-  Term,
   Union,
   Variable,
 
@@ -159,15 +157,6 @@ export interface TemporaryTypeVariable {
 }
 
 /**
- * A term type represents an unresolved type of a node (resulting from
- * typeof's).
- */
-export interface TermType {
-  kind: typeof TypeKind.Term
-  bindings: TermBinding[]
-}
-
-/**
  * A type variable represents any type.
  */
 export interface TypeVariable {
@@ -288,11 +277,6 @@ export const buildSubtractionType = (
 
 export const buildTemporaryTypeVariable = (): TemporaryTypeVariable => ({
   kind: TypeKind.TemporaryVariable,
-})
-
-export const buildTermType = (bindings: TermBinding[]): TermType => ({
-  kind: TypeKind.Term,
-  bindings,
 })
 
 export const buildTypeVariable = (): TypeVariable => ({

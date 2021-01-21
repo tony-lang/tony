@@ -11,7 +11,6 @@ import {
   RefinedType,
   SubtractionType,
   TemporaryTypeVariable,
-  TermType,
   TypeVariable,
   UnionType,
 } from './types'
@@ -48,4 +47,3 @@ export type Type =
   | ConditionalType
   | ParametricType
   | SubtractionType
-  | TermType

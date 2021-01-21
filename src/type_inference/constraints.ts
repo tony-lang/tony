@@ -1,9 +1,10 @@
-import { Property, TypeKind, TypeVariable } from '../types/type_inference/types'
-import { ScopeWithErrors, ScopeWithTypes } from '../types/analyze/scopes'
 import {
+  DeferredTypeVariableAssignment,
   TypeConstraints,
   TypeVariableAssignment,
 } from '../types/type_inference/constraints'
+import { Property, TypeKind, TypeVariable } from '../types/type_inference/types'
+import { ScopeWithErrors, ScopeWithTypes } from '../types/analyze/scopes'
 import { filterUnique, isNotUndefined } from '../util'
 import { ResolvedType } from '../types/type_inference/categories'
 import { unify } from './unification'
@@ -12,8 +13,6 @@ type State = {
   scopes: (ScopeWithErrors & ScopeWithTypes)[]
 }
 
-type ReturnType<T extends State> = [newState: T, constraints: TypeConstraints]
-
 /**
  * Given a set of constraints, obtains a most general set of type constraints by
  * unifying all shared constraints.
@@ -21,26 +20,40 @@ type ReturnType<T extends State> = [newState: T, constraints: TypeConstraints]
 export const unifyConstraints = <T extends State>(
   state: T,
   ...constraints: TypeConstraints[]
-): ReturnType<T> =>
-  constraints.reduce<ReturnType<T>>(
-    (acc, constraints) =>
-      constraints.reduce(([state, constraints], constraint) => {
-        const matchingConstraints = getOverlappingConstraints(
-          constraints,
-          constraint.typeVariables,
+): [newState: T, constraints: TypeConstraints] => {
+  const [newState, assignments] = unifyAssignments(
+    state,
+    ...constraints.map(({ assignments }) => assignments),
+  )
+  const deferredAssignments = mergeDeferredAssignments(
+    ...constraints.map(({ deferredAssignments }) => deferredAssignments),
+  )
+  return [newState, { assignments, deferredAssignments }]
+}
+
+const unifyAssignments = <T extends State>(
+  state: T,
+  ...assignments: TypeVariableAssignment[][]
+): [newState: T, assignments: TypeVariableAssignment[]] =>
+  assignments.reduce<[newState: T, assignments: TypeVariableAssignment[]]>(
+    (acc, assignments) =>
+      assignments.reduce(([state, assignments], assignment) => {
+        const matchingAssignments = getOverlappingAssignments(
+          assignments,
+          assignment.typeVariables,
         )
-        if (matchingConstraints.length === 0)
-          return [state, [...constraints, constraint]]
+        if (matchingAssignments.length === 0)
+          return [state, [...assignments, assignment]]
 
         const [newState, newConstraint] = mergeTypeVariableAssignments(state, [
-          constraint,
-          ...matchingConstraints,
+          assignment,
+          ...matchingAssignments,
         ])
         return [
           newState,
           [
-            ...constraints.filter(
-              (constraint) => !matchingConstraints.includes(constraint),
+            ...assignments.filter(
+              (assignment) => !matchingAssignments.includes(assignment),
             ),
             newConstraint,
           ],
@@ -73,6 +86,13 @@ const mergeTypeVariableAssignments = <T extends State>(
     },
   ]
 }
+
+/**
+ * Merge multiple disjunct sets of deferred type variable assignments into one.
+ */
+export const mergeDeferredAssignments = (
+  ...deferredAssignments: DeferredTypeVariableAssignment[][]
+): DeferredTypeVariableAssignment[] => deferredAssignments.flat()
 
 /**
  * Given a type and constraints, applies the constraints to the type to obtain
@@ -139,16 +159,16 @@ const getConstraintOf = (
   constraints: TypeConstraints,
   typeVariable: TypeVariable,
 ): TypeVariableAssignment | undefined =>
-  constraints.find((constraint) =>
+  constraints.assignments.find((constraint) =>
     constraint.typeVariables.includes(typeVariable),
   )
 
-const getOverlappingConstraints = (
-  constraints: TypeConstraints,
+const getOverlappingAssignments = (
+  assignments: TypeVariableAssignment[],
   typeVariables: TypeVariable[],
 ): TypeVariableAssignment[] =>
-  constraints.filter((constraint) =>
+  assignments.filter((assignment) =>
     typeVariables.some((typeVariable) =>
-      constraint.typeVariables.includes(typeVariable),
+      assignment.typeVariables.includes(typeVariable),
     ),
   )

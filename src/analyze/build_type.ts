@@ -41,6 +41,10 @@ import {
   isPrimitiveTypeName,
 } from '../types/type_inference/primitive_types'
 import { DeclaredType, Type } from '../types/type_inference/categories'
+import {
+  DeferredTypeVariableAssignment,
+  buildDeferredTypeVariableAssignment,
+} from '../types/type_inference/constraints'
 import { NotImplementedError, assert } from '../types/errors/internal'
 import {
   Property,
@@ -54,7 +58,7 @@ import {
   buildParametricType,
   buildProperty,
   buildSubtractionType,
-  buildTermType,
+  buildTypeVariable,
   buildUnionType,
 } from '../types/type_inference/types'
 import {
@@ -73,6 +77,7 @@ import { getTerms, getTypeVariables } from '../util/scopes'
 import { TypeBindingNode } from '../types/analyze/bindings'
 import { addErrorUnless } from '../util/traverse'
 import { buildPrimitiveTypeArgumentsError } from '../types/errors/annotations'
+import { mergeDeferredAssignments } from '../type_inference/constraints'
 
 type InternalTypeNode =
   | AccessTypeNode
@@ -104,19 +109,27 @@ type State = {
   scopes: (ScopeWithErrors & ScopeWithTerms & ScopeWithTypes)[]
 }
 
-type Return<T extends State, U> = [newState: T, type: U]
+type ReturnType<T extends State, U> = [
+  newState: T,
+  type: U,
+  deferredTypeVariableAssignments: DeferredTypeVariableAssignment[],
+]
 
 const withState = <T extends State, U extends SyntaxNode, V>(
   state: T,
   nodes: U[],
-  callback: (state: T, node: U, i: number) => Return<T, V>,
+  callback: (state: T, node: U, i: number) => ReturnType<T, V>,
 ) =>
-  nodes.reduce<Return<T, V[]>>(
-    ([state, types], node, i) => {
-      const [newState, type] = callback(state, node, i)
-      return [newState, [...types, type]]
+  nodes.reduce<ReturnType<T, V[]>>(
+    ([state, types, typeofs], node, i) => {
+      const [newState, type, newTypeofs] = callback(state, node, i)
+      return [
+        newState,
+        [...types, type],
+        mergeDeferredAssignments(typeofs, newTypeofs),
+      ]
     },
-    [state, []],
+    [state, [], []],
   )
 
 const findTypeVariable = <T extends State>(
@@ -142,10 +155,10 @@ const findTypeVariable = <T extends State>(
 export const buildAliasType = <T extends State>(
   state: T,
   node: TypeBindingNode,
-): Return<T, DeclaredType> => {
+): ReturnType<T, DeclaredType> => {
   switch (node.type) {
     case SyntaxType.Enum:
-      return [state, handleTypeNode(node.nameNode)]
+      return [state, handleTypeNode(node.nameNode), []]
     case SyntaxType.Interface:
     case SyntaxType.TypeAlias:
       return handleTypeDeclaration(state, node.nameNode)
@@ -158,12 +171,12 @@ const handleTypeNode = (node: TypeNode) =>
 const handleTypeDeclaration = <T extends State>(
   state: T,
   node: TypeDeclarationNode,
-): Return<T, DeclaredType> => {
+): ReturnType<T, DeclaredType> => {
   const name = getTypeName(node.nameNode)
   const typeParameters = node.parameterNodes.map((child) =>
     findTypeVariable(state, child.nameNode),
   )
-  return [state, buildGenericType(name, typeParameters)]
+  return [state, buildGenericType(name, typeParameters), []]
 }
 
 /**
@@ -173,7 +186,7 @@ const handleTypeDeclaration = <T extends State>(
 export const buildAliasedType = <T extends State>(
   state: T,
   node: TypeBindingNode,
-): Return<T, Type> => {
+): ReturnType<T, Type> => {
   switch (node.type) {
     case SyntaxType.Enum:
       return handleEnum(state, node)
@@ -187,25 +200,25 @@ export const buildAliasedType = <T extends State>(
 const handleEnum = <T extends State>(
   state: T,
   node: EnumNode,
-): Return<T, Type> => {
-  const [stateWithValues, valueTypes] = withState(
+): ReturnType<T, Type> => {
+  const [stateWithValues, valueTypes, typeofs] = withState(
     state,
     node.valueNodes,
     handleEnumValue,
   )
-  return [stateWithValues, buildUnionType(valueTypes)]
+  return [stateWithValues, buildUnionType(valueTypes), typeofs]
 }
 
 const handleInterface = <T extends State>(
   state: T,
   node: InterfaceNode,
-): Return<T, Type> => {
-  const [stateWithValues, memberTypes] = withState(
+): ReturnType<T, Type> => {
+  const [stateWithValues, memberTypes, typeofs] = withState(
     state,
     node.memberNodes,
     handleInterfaceMember,
   )
-  return [stateWithValues, buildInterfaceType(memberTypes)]
+  return [stateWithValues, buildInterfaceType(memberTypes), typeofs]
 }
 
 /**
@@ -215,7 +228,7 @@ const handleInterface = <T extends State>(
 export const buildType = <T extends State>(
   state: T,
   node: InternalTypeNode,
-): Return<T, Type> => {
+): ReturnType<T, Type> => {
   switch (node.type) {
     case SyntaxType.AccessType:
       return handleAccessType(state, node)
@@ -261,95 +274,124 @@ export const buildType = <T extends State>(
 export const buildTypes = <T extends State>(
   state: T,
   nodes: InternalTypeNode[],
-): Return<T, Type[]> => withState(state, nodes, buildType)
+): ReturnType<T, Type[]> => withState(state, nodes, buildType)
 
 const handleAccessType = <T extends State>(
   state: T,
   node: AccessTypeNode,
-): Return<T, Type> => {
-  const [stateWithType, type] = buildType(state, node.typeNode)
+): ReturnType<T, Type> => {
+  const [stateWithType, type, typeofs] = buildType(state, node.typeNode)
   const [stateWithProperty, propertyType] = handleTerm(
     stateWithType,
     node.valueNode,
   )
-  return [stateWithProperty, buildAccessType(type, propertyType)]
+  return [stateWithProperty, buildAccessType(type, propertyType), typeofs]
 }
 
 const handleConditionalType = <T extends State>(
   state: T,
   node: ConditionalTypeNode,
-): Return<T, Type> => {
-  const [stateWithType, type] = buildType(state, node.typeNode)
-  const [stateWithConstraints, constraints] = buildTypes(
-    stateWithType,
-    node.constraintNodes,
-  )
-  const [stateWithConsequence, consequence] = buildType(
+): ReturnType<T, Type> => {
+  const [stateWithType, type, typeofsFromType] = buildType(state, node.typeNode)
+  const [
+    stateWithConstraints,
+    constraints,
+    typeofsFromConstraints,
+  ] = buildTypes(stateWithType, node.constraintNodes)
+  const [stateWithConsequence, consequence, typeofsFromConsequence] = buildType(
     stateWithConstraints,
     node.consequenceNode,
   )
-  const [stateWithAlternative, alternative] = buildType(
+  const [stateWithAlternative, alternative, typeofsFromAlternative] = buildType(
     stateWithConsequence,
     node.alternativeNode,
   )
   return [
     stateWithAlternative,
     buildConditionalType(type, constraints, consequence, alternative),
+    mergeDeferredAssignments(
+      typeofsFromType,
+      typeofsFromConstraints,
+      typeofsFromConsequence,
+      typeofsFromAlternative,
+    ),
   ]
 }
 
 const handleCurriedType = <T extends State>(
   state: T,
   node: CurriedTypeNode,
-): Return<T, Type> => {
-  const [stateWithFrom, from] = buildType(state, node.fromNode)
-  const [stateWithTo, to] = buildType(stateWithFrom, node.toNode)
-  return [stateWithTo, buildCurriedType(from, to)]
+): ReturnType<T, Type> => {
+  const [stateWithFrom, from, typeofsFromFrom] = buildType(state, node.fromNode)
+  const [stateWithTo, to, typeofsFromTo] = buildType(stateWithFrom, node.toNode)
+  return [
+    stateWithTo,
+    buildCurriedType(from, to),
+    mergeDeferredAssignments(typeofsFromFrom, typeofsFromTo),
+  ]
 }
 
 const handleIntersectionType = <T extends State>(
   state: T,
   node: IntersectionTypeNode,
-): Return<T, Type> => {
-  const [stateWithLeft, left] = buildType(state, node.leftNode)
-  const [stateWithRight, right] = buildType(stateWithLeft, node.rightNode)
-  return [stateWithRight, flattenType(buildIntersectionType([left, right]))]
+): ReturnType<T, Type> => {
+  const [stateWithLeft, left, typeofsFromLeft] = buildType(state, node.leftNode)
+  const [stateWithRight, right, typeofsFromRight] = buildType(
+    stateWithLeft,
+    node.rightNode,
+  )
+  return [
+    stateWithRight,
+    flattenType(buildIntersectionType([left, right])),
+    mergeDeferredAssignments(typeofsFromLeft, typeofsFromRight),
+  ]
 }
 
 const handleListType = <T extends State>(
   state: T,
   node: ListTypeNode,
-): Return<T, Type> => {
-  const [stateWithElement, element] = buildType(state, node.elementNode)
+): ReturnType<T, Type> => {
+  const [stateWithElement, element, typeofs] = buildType(
+    state,
+    node.elementNode,
+  )
   return [
     stateWithElement,
     buildObjectType([buildProperty(NUMBER_TYPE, element)]),
+    typeofs,
   ]
 }
 
 const handleMapType = <T extends State>(
   state: T,
   node: MapTypeNode,
-): Return<T, Type> => {
-  const [stateWithKey, key] = buildType(state, node.keyNode)
-  const [stateWithValue, value] = buildType(stateWithKey, node.valueNode)
-  return [stateWithValue, buildObjectType([buildProperty(key, value)])]
+): ReturnType<T, Type> => {
+  const [stateWithKey, key, typeofsFromKey] = buildType(state, node.keyNode)
+  const [stateWithValue, value, typeofsFromValue] = buildType(
+    stateWithKey,
+    node.valueNode,
+  )
+  return [
+    stateWithValue,
+    buildObjectType([buildProperty(key, value)]),
+    mergeDeferredAssignments(typeofsFromKey, typeofsFromValue),
+  ]
 }
 
 const handleParametricType = <T extends State>(
   state: T,
   node: ParametricTypeNode,
-): Return<T, Type> => {
+): ReturnType<T, Type> => {
   const name = getTypeName(node.nameNode)
   if (isPrimitiveTypeName(name)) {
     const stateWithError = addErrorUnless<T>(
       node.argumentNodes.length === 0 && node.elementNodes.length === 0,
       buildPrimitiveTypeArgumentsError(),
     )(state, node)
-    return [stateWithError, findPrimitiveType(name)]
+    return [stateWithError, findPrimitiveType(name), []]
   }
 
-  const [stateWithTypeArguments, typeArguments] = buildTypes(
+  const [stateWithTypeArguments, typeArguments, typeofs] = buildTypes(
     state,
     node.argumentNodes,
   )
@@ -357,129 +399,155 @@ const handleParametricType = <T extends State>(
   return [
     stateWithTypeArguments,
     buildParametricType(name, typeArguments, termArguments),
+    typeofs,
   ]
 }
 
 const handleStructType = <T extends State>(
   state: T,
   node: StructTypeNode,
-): Return<T, Type> => {
-  const [stateWithMembers, properties] = withState(
+): ReturnType<T, Type> => {
+  const [stateWithMembers, properties, typeofs] = withState(
     state,
     node.memberNodes,
     handleMemberType,
   )
-  return [stateWithMembers, buildObjectType(properties)]
+  return [stateWithMembers, buildObjectType(properties), typeofs]
 }
 
 const handleSubtractionType = <T extends State>(
   state: T,
   node: SubtractionTypeNode,
-): Return<T, Type> => {
-  const [stateWithLeft, left] = buildType(state, node.leftNode)
-  const [stateWithRight, right] = buildType(stateWithLeft, node.rightNode)
-  return [stateWithRight, buildSubtractionType(left, right)]
+): ReturnType<T, Type> => {
+  const [stateWithLeft, left, typeofsFromLeft] = buildType(state, node.leftNode)
+  const [stateWithRight, right, typeofsFromRight] = buildType(
+    stateWithLeft,
+    node.rightNode,
+  )
+  return [
+    stateWithRight,
+    buildSubtractionType(left, right),
+    mergeDeferredAssignments(typeofsFromLeft, typeofsFromRight),
+  ]
 }
 
 const handleTaggedType = <T extends State>(
   state: T,
   node: TaggedTypeNode,
-): Return<T, Type> => {
+): ReturnType<T, Type> => {
   const tag = buildProperty(
     buildLiteralType('tag'),
     buildLiteralType(getIdentifierName(node.nameNode)),
   )
-  if (node.typeNode === undefined) return [state, buildObjectType([tag])]
+  if (node.typeNode === undefined) return [state, buildObjectType([tag]), []]
 
-  const [stateWithValue, type] = buildType(state, node.typeNode)
+  const [stateWithValue, type, typeofs] = buildType(state, node.typeNode)
   const value = buildProperty(buildLiteralType('value'), type)
-  return [stateWithValue, buildObjectType([tag, value])]
+  return [stateWithValue, buildObjectType([tag, value]), typeofs]
 }
 
 const handleTupleType = <T extends State>(
   state: T,
   node: TupleTypeNode,
-): Return<T, Type> => {
-  const [stateWithElements, elements] = buildTypes(state, node.elementNodes)
+): ReturnType<T, Type> => {
+  const [stateWithElements, elements, typeofs] = buildTypes(
+    state,
+    node.elementNodes,
+  )
   return [
     stateWithElements,
     buildObjectType(
       elements.map((element, i) => buildProperty(buildLiteralType(i), element)),
     ),
+    typeofs,
   ]
 }
 
 const handleTypeGroup = <T extends State>(
   state: T,
   node: TypeGroupNode,
-): Return<T, Type> => buildType(state, node.typeNode)
+): ReturnType<T, Type> => buildType(state, node.typeNode)
 
 const handleTypeVariable = <T extends State>(
   state: T,
   node: TypeVariableNode,
-): Return<T, Type> => [state, findTypeVariable(state, node)]
+): ReturnType<T, Type> => [state, findTypeVariable(state, node), []]
 
 const handleTypeof = <T extends State>(
   state: T,
   node: TypeofNode,
-): Return<T, Type> => handleTerm(state, node.valueNode)
+): ReturnType<T, Type> => handleTerm(state, node.valueNode)
 
 const handleUnionType = <T extends State>(
   state: T,
   node: UnionTypeNode,
-): Return<T, Type> => {
-  const [stateWithLeft, left] = buildType(state, node.leftNode)
-  const [stateWithRight, right] = buildType(stateWithLeft, node.rightNode)
-  return [stateWithRight, flattenType(buildUnionType([left, right]))]
+): ReturnType<T, Type> => {
+  const [stateWithLeft, left, typeofsFromLeft] = buildType(state, node.leftNode)
+  const [stateWithRight, right, typeofsFromRight] = buildType(
+    stateWithLeft,
+    node.rightNode,
+  )
+  return [
+    stateWithRight,
+    flattenType(buildUnionType([left, right])),
+    mergeDeferredAssignments(typeofsFromLeft, typeofsFromRight),
+  ]
 }
 
 const handleEnumValue = <T extends State>(
   state: T,
   node: EnumValueNode,
   i: number,
-): Return<T, Type> => {
+): ReturnType<T, Type> => {
   if (node.valueNode) return handleTerm(state, node.valueNode)
-  return [state, buildLiteralType(i)]
+  return [state, buildLiteralType(i), []]
 }
 
 const handleInterfaceMember = <T extends State>(
   state: T,
   node: InterfaceMemberNode,
-): Return<T, Property<Type>> => {
-  const [stateWithType, type] = buildType(state, node.typeNode)
+): ReturnType<T, Property<Type>> => {
+  const [stateWithType, type, typeofs] = buildType(state, node.typeNode)
   return [
     stateWithType,
     buildProperty(buildLiteralType(getIdentifierName(node.nameNode)), type),
+    typeofs,
   ]
 }
 
 const handleMemberType = <T extends State>(
   state: T,
   node: MemberTypeNode,
-): Return<T, Property<Type>> => {
-  const [stateWithValue, value] = buildType(state, node.valueNode)
+): ReturnType<T, Property<Type>> => {
+  const [stateWithValue, value, typeofs] = buildType(state, node.valueNode)
   return [
     stateWithValue,
     buildProperty(buildLiteralType(getIdentifierName(node.keyNode)), value),
+    typeofs,
   ]
 }
 
 const handleTerm = <T extends State>(
   state: T,
   node: ImmediateTermNode,
-): Return<T, Type> => {
+): ReturnType<T, Type> => {
   switch (node.type) {
     case SyntaxType.Boolean:
-      return [state, BOOLEAN_TYPE]
+      return [state, BOOLEAN_TYPE, []]
     case SyntaxType.Number:
-      return [state, NUMBER_TYPE]
+      return [state, NUMBER_TYPE, []]
     case SyntaxType.Regex:
-      return [state, REG_EXP_TYPE]
+      return [state, REG_EXP_TYPE, []]
     case SyntaxType.String:
-      return [state, STRING_TYPE]
+      return [state, STRING_TYPE, []]
   }
 
+  const typeVariable = buildTypeVariable()
   const name = getIdentifierName(node)
   const bindings = findBindings(name, state.scopes.map(getTerms))
-  return [state, buildTermType(bindings)]
+  return [
+    state,
+    typeVariable,
+    [buildDeferredTypeVariableAssignment(typeVariable, bindings)],
+  ]
 }
