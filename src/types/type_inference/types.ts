@@ -20,7 +20,6 @@ export enum TypeKind {
   Generic,
   Interface,
   Intersection,
-  Map,
   Object,
   Parametric,
   Refined,
@@ -102,15 +101,6 @@ export interface InterfaceType<T extends Type = Type> {
 export interface IntersectionType<T extends Type = Type> {
   kind: typeof TypeKind.Intersection
   parameters: T[]
-}
-
-/**
- * A map type represents the scope of a mapping from values of a key type to
- * values of a value type.
- */
-export interface MapType<T extends Type = Type> {
-  kind: typeof TypeKind.Map
-  property: Property<T>
 }
 
 /**
@@ -253,13 +243,6 @@ export const buildIntersectionType = <T extends Type>(
 ): IntersectionType<T> => ({
   kind: TypeKind.Intersection,
   parameters,
-})
-
-export const buildMapType = <T extends Type>(
-  property: Property<T>,
-): MapType<T> => ({
-  kind: TypeKind.Map,
-  property,
 })
 
 export const buildObjectType = <T extends Type>(

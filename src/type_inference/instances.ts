@@ -1,14 +1,11 @@
 import {
   CurriedType,
   IntersectionType,
-  MapType,
   ObjectType,
   Property,
   TypeKind,
   TypeVariable,
   UnionType,
-  buildProperty,
-  buildUnionType,
 } from '../types/type_inference/types'
 import { ScopeWithErrors, ScopeWithTypes } from '../types/analyze/scopes'
 import {
@@ -101,8 +98,6 @@ export const isInstanceOf = <T extends State>(
         specific,
         constraints,
       )
-    case TypeKind.Map:
-      return isInstanceOfMapType(state, specific, general, constraints)
     case TypeKind.Object:
       return isInstanceOfObjectType(state, specific, general, constraints)
     case TypeKind.Refined:
@@ -165,48 +160,12 @@ const isInstanceOfCurriedType = <T extends State>(
   )
 }
 
-const isInstanceOfMapType = <T extends State>(
-  state: T,
-  specific: ResolvedType,
-  general: MapType<ResolvedType>,
-  constraints: TypeConstraints,
-): ReturnType<T>[] => {
-  if (specific.kind === TypeKind.Map)
-    return propertyIsInstanceOf(
-      state,
-      specific.property,
-      general.property,
-      constraints,
-    )
-  if (specific.kind === TypeKind.Object) {
-    const specificProperty = buildProperty(
-      buildUnionType(specific.properties.map((property) => property.key)),
-      buildUnionType(specific.properties.map((property) => property.value)),
-    )
-    return propertyIsInstanceOf(
-      state,
-      specificProperty,
-      general.property,
-      constraints,
-    )
-  }
-  return []
-}
-
 const isInstanceOfObjectType = <T extends State>(
   state: T,
   specific: ResolvedType,
   general: ObjectType<ResolvedType>,
   constraints: TypeConstraints,
 ): ReturnType<T>[] => {
-  if (specific.kind === TypeKind.Map)
-    return forAll(
-      state,
-      general.properties,
-      constraints,
-      (state, property, constraints) =>
-        propertyIsInstanceOf(state, specific.property, property, constraints),
-    )
   if (specific.kind === TypeKind.Object) {
     return forAll(
       state,

@@ -50,7 +50,6 @@ import {
   buildGenericType,
   buildInterfaceType,
   buildIntersectionType,
-  buildMapType,
   buildObjectType,
   buildParametricType,
   buildProperty,
@@ -322,7 +321,10 @@ const handleListType = <T extends State>(
   node: ListTypeNode,
 ): Return<T, Type> => {
   const [stateWithElement, element] = buildType(state, node.elementNode)
-  return [stateWithElement, buildMapType(buildProperty(NUMBER_TYPE, element))]
+  return [
+    stateWithElement,
+    buildObjectType([buildProperty(NUMBER_TYPE, element)]),
+  ]
 }
 
 const handleMapType = <T extends State>(
@@ -331,7 +333,7 @@ const handleMapType = <T extends State>(
 ): Return<T, Type> => {
   const [stateWithKey, key] = buildType(state, node.keyNode)
   const [stateWithValue, value] = buildType(stateWithKey, node.valueNode)
-  return [stateWithValue, buildMapType(buildProperty(key, value))]
+  return [stateWithValue, buildObjectType([buildProperty(key, value)])]
 }
 
 const handleParametricType = <T extends State>(

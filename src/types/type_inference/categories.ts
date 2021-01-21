@@ -5,7 +5,6 @@ import {
   GenericType,
   InterfaceType,
   IntersectionType,
-  MapType,
   ObjectType,
   ParametricType,
   RefinedTerm,
@@ -27,7 +26,6 @@ export type ResolvedType =
   | CurriedType<ResolvedType>
   | InterfaceType<ResolvedType>
   | IntersectionType<ResolvedType>
-  | MapType<ResolvedType>
   | ObjectType<ResolvedType>
   | PrimitiveType
   | RefinedTerm
@@ -40,7 +38,6 @@ export type Type =
   | CurriedType<Type>
   | InterfaceType<Type>
   | IntersectionType<Type>
-  | MapType<Type>
   | ObjectType<Type>
   | PrimitiveType
   | RefinedTerm

@@ -104,11 +104,6 @@ export const applyConstraints = (
           applyConstraintsToProperty(member, constraints),
         ),
       }
-    case TypeKind.Map:
-      return {
-        ...type,
-        property: applyConstraintsToProperty(type.property, constraints),
-      }
     case TypeKind.Variable:
       return getConstraintOf(constraints, type)?.type || type
     case TypeKind.Object:
