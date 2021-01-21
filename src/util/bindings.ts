@@ -1,5 +1,3 @@
-import { PropertyKey, RefinedTerm, RefinedType } from '../types/type_inference/types'
-
 type Item = { name: string }
 
 const findItemByName = <T extends Item>(name: string, items: T[]) =>
@@ -7,11 +5,6 @@ const findItemByName = <T extends Item>(name: string, items: T[]) =>
 
 const findItemsByName = <T extends Item>(name: string, items: T[]) =>
   items.filter((item) => item.name === name)
-
-const findItemsByPropertyKey = <T extends Item>(
-  type: PropertyKey,
-  items: T[],
-) => items.filter((item) => item.name === name)
 
 const findItem = <T extends Item, U, V>(
   name: V,
@@ -34,11 +27,6 @@ export const findBindings = <T extends Item>(
   name: string,
   bindingsStack: T[][],
 ): T[] => findItem(name, bindingsStack, findItemsByName, [])
-
-export const findBindingsByPropertyKey = <T extends Item>(
-  type: PropertyKey,
-  bindingsStack: T[][],
-): T[] => findItem(type, bindingsStack, findItemsByPropertyKey, [])
 
 /**
  * Returns the items (1) is missing from (2).

@@ -5,13 +5,11 @@ import { Type } from './categories'
 
 // ---- Types ----
 
-export type PropertyKey = RefinedType<RefinedTerm> | UnionType<PropertyKey>
-
 /**
  * A property represents the mapping of a key to a value.
  */
 export type Property<T extends Type = Type> = {
-  key: PropertyKey
+  key: T
   value: T
 }
 
@@ -91,15 +89,9 @@ export interface GenericType {
 /**
  * An interface type represents all members that implementors have to implement
  * to be an instance of an interface.
- *
- * So to check whether a type is an instance of an interface, it has to be
- * checked whether (instantiating the type variables with the given types) for
- * each member there exists a binding with the same name where the type of the
- * member is an instance of the bindings type.
  */
 export interface InterfaceType<T extends Type = Type> {
   kind: typeof TypeKind.Interface
-  typeVariable: TypeVariable
   members: Property<T>[]
 }
 
@@ -203,7 +195,7 @@ export interface UnionType<T extends Type = Type> {
 // ---- Factories ----
 
 export const buildProperty = <T extends Type>(
-  key: PropertyKey,
+  key: T,
   value: T,
 ): Property<T> => ({
   key,
@@ -250,11 +242,9 @@ export const buildGenericType = (
 })
 
 export const buildInterfaceType = <T extends Type>(
-  typeVariable: TypeVariable,
   members: Property<T>[] = [],
 ): InterfaceType<T> => ({
   kind: TypeKind.Interface,
-  typeVariable,
   members,
 })
 

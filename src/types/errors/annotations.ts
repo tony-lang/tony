@@ -1,11 +1,9 @@
 import { AbsolutePath, RelativePath } from '../path'
 import { ProgramNode, SyntaxNode } from 'tree-sitter-tony'
-import { ResolvedType, Type } from '../type_inference/categories'
 import { CyclicDependency } from '../cyclic_dependency'
 import { TermBinding } from '../analyze/bindings'
-import { TypeConstraints } from '../type_inference/constraints'
+import { Type } from '../type_inference/categories'
 import { TypedNode } from '../type_inference/nodes'
-import { applyConstraints } from '../../type_inference/constraints'
 
 // ---- Types ----
 
@@ -188,16 +186,6 @@ export const buildTypeError = (expected: Type, actual: Type): TypeError => ({
   kind: ErrorAnnotationKind.Type,
   expected,
   actual,
-})
-
-export const buildTypeErrorFromConstrainedTypes = (
-  expected: ResolvedType,
-  actual: ResolvedType,
-  constraints: TypeConstraints,
-): TypeError => ({
-  kind: ErrorAnnotationKind.Type,
-  expected: applyConstraints(expected, constraints),
-  actual: applyConstraints(actual, constraints),
 })
 
 export const buildUnknownFileError = (

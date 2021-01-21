@@ -1,23 +1,16 @@
 import {
   CurriedType,
-  InterfaceType,
   IntersectionType,
   MapType,
   ObjectType,
   Property,
-  RefinedTerm,
-  RefinedType,
   TypeKind,
   TypeVariable,
   UnionType,
   buildProperty,
   buildUnionType,
 } from '../types/type_inference/types'
-import {
-  ScopeWithErrors,
-  ScopeWithTypes,
-  TypingEnvironment,
-} from '../types/analyze/scopes'
+import { ScopeWithErrors, ScopeWithTypes } from '../types/analyze/scopes'
 import {
   TypeConstraints,
   buildTypeConstraints,
@@ -25,12 +18,10 @@ import {
 import { NotImplementedError } from '../types/errors/internal'
 import { ResolvedType } from '../types/type_inference/categories'
 import { buildTypeConstraintsFromType } from '../util/types'
-import { findBindingsByPropertyKey } from '../util/bindings'
-import { getTypeAssignments } from '../util/scopes'
 import { unifyConstraints } from './constraints'
 
 type State = {
-  scopes: (ScopeWithErrors & ScopeWithTypes & TypingEnvironment)[]
+  scopes: (ScopeWithErrors & ScopeWithTypes)[]
 }
 
 type ReturnType<T extends State> = [newState: T, constraints: TypeConstraints]
@@ -99,7 +90,9 @@ export const isInstanceOf = <T extends State>(
     case TypeKind.Curried:
       return isInstanceOfCurriedType(state, specific, general, constraints)
     case TypeKind.Interface:
-      return isInstanceOfInterfaceType(state, specific, general, constraints)
+      throw new NotImplementedError(
+        'Cannot determine assignability to interfaces yet.',
+      )
     case TypeKind.Intersection:
     case TypeKind.Union:
       return isInstanceOfIntersectionOrUnion(
@@ -115,7 +108,7 @@ export const isInstanceOf = <T extends State>(
     case TypeKind.Refined:
     case TypeKind.RefinedTerm:
       throw new NotImplementedError(
-        'Cannot deduce assignability to refined types yet.',
+        'Cannot determine assignability to refined types yet.',
       )
     case TypeKind.Variable:
       return typeVariableIsInstanceOf(state, general, specific, constraints)
@@ -169,35 +162,6 @@ const isInstanceOfCurriedType = <T extends State>(
     isInstanceOf(state, specific.from, general.from, constraints),
     ([stateWithFrom, constraintsWithFrom]) =>
       isInstanceOf(stateWithFrom, specific.to, general.to, constraintsWithFrom),
-  )
-}
-
-const isInstanceOfInterfaceType = <T extends State>(
-  state: T,
-  specific: ResolvedType,
-  general: InterfaceType<ResolvedType>,
-  constraints: TypeConstraints,
-): ReturnType<T>[] => {
-  const [stateAfterConstraints, constraintsWithSpecificType] = unifyConstraints(
-    state,
-    constraints,
-    buildTypeConstraintsFromType(general.typeVariable, specific),
-  )
-  return forAll(
-    stateAfterConstraints,
-    general.members,
-    constraintsWithSpecificType,
-    (state, member, constraints) =>
-      forSome(
-        state,
-        findBindingsByPropertyKey(
-          member.key,
-          state.scopes.map(getTypeAssignments),
-        ),
-        constraints,
-        (state, typeAssignment, constraints) =>
-          isInstanceOf(state, typeAssignment.type, member.value, constraints),
-      ),
   )
 }
 
