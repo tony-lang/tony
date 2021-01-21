@@ -1,6 +1,6 @@
-import { ConstrainedType } from './constraints'
 import { ResolvedType } from './categories'
 import { SyntaxNode } from 'tree-sitter-tony'
+import { TypeConstraints } from './constraints'
 
 // ---- Types ----
 
@@ -9,7 +9,8 @@ import { SyntaxNode } from 'tree-sitter-tony'
  */
 export type TypedNode<T extends SyntaxNode> = {
   node: T
-  type: ConstrainedType<ResolvedType>
+  type: ResolvedType
+  constraints: TypeConstraints
   childNodes: TypedNode<SyntaxNode>[]
 }
 
@@ -17,10 +18,12 @@ export type TypedNode<T extends SyntaxNode> = {
 
 export const buildTypedNode = <T extends SyntaxNode>(
   node: T,
-  type: ConstrainedType<ResolvedType>,
+  type: ResolvedType,
+  constraints: TypeConstraints,
   childNodes: TypedNode<SyntaxNode>[] = [],
 ): TypedNode<T> => ({
   node,
   type,
+  constraints,
   childNodes,
 })

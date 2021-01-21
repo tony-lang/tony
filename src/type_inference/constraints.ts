@@ -1,10 +1,9 @@
+import { Property, TypeKind, TypeVariable } from '../types/type_inference/types'
+import { ScopeWithErrors, ScopeWithTypes } from '../types/analyze/scopes'
 import {
-  ConstrainedType,
   TypeConstraints,
   TypeVariableAssignment,
 } from '../types/type_inference/constraints'
-import { Property, TypeKind, TypeVariable } from '../types/type_inference/types'
-import { ScopeWithErrors, ScopeWithTypes } from '../types/analyze/scopes'
 import { filterUnique, isNotUndefined } from '../util'
 import { ResolvedType } from '../types/type_inference/categories'
 import { unify } from './unification'
@@ -13,6 +12,8 @@ type State = {
   scopes: (ScopeWithErrors & ScopeWithTypes)[]
 }
 
+type ReturnType<T extends State> = [newState: T, constraints: TypeConstraints]
+
 /**
  * Given a set of constraints, obtains a most general set of type constraints by
  * unifying all shared constraints.
@@ -20,35 +21,38 @@ type State = {
 export const unifyConstraints = <T extends State>(
   state: T,
   ...constraints: TypeConstraints[]
-): TypeConstraints =>
-  constraints.reduce<TypeConstraints>(
+): ReturnType<T> =>
+  constraints.reduce<ReturnType<T>>(
     (acc, constraints) =>
-      constraints.reduce((acc, constraint) => {
+      constraints.reduce(([state, constraints], constraint) => {
         const matchingConstraints = getOverlappingConstraints(
-          acc,
+          constraints,
           constraint.typeVariables,
         )
-        if (matchingConstraints.length === 0) return [...acc, constraint]
+        if (matchingConstraints.length === 0)
+          return [state, [...constraints, constraint]]
 
-        const newConstraint = mergeTypeVariableAssignments(state, [
+        const [newState, newConstraint] = mergeTypeVariableAssignments(state, [
           constraint,
           ...matchingConstraints,
         ])
         return [
-          ...acc.filter(
-            (constraint) => !matchingConstraints.includes(constraint),
-          ),
-          newConstraint,
+          newState,
+          [
+            ...constraints.filter(
+              (constraint) => !matchingConstraints.includes(constraint),
+            ),
+            newConstraint,
+          ],
         ]
-        return acc
       }, acc),
-    [],
+    [state, []],
   )
 
 const mergeTypeVariableAssignments = <T extends State>(
   state: T,
   typeVariableAssignments: TypeVariableAssignment[],
-): TypeVariableAssignment => {
+): [newState: T, typeVariableAssignment: TypeVariableAssignment] => {
   const typeVariables = filterUnique(
     typeVariableAssignments
       .map((typeVariableAssignment) => typeVariableAssignment.typeVariables)
@@ -59,11 +63,15 @@ const mergeTypeVariableAssignments = <T extends State>(
       typeVariableAssignment.type ? typeVariableAssignment.type : undefined,
     )
     .filter(isNotUndefined)
-  const type = unify(state, ...types).type
-  return {
-    typeVariables,
-    type,
-  }
+  // disregard updated constraints from unification
+  const [stateAfterUnify, type] = unify(state, ...types)
+  return [
+    stateAfterUnify,
+    {
+      typeVariables,
+      type,
+    },
+  ]
 }
 
 /**
@@ -131,13 +139,6 @@ const applyConstraintsToProperty = (
   key: applyConstraints(property.key, constraints),
   value: applyConstraints(property.value, constraints),
 })
-
-/**
- * Applies a constrained type to its constraints.
- */
-export const flattenConstrainedType = (
-  type: ConstrainedType<ResolvedType>,
-): ResolvedType => applyConstraints(type.type, type.constraints)
 
 const getConstraintOf = (
   constraints: TypeConstraints,

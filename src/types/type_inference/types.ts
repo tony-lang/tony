@@ -89,11 +89,6 @@ export interface GenericType {
 /**
  * An interface type represents all members that implementors have to implement
  * to be an instance of an interface.
- *
- * So to check whether a type is an instance of an interface, it has to be
- * checked whether (instantiating the type variables with the given types) for
- * each member there exists a binding with the same name where the type of the
- * member is an instance of the bindings type.
  */
 export interface InterfaceType<T extends Type = Type> {
   kind: typeof TypeKind.Interface

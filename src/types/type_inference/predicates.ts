@@ -28,6 +28,10 @@ export type Predicate = {
   arguments: Value[]
 }
 
+// ---- Constants ----
+
+const EQUALITY_BINDING_NAME = '=='
+
 // ---- Factories ----
 
 export const buildBindingValue = (name: string): BindingValue => ({
@@ -43,6 +47,6 @@ export const buildLiteralValue = <T extends Literal>(
 })
 
 export const buildEqualityPredicate = (a: Value, b: Value): Predicate => ({
-  name: '==',
+  name: EQUALITY_BINDING_NAME,
   arguments: [a, b],
 })

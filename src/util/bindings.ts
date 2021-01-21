@@ -6,10 +6,10 @@ const findItemByName = <T extends Item>(name: string, items: T[]) =>
 const findItemsByName = <T extends Item>(name: string, items: T[]) =>
   items.filter((item) => item.name === name)
 
-const findItem = <T extends Item, U>(
-  name: string,
+const findItem = <T extends Item, U, V>(
+  name: V,
   itemsStack: T[][],
-  find: (name: string, items: T[]) => U,
+  find: (name: V, items: T[]) => U,
   init: U,
 ) =>
   itemsStack.reduce<U>((item, items) => {
