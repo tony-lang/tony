@@ -17,7 +17,7 @@ import {
   buildConstraints,
 } from '../types/type_inference/constraints'
 import { ResolvedType, Type } from '../types/type_inference/categories'
-import { State } from '../types/type_inference/state'
+import { AbstractState } from '../types/state'
 
 type Return = { constraints: Constraints; type: ResolvedType }
 
@@ -25,7 +25,7 @@ type Return = { constraints: Constraints; type: ResolvedType }
  * Given a type, reduce the type until it is normal (i.e. cannot be reduced
  * further).
  */
-export const normalize = <T extends State>(
+export const normalize = <T extends AbstractState>(
   state: T,
   type: Type,
 ): Answers<T, Return> => {
@@ -55,20 +55,20 @@ export const normalize = <T extends State>(
   }
 }
 
-// const normalizeAll = <T extends State, U extends Type>(
+// const normalizeAll = <T extends AbstractState, U extends Type>(
 //   state: T,
 //   types: U[],
-// ) => types.reduce<[newState: T, constraints: Constraints, types: ResolvedType[]][]>((acc, type) => {
-//   const [newState, newConstraints, normalizedType] = normalize(state, type)
+// ) => types.reduce<[newAbstractState: T, constraints: Constraints, types: ResolvedType[]][]>((acc, type) => {
+//   const [newAbstractState, newConstraints, normalizedType] = normalize(state, type)
 //   return
 // }, [[state, buildConstraints(), []]])
 
-const handleAccessType = <T extends State>(
+const handleAccessType = <T extends AbstractState>(
   state: T,
   type: AccessType,
 ): Answers<T, Return> => {}
 
-const handleConditionalType = <T extends State>(
+const handleConditionalType = <T extends AbstractState>(
   state: T,
   type: ConditionalType,
 ): Answers<T, Return> => {
@@ -77,7 +77,7 @@ const handleConditionalType = <T extends State>(
   // })
 }
 
-const handleCurriedType = <T extends State>(
+const handleCurriedType = <T extends AbstractState>(
   state: T,
   type: CurriedType,
 ): Answers<T, Return> => {
@@ -86,37 +86,37 @@ const handleCurriedType = <T extends State>(
   // return [stateWithTo, { ...type, from, to }]
 }
 
-const handleInterfaceType = <T extends State>(
+const handleInterfaceType = <T extends AbstractState>(
   state: T,
   type: InterfaceType,
 ): Answers<T, Return> => {}
 
-const handleIntersectionType = <T extends State>(
+const handleIntersectionType = <T extends AbstractState>(
   state: T,
   type: IntersectionType,
 ): Answers<T, Return> => {}
 
-const handleObjectType = <T extends State>(
+const handleObjectType = <T extends AbstractState>(
   state: T,
   type: ObjectType,
 ): Answers<T, Return> => {}
 
-const handleParametricType = <T extends State>(
+const handleParametricType = <T extends AbstractState>(
   state: T,
   type: ParametricType,
 ): Answers<T, Return> => {}
 
-const handleRefinedType = <T extends State>(
+const handleRefinedType = <T extends AbstractState>(
   state: T,
   type: RefinedType,
 ): Answers<T, Return> => {}
 
-const handleSubtractionType = <T extends State>(
+const handleSubtractionType = <T extends AbstractState>(
   state: T,
   type: SubtractionType,
 ): Answers<T, Return> => {}
 
-const handleUnionType = <T extends State>(
+const handleUnionType = <T extends AbstractState>(
   state: T,
   type: UnionType,
 ): Answers<T, Return> => {}

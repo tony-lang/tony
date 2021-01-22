@@ -12,7 +12,7 @@ import {
   buildTemporaryTypeVariable,
 } from '../types/type_inference/types'
 import { mapAnswers, reduceAnswers } from '../util/answers'
-import { State } from '../types/type_inference/state'
+import { AbstractState } from '../types/state'
 import { buildConstraintsFromType } from '../util/types'
 import { normalize } from './normalization'
 import { unifyConstraints } from './constraints'
@@ -23,7 +23,7 @@ type Return = { type: ResolvedType; constraints: Constraints }
  * Given a set of types, return the least general type such that all types in
  * the set are instances of that type.
  */
-export const unify = <T extends State>(
+export const unify = <T extends AbstractState>(
   state: T,
   ...types: Type[]
 ): Answers<T, Return> =>
@@ -57,7 +57,7 @@ export const unify = <T extends State>(
     ],
   )
 
-const concreteUnify = <T extends State>(state: T, left: Type, right: Type) => {
+const concreteUnify = <T extends AbstractState>(state: T, left: Type, right: Type) => {
   switch (left.kind) {
     case TypeKind.Variable:
       return unifyWithTypeVariable(state, left, right)
@@ -75,7 +75,7 @@ const concreteUnify = <T extends State>(state: T, left: Type, right: Type) => {
   }
 }
 
-const unifyWithTypeVariable = <T extends State>(
+const unifyWithTypeVariable = <T extends AbstractState>(
   state: T,
   typeVariable: TypeVariable,
   type: Type,

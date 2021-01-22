@@ -1,5 +1,5 @@
 import { Answer, Answers } from '../types/type_inference/answers'
-import { State } from '../types/type_inference/state'
+import { AbstractState } from '../types/state'
 import { assert } from '../types/errors/internal'
 import { collectErrors } from '../errors'
 
@@ -9,7 +9,7 @@ import { collectErrors } from '../errors'
  *  * if there are only answers with errors, return the answer with the least
  *    number of errors.
  */
-const filterAnswers = <T extends State, U>(answers: Answers<T, U>) => {
+const filterAnswers = <T extends AbstractState, U>(answers: Answers<T, U>) => {
   assert(answers.length > 0, 'The universe requires at least one answer.')
 
   // Remove answers with errors if there are some answers without errors.
@@ -34,7 +34,7 @@ const filterAnswers = <T extends State, U>(answers: Answers<T, U>) => {
 /**
  * Apply a callback to all given answers returning all resulting answers.
  */
-const unfilteredMapAnswers = <T extends State, U, V>(
+const unfilteredMapAnswers = <T extends AbstractState, U, V>(
   answers: Answers<T, U>,
   callback: (answer: Answer<T, U>) => Answers<T, V>,
 ) => answers.map(callback).flat()
@@ -43,7 +43,7 @@ const unfilteredMapAnswers = <T extends State, U, V>(
  * Apply a callback to all given answers returning all resulting answers after
  * filtering answers with errors.
  */
-export const mapAnswers = <T extends State, U, V>(
+export const mapAnswers = <T extends AbstractState, U, V>(
   answers: Answers<T, U>,
   callback: (answer: Answer<T, U>) => Answers<T, V>,
 ): Answers<T, V> => filterAnswers(unfilteredMapAnswers(answers, callback))
@@ -52,7 +52,7 @@ export const mapAnswers = <T extends State, U, V>(
  * Starting from a set of initial answers, for each value, map over all current
  * answers applying the callback.
  */
-export const reduceAnswers = <T extends State, U, V>(
+export const reduceAnswers = <T extends AbstractState, U, V>(
   values: V[],
   callback: (answer: Answer<T, U>, value: V) => Answers<T, U>,
   initial: Answers<T, U>,

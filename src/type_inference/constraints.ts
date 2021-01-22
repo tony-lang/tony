@@ -9,14 +9,14 @@ import { Property, TypeKind, TypeVariable } from '../types/type_inference/types'
 import { filterUnique, isNotUndefined } from '../util'
 import { mapAnswers, reduceAnswers } from '../util/answers'
 import { ResolvedType } from '../types/type_inference/categories'
-import { State } from '../types/type_inference/state'
+import { AbstractState } from '../types/state'
 import { unify } from './unification'
 
 /**
  * Given a set of constraints, obtains a most general set of type constraints by
  * unifying all shared constraints.
  */
-export const unifyConstraints = <T extends State>(
+export const unifyConstraints = <T extends AbstractState>(
   state: T,
   ...constraints: Constraints[]
 ): Answers<T, { constraints: Constraints }> => {
@@ -34,7 +34,7 @@ export const unifyConstraints = <T extends State>(
   )
 }
 
-const unifyAssignments = <T extends State>(
+const unifyAssignments = <T extends AbstractState>(
   state: T,
   ...assignments: TypeVariableAssignment[][]
 ) =>
@@ -71,7 +71,7 @@ const unifyAssignments = <T extends State>(
     [buildAnswer(state, { assignments: [] })],
   )
 
-const mergeAssignments = <T extends State>(
+const mergeAssignments = <T extends AbstractState>(
   state: T,
   assignments: TypeVariableAssignment[],
 ) => {

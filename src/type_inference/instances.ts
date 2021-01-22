@@ -15,13 +15,13 @@ import {
 import { mapAnswers, reduceAnswers } from '../util/answers'
 import { NotImplementedError } from '../types/errors/internal'
 import { ResolvedType } from '../types/type_inference/categories'
-import { State } from '../types/type_inference/state'
+import { AbstractState } from '../types/state'
 import { buildConstraintsFromType } from '../util/types'
 import { unifyConstraints } from './constraints'
 
 type Return = { constraints: Constraints }
 
-const forAll = <T extends State, U>(
+const forAll = <T extends AbstractState, U>(
   state: T,
   types: U[],
   constraints: Constraints,
@@ -33,7 +33,7 @@ const forAll = <T extends State, U>(
     [buildAnswer(state, { constraints })],
   )
 
-const forSome = <T extends State, U>(
+const forSome = <T extends AbstractState, U>(
   state: T,
   types: U[],
   constraints: Constraints,
@@ -44,7 +44,7 @@ const forSome = <T extends State, U>(
  * Given a specific type and some general types, determines whether the specific
  * type is an instance of all general types.
  */
-export const isInstanceOfAll = <T extends State>(
+export const isInstanceOfAll = <T extends AbstractState>(
   state: T,
   specific: ResolvedType,
   general: ResolvedType[],
@@ -60,7 +60,7 @@ export const isInstanceOfAll = <T extends State>(
  * sets of type constraints in which the given specific type is an instance of
  * the given general type.
  */
-export const isInstanceOf = <T extends State>(
+export const isInstanceOf = <T extends AbstractState>(
   state: T,
   specific: ResolvedType,
   general: ResolvedType,
@@ -114,7 +114,7 @@ export const isInstanceOf = <T extends State>(
   }
 }
 
-const typeVariableIsInstanceOf = <T extends State>(
+const typeVariableIsInstanceOf = <T extends AbstractState>(
   state: T,
   typeVariable: TypeVariable,
   type: ResolvedType,
@@ -129,7 +129,7 @@ const typeVariableIsInstanceOf = <T extends State>(
     ({ state, constraints }) => [buildAnswer(state, { constraints })],
   )
 
-const isInstanceOfIntersectionOrUnion = <T extends State>(
+const isInstanceOfIntersectionOrUnion = <T extends AbstractState>(
   state: T,
   intersectionOrUnion: IntersectionType<ResolvedType> | UnionType<ResolvedType>,
   type: ResolvedType,
@@ -143,7 +143,7 @@ const isInstanceOfIntersectionOrUnion = <T extends State>(
       isInstanceOf(state, parameter, type, constraints),
   )
 
-const isInstanceOfCurriedType = <T extends State>(
+const isInstanceOfCurriedType = <T extends AbstractState>(
   state: T,
   specific: ResolvedType,
   general: CurriedType<ResolvedType>,
@@ -157,7 +157,7 @@ const isInstanceOfCurriedType = <T extends State>(
   )
 }
 
-const isInstanceOfObjectType = <T extends State>(
+const isInstanceOfObjectType = <T extends AbstractState>(
   state: T,
   specific: ResolvedType,
   general: ObjectType<ResolvedType>,
@@ -186,7 +186,7 @@ const isInstanceOfObjectType = <T extends State>(
   return []
 }
 
-const propertyIsInstanceOf = <T extends State>(
+const propertyIsInstanceOf = <T extends AbstractState>(
   state: T,
   specific: Property<ResolvedType>,
   general: Property<ResolvedType>,
