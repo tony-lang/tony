@@ -277,7 +277,7 @@ const addTypeVariableBinding = (name: string) =>
         ...constraints,
       )
       const typeVariable = buildTypeVariable()
-      const [stateWithConstraints, typeConstraints] = unifyConstraints(
+      const [stateWithUnifiedConstraints, typeConstraints] = unifyConstraints(
         stateWithUnify,
         constraintsFromConstraint,
         buildConstraintsFromType(typeVariable, constraintType),
@@ -288,13 +288,13 @@ const addTypeVariableBinding = (name: string) =>
         typeVariable,
         typeConstraints,
       )
-      const [scope, ...parentScopes] = stateWithConstraints.scopes
+      const [scope, ...parentScopes] = stateWithUnifiedConstraints.scopes
       const newScope = {
         ...scope,
         typeVariables: [...scope.typeVariables, binding],
       }
       return {
-        ...stateWithConstraints,
+        ...stateWithUnifiedConstraints,
         scopes: [newScope, ...parentScopes],
       }
     },
