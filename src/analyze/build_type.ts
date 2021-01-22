@@ -280,32 +280,48 @@ const handleAccessType = <T extends State>(
   state: T,
   node: AccessTypeNode,
 ): Return<T, Type> => {
-  const [stateWithType, deferredAssignmentsFromType, type] = buildType(state, node.typeNode)
-  const [stateWithProperty, deferredAssignmentsFromValue, propertyType] = handleTerm(
-    stateWithType,
-    node.valueNode,
+  const [stateWithType, deferredAssignmentsFromType, type] = buildType(
+    state,
+    node.typeNode,
   )
-  return [stateWithProperty, mergeDeferredAssignments(deferredAssignmentsFromType, deferredAssignmentsFromValue), buildAccessType(type, propertyType)]
+  const [
+    stateWithProperty,
+    deferredAssignmentsFromValue,
+    propertyType,
+  ] = handleTerm(stateWithType, node.valueNode)
+  return [
+    stateWithProperty,
+    mergeDeferredAssignments(
+      deferredAssignmentsFromType,
+      deferredAssignmentsFromValue,
+    ),
+    buildAccessType(type, propertyType),
+  ]
 }
 
 const handleConditionalType = <T extends State>(
   state: T,
   node: ConditionalTypeNode,
 ): Return<T, Type> => {
-  const [stateWithType, deferredAssignmentsFromType, type] = buildType(state, node.typeNode)
+  const [stateWithType, deferredAssignmentsFromType, type] = buildType(
+    state,
+    node.typeNode,
+  )
   const [
     stateWithConstraints,
     deferredAssignmentsFromConstraints,
     constraints,
   ] = buildTypes(stateWithType, node.constraintNodes)
-  const [stateWithConsequence, deferredAssignmentsFromConsequence, consequence] = buildType(
-    stateWithConstraints,
-    node.consequenceNode,
-  )
-  const [stateWithAlternative, deferredAssignmentsFromAlternative, alternative] = buildType(
+  const [
     stateWithConsequence,
-    node.alternativeNode,
-  )
+    deferredAssignmentsFromConsequence,
+    consequence,
+  ] = buildType(stateWithConstraints, node.consequenceNode)
+  const [
+    stateWithAlternative,
+    deferredAssignmentsFromAlternative,
+    alternative,
+  ] = buildType(stateWithConsequence, node.alternativeNode)
   return [
     stateWithAlternative,
     mergeDeferredAssignments(
@@ -322,11 +338,20 @@ const handleCurriedType = <T extends State>(
   state: T,
   node: CurriedTypeNode,
 ): Return<T, Type> => {
-  const [stateWithFrom, deferredAssignmentsFromFrom, from] = buildType(state, node.fromNode)
-  const [stateWithTo, deferredAssignmentsFromTo, to] = buildType(stateWithFrom, node.toNode)
+  const [stateWithFrom, deferredAssignmentsFromFrom, from] = buildType(
+    state,
+    node.fromNode,
+  )
+  const [stateWithTo, deferredAssignmentsFromTo, to] = buildType(
+    stateWithFrom,
+    node.toNode,
+  )
   return [
     stateWithTo,
-    mergeDeferredAssignments(deferredAssignmentsFromFrom, deferredAssignmentsFromTo),
+    mergeDeferredAssignments(
+      deferredAssignmentsFromFrom,
+      deferredAssignmentsFromTo,
+    ),
     buildCurriedType(from, to),
   ]
 }
@@ -335,14 +360,20 @@ const handleIntersectionType = <T extends State>(
   state: T,
   node: IntersectionTypeNode,
 ): Return<T, Type> => {
-  const [stateWithLeft, deferredAssignmentsFromLeft, left] = buildType(state, node.leftNode)
+  const [stateWithLeft, deferredAssignmentsFromLeft, left] = buildType(
+    state,
+    node.leftNode,
+  )
   const [stateWithRight, deferredAssignmentsFromRight, right] = buildType(
     stateWithLeft,
     node.rightNode,
   )
   return [
     stateWithRight,
-    mergeDeferredAssignments(deferredAssignmentsFromLeft, deferredAssignmentsFromRight),
+    mergeDeferredAssignments(
+      deferredAssignmentsFromLeft,
+      deferredAssignmentsFromRight,
+    ),
     flattenType(buildIntersectionType([left, right])),
   ]
 }
@@ -366,14 +397,20 @@ const handleMapType = <T extends State>(
   state: T,
   node: MapTypeNode,
 ): Return<T, Type> => {
-  const [stateWithKey, deferredAssignmentsFromKey, key] = buildType(state, node.keyNode)
+  const [stateWithKey, deferredAssignmentsFromKey, key] = buildType(
+    state,
+    node.keyNode,
+  )
   const [stateWithValue, deferredAssignmentsFromValue, value] = buildType(
     stateWithKey,
     node.valueNode,
   )
   return [
     stateWithValue,
-    mergeDeferredAssignments(deferredAssignmentsFromKey, deferredAssignmentsFromValue),
+    mergeDeferredAssignments(
+      deferredAssignmentsFromKey,
+      deferredAssignmentsFromValue,
+    ),
     buildObjectType([buildProperty(key, value)]),
   ]
 }
@@ -391,10 +428,11 @@ const handleParametricType = <T extends State>(
     return [stateWithError, [], findPrimitiveType(name)]
   }
 
-  const [stateWithTypeArguments, deferredAssignments, typeArguments] = buildTypes(
-    state,
-    node.argumentNodes,
-  )
+  const [
+    stateWithTypeArguments,
+    deferredAssignments,
+    typeArguments,
+  ] = buildTypes(state, node.argumentNodes)
   const termArguments = node.elementNodes
   return [
     stateWithTypeArguments,
@@ -419,14 +457,20 @@ const handleSubtractionType = <T extends State>(
   state: T,
   node: SubtractionTypeNode,
 ): Return<T, Type> => {
-  const [stateWithLeft, deferredAssignmentsFromLeft, left] = buildType(state, node.leftNode)
+  const [stateWithLeft, deferredAssignmentsFromLeft, left] = buildType(
+    state,
+    node.leftNode,
+  )
   const [stateWithRight, deferredAssignmentsFromRight, right] = buildType(
     stateWithLeft,
     node.rightNode,
   )
   return [
     stateWithRight,
-    mergeDeferredAssignments(deferredAssignmentsFromLeft, deferredAssignmentsFromRight),
+    mergeDeferredAssignments(
+      deferredAssignmentsFromLeft,
+      deferredAssignmentsFromRight,
+    ),
     buildSubtractionType(left, right),
   ]
 }
@@ -441,7 +485,10 @@ const handleTaggedType = <T extends State>(
   )
   if (node.typeNode === undefined) return [state, [], buildObjectType([tag])]
 
-  const [stateWithValue, deferredAssignments, type] = buildType(state, node.typeNode)
+  const [stateWithValue, deferredAssignments, type] = buildType(
+    state,
+    node.typeNode,
+  )
   const value = buildProperty(buildLiteralType('value'), type)
   return [stateWithValue, deferredAssignments, buildObjectType([tag, value])]
 }
@@ -482,14 +529,20 @@ const handleUnionType = <T extends State>(
   state: T,
   node: UnionTypeNode,
 ): Return<T, Type> => {
-  const [stateWithLeft, deferredAssignmentsFromLeft, left] = buildType(state, node.leftNode)
+  const [stateWithLeft, deferredAssignmentsFromLeft, left] = buildType(
+    state,
+    node.leftNode,
+  )
   const [stateWithRight, deferredAssignmentsFromRight, right] = buildType(
     stateWithLeft,
     node.rightNode,
   )
   return [
     stateWithRight,
-    mergeDeferredAssignments(deferredAssignmentsFromLeft, deferredAssignmentsFromRight),
+    mergeDeferredAssignments(
+      deferredAssignmentsFromLeft,
+      deferredAssignmentsFromRight,
+    ),
     flattenType(buildUnionType([left, right])),
   ]
 }
@@ -507,7 +560,10 @@ const handleInterfaceMember = <T extends State>(
   state: T,
   node: InterfaceMemberNode,
 ): Return<T, Property<Type>> => {
-  const [stateWithType, deferredAssignments, type] = buildType(state, node.typeNode)
+  const [stateWithType, deferredAssignments, type] = buildType(
+    state,
+    node.typeNode,
+  )
   return [
     stateWithType,
     deferredAssignments,
@@ -519,7 +575,10 @@ const handleMemberType = <T extends State>(
   state: T,
   node: MemberTypeNode,
 ): Return<T, Property<Type>> => {
-  const [stateWithValue, deferredAssignments, value] = buildType(state, node.valueNode)
+  const [stateWithValue, deferredAssignments, value] = buildType(
+    state,
+    node.valueNode,
+  )
   return [
     stateWithValue,
     deferredAssignments,

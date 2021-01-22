@@ -32,12 +32,12 @@ export type DeferredTypeVariableAssignment = {
 
 // ---- Factories ----
 
-export const buildConstraints = <T extends Type>(
+export const buildConstraints = <T extends Type = ResolvedType>(
   assignments: TypeVariableAssignment<T>[] = [],
   deferredAssignments: DeferredTypeVariableAssignment[] = [],
 ): Constraints<T> => ({ assignments, deferredAssignments })
 
-export const buildTypeVariableAssignment = <T extends Type>(
+export const buildTypeVariableAssignment = <T extends Type = ResolvedType>(
   typeVariables: TypeVariable[],
   type?: T,
 ): TypeVariableAssignment<T> => ({

@@ -8,8 +8,8 @@ import {
 import { Property, TypeKind, TypeVariable } from '../types/type_inference/types'
 import { filterUnique, isNotUndefined } from '../util'
 import { mapAnswers, reduceAnswers } from '../util/answers'
-import { ResolvedType } from '../types/type_inference/categories'
 import { AbstractState } from '../types/state'
+import { ResolvedType } from '../types/type_inference/categories'
 import { unify } from './unification'
 
 /**

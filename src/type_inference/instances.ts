@@ -13,9 +13,9 @@ import {
   UnionType,
 } from '../types/type_inference/types'
 import { mapAnswers, reduceAnswers } from '../util/answers'
+import { AbstractState } from '../types/state'
 import { NotImplementedError } from '../types/errors/internal'
 import { ResolvedType } from '../types/type_inference/categories'
-import { AbstractState } from '../types/state'
 import { buildConstraintsFromType } from '../util/types'
 import { unifyConstraints } from './constraints'
 

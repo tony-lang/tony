@@ -57,7 +57,11 @@ export const unify = <T extends AbstractState>(
     ],
   )
 
-const concreteUnify = <T extends AbstractState>(state: T, left: Type, right: Type) => {
+const concreteUnify = <T extends AbstractState>(
+  state: T,
+  left: Type,
+  right: Type,
+) => {
   switch (left.kind) {
     case TypeKind.Variable:
       return unifyWithTypeVariable(state, left, right)
