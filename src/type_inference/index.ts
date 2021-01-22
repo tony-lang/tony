@@ -56,6 +56,7 @@ import {
   TypeHintNode,
   WhenNode,
 } from 'tree-sitter-tony'
+import { Answer, Answers, buildAnswer } from '../types/type_inference/answers'
 import {
   BOOLEAN_TYPE,
   NUMBER_TYPE,
@@ -64,6 +65,10 @@ import {
   STRING_TYPE,
   VOID_TYPE,
 } from '../types/type_inference/primitive_types'
+import {
+  Constraints,
+  buildConstraints,
+} from '../types/type_inference/constraints'
 import {
   FileScope,
   GlobalScope,
@@ -77,23 +82,17 @@ import {
 } from '../types/analyze/scopes'
 import { LogLevel, log } from '../logger'
 import { NotImplementedError, assert } from '../types/errors/internal'
-import {
-  Constraints,
-  buildConstraints,
-} from '../types/type_inference/constraints'
 import { TypedNode, buildTypedNode } from '../types/type_inference/nodes'
+import { mapAnswers, reduceAnswers } from '../util/answers'
 import { Config } from '../config'
 import { ResolvedType } from '../types/type_inference/categories'
 import { TypeAssignment } from '../types/analyze/bindings'
 import { addErrorUnless } from '../util/traverse'
 import { buildAmbiguousTypeError } from '../types/errors/annotations'
 import { buildTemporaryTypeVariable } from '../types/type_inference/types'
-import { collectErrors } from '../errors'
 import { findScopeOfNode } from '../util/scopes'
 import { isInstanceOf } from './instances'
 import { unifyConstraints } from './constraints'
-import { Answer, Answers, buildAnswer } from '../types/type_inference/answers'
-import { mapAnswers, reduceAnswers } from '../util/answers'
 
 type TermNode =
   | AbstractionNode

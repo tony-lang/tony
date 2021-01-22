@@ -1,3 +1,8 @@
+import { Answers, buildAnswer } from '../types/type_inference/answers'
+import {
+  Constraints,
+  buildConstraints,
+} from '../types/type_inference/constraints'
 import {
   CurriedType,
   IntersectionType,
@@ -7,21 +12,12 @@ import {
   TypeVariable,
   UnionType,
 } from '../types/type_inference/types'
-import { ScopeWithErrors, ScopeWithTypes } from '../types/analyze/scopes'
-import {
-  Constraints,
-  buildConstraints,
-} from '../types/type_inference/constraints'
+import { mapAnswers, reduceAnswers } from '../util/answers'
 import { NotImplementedError } from '../types/errors/internal'
 import { ResolvedType } from '../types/type_inference/categories'
+import { State } from '../types/type_inference/state'
 import { buildConstraintsFromType } from '../util/types'
 import { unifyConstraints } from './constraints'
-import { Answers, buildAnswer } from '../types/type_inference/answers'
-import { mapAnswers, reduceAnswers } from '../util/answers'
-
-type State = {
-  scopes: (ScopeWithErrors & ScopeWithTypes)[]
-}
 
 type Return = { constraints: Constraints }
 

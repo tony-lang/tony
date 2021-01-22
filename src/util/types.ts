@@ -1,4 +1,9 @@
 import {
+  Constraints,
+  buildConstraints,
+  buildTypeVariableAssignment,
+} from '../types/type_inference/constraints'
+import {
   IntersectionType,
   RefinedTerm,
   RefinedType,
@@ -9,11 +14,6 @@ import {
   buildRefinedType,
 } from '../types/type_inference/types'
 import { ResolvedType, Type } from '../types/type_inference/categories'
-import {
-  Constraints,
-  buildConstraints,
-  buildTypeVariableAssignment,
-} from '../types/type_inference/constraints'
 import {
   buildBindingValue,
   buildEqualityPredicate,

@@ -1,5 +1,3 @@
-import { ResolvedType, Type } from '../types/type_inference/categories'
-import { ScopeWithErrors, ScopeWithTypes } from '../types/analyze/scopes'
 import {
   AccessType,
   ConditionalType,
@@ -13,50 +11,24 @@ import {
   TypeKind,
   UnionType,
 } from '../types/type_inference/types'
+import { Answers, buildAnswer } from '../types/type_inference/answers'
 import {
   Constraints,
   buildConstraints,
 } from '../types/type_inference/constraints'
-import { isInstanceOfAll } from './instances'
-import { Answers, buildAnswer } from '../types/type_inference/answers'
+import { ResolvedType, Type } from '../types/type_inference/categories'
+import { State } from '../types/type_inference/state'
 
-type State = {
-  scopes: (ScopeWithErrors & ScopeWithTypes)[]
-}
-
-type Return<T extends State> = Answers<
-  T,
-  { constraints: Constraints; type: ResolvedType }
->
-
-// const apply = <T extends State>(
-//   results: ReturnType<T>[],
-//   callback: (result: ReturnType<T>) => ReturnType<T>[],
-// ): ReturnType<T>[] => results.map((result) => callback(result)).flat()
-
-// const forAll = <T extends State, U>(
-//   state: T,
-//   types: U[],
-//   constraints: Constraints,
-//   callback: (
-//     state: T,
-//     type: U,
-//     constraints: Constraints,
-//   ) => ReturnType<T>[],
-// ): ReturnType<T>[] => {
-//   if (types.length === 1) return callback(state, types[0], constraints)
-//   const [type, ...remainingTypes] = types
-//   const results = callback(state, type, constraints)
-//   return apply(results, ([newState, newConstraints]) =>
-//     forAll(newState, remainingTypes, newConstraints, callback),
-//   )
-// }
+type Return = { constraints: Constraints; type: ResolvedType }
 
 /**
  * Given a type, reduce the type until it is normal (i.e. cannot be reduced
  * further).
  */
-export const normalize = <T extends State>(state: T, type: Type): Return<T> => {
+export const normalize = <T extends State>(
+  state: T,
+  type: Type,
+): Answers<T, Return> => {
   switch (type.kind) {
     case TypeKind.Access:
       return handleAccessType(state, type)
@@ -94,12 +66,12 @@ export const normalize = <T extends State>(state: T, type: Type): Return<T> => {
 const handleAccessType = <T extends State>(
   state: T,
   type: AccessType,
-): Return<T> => {}
+): Answers<T, Return> => {}
 
 const handleConditionalType = <T extends State>(
   state: T,
   type: ConditionalType,
-): Return<T> => {
+): Answers<T, Return> => {
   // normalize(state, type.type).map(([stateWithType, constraintsWithType, normalizedType]) => {
   //   const [] = isInstanceOfAll(stateWithType, normalizedType, type.constraints, constraintsWithType)
   // })
@@ -108,7 +80,7 @@ const handleConditionalType = <T extends State>(
 const handleCurriedType = <T extends State>(
   state: T,
   type: CurriedType,
-): Return<T>[] => {
+): Answers<T, Return> => {
   // const [stateWithFrom, from] = normalize(state, type.from)
   // const [stateWithTo, to] = normalize(stateWithFrom, type.to)
   // return [stateWithTo, { ...type, from, to }]
@@ -117,34 +89,34 @@ const handleCurriedType = <T extends State>(
 const handleInterfaceType = <T extends State>(
   state: T,
   type: InterfaceType,
-): Return<T>[] => {}
+): Answers<T, Return> => {}
 
 const handleIntersectionType = <T extends State>(
   state: T,
   type: IntersectionType,
-): Return<T>[] => {}
+): Answers<T, Return> => {}
 
 const handleObjectType = <T extends State>(
   state: T,
   type: ObjectType,
-): Return<T>[] => {}
+): Answers<T, Return> => {}
 
 const handleParametricType = <T extends State>(
   state: T,
   type: ParametricType,
-): Return<T>[] => {}
+): Answers<T, Return> => {}
 
 const handleRefinedType = <T extends State>(
   state: T,
   type: RefinedType,
-): Return<T>[] => {}
+): Answers<T, Return> => {}
 
 const handleSubtractionType = <T extends State>(
   state: T,
   type: SubtractionType,
-): Return<T>[] => {}
+): Answers<T, Return> => {}
 
 const handleUnionType = <T extends State>(
   state: T,
   type: UnionType,
-): Return<T>[] => {}
+): Answers<T, Return> => {}

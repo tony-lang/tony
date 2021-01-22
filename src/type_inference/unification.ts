@@ -1,25 +1,21 @@
-import { ResolvedType, Type } from '../types/type_inference/categories'
-import { ScopeWithErrors, ScopeWithTypes } from '../types/analyze/scopes'
+import { Answers, buildAnswer } from '../types/type_inference/answers'
 import {
   Constraints,
   buildConstraints,
   buildTypeVariableAssignment,
 } from '../types/type_inference/constraints'
+import { ResolvedType, Type } from '../types/type_inference/categories'
 import {
   TypeKind,
   TypeVariable,
   buildIntersectionType,
   buildTemporaryTypeVariable,
 } from '../types/type_inference/types'
+import { mapAnswers, reduceAnswers } from '../util/answers'
+import { State } from '../types/type_inference/state'
 import { buildConstraintsFromType } from '../util/types'
 import { normalize } from './normalization'
 import { unifyConstraints } from './constraints'
-import { Answers, buildAnswer } from '../types/type_inference/answers'
-import { mapAnswers, reduceAnswers } from '../util/answers'
-
-type State = {
-  scopes: (ScopeWithErrors & ScopeWithTypes)[]
-}
 
 type Return = { type: ResolvedType; constraints: Constraints }
 

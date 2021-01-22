@@ -1,3 +1,4 @@
+import { Answers, buildAnswer } from '../types/type_inference/answers'
 import {
   Constraints,
   DeferredTypeVariableAssignment,
@@ -5,16 +6,11 @@ import {
   buildTypeVariableAssignment,
 } from '../types/type_inference/constraints'
 import { Property, TypeKind, TypeVariable } from '../types/type_inference/types'
-import { ScopeWithErrors, ScopeWithTypes } from '../types/analyze/scopes'
 import { filterUnique, isNotUndefined } from '../util'
-import { ResolvedType } from '../types/type_inference/categories'
-import { unify } from './unification'
-import { Answers, buildAnswer } from '../types/type_inference/answers'
 import { mapAnswers, reduceAnswers } from '../util/answers'
-
-type State = {
-  scopes: (ScopeWithErrors & ScopeWithTypes)[]
-}
+import { ResolvedType } from '../types/type_inference/categories'
+import { State } from '../types/type_inference/state'
+import { unify } from './unification'
 
 /**
  * Given a set of constraints, obtains a most general set of type constraints by

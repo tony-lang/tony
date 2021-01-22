@@ -66,7 +66,6 @@ import {
   ScopeWithTerms,
   ScopeWithTypes,
 } from '../types/analyze/scopes'
-import { buildLiteralType } from '../util/types'
 import { findBinding, findBindings } from '../util/bindings'
 import {
   getIdentifierName,
@@ -76,6 +75,7 @@ import {
 import { getTerms, getTypeVariables } from '../util/scopes'
 import { TypeBindingNode } from '../types/analyze/bindings'
 import { addErrorUnless } from '../util/traverse'
+import { buildLiteralType } from '../util/types'
 import { buildPrimitiveTypeArgumentsError } from '../types/errors/annotations'
 import { mergeDeferredAssignments } from '../type_inference/constraints'
 

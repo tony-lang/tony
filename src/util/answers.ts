@@ -1,13 +1,7 @@
-import { collectErrors } from '../errors'
-import { RecursiveScope, ScopeWithErrors } from '../types/analyze/scopes'
-import { assert } from '../types/errors/internal'
 import { Answer, Answers } from '../types/type_inference/answers'
-
-interface Scope extends ScopeWithErrors, RecursiveScope<Scope> {}
-
-type State = {
-  scopes: Scope[]
-}
+import { State } from '../types/type_inference/state'
+import { assert } from '../types/errors/internal'
+import { collectErrors } from '../errors'
 
 /**
  * Filters the given answers.
@@ -15,9 +9,7 @@ type State = {
  *  * if there are only answers with errors, return the answer with the least
  *    number of errors.
  */
-const filterAnswers = <T extends State, U>(
-  answers: Answers<T, U>,
-): Answers<T, U> => {
+const filterAnswers = <T extends State, U>(answers: Answers<T, U>) => {
   assert(answers.length > 0, 'The universe requires at least one answer.')
 
   // Remove answers with errors if there are some answers without errors.
@@ -45,7 +37,7 @@ const filterAnswers = <T extends State, U>(
 const unfilteredMapAnswers = <T extends State, U, V>(
   answers: Answers<T, U>,
   callback: (answer: Answer<T, U>) => Answers<T, V>,
-): Answers<T, V> => answers.map(callback).flat()
+) => answers.map(callback).flat()
 
 /**
  * Apply a callback to all given answers returning all resulting answers after
@@ -54,7 +46,7 @@ const unfilteredMapAnswers = <T extends State, U, V>(
 export const mapAnswers = <T extends State, U, V>(
   answers: Answers<T, U>,
   callback: (answer: Answer<T, U>) => Answers<T, V>,
-) => filterAnswers(unfilteredMapAnswers(answers, callback))
+): Answers<T, V> => filterAnswers(unfilteredMapAnswers(answers, callback))
 
 /**
  * Starting from a set of initial answers, for each value, map over all current

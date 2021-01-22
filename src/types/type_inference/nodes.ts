@@ -1,6 +1,6 @@
+import { Constraints } from './constraints'
 import { ResolvedType } from './categories'
 import { SyntaxNode } from 'tree-sitter-tony'
-import { Constraints } from './constraints'
 
 // ---- Types ----
 
