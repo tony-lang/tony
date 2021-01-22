@@ -10,8 +10,8 @@ import {
 } from '../types/type_inference/types'
 import { ResolvedType, Type } from '../types/type_inference/categories'
 import {
-  TypeConstraints,
-  buildTypeConstraints,
+  Constraints,
+  buildConstraints,
   buildTypeVariableAssignment,
 } from '../types/type_inference/constraints'
 import {
@@ -21,17 +21,13 @@ import {
 } from '../types/type_inference/predicates'
 import { Literal } from '../types/type_inference/primitive_types'
 
-export const buildTypeConstraintsFromType = (
+export const buildConstraintsFromType = (
   typeVariable: TypeVariable,
   type: ResolvedType,
-): TypeConstraints => {
+): Constraints => {
   if (type.kind === TypeKind.Variable)
-    return buildTypeConstraints([
-      buildTypeVariableAssignment([typeVariable, type]),
-    ])
-  return buildTypeConstraints([
-    buildTypeVariableAssignment([typeVariable], type),
-  ])
+    return buildConstraints([buildTypeVariableAssignment([typeVariable, type])])
+  return buildConstraints([buildTypeVariableAssignment([typeVariable], type)])
 }
 
 export const buildLiteralType = (value: Literal): RefinedType<RefinedTerm> =>

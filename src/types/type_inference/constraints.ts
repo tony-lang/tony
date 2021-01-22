@@ -7,7 +7,7 @@ import { TypeVariable } from './types'
 /**
  * A set of assignments of type variables to their most general type.
  */
-export type TypeConstraints = {
+export type Constraints = {
   assignments: TypeVariableAssignment[]
   deferredAssignments: DeferredTypeVariableAssignment[]
 }
@@ -32,10 +32,10 @@ export type DeferredTypeVariableAssignment = {
 
 // ---- Factories ----
 
-export const buildTypeConstraints = (
+export const buildConstraints = (
   assignments: TypeVariableAssignment[] = [],
   deferredAssignments: DeferredTypeVariableAssignment[] = [],
-): TypeConstraints => ({ assignments, deferredAssignments })
+): Constraints => ({ assignments, deferredAssignments })
 
 export const buildTypeVariableAssignment = (
   typeVariables: TypeVariable[],

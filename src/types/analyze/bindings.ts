@@ -15,7 +15,7 @@ import {
   TypeVariableDeclarationNode,
 } from 'tree-sitter-tony'
 import { AbsolutePath } from '../path'
-import { TypeConstraints } from '../type_inference/constraints'
+import { Constraints } from '../type_inference/constraints'
 import { TypeVariable } from '../type_inference/types'
 
 // ---- Types ----
@@ -96,7 +96,7 @@ export type TypeVariableBinding = AbstractBinding & {
   kind: typeof BindingKind.TypeVariable
   node: TypeVariableDeclarationNode
   value: TypeVariable
-  constraints: TypeConstraints
+  constraints: Constraints
 }
 
 /**
@@ -180,7 +180,7 @@ export const buildTypeVariableBinding = (
   name: string,
   node: TypeVariableDeclarationNode,
   value: TypeVariable,
-  constraints: TypeConstraints,
+  constraints: Constraints,
 ): TypeVariableBinding => ({
   kind: BindingKind.TypeVariable,
   name,

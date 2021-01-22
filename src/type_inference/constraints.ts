@@ -1,6 +1,6 @@
 import {
+  Constraints,
   DeferredTypeVariableAssignment,
-  TypeConstraints,
   TypeVariableAssignment,
 } from '../types/type_inference/constraints'
 import { Property, TypeKind, TypeVariable } from '../types/type_inference/types'
@@ -8,6 +8,7 @@ import { ScopeWithErrors, ScopeWithTypes } from '../types/analyze/scopes'
 import { filterUnique, isNotUndefined } from '../util'
 import { ResolvedType } from '../types/type_inference/categories'
 import { unify } from './unification'
+import { Answers } from '../types/type_inference/answers'
 
 type State = {
   scopes: (ScopeWithErrors & ScopeWithTypes)[]
@@ -19,8 +20,8 @@ type State = {
  */
 export const unifyConstraints = <T extends State>(
   state: T,
-  ...constraints: TypeConstraints[]
-): [newState: T, constraints: TypeConstraints] => {
+  ...constraints: Constraints[]
+): Answers<T, { constraints: Constraints }> => {
   const [newState, assignments] = unifyAssignments(
     state,
     ...constraints.map(({ assignments }) => assignments),
@@ -100,7 +101,7 @@ export const mergeDeferredAssignments = (
  */
 export const applyConstraints = (
   type: ResolvedType,
-  constraints: TypeConstraints,
+  constraints: Constraints,
 ): ResolvedType => {
   switch (type.kind) {
     case TypeKind.Curried:
@@ -149,14 +150,14 @@ export const applyConstraints = (
 
 const applyConstraintsToProperty = (
   property: Property<ResolvedType>,
-  constraints: TypeConstraints,
+  constraints: Constraints,
 ): Property<ResolvedType> => ({
   key: applyConstraints(property.key, constraints),
   value: applyConstraints(property.value, constraints),
 })
 
 const getConstraintOf = (
-  constraints: TypeConstraints,
+  constraints: Constraints,
   typeVariable: TypeVariable,
 ): TypeVariableAssignment | undefined =>
   constraints.assignments.find((constraint) =>

@@ -1,6 +1,7 @@
 import { Predicate } from './predicates'
 import { SyntaxNode } from 'tree-sitter-tony'
 import { Type } from './categories'
+import { flattenType } from '../../util/types'
 
 // ---- Types ----
 
@@ -229,10 +230,11 @@ export const buildInterfaceType = <T extends Type>(
 
 export const buildIntersectionType = <T extends Type>(
   parameters: T[] = [],
-): IntersectionType<T> => ({
-  kind: TypeKind.Intersection,
-  parameters,
-})
+): IntersectionType<T> =>
+  flattenType({
+    kind: TypeKind.Intersection,
+    parameters,
+  })
 
 export const buildObjectType = <T extends Type>(
   properties: Property<T>[],
@@ -285,7 +287,8 @@ export const buildTypeVariable = (): TypeVariable => ({
 
 export const buildUnionType = <T extends Type>(
   parameters: T[] = [],
-): UnionType<T> => ({
-  kind: TypeKind.Union,
-  parameters,
-})
+): UnionType<T> =>
+  flattenType({
+    kind: TypeKind.Union,
+    parameters,
+  })

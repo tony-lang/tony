@@ -78,8 +78,8 @@ import {
 import { LogLevel, log } from '../logger'
 import { NotImplementedError, assert } from '../types/errors/internal'
 import {
-  TypeConstraints,
-  buildTypeConstraints,
+  Constraints,
+  buildConstraints,
 } from '../types/type_inference/constraints'
 import { TypedNode, buildTypedNode } from '../types/type_inference/nodes'
 import { Config } from '../config'
@@ -239,9 +239,8 @@ const inferTypesOfFile = (
 const getTypedNodesFromAnswers = <T extends TermNode>(answers: Answers<T>) =>
   answers.map((answer) => answer.typedNode)
 
-const getTypeConstraintsFromAnswers = <T extends TermNode>(
-  answers: Answers<T>,
-) => answers.map((answer) => answer.typedNode.constraints)
+const getConstraintsFromAnswers = <T extends TermNode>(answers: Answers<T>) =>
+  answers.map((answer) => answer.typedNode.constraints)
 
 const buildAnswer = <T extends TermNode>(
   state: State,
@@ -255,7 +254,7 @@ const buildPrimitiveAnswer = <T extends TermNode>(type: PrimitiveType) => (
   state: State,
   node: T,
 ): Answer<T> =>
-  buildAnswer(state, buildTypedNode(node, type, buildTypeConstraints()))
+  buildAnswer(state, buildTypedNode(node, type, buildConstraints()))
 
 const buildEmptyAnswer = buildPrimitiveAnswer(VOID_TYPE)
 
@@ -362,14 +361,9 @@ const nest = <T extends NestingNode & TermNode>(
     state: State,
     node: T,
     type: ResolvedType,
-    constraints: TypeConstraints,
+    constraints: Constraints,
   ) => Answers<T>,
-) => (
-  state: State,
-  node: T,
-  type: ResolvedType,
-  constraints: TypeConstraints,
-) => {
+) => (state: State, node: T, type: ResolvedType, constraints: Constraints) => {
   const nestedState = enterBlock(state, node)
   const answers = callback(nestedState, node, type, constraints)
   return forAllAnswers(answers, (answer) => [
@@ -381,18 +375,18 @@ const traverseAll = <T extends TermNode>(
   nodes: T[],
   initialState: State,
   typeFactory: (
-    constraints: TypeConstraints,
+    constraints: Constraints,
     node: T,
-  ) => [ResolvedType, TypeConstraints] = () => [
+  ) => [ResolvedType, Constraints] = () => [
     buildTemporaryTypeVariable(),
-    buildTypeConstraints(),
+    buildConstraints(),
   ],
 ) =>
   nodes.reduce<Answers<T>>((answers, node) => {
     const typeConstraints =
       answers.length > 0
-        ? getTypeConstraintsFromAnswers(answers)
-        : [buildTypeConstraints()]
+        ? getConstraintsFromAnswers(answers)
+        : [buildConstraints()]
     return reduceAnswers(
       typeConstraints.map((constraint) => {
         const [type, constraints] = typeFactory(constraint, node)
@@ -404,7 +398,7 @@ const traverseAll = <T extends TermNode>(
 const ensureIsInstanceOf = <T extends TermNode>(
   answer: Answer<T>,
   generalType: ResolvedType,
-  constraints: TypeConstraints,
+  constraints: Constraints,
 ): Answers<T> =>
   isInstanceOf<State>(
     answer.state,
@@ -427,7 +421,7 @@ const traverse = <T extends TermNode>(
   state: State,
   node: T,
   type: ResolvedType,
-  constraints: TypeConstraints,
+  constraints: Constraints,
 ): Answers<T> => {
   const answers = handleNode(state, node, type, constraints) as Answers<T>
   assert(
@@ -443,7 +437,7 @@ const handleNode = (
   state: State,
   node: TermNode,
   type: ResolvedType,
-  constraints: TypeConstraints,
+  constraints: Constraints,
 ): Answers<TermNode> => {
   switch (node.type) {
     case SyntaxType.ERROR:
@@ -646,7 +640,7 @@ const handleError = (
   state: State,
   node: ErrorNode,
   type: ResolvedType,
-  constraints: TypeConstraints,
+  constraints: Constraints,
 ): Answers<ErrorNode> => {
   const typedNode = buildTypedNode(node, type, constraints)
   return [buildAnswer(state, typedNode)]

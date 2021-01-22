@@ -66,7 +66,7 @@ import {
   ScopeWithTerms,
   ScopeWithTypes,
 } from '../types/analyze/scopes'
-import { buildLiteralType, flattenType } from '../util/types'
+import { buildLiteralType } from '../util/types'
 import { findBinding, findBindings } from '../util/bindings'
 import {
   getIdentifierName,
@@ -342,7 +342,7 @@ const handleIntersectionType = <T extends State>(
   )
   return [
     stateWithRight,
-    flattenType(buildIntersectionType([left, right])),
+    buildIntersectionType([left, right]),
     mergeDeferredAssignments(typeofsFromLeft, typeofsFromRight),
   ]
 }
@@ -489,7 +489,7 @@ const handleUnionType = <T extends State>(
   )
   return [
     stateWithRight,
-    flattenType(buildUnionType([left, right])),
+    buildUnionType([left, right]),
     mergeDeferredAssignments(typeofsFromLeft, typeofsFromRight),
   ]
 }
