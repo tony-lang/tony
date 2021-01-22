@@ -1,3 +1,7 @@
+import {
+  Constraints,
+  DeferredTypeVariableAssignment,
+} from '../type_inference/constraints'
 import { DeclaredType, ResolvedType, Type } from '../type_inference/categories'
 import {
   DestructuringPatternNode,
@@ -15,7 +19,6 @@ import {
   TypeVariableDeclarationNode,
 } from 'tree-sitter-tony'
 import { AbsolutePath } from '../path'
-import { TypeConstraints } from '../type_inference/constraints'
 import { TypeVariable } from '../type_inference/types'
 
 // ---- Types ----
@@ -89,6 +92,7 @@ export type LocalTypeBinding = AbstractTypeBinding &
     node: TypeBindingNode
     value: DeclaredType
     alias: Type
+    deferredAssignments: DeferredTypeVariableAssignment[]
   }
 export type TypeBinding = ImportedTypeBinding | LocalTypeBinding
 
@@ -96,7 +100,7 @@ export type TypeVariableBinding = AbstractBinding & {
   kind: typeof BindingKind.TypeVariable
   node: TypeVariableDeclarationNode
   value: TypeVariable
-  constraints: TypeConstraints
+  constraints: Constraints<Type>
 }
 
 /**
@@ -165,6 +169,7 @@ export const buildLocalTypeBinding = (
   value: DeclaredType,
   alias: Type,
   node: TypeBindingNode,
+  deferredAssignments: DeferredTypeVariableAssignment[],
   isExported = false,
 ): LocalTypeBinding => ({
   kind: BindingKind.Type,
@@ -174,13 +179,14 @@ export const buildLocalTypeBinding = (
   isExported,
   value,
   alias,
+  deferredAssignments,
 })
 
 export const buildTypeVariableBinding = (
   name: string,
   node: TypeVariableDeclarationNode,
   value: TypeVariable,
-  constraints: TypeConstraints,
+  constraints: Constraints<Type>,
 ): TypeVariableBinding => ({
   kind: BindingKind.TypeVariable,
   name,

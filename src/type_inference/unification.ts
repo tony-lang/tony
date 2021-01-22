@@ -1,93 +1,106 @@
-import { ResolvedType, Type } from '../types/type_inference/categories'
-import { ScopeWithErrors, ScopeWithTypes } from '../types/analyze/scopes'
+import { Answers, buildAnswer } from '../types/type_inference/answers'
 import {
-  TypeConstraints,
-  buildTypeConstraints,
+  Constraints,
+  buildConstraints,
   buildTypeVariableAssignment,
 } from '../types/type_inference/constraints'
+import { ResolvedType, Type } from '../types/type_inference/categories'
 import {
   TypeKind,
   TypeVariable,
   buildIntersectionType,
   buildTemporaryTypeVariable,
 } from '../types/type_inference/types'
-import { buildTypeConstraintsFromType, flattenType } from '../util/types'
+import { mapAnswers, reduceAnswers } from '../util/answers'
+import { AbstractState } from '../types/state'
+import { buildConstraintsFromType } from '../util/types'
 import { normalize } from './normalization'
 import { unifyConstraints } from './constraints'
 
-type State = {
-  scopes: (ScopeWithErrors & ScopeWithTypes)[]
-}
-
-type ReturnType<T extends State, U extends Type> = [
-  newState: T,
-  type: U,
-  constraints: TypeConstraints,
-]
+type Return = { type: ResolvedType; constraints: Constraints }
 
 /**
  * Given a set of types, return the least general type such that all types in
  * the set are instances of that type.
  */
-export const unify = <T extends State>(
+export const unify = <T extends AbstractState>(
   state: T,
   ...types: Type[]
-): ReturnType<T, ResolvedType> =>
-  types.reduce<ReturnType<T, ResolvedType>>(
-    ([state, left, constraints], right) => {
-      const [stateAfterUnify, type, constraintsAfterUnify] = concreteUnify(
-        state,
-        left,
-        right,
-      )
-      const [stateAfterUnifyConstraints, newConstraints] = unifyConstraints(
-        stateAfterUnify,
-        constraints,
-        constraintsAfterUnify,
-      )
-      const [stateAfterNormalize, normalizedType] = normalize(
-        stateAfterUnifyConstraints,
-        type,
-      )
-      return [stateAfterNormalize, normalizedType, newConstraints]
-    },
-    [state, buildTemporaryTypeVariable(), buildTypeConstraints()],
+): Answers<T, Return> =>
+  reduceAnswers<T, Return, Type>(
+    types,
+    ({ state, type: left, constraints }, right) =>
+      mapAnswers(
+        concreteUnify(state, left, right),
+        ({ state, type, constraints: constraintsAfterUnify }) =>
+          mapAnswers(
+            normalize(state, type),
+            ({ state, type, constraints: constraintsAfterNormalize }) =>
+              mapAnswers(
+                unifyConstraints(
+                  state,
+                  constraints,
+                  constraintsAfterUnify,
+                  constraintsAfterNormalize,
+                ),
+                ({ state, constraints }) => [
+                  buildAnswer(state, { type, constraints }),
+                ],
+              ),
+          ),
+      ),
+    [
+      buildAnswer(state, {
+        type: buildTemporaryTypeVariable(),
+        constraints: buildConstraints(),
+      }),
+    ],
   )
 
-const concreteUnify = <T extends State>(
+const concreteUnify = <T extends AbstractState>(
   state: T,
   left: Type,
   right: Type,
-): ReturnType<T, Type> => {
+) => {
   switch (left.kind) {
     case TypeKind.Variable:
       return unifyWithTypeVariable(state, left, right)
     case TypeKind.TemporaryVariable:
-      return [state, right, buildTypeConstraints()]
+      return [
+        buildAnswer(state, { type: right, constraints: buildConstraints() }),
+      ]
     default:
       return [
-        state,
-        flattenType(buildIntersectionType([left, right])),
-        buildTypeConstraints(),
+        buildAnswer(state, {
+          type: buildIntersectionType([left, right]),
+          constraints: buildConstraints(),
+        }),
       ]
   }
 }
 
-const unifyWithTypeVariable = <T extends State>(
+const unifyWithTypeVariable = <T extends AbstractState>(
   state: T,
   typeVariable: TypeVariable,
   type: Type,
-): ReturnType<T, Type> => {
+) => {
   if (type.kind === TypeKind.Variable)
     return [
-      state,
-      typeVariable,
-      buildTypeConstraints([buildTypeVariableAssignment([typeVariable, type])]),
+      buildAnswer(state, {
+        type: typeVariable,
+        constraints: buildConstraints([
+          buildTypeVariableAssignment([typeVariable, type]),
+        ]),
+      }),
     ]
-  const [newState, normalizedType] = normalize(state, type)
-  return [
-    newState,
-    normalizedType,
-    buildTypeConstraintsFromType(typeVariable, normalizedType),
-  ]
+  return mapAnswers(normalize(state, type), ({ state, type, constraints }) =>
+    mapAnswers(
+      unifyConstraints(
+        state,
+        constraints,
+        buildConstraintsFromType(typeVariable, type),
+      ),
+      ({ state, constraints }) => [buildAnswer(state, { type, constraints })],
+    ),
+  )
 }

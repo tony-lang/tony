@@ -38,8 +38,6 @@ export type Type =
   | InterfaceType<Type>
   | IntersectionType<Type>
   | ObjectType<Type>
-  | PrimitiveType
-  | RefinedTerm
   | RefinedType<Type>
   | UnionType<Type>
   // solely unresolved types
