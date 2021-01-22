@@ -18,6 +18,7 @@ import {
 } from '../types/type_inference/constraints'
 import { ResolvedType, Type } from '../types/type_inference/categories'
 import { AbstractState } from '../types/state'
+import { NotImplementedError } from '../types/errors/internal'
 
 type Return = { constraints: Constraints; type: ResolvedType }
 
@@ -55,68 +56,72 @@ export const normalize = <T extends AbstractState>(
   }
 }
 
-// const normalizeAll = <T extends AbstractState, U extends Type>(
-//   state: T,
-//   types: U[],
-// ) => types.reduce<[newAbstractState: T, constraints: Constraints, types: ResolvedType[]][]>((acc, type) => {
-//   const [newAbstractState, newConstraints, normalizedType] = normalize(state, type)
-//   return
-// }, [[state, buildConstraints(), []]])
-
 const handleAccessType = <T extends AbstractState>(
   state: T,
   type: AccessType,
-): Answers<T, Return> => {}
+): Answers<T, Return> => {
+  throw new NotImplementedError('Cannot normalize access types yet.')
+}
 
 const handleConditionalType = <T extends AbstractState>(
   state: T,
   type: ConditionalType,
 ): Answers<T, Return> => {
-  // normalize(state, type.type).map(([stateWithType, constraintsWithType, normalizedType]) => {
-  //   const [] = isInstanceOfAll(stateWithType, normalizedType, type.constraints, constraintsWithType)
-  // })
+  throw new NotImplementedError('Cannot normalize conditional types yet.')
 }
 
 const handleCurriedType = <T extends AbstractState>(
   state: T,
   type: CurriedType,
 ): Answers<T, Return> => {
-  // const [stateWithFrom, from] = normalize(state, type.from)
-  // const [stateWithTo, to] = normalize(stateWithFrom, type.to)
-  // return [stateWithTo, { ...type, from, to }]
+  throw new NotImplementedError('Cannot normalize curried types yet.')
 }
 
 const handleInterfaceType = <T extends AbstractState>(
   state: T,
   type: InterfaceType,
-): Answers<T, Return> => {}
+): Answers<T, Return> => {
+  throw new NotImplementedError('Cannot normalize interface types yet.')
+}
 
 const handleIntersectionType = <T extends AbstractState>(
   state: T,
   type: IntersectionType,
-): Answers<T, Return> => {}
+): Answers<T, Return> => {
+  throw new NotImplementedError('Cannot normalize intersection types yet.')
+}
 
 const handleObjectType = <T extends AbstractState>(
   state: T,
   type: ObjectType,
-): Answers<T, Return> => {}
+): Answers<T, Return> => {
+  throw new NotImplementedError('Cannot normalize object types yet.')
+}
 
 const handleParametricType = <T extends AbstractState>(
   state: T,
   type: ParametricType,
-): Answers<T, Return> => {}
+): Answers<T, Return> => {
+  throw new NotImplementedError('Cannot normalize parametric types yet.')
+}
 
 const handleRefinedType = <T extends AbstractState>(
   state: T,
   type: RefinedType,
-): Answers<T, Return> => {}
+): Answers<T, Return> => {
+  throw new NotImplementedError('Cannot normalize refined types yet.')
+}
 
 const handleSubtractionType = <T extends AbstractState>(
   state: T,
   type: SubtractionType,
-): Answers<T, Return> => {}
+): Answers<T, Return> => {
+  throw new NotImplementedError('Cannot normalize subtraction types yet.')
+}
 
 const handleUnionType = <T extends AbstractState>(
   state: T,
   type: UnionType,
-): Answers<T, Return> => {}
+): Answers<T, Return> => {
+  throw new NotImplementedError('Cannot normalize union types yet.')
+}
