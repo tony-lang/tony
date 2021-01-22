@@ -270,11 +270,11 @@ const addTypeVariableBinding = (name: string) =>
     (state) =>
       findBinding(name, state.scopes.map(getTypeVariables)) === undefined,
     (state, node) => {
-      const {
-        state: stateWithConstraints,
-        result: constraintTypes,
+      const [
+        stateWithConstraints,
         deferredAssignments,
-      } = buildTypes(state, node.constraintNodes)
+        constraintTypes,
+      ] = buildTypes(state, node.constraintNodes)
       const typeVariable = buildTypeVariable()
       const binding = buildTypeVariableBinding(
         name,
@@ -341,16 +341,16 @@ const buildTypesForLocalBinding = (
   node: TypeBindingNode,
   isExported: boolean,
 ): [newState: State, binding: LocalTypeBinding] => {
-  const {
-    state: stateWithAliasType,
-    result: aliasType,
-    deferredAssignments: deferredAssignmentsFromAliasType,
-  } = buildAliasType(state, node)
-  const {
-    state: stateWithAliasedType,
-    result: aliasedType,
-    deferredAssignments: deferredAssignmentsFromAliasedType,
-  } = buildAliasedType(stateWithAliasType, node)
+  const [
+    stateWithAliasType,
+    deferredAssignmentsFromAliasType,
+    aliasType,
+  ] = buildAliasType(state, node)
+  const [
+    stateWithAliasedType,
+    deferredAssignmentsFromAliasedType,
+    aliasedType,
+  ] = buildAliasedType(stateWithAliasType, node)
   return [
     stateWithAliasedType,
     buildLocalTypeBinding(
