@@ -1,5 +1,6 @@
 import {
   Constraints,
+  DeferredTypeVariableAssignment,
   buildConstraints,
   buildTypeVariableAssignment,
 } from '../types/type_inference/constraints'
@@ -13,21 +14,28 @@ import {
   buildRefinedTerm,
   buildRefinedType,
 } from '../types/type_inference/types'
-import { ResolvedType, Type } from '../types/type_inference/categories'
 import {
   buildBindingValue,
   buildEqualityPredicate,
   buildLiteralValue,
 } from '../types/type_inference/predicates'
 import { Literal } from '../types/type_inference/primitive_types'
+import { Type } from '../types/type_inference/categories'
 
-export const buildConstraintsFromType = (
+export const buildConstraintsFromType = <T extends Type>(
   typeVariable: TypeVariable,
-  type: ResolvedType,
-): Constraints => {
+  type: T,
+  deferredAssignments: DeferredTypeVariableAssignment[] = [],
+): Constraints<T> => {
   if (type.kind === TypeKind.Variable)
-    return buildConstraints([buildTypeVariableAssignment([typeVariable, type])])
-  return buildConstraints([buildTypeVariableAssignment([typeVariable], type)])
+    return buildConstraints(
+      [buildTypeVariableAssignment([typeVariable, type as TypeVariable])],
+      deferredAssignments,
+    )
+  return buildConstraints(
+    [buildTypeVariableAssignment([typeVariable], type)],
+    deferredAssignments,
+  )
 }
 
 export const buildLiteralType = (value: Literal): RefinedType<RefinedTerm> =>

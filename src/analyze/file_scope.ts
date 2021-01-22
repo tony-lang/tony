@@ -64,6 +64,10 @@ import {
   buildRefinementTypeDeclarationOutsideRefinementTypeError,
   buildUnknownFileError,
 } from '../types/errors/annotations'
+import {
+  buildTypeVariable,
+  buildUnionType,
+} from '../types/type_inference/types'
 import { fileIsExternal, fileMayBeImported } from '../util/paths'
 import { findBinding, findBindings, itemsMissingFrom } from '../util/bindings'
 import {
@@ -76,11 +80,9 @@ import { getTerms, getTypeVariables, getTypes } from '../util/scopes'
 import { Config } from '../config'
 import { assert } from '../types/errors/internal'
 import { buildConstraintsFromType } from '../util/types'
-import { buildTypeVariable } from '../types/type_inference/types'
 import { isPrimitiveTypeName } from '../types/type_inference/primitive_types'
+import { mergeDeferredAssignments } from '../type_inference/constraints'
 import { resolveRelativePath } from './resolve'
-import { unify } from '../type_inference/unification'
-import { unifyConstraints } from '../type_inference/constraints'
 
 type ImportedBindingConfig = { file: AbsolutePath; originalName?: string }
 
@@ -268,33 +270,29 @@ const addTypeVariableBinding = (name: string) =>
     (state) =>
       findBinding(name, state.scopes.map(getTypeVariables)) === undefined,
     (state, node) => {
-      const [stateWithConstraints, constraints] = buildTypes(
-        state,
-        node.constraintNodes,
-      )
-      const [stateWithUnify, constraintType, constraintsFromConstraint] = unify(
-        stateWithConstraints,
-        ...constraints,
-      )
+      const {
+        state: stateWithConstraints,
+        result: constraintTypes,
+        deferredAssignments,
+      } = buildTypes(state, node.constraintNodes)
       const typeVariable = buildTypeVariable()
-      const [stateWithUnifiedConstraints, typeConstraints] = unifyConstraints(
-        stateWithUnify,
-        constraintsFromConstraint,
-        buildConstraintsFromType(typeVariable, constraintType),
-      )
       const binding = buildTypeVariableBinding(
         name,
         node,
         typeVariable,
-        typeConstraints,
+        buildConstraintsFromType(
+          typeVariable,
+          buildUnionType(constraintTypes),
+          deferredAssignments,
+        ),
       )
-      const [scope, ...parentScopes] = stateWithUnifiedConstraints.scopes
+      const [scope, ...parentScopes] = stateWithConstraints.scopes
       const newScope = {
         ...scope,
         typeVariables: [...scope.typeVariables, binding],
       }
       return {
-        ...stateWithUnifiedConstraints,
+        ...stateWithConstraints,
         scopes: [newScope, ...parentScopes],
       }
     },
@@ -343,14 +341,29 @@ const buildTypesForLocalBinding = (
   node: TypeBindingNode,
   isExported: boolean,
 ): [newState: State, binding: LocalTypeBinding] => {
-  const [stateWithAliasType, aliasType] = buildAliasType(state, node)
-  const [stateWithAliasedType, aliasedType] = buildAliasedType(
-    stateWithAliasType,
-    node,
-  )
+  const {
+    state: stateWithAliasType,
+    result: aliasType,
+    deferredAssignments: deferredAssignmentsFromAliasType,
+  } = buildAliasType(state, node)
+  const {
+    state: stateWithAliasedType,
+    result: aliasedType,
+    deferredAssignments: deferredAssignmentsFromAliasedType,
+  } = buildAliasedType(stateWithAliasType, node)
   return [
     stateWithAliasedType,
-    buildLocalTypeBinding(name, aliasType, aliasedType, node, isExported),
+    buildLocalTypeBinding(
+      name,
+      aliasType,
+      aliasedType,
+      node,
+      mergeDeferredAssignments(
+        deferredAssignmentsFromAliasType,
+        deferredAssignmentsFromAliasedType,
+      ),
+      isExported,
+    ),
   ]
 }
 

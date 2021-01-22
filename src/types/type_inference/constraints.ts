@@ -1,4 +1,4 @@
-import { ResolvedType } from './categories'
+import { ResolvedType, Type } from './categories'
 import { TermBinding } from '../analyze/bindings'
 import { TypeVariable } from './types'
 
@@ -7,17 +7,17 @@ import { TypeVariable } from './types'
 /**
  * A set of assignments of type variables to their most general type.
  */
-export type Constraints = {
-  assignments: TypeVariableAssignment[]
+export type Constraints<T extends Type = ResolvedType> = {
+  assignments: TypeVariableAssignment<T>[]
   deferredAssignments: DeferredTypeVariableAssignment[]
 }
 
 /**
  * Maps a set of type variables to their most general type (if any).
  */
-export type TypeVariableAssignment = {
+export type TypeVariableAssignment<T extends Type = ResolvedType> = {
   typeVariables: TypeVariable[]
-  type?: ResolvedType
+  type?: T
 }
 
 /**
@@ -32,15 +32,15 @@ export type DeferredTypeVariableAssignment = {
 
 // ---- Factories ----
 
-export const buildConstraints = (
-  assignments: TypeVariableAssignment[] = [],
+export const buildConstraints = <T extends Type>(
+  assignments: TypeVariableAssignment<T>[] = [],
   deferredAssignments: DeferredTypeVariableAssignment[] = [],
-): Constraints => ({ assignments, deferredAssignments })
+): Constraints<T> => ({ assignments, deferredAssignments })
 
-export const buildTypeVariableAssignment = (
+export const buildTypeVariableAssignment = <T extends Type>(
   typeVariables: TypeVariable[],
-  type?: ResolvedType,
-): TypeVariableAssignment => ({
+  type?: T,
+): TypeVariableAssignment<T> => ({
   typeVariables,
   type,
 })

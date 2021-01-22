@@ -176,7 +176,7 @@ const handleTypeNode = (node: TypeNode) =>
 const handleTypeDeclaration = <T extends State>(
   state: T,
   node: TypeDeclarationNode,
-): Answer<T, Return<DeclaredType>> => {
+) => {
   const name = getTypeName(node.nameNode)
   const typeParameters = node.parameterNodes.map((child) =>
     findTypeVariable(state, child.nameNode),
@@ -205,10 +205,7 @@ export const buildAliasedType = <T extends State>(
   }
 }
 
-const handleEnum = <T extends State>(
-  state: T,
-  node: EnumNode,
-): Answer<T, Return<Type>> => {
+const handleEnum = <T extends State>(state: T, node: EnumNode) => {
   const {
     state: stateWithValues,
     result: valueTypes,
@@ -220,10 +217,7 @@ const handleEnum = <T extends State>(
   })
 }
 
-const handleInterface = <T extends State>(
-  state: T,
-  node: InterfaceNode,
-): Answer<T, Return<Type>> => {
+const handleInterface = <T extends State>(state: T, node: InterfaceNode) => {
   const {
     state: stateWithValues,
     result: memberTypes,
