@@ -30,7 +30,7 @@ const forAll = <T extends State, U>(
   types: U[],
   constraints: Constraints,
   callback: (state: T, type: U, constraints: Constraints) => Answers<T, Return>,
-): Answers<T, Return> =>
+) =>
   reduceAnswers(
     types,
     ({ state, constraints }, type) => callback(state, type, constraints),
@@ -42,8 +42,7 @@ const forSome = <T extends State, U>(
   types: U[],
   constraints: Constraints,
   callback: (state: T, type: U, constraints: Constraints) => Answers<T, Return>,
-): Answers<T, Return> =>
-  types.map((type) => callback(state, type, constraints)).flat()
+) => types.map((type) => callback(state, type, constraints)).flat()
 
 /**
  * Given a specific type and some general types, determines whether the specific
@@ -124,7 +123,7 @@ const typeVariableIsInstanceOf = <T extends State>(
   typeVariable: TypeVariable,
   type: ResolvedType,
   constraints: Constraints,
-): Answers<T, Return> =>
+) =>
   mapAnswers(
     unifyConstraints(
       state,
@@ -139,7 +138,7 @@ const isInstanceOfIntersectionOrUnion = <T extends State>(
   intersectionOrUnion: IntersectionType<ResolvedType> | UnionType<ResolvedType>,
   type: ResolvedType,
   constraints: Constraints,
-): Answers<T, Return> =>
+) =>
   (intersectionOrUnion.kind === TypeKind.Intersection ? forSome : forAll)(
     state,
     intersectionOrUnion.parameters,
@@ -153,7 +152,7 @@ const isInstanceOfCurriedType = <T extends State>(
   specific: ResolvedType,
   general: CurriedType<ResolvedType>,
   constraints: Constraints,
-): Answers<T, Return> => {
+) => {
   if (specific.kind !== TypeKind.Curried) return []
   return mapAnswers(
     isInstanceOf(state, specific.from, general.from, constraints),
@@ -167,7 +166,7 @@ const isInstanceOfObjectType = <T extends State>(
   specific: ResolvedType,
   general: ObjectType<ResolvedType>,
   constraints: Constraints,
-): Answers<T, Return> => {
+) => {
   if (specific.kind === TypeKind.Object) {
     return forAll(
       state,
@@ -196,7 +195,7 @@ const propertyIsInstanceOf = <T extends State>(
   specific: Property<ResolvedType>,
   general: Property<ResolvedType>,
   constraints: Constraints,
-): Answers<T, Return> =>
+) =>
   mapAnswers(
     isInstanceOf(state, specific.key, general.key, constraints),
     ({ state, constraints }) =>

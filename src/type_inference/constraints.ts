@@ -2,13 +2,15 @@ import {
   Constraints,
   DeferredTypeVariableAssignment,
   TypeVariableAssignment,
+  buildTypeVariableAssignment,
 } from '../types/type_inference/constraints'
 import { Property, TypeKind, TypeVariable } from '../types/type_inference/types'
 import { ScopeWithErrors, ScopeWithTypes } from '../types/analyze/scopes'
 import { filterUnique, isNotUndefined } from '../util'
 import { ResolvedType } from '../types/type_inference/categories'
 import { unify } from './unification'
-import { Answers } from '../types/type_inference/answers'
+import { Answers, buildAnswer } from '../types/type_inference/answers'
+import { mapAnswers, reduceAnswers } from '../util/answers'
 
 type State = {
   scopes: (ScopeWithErrors & ScopeWithTypes)[]
@@ -22,70 +24,73 @@ export const unifyConstraints = <T extends State>(
   state: T,
   ...constraints: Constraints[]
 ): Answers<T, { constraints: Constraints }> => {
-  const [newState, assignments] = unifyAssignments(
-    state,
-    ...constraints.map(({ assignments }) => assignments),
-  )
   const deferredAssignments = mergeDeferredAssignments(
     ...constraints.map(({ deferredAssignments }) => deferredAssignments),
   )
-  return [newState, { assignments, deferredAssignments }]
+  return mapAnswers(
+    unifyAssignments(
+      state,
+      ...constraints.map(({ assignments }) => assignments),
+    ),
+    ({ state, assignments }) => [
+      buildAnswer(state, { constraints: { assignments, deferredAssignments } }),
+    ],
+  )
 }
 
 const unifyAssignments = <T extends State>(
   state: T,
   ...assignments: TypeVariableAssignment[][]
-): [newState: T, assignments: TypeVariableAssignment[]] =>
-  assignments.reduce<[newState: T, assignments: TypeVariableAssignment[]]>(
-    (acc, assignments) =>
-      assignments.reduce(([state, assignments], assignment) => {
-        const matchingAssignments = getOverlappingAssignments(
-          assignments,
-          assignment.typeVariables,
-        )
-        if (matchingAssignments.length === 0)
-          return [state, [...assignments, assignment]]
-
-        const [newState, newConstraint] = mergeTypeVariableAssignments(state, [
-          assignment,
-          ...matchingAssignments,
-        ])
+) =>
+  reduceAnswers<
+    T,
+    { assignments: TypeVariableAssignment[] },
+    TypeVariableAssignment
+  >(
+    assignments.flat(),
+    ({ state, assignments }, assignment) => {
+      const matchingAssignments = getOverlappingAssignments(
+        assignments,
+        assignment.typeVariables,
+      )
+      if (matchingAssignments.length === 0)
         return [
-          newState,
-          [
-            ...assignments.filter(
-              (assignment) => !matchingAssignments.includes(assignment),
-            ),
-            newConstraint,
-          ],
+          buildAnswer(state, { assignments: [...assignments, assignment] }),
         ]
-      }, acc),
-    [state, []],
+
+      return mapAnswers(
+        mergeAssignments(state, [assignment, ...matchingAssignments]),
+        ({ state, assignment }) => [
+          buildAnswer(state, {
+            assignments: [
+              ...assignments.filter(
+                (assignment) => !matchingAssignments.includes(assignment),
+              ),
+              assignment,
+            ],
+          }),
+        ],
+      )
+    },
+    [buildAnswer(state, { assignments: [] })],
   )
 
-const mergeTypeVariableAssignments = <T extends State>(
+const mergeAssignments = <T extends State>(
   state: T,
-  typeVariableAssignments: TypeVariableAssignment[],
-): [newState: T, typeVariableAssignment: TypeVariableAssignment][] => {
+  assignments: TypeVariableAssignment[],
+) => {
   const typeVariables = filterUnique(
-    typeVariableAssignments
-      .map((typeVariableAssignment) => typeVariableAssignment.typeVariables)
-      .flat(1),
+    assignments.map((assignment) => assignment.typeVariables).flat(1),
   )
-  const types = typeVariableAssignments
-    .map((typeVariableAssignment) =>
-      typeVariableAssignment.type ? typeVariableAssignment.type : undefined,
-    )
+  const types = assignments
+    .map((assignment) => (assignment.type ? assignment.type : undefined))
     .filter(isNotUndefined)
   // disregard updated constraints from unification
-  const [stateAfterUnify, type] = unify(state, ...types)
-  return [
-    stateAfterUnify,
-    {
-      typeVariables,
-      type,
-    },
-  ]
+  return mapAnswers(unify(state, ...types), ({ state, type }) => [
+    buildAnswer(state, {
+      assignment: buildTypeVariableAssignment(typeVariables, type),
+    }),
+  ])
 }
 
 /**
@@ -151,7 +156,7 @@ export const applyConstraints = (
 const applyConstraintsToProperty = (
   property: Property<ResolvedType>,
   constraints: Constraints,
-): Property<ResolvedType> => ({
+) => ({
   key: applyConstraints(property.key, constraints),
   value: applyConstraints(property.value, constraints),
 })
@@ -159,7 +164,7 @@ const applyConstraintsToProperty = (
 const getConstraintOf = (
   constraints: Constraints,
   typeVariable: TypeVariable,
-): TypeVariableAssignment | undefined =>
+) =>
   constraints.assignments.find((constraint) =>
     constraint.typeVariables.includes(typeVariable),
   )
@@ -167,7 +172,7 @@ const getConstraintOf = (
 const getOverlappingAssignments = (
   assignments: TypeVariableAssignment[],
   typeVariables: TypeVariable[],
-): TypeVariableAssignment[] =>
+) =>
   assignments.filter((assignment) =>
     typeVariables.some((typeVariable) =>
       assignment.typeVariables.includes(typeVariable),
