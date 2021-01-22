@@ -16,31 +16,34 @@ import { NotImplementedError } from '../types/errors/internal'
 import { ResolvedType } from '../types/type_inference/categories'
 import { buildConstraintsFromType } from '../util/types'
 import { unifyConstraints } from './constraints'
+import { Answers, buildAnswer } from '../types/type_inference/answers'
+import { mapAnswers, reduceAnswers } from '../util/answers'
 
 type State = {
   scopes: (ScopeWithErrors & ScopeWithTypes)[]
 }
 
-type ReturnType<T extends State> = [newState: T, constraints: Constraints]
-
-const apply = <T extends State>(
-  results: ReturnType<T>[],
-  callback: (result: ReturnType<T>) => ReturnType<T>[],
-): ReturnType<T>[] => results.map((result) => callback(result)).flat()
+type Return = { constraints: Constraints }
 
 const forAll = <T extends State, U>(
   state: T,
   types: U[],
   constraints: Constraints,
-  callback: (state: T, type: U, constraints: Constraints) => ReturnType<T>[],
-): ReturnType<T>[] => {
-  if (types.length === 0) return [[state, constraints]]
-  const [type, ...remainingTypes] = types
-  const results = callback(state, type, constraints)
-  return apply(results, ([newState, newConstraints]) =>
-    forAll(newState, remainingTypes, newConstraints, callback),
+  callback: (state: T, type: U, constraints: Constraints) => Answers<T, Return>,
+): Answers<T, Return> =>
+  reduceAnswers(
+    types,
+    ({ state, constraints }, type) => callback(state, type, constraints),
+    [buildAnswer(state, { constraints })],
   )
-}
+
+const forSome = <T extends State, U>(
+  state: T,
+  types: U[],
+  constraints: Constraints,
+  callback: (state: T, type: U, constraints: Constraints) => Answers<T, Return>,
+): Answers<T, Return> =>
+  types.map((type) => callback(state, type, constraints)).flat()
 
 /**
  * Given a specific type and some general types, determines whether the specific
@@ -51,18 +54,10 @@ export const isInstanceOfAll = <T extends State>(
   specific: ResolvedType,
   general: ResolvedType[],
   constraints = buildConstraints(),
-): ReturnType<T>[] =>
+): Answers<T, Return> =>
   forAll(state, general, constraints, (state, general, constraints) =>
     isInstanceOf(state, specific, general, constraints),
   )
-
-const forSome = <T extends State, U>(
-  state: T,
-  types: U[],
-  constraints: Constraints,
-  callback: (state: T, type: U, constraints: Constraints) => ReturnType<T>[],
-): ReturnType<T>[] =>
-  types.map((type) => callback(state, type, constraints)).flat()
 
 /**
  * Given a specific and a general type, determines whether the specific type is
@@ -75,7 +70,7 @@ export const isInstanceOf = <T extends State>(
   specific: ResolvedType,
   general: ResolvedType,
   constraints = buildConstraints(),
-): ReturnType<T>[] => {
+): Answers<T, Return> => {
   if (specific.kind === TypeKind.Variable)
     return typeVariableIsInstanceOf(state, specific, general, constraints)
   else if (
@@ -120,7 +115,7 @@ export const isInstanceOf = <T extends State>(
     case TypeKind.String:
     case TypeKind.TemporaryVariable:
     case TypeKind.Void:
-      return specific === general ? [[state, constraints]] : []
+      return specific === general ? [buildAnswer(state, { constraints })] : []
   }
 }
 
@@ -129,21 +124,22 @@ const typeVariableIsInstanceOf = <T extends State>(
   typeVariable: TypeVariable,
   type: ResolvedType,
   constraints: Constraints,
-): ReturnType<T>[] => {
-  const [newState, newConstraints] = unifyConstraints(
-    state,
-    constraints,
-    buildConstraintsFromType(typeVariable, type),
+): Answers<T, Return> =>
+  mapAnswers(
+    unifyConstraints(
+      state,
+      constraints,
+      buildConstraintsFromType(typeVariable, type),
+    ),
+    ({ state, constraints }) => [buildAnswer(state, { constraints })],
   )
-  return [[newState, newConstraints]]
-}
 
 const isInstanceOfIntersectionOrUnion = <T extends State>(
   state: T,
   intersectionOrUnion: IntersectionType<ResolvedType> | UnionType<ResolvedType>,
   type: ResolvedType,
   constraints: Constraints,
-): ReturnType<T>[] =>
+): Answers<T, Return> =>
   (intersectionOrUnion.kind === TypeKind.Intersection ? forSome : forAll)(
     state,
     intersectionOrUnion.parameters,
@@ -157,12 +153,12 @@ const isInstanceOfCurriedType = <T extends State>(
   specific: ResolvedType,
   general: CurriedType<ResolvedType>,
   constraints: Constraints,
-): ReturnType<T>[] => {
+): Answers<T, Return> => {
   if (specific.kind !== TypeKind.Curried) return []
-  return apply<T>(
+  return mapAnswers(
     isInstanceOf(state, specific.from, general.from, constraints),
-    ([stateWithFrom, constraintsWithFrom]) =>
-      isInstanceOf(stateWithFrom, specific.to, general.to, constraintsWithFrom),
+    ({ state, constraints }) =>
+      isInstanceOf(state, specific.to, general.to, constraints),
   )
 }
 
@@ -171,7 +167,7 @@ const isInstanceOfObjectType = <T extends State>(
   specific: ResolvedType,
   general: ObjectType<ResolvedType>,
   constraints: Constraints,
-): ReturnType<T>[] => {
+): Answers<T, Return> => {
   if (specific.kind === TypeKind.Object) {
     return forAll(
       state,
@@ -200,14 +196,9 @@ const propertyIsInstanceOf = <T extends State>(
   specific: Property<ResolvedType>,
   general: Property<ResolvedType>,
   constraints: Constraints,
-): ReturnType<T>[] =>
-  apply<T>(
+): Answers<T, Return> =>
+  mapAnswers(
     isInstanceOf(state, specific.key, general.key, constraints),
-    ([stateWithKey, constraintsWithKey]) =>
-      isInstanceOf(
-        stateWithKey,
-        specific.value,
-        general.value,
-        constraintsWithKey,
-      ),
+    ({ state, constraints }) =>
+      isInstanceOf(state, specific.value, general.value, constraints),
   )
