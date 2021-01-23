@@ -1,8 +1,4 @@
 import { AbstractionNode, SyntaxType } from 'tree-sitter-tony'
-import {
-  CURRY_FUNCTION,
-  RESOLVE_ABSTRACTION_BRANCH_FUNCTION,
-} from './constants'
 import { Emit, buildFileEmit } from '../types/emit'
 import { GlobalScope, TypedFileScope } from '../types/analyze/scopes'
 import { LogLevel, log } from '../logger'
@@ -10,6 +6,7 @@ import { NotImplementedError, assert } from '../types/errors/internal'
 import { Config } from '../config'
 import { TermNode } from '../types/nodes'
 import { TypedNode } from '../types/type_inference/nodes'
+import { generateAbstraction } from './util'
 
 export const generateCode = (
   config: Config,
@@ -226,9 +223,6 @@ const traverse = (typedNode: TypedNode<TermNode>): string => {
 }
 
 const handleAbstraction = (typedNode: TypedNode<AbstractionNode>): string => {
-  const branches = typedNode.branchNodes
-    .map((branch) => traverse(branch))
-    .join(',')
-
-  return `${CURRY_FUNCTION}((...args) => ${RESOLVE_ABSTRACTION_BRANCH_FUNCTION}(args, [${branches}]))`
+  const branches = typedNode.branchNodes.map((branch) => traverse(branch))
+  return generateAbstraction(branches)
 }
