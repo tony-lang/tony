@@ -1,61 +1,3 @@
-import {
-  AbstractionBranchNode,
-  AbstractionNode,
-  AccessNode,
-  ApplicationNode,
-  ArgumentNode,
-  AssignmentNode,
-  BlockNode,
-  BooleanNode,
-  CaseNode,
-  DestructuringPatternNode,
-  ElseIfNode,
-  EnumNode,
-  EnumValueNode,
-  ErrorNode,
-  ExportNode,
-  ExportedImportNode,
-  GeneratorNode,
-  GroupNode,
-  IdentifierNode,
-  IdentifierPatternNode,
-  IfNode,
-  ImportIdentifierNode,
-  ImportNode,
-  ImportTypeNode,
-  InfixApplicationNode,
-  InterfaceNode,
-  InterpolationNode,
-  LeftSectionNode,
-  ListComprehensionNode,
-  ListNode,
-  ListPatternNode,
-  MemberNode,
-  MemberPatternNode,
-  NumberNode,
-  PatternGroupNode,
-  PipelineNode,
-  PrefixApplicationNode,
-  ProgramNode,
-  RawStringNode,
-  RegexNode,
-  RestNode,
-  ReturnNode,
-  RightSectionNode,
-  ShorthandMemberPatternNode,
-  SpreadNode,
-  StringNode,
-  StructNode,
-  StructPatternNode,
-  SyntaxType,
-  TaggedPatternNode,
-  TaggedValueNode,
-  TupleNode,
-  TuplePatternNode,
-  TypeAliasNode,
-  TypeHintNode,
-  WhenNode,
-} from 'tree-sitter-tony'
 import { Answer, Answers, buildAnswer } from '../types/type_inference/answers'
 import {
   BOOLEAN_TYPE,
@@ -69,11 +11,12 @@ import {
   Constraints,
   buildConstraints,
 } from '../types/type_inference/constraints'
+import { ErrorNode, ProgramNode, SyntaxType } from 'tree-sitter-tony'
 import {
   FileScope,
   GlobalScope,
   NestedScope,
-  NestingNode,
+  NestingTermNode,
   TypedFileScope,
   TypedNestedScope,
   buildTypedFileScope,
@@ -82,74 +25,22 @@ import {
 } from '../types/analyze/scopes'
 import { LogLevel, log } from '../logger'
 import { NotImplementedError, assert } from '../types/errors/internal'
-import { TypedNode, buildTypedNode } from '../types/type_inference/nodes'
+import {
+  TypedNode,
+  TypedNodeChildren,
+  buildTypedNode,
+} from '../types/type_inference/nodes'
+import { filterFileScopeByTermScopes, findScopeOfNode } from '../util/scopes'
 import { mapAnswers, reduceAnswers } from '../util/answers'
 import { Config } from '../config'
 import { ResolvedType } from '../types/type_inference/categories'
+import { TermNode } from '../types/nodes'
 import { TypeAssignment } from '../types/analyze/bindings'
 import { addErrorUnless } from '../util/traverse'
 import { buildAmbiguousTypeError } from '../types/errors/annotations'
 import { buildTemporaryTypeVariable } from '../types/type_inference/types'
-import { findScopeOfNode } from '../util/scopes'
 import { isInstanceOf } from './instances'
 import { unifyConstraints } from './constraints'
-
-type TermNode =
-  | AbstractionNode
-  | AbstractionBranchNode
-  | AccessNode
-  | ApplicationNode
-  | ArgumentNode
-  | AssignmentNode
-  | BlockNode
-  | BooleanNode
-  | CaseNode
-  | DestructuringPatternNode
-  | ElseIfNode
-  | EnumNode
-  | EnumValueNode
-  | ExportNode
-  | ExportedImportNode
-  | GeneratorNode
-  | GroupNode
-  | IdentifierNode
-  | IdentifierPatternNode
-  | IfNode
-  | ImportNode
-  | ImportIdentifierNode
-  | ImportTypeNode
-  | InfixApplicationNode
-  | InterfaceNode
-  | InterpolationNode
-  | LeftSectionNode
-  | ListNode
-  | ListComprehensionNode
-  | ListPatternNode
-  | MemberNode
-  | MemberPatternNode
-  | NumberNode
-  | PatternGroupNode
-  | PipelineNode
-  | PrefixApplicationNode
-  | ProgramNode
-  | RawStringNode
-  | RegexNode
-  | RestNode
-  | ReturnNode
-  | RightSectionNode
-  | ShorthandMemberPatternNode
-  | SpreadNode
-  | StringNode
-  | StructNode
-  | StructPatternNode
-  | TaggedPatternNode
-  | TaggedValueNode
-  | TupleNode
-  | TuplePatternNode
-  | TypeAliasNode
-  | TypeHintNode
-  | WhenNode
-  | ErrorNode
 
 type State = {
   /**
@@ -160,7 +51,7 @@ type State = {
    * A stack of all scopes starting with the closest scope and ending with the
    * symbol table.
    */
-  scopes: (FileScope | NestedScope)[]
+  scopes: (FileScope<NestingTermNode> | NestedScope<NestingTermNode>)[]
   /**
    * A list of type assignments for each scope on the scope stack.
    */
@@ -176,7 +67,9 @@ type State = {
  * Represents a type annotation (an "explanation") for a given node in the
  * syntax tree.
  */
-type Return<T extends TermNode> = { typedNode: TypedNode<T> }
+type Return<T extends TermNode = TermNode> = {
+  typedNode: TypedNode<T>
+}
 
 /**
  * Represents the contextual type of a node in the syntax tree.
@@ -206,7 +99,7 @@ const inferTypesOfFile = (
 ): TypedFileScope => {
   const initialState: State = {
     typedFileScopes,
-    scopes: [fileScope],
+    scopes: [filterFileScopeByTermScopes(fileScope)],
     typeAssignments: [[]],
     typedScopes: [],
   }
@@ -242,34 +135,34 @@ const buildPrimitiveAnswer = <T extends TermNode>(
   state: State,
   node: T,
   type: PrimitiveType,
+  childNodes: TypedNodeChildren<T>,
 ): Answer<State, Return<T>> =>
   buildAnswer(state, {
-    typedNode: buildTypedNode(node, type, buildConstraints()),
+    typedNode: buildTypedNode(node, type, buildConstraints(), childNodes),
   })
 
-const wrapAnswer = <T extends TermNode>(
-  node: T,
-  answer: Answer<State, { results: Return<TermNode>[] }>,
-  type: ResolvedType,
+const wrapAnswer = <T extends TermNode, U extends TermNode>(
+  answer: Answer<State, { results: Return<U>[] }>,
+  callback: (
+    state: State,
+    typedNodes: TypedNode<U>[],
+    constraints: Constraints,
+  ) => Answers<State, Return<T>>,
 ): Answers<State, Return<T>> =>
   mapAnswers(
     unifyConstraints(
       answer.state,
       ...answer.results.map((result) => result.typedNode.constraints),
     ),
-    ({ state, constraints }) => [
-      buildAnswer(state, {
-        typedNode: buildTypedNode(
-          node,
-          type,
-          constraints,
-          answer.results.map((result) => result.typedNode),
-        ),
-      }),
-    ],
+    ({ state, constraints }) =>
+      callback(
+        state,
+        answer.results.map((result) => result.typedNode),
+        constraints,
+      ),
   )
 
-const enterBlock = (state: State, node: NestingNode): State => {
+const enterBlock = (state: State, node: NestingTermNode): State => {
   const [scope, ...scopes] = state.scopes
   const newScope = findScopeOfNode(scope.scopes, node)
   assert(
@@ -284,9 +177,7 @@ const enterBlock = (state: State, node: NestingNode): State => {
   }
 }
 
-const leaveBlock = (
-  answer: Answer<State, Return<NestingNode & TermNode>>,
-): State => {
+const leaveBlock = (answer: Answer<State, Return<NestingTermNode>>): State => {
   const [scope, parentScope, ...parentScopes] = answer.state.scopes
   const [
     typedScopes,
@@ -320,7 +211,7 @@ const leaveBlock = (
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const nest = <T extends NestingNode & TermNode>(
+const nest = <T extends NestingTermNode>(
   callback: (
     state: State,
     node: T,
@@ -382,7 +273,7 @@ const handleNode = (
   state: State,
   node: TermNode,
   context: Context,
-): Answers<State, Return<TermNode>> => {
+): Answers<State, Return> => {
   switch (node.type) {
     case SyntaxType.ERROR:
       return handleError(state, node, context)
@@ -414,7 +305,7 @@ const handleNode = (
     case SyntaxType.Block:
       throw new NotImplementedError('Tony cannot infer the type of blocks yet.')
     case SyntaxType.Boolean:
-      return [buildPrimitiveAnswer(state, node, BOOLEAN_TYPE)]
+      return [buildPrimitiveAnswer(state, node, BOOLEAN_TYPE, {})]
     case SyntaxType.Case:
       throw new NotImplementedError('Tony cannot infer the type of cases yet.')
     case SyntaxType.DestructuringPattern:
@@ -502,7 +393,7 @@ const handleNode = (
         'Tony cannot infer the type of member patterns yet.',
       )
     case SyntaxType.Number:
-      return [buildPrimitiveAnswer(state, node, NUMBER_TYPE)]
+      return [buildPrimitiveAnswer(state, node, NUMBER_TYPE, {})]
     case SyntaxType.PatternGroup:
       throw new NotImplementedError(
         'Tony cannot infer the type of pattern groups yet.',
@@ -518,9 +409,9 @@ const handleNode = (
     case SyntaxType.Program:
       return handleProgram(state, node)
     case SyntaxType.RawString:
-      return [buildPrimitiveAnswer(state, node, STRING_TYPE)]
+      return [buildPrimitiveAnswer(state, node, STRING_TYPE, {})]
     case SyntaxType.Regex:
-      return [buildPrimitiveAnswer(state, node, REG_EXP_TYPE)]
+      return [buildPrimitiveAnswer(state, node, REG_EXP_TYPE, {})]
     case SyntaxType.Rest:
       throw new NotImplementedError(
         'Tony cannot infer the type of rest parameters yet.',
@@ -585,7 +476,7 @@ const handleError = (
   node: ErrorNode,
   { type, constraints }: Context,
 ): Answers<State, Return<ErrorNode>> => {
-  const typedNode = buildTypedNode(node, type, constraints)
+  const typedNode = buildTypedNode(node, type, constraints, {})
   return [buildAnswer(state, { typedNode })]
 }
 
@@ -593,11 +484,20 @@ const handleProgram = (
   state: State,
   node: ProgramNode,
 ): Answers<State, Return<ProgramNode>> => {
-  const answers = traverseAll(state, node.termNodes)
-  return mapAnswers(answers, (answer) => {
-    if (answer.results.length === 0)
-      return [buildPrimitiveAnswer(answer.state, node, VOID_TYPE)]
-    const type = answer.results[answer.results.length - 1].typedNode.type
-    return wrapAnswer(node, answer, type)
-  })
+  if (node.termNodes.length === 0)
+    return [buildPrimitiveAnswer(state, node, VOID_TYPE, { termNodes: [] })]
+  return mapAnswers(traverseAll(state, node.termNodes), (answer) =>
+    wrapAnswer(answer, (state, termNodes, constraints) => {
+      assert(
+        termNodes.length > 0,
+        'When there is at least one term, results must also include at least one term.',
+      )
+      const type = termNodes[termNodes.length - 1].type
+      return [
+        buildAnswer(state, {
+          typedNode: buildTypedNode(node, type, constraints, { termNodes }),
+        }),
+      ]
+    }),
+  )
 }

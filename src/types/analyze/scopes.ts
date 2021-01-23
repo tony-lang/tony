@@ -5,7 +5,6 @@ import {
   ListComprehensionNode,
   ProgramNode,
   RefinementTypeNode,
-  SyntaxNode,
   TypeAliasNode,
   WhenNode,
 } from 'tree-sitter-tony'
@@ -17,6 +16,7 @@ import {
   TypeVariableBinding,
 } from './bindings'
 import { AbsolutePath } from '../path'
+import { TermNode } from '../nodes'
 import { TypedNode } from '../type_inference/nodes'
 
 // ---- Types ----
@@ -29,6 +29,8 @@ export type NestingNode =
   | RefinementTypeNode
   | TypeAliasNode
   | WhenNode
+
+export type NestingTermNode = NestingNode & TermNode
 
 enum ScopeKind {
   Global,
@@ -54,7 +56,7 @@ export type ScopeWithErrors = {
   errors: MountedErrorAnnotation[]
 }
 
-export type TypedScope<T extends SyntaxNode> = {
+export type TypedScope<T extends TermNode> = {
   typedNode: TypedNode<T>
 }
 
@@ -69,7 +71,9 @@ export type GlobalScope<
   errors: ErrorAnnotation[]
 }
 
-export type FileScope = RecursiveScope<NestedScope> &
+export type FileScope<T extends NestingNode = NestingNode> = RecursiveScope<
+  NestedScope<T>
+> &
   ScopeWithTerms &
   ScopeWithTypes &
   ScopeWithErrors & {
@@ -85,7 +89,7 @@ export type TypedFileScope = FileScope &
   TypedScope<ProgramNode>
 
 export interface NestedScope<T extends NestingNode = NestingNode>
-  extends RecursiveScope<NestedScope>,
+  extends RecursiveScope<NestedScope<T>>,
     ScopeWithTerms,
     ScopeWithTypes,
     ScopeWithErrors {
@@ -93,11 +97,11 @@ export interface NestedScope<T extends NestingNode = NestingNode>
   node: T
 }
 
-export interface TypedNestedScope<T extends NestingNode = NestingNode>
+export interface TypedNestedScope<T extends NestingTermNode = NestingTermNode>
   extends NestedScope<T>,
     TypingEnvironment,
     TypedScope<T> {
-  scopes: TypedNestedScope[]
+  scopes: TypedNestedScope<T>[]
 }
 
 // ---- Factories ----
@@ -148,9 +152,9 @@ export const buildNestedScope = (node: NestingNode): NestedScope => ({
   errors: [],
 })
 
-export const buildTypedNestedScope = <T extends NestingNode>(
+export const buildTypedNestedScope = <T extends NestingTermNode>(
   scope: NestedScope<T>,
-  scopes: TypedNestedScope[],
+  scopes: TypedNestedScope<T>[],
   typedNode: TypedNode<T>,
   typeAssignments: TypeAssignment[],
 ): TypedNestedScope<T> => ({

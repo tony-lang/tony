@@ -1,11 +1,14 @@
 import {
   FileScope,
   NestedScope,
+  NestingNode,
+  NestingTermNode,
   ScopeWithErrors,
   ScopeWithTerms,
   ScopeWithTypes,
   TypingEnvironment,
 } from '../types/analyze/scopes'
+import { SyntaxNode, SyntaxType } from 'tree-sitter-tony'
 import {
   TermBinding,
   TypeAssignment,
@@ -14,7 +17,7 @@ import {
 } from '../types/analyze/bindings'
 import { AbsolutePath } from '../types/path'
 import { ErrorAnnotation } from '../types/errors/annotations'
-import { SyntaxNode } from 'tree-sitter-tony'
+import { isNotUndefined } from '.'
 import { isSamePath } from './paths'
 
 export const findFileScope = <T extends FileScope>(
@@ -41,7 +44,33 @@ export const getTypeAssignments = (
   scope: TypingEnvironment,
 ): TypeAssignment[] => scope.typeAssignments
 
-export const findScopeOfNode = <T extends FileScope | NestedScope>(
-  scopes: T[],
-  node: SyntaxNode,
-): T | undefined => scopes.find((scope) => scope.node === node)
+export const findScopeOfNode = <
+  T extends NestingNode,
+  U extends FileScope<T> | NestedScope<T>
+>(
+  scopes: U[],
+  node: T,
+): U | undefined => scopes.find((scope) => scope.node === node)
+
+export const filterFileScopeByTermScopes = (
+  scope: FileScope,
+): FileScope<NestingTermNode> => ({
+  ...scope,
+  scopes: scope.scopes
+    .map(filterNestedScopeByTermScopes)
+    .filter(isNotUndefined),
+})
+
+const filterNestedScopeByTermScopes = (
+  scope: NestedScope,
+): NestedScope<NestingTermNode> | undefined => {
+  const node = scope.node
+  if (node.type === SyntaxType.RefinementType) return undefined
+  return {
+    ...scope,
+    node,
+    scopes: scope.scopes
+      .map(filterNestedScopeByTermScopes)
+      .filter(isNotUndefined),
+  }
+}
