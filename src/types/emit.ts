@@ -3,8 +3,8 @@ import { AbsolutePath } from './path'
 // ---- Types ----
 
 export type FileEmit = {
-  originalFile: AbsolutePath
-  content: string
+  readonly originalFile: AbsolutePath
+  readonly content: string
 }
 
 export type Emit = FileEmit[]

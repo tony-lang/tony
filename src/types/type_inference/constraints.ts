@@ -8,16 +8,16 @@ import { TypeVariable } from './types'
  * A set of assignments of type variables to their most general type.
  */
 export type Constraints<T extends Type = ResolvedType> = {
-  assignments: TypeVariableAssignment<T>[]
-  deferredAssignments: DeferredTypeVariableAssignment[]
+  readonly assignments: TypeVariableAssignment<T>[]
+  readonly deferredAssignments: DeferredTypeVariableAssignment[]
 }
 
 /**
  * Maps a set of type variables to their most general type (if any).
  */
 export type TypeVariableAssignment<T extends Type = ResolvedType> = {
-  typeVariables: TypeVariable[]
-  type?: T
+  readonly typeVariables: TypeVariable[]
+  readonly type?: T
 }
 
 /**
@@ -26,8 +26,8 @@ export type TypeVariableAssignment<T extends Type = ResolvedType> = {
  * was determined.
  */
 export type DeferredTypeVariableAssignment = {
-  typeVariable: TypeVariable
-  bindings: TermBinding[]
+  readonly typeVariable: TypeVariable
+  readonly bindings: TermBinding[]
 }
 
 // ---- Factories ----

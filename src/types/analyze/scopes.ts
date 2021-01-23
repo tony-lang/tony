@@ -40,35 +40,35 @@ enum ScopeKind {
 }
 
 export type ScopeWithTerms = {
-  terms: TermBinding[]
+  readonly terms: TermBinding[]
 }
 
 export type TypingEnvironment = {
-  typeAssignments: TypeAssignment[]
+  readonly typeAssignments: TypeAssignment[]
 }
 
 export type ScopeWithTypes = {
-  types: TypeBinding[]
-  typeVariables: TypeVariableBinding[]
+  readonly types: TypeBinding[]
+  readonly typeVariables: TypeVariableBinding[]
 }
 
 export type ScopeWithErrors = {
-  errors: MountedErrorAnnotation[]
+  readonly errors: MountedErrorAnnotation[]
 }
 
 export type TypedScope<T extends TermNode> = {
-  typedNode: TypedNode<T>
+  readonly typedNode: TypedNode<T>
 }
 
 export type RecursiveScope<T> = {
-  scopes: T[]
+  readonly scopes: T[]
 }
 
 export type GlobalScope<
   T extends FileScope | TypedFileScope
 > = RecursiveScope<T> & {
-  kind: typeof ScopeKind.Global
-  errors: ErrorAnnotation[]
+  readonly kind: typeof ScopeKind.Global
+  readonly errors: ErrorAnnotation[]
 }
 
 export type FileScope<T extends NestingNode = NestingNode> = RecursiveScope<
@@ -77,10 +77,10 @@ export type FileScope<T extends NestingNode = NestingNode> = RecursiveScope<
   ScopeWithTerms &
   ScopeWithTypes &
   ScopeWithErrors & {
-    kind: typeof ScopeKind.File
-    file: AbsolutePath
-    node: ProgramNode
-    dependencies: AbsolutePath[]
+    readonly kind: typeof ScopeKind.File
+    readonly file: AbsolutePath
+    readonly node: ProgramNode
+    readonly dependencies: AbsolutePath[]
   }
 
 export type TypedFileScope = FileScope &
@@ -93,15 +93,15 @@ export interface NestedScope<T extends NestingNode = NestingNode>
     ScopeWithTerms,
     ScopeWithTypes,
     ScopeWithErrors {
-  kind: typeof ScopeKind.Nested
-  node: T
+  readonly kind: typeof ScopeKind.Nested
+  readonly node: T
 }
 
 export interface TypedNestedScope<T extends NestingTermNode = NestingTermNode>
   extends NestedScope<T>,
     TypingEnvironment,
     TypedScope<T> {
-  scopes: TypedNestedScope<T>[]
+  readonly scopes: TypedNestedScope<T>[]
 }
 
 // ---- Factories ----

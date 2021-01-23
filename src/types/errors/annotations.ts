@@ -27,79 +27,79 @@ export enum ErrorAnnotationKind {
 }
 
 export type CyclicDependencyError = {
-  kind: typeof ErrorAnnotationKind.CyclicDependency
-  cyclicDependency: CyclicDependency<AbsolutePath>
+  readonly kind: typeof ErrorAnnotationKind.CyclicDependency
+  readonly cyclicDependency: CyclicDependency<AbsolutePath>
 }
 
 export type DuplicateBindingError = {
-  kind: typeof ErrorAnnotationKind.DuplicateBinding
-  name: string
+  readonly kind: typeof ErrorAnnotationKind.DuplicateBinding
+  readonly name: string
 }
 
 export type ExportOutsideFileScopeError = {
-  kind: typeof ErrorAnnotationKind.ExportOutsideFileScope
+  readonly kind: typeof ErrorAnnotationKind.ExportOutsideFileScope
 }
 
 export type ExternalTypeImportError = {
-  kind: typeof ErrorAnnotationKind.ExternalTypeImport
+  readonly kind: typeof ErrorAnnotationKind.ExternalTypeImport
 }
 
 export type ImportOutsideFileScopeError = {
-  kind: typeof ErrorAnnotationKind.ImportOutsideFileScope
+  readonly kind: typeof ErrorAnnotationKind.ImportOutsideFileScope
 }
 
 export type IncompleteWhenPatternError = {
-  kind: typeof ErrorAnnotationKind.IncompleteWhenPattern
-  missingBindings: string[]
+  readonly kind: typeof ErrorAnnotationKind.IncompleteWhenPattern
+  readonly missingBindings: string[]
 }
 
 export type AmbiguousTypeError = {
-  kind: typeof ErrorAnnotationKind.AmbiguousType
-  answers: TypedNode<ProgramNode>[]
+  readonly kind: typeof ErrorAnnotationKind.AmbiguousType
+  readonly answers: TypedNode<ProgramNode>[]
 }
 
 export type MissingBindingError = {
-  kind: typeof ErrorAnnotationKind.MissingBinding
-  name: string
+  readonly kind: typeof ErrorAnnotationKind.MissingBinding
+  readonly name: string
 }
 
 export type MissingExternalImportTypeHintError = {
-  kind: typeof ErrorAnnotationKind.MissingExternalImportTypeHint
-  binding: TermBinding
+  readonly kind: typeof ErrorAnnotationKind.MissingExternalImportTypeHint
+  readonly binding: TermBinding
 }
 
 export type PrimitiveTypeArgumentsError = {
-  kind: typeof ErrorAnnotationKind.PrimitiveTypeArguments
+  readonly kind: typeof ErrorAnnotationKind.PrimitiveTypeArguments
 }
 
 export type RefinementTypeDeclarationOutsideRefinementTypeError = {
-  kind: typeof ErrorAnnotationKind.RefinementTypeDeclarationOutsideRefinementType
+  readonly kind: typeof ErrorAnnotationKind.RefinementTypeDeclarationOutsideRefinementType
 }
 
 export type TypeError = {
-  kind: typeof ErrorAnnotationKind.Type
-  expected: Type
-  actual: Type
+  readonly kind: typeof ErrorAnnotationKind.Type
+  readonly expected: Type
+  readonly actual: Type
 }
 
 export type UnknownFileError = {
-  kind: typeof ErrorAnnotationKind.UnknownFile
-  sourcePath: AbsolutePath | RelativePath
+  readonly kind: typeof ErrorAnnotationKind.UnknownFile
+  readonly sourcePath: AbsolutePath | RelativePath
 }
 
 export type UnknownImportError = {
-  kind: typeof ErrorAnnotationKind.UnknownImport
-  sourcePath: AbsolutePath
-  name: string
+  readonly kind: typeof ErrorAnnotationKind.UnknownImport
+  readonly sourcePath: AbsolutePath
+  readonly name: string
 }
 
 export type UnsupportedSyntaxError = {
-  kind: typeof ErrorAnnotationKind.UnsupportedSyntax
+  readonly kind: typeof ErrorAnnotationKind.UnsupportedSyntax
 }
 
 export type UseOfTypeAsValueError = {
-  kind: typeof ErrorAnnotationKind.UseOfTypeAsValue
-  type: Type
+  readonly kind: typeof ErrorAnnotationKind.UseOfTypeAsValue
+  readonly type: Type
 }
 
 export type ErrorAnnotation =

@@ -4,7 +4,7 @@
  * An answer represents a single "explanation".
  */
 export type Answer<T, U> = {
-  state: T
+  readonly state: T
 } & U
 
 /**

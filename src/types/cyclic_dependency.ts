@@ -3,7 +3,7 @@
  * ancestors of a.
  */
 export type CyclicDependency<T> = {
-  a: T
-  b: T
-  ancestorsOfA: T[]
+  readonly a: T
+  readonly b: T
+  readonly ancestorsOfA: T[]
 }

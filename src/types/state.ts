@@ -5,5 +5,5 @@ export interface AbstractScope
     RecursiveScope<AbstractScope> {}
 
 export type AbstractState = {
-  scopes: AbstractScope[]
+  readonly scopes: AbstractScope[]
 }

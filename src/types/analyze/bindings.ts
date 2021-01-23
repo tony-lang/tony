@@ -36,8 +36,8 @@ export type TermBindingNode =
 export type TypeBindingNode = EnumNode | InterfaceNode | TypeAliasNode
 
 type AbstractBinding = {
-  name: string
-  isExported: boolean
+  readonly name: string
+  readonly isExported: boolean
 }
 
 enum BindingKind {
@@ -47,23 +47,23 @@ enum BindingKind {
 }
 
 type AbstractTermBinding = AbstractBinding & {
-  kind: typeof BindingKind.Term
-  node: TermBindingNode
+  readonly kind: typeof BindingKind.Term
+  readonly node: TermBindingNode
   /**
    * The index tracks the number of times a binding is overloaded. Among all
    * bindings with a given name that have overlapping scopes, index is a unique
    * identifier.
    */
-  index: number
+  readonly index: number
   /**
    * A binding is implicit when it stems from a generator, parameter or case,
    * but not when it stems from an assignment. Used for code generation.
    */
-  isImplicit: boolean
+  readonly isImplicit: boolean
 }
 
 type AbstractTypeBinding = AbstractBinding & {
-  kind: typeof BindingKind.Type
+  readonly kind: typeof BindingKind.Type
 }
 
 enum BindingLocation {
@@ -72,13 +72,13 @@ enum BindingLocation {
 }
 
 export type ImportedBinding = {
-  location: typeof BindingLocation.Imported
-  file: AbsolutePath
-  originalName?: string
+  readonly location: typeof BindingLocation.Imported
+  readonly file: AbsolutePath
+  readonly originalName?: string
 }
 
 export type LocalBinding = {
-  location: typeof BindingLocation.Local
+  readonly location: typeof BindingLocation.Local
 }
 
 export type ImportedTermBinding = AbstractTermBinding & ImportedBinding
@@ -86,28 +86,28 @@ export type LocalTermBinding = AbstractTermBinding & LocalBinding
 export type TermBinding = ImportedTermBinding | LocalTermBinding
 
 export type ImportedTypeBinding = AbstractTypeBinding &
-  ImportedBinding & { node: ImportTypeNode }
+  ImportedBinding & { readonly node: ImportTypeNode }
 export type LocalTypeBinding = AbstractTypeBinding &
   LocalBinding & {
-    node: TypeBindingNode
-    value: DeclaredType
-    alias: Type
-    deferredAssignments: DeferredTypeVariableAssignment[]
+    readonly node: TypeBindingNode
+    readonly value: DeclaredType
+    readonly alias: Type
+    readonly deferredAssignments: DeferredTypeVariableAssignment[]
   }
 export type TypeBinding = ImportedTypeBinding | LocalTypeBinding
 
 export type TypeVariableBinding = AbstractBinding & {
-  kind: typeof BindingKind.TypeVariable
-  node: TypeVariableDeclarationNode
-  value: TypeVariable
-  constraints: Constraints<Type>
+  readonly kind: typeof BindingKind.TypeVariable
+  readonly node: TypeVariableDeclarationNode
+  readonly value: TypeVariable
+  readonly constraints: Constraints<Type>
 }
 
 /**
  * A type assignment assigns a type to a term binding.
  */
 export type TypeAssignment = TermBinding & {
-  type: ResolvedType
+  readonly type: ResolvedType
 }
 
 // ---- Factories ----

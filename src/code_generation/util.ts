@@ -9,7 +9,7 @@ const resolveAbstractionBranch = (branches: string[]) => {
 }
 
 const curry = (fn: string) =>
-  `${CURRY_FUNCTION}((...${ARGUMENTS_NAME}) => ${fn})`
+  `${CURRY_FUNCTION}((...${ARGUMENTS_NAME})=>${fn})`
 
 export const generateAbstraction = (branches: string[]): string =>
   curry(resolveAbstractionBranch(branches))

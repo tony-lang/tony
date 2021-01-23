@@ -31,9 +31,9 @@ export type TypedNodeChildren<T extends TermNode> = Omit<
  * A type annotation for a given node in the syntax tree.
  */
 export type TypedNode<T extends TermNode> = TypedNodeChildren<T> & {
-  node: T
-  type: ResolvedType
-  constraints: Constraints
+  readonly node: T
+  readonly type: ResolvedType
+  readonly constraints: Constraints
 }
 
 // ---- Factories ----
