@@ -4,6 +4,6 @@ export interface AbstractScope
   extends ScopeWithErrors,
     RecursiveScope<AbstractScope> {}
 
-export type AbstractState = {
-  readonly scopes: AbstractScope[]
+export type AbstractState<T extends AbstractScope = AbstractScope> = {
+  readonly scopes: T[]
 }
