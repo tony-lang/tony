@@ -1,13 +1,28 @@
 import { AbstractionNode, SyntaxType } from 'tree-sitter-tony'
 import { Emit, buildFileEmit } from '../types/emit'
-import { GlobalScope, TypedFileScope } from '../types/analyze/scopes'
+import {
+  FileScope,
+  GlobalScope,
+  NestedScope,
+  NestingTermNode,
+  TypedFileScope,
+} from '../types/analyze/scopes'
 import { LogLevel, log } from '../logger'
 import { NotImplementedError, assert } from '../types/errors/internal'
+import { filterFileScopeByTermScopes, findScopeOfNode } from '../util/scopes'
 import { Config } from '../config'
 import { TermNode } from '../types/nodes'
 import { TypedNode } from '../types/type_inference/nodes'
 import { generateAbstraction } from './util'
 import { traverseScopes } from '../util/traverse'
+
+type State = {
+  /**
+   * A stack of all scopes starting with the closest scope and ending with the
+   * symbol table.
+   */
+  scopes: (FileScope<NestingTermNode> | NestedScope<NestingTermNode>)[]
+}
 
 export const generateCode = (
   config: Config,
@@ -18,18 +33,50 @@ export const generateCode = (
   return globalScope.scopes.map(generateCodeForFile)
 }
 
-const generateCodeForFile = (fileScope: TypedFileScope) =>
-  buildFileEmit(fileScope.file, traverse(fileScope.typedNode))
+const generateCodeForFile = (fileScope: TypedFileScope) => {
+  const initialState: State = {
+    scopes: [filterFileScopeByTermScopes(fileScope)],
+  }
+  return buildFileEmit(
+    fileScope.file,
+    traverse(initialState, fileScope.typedNode),
+  )
+}
 
-const traverse = (typedNode: TypedNode<TermNode>): string =>
+const enterBlock = (
+  state: State,
+  typedNode: TypedNode<NestingTermNode>,
+): State => {
+  const [scope, ...scopes] = state.scopes
+  const newScope = findScopeOfNode(scope.scopes, typedNode.node)
+  assert(
+    newScope !== undefined,
+    'All scopes should have been built during analyze.',
+  )
+  return {
+    ...state,
+    scopes: [newScope, scope, ...scopes],
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const nest = <T extends NestingTermNode>(
+  state: State,
+  typedNode: TypedNode<T>,
+  callback: (state: State, typedNode: TypedNode<T>) => string,
+) => {
+  const nestedState = enterBlock(state, typedNode)
+  return callback(nestedState, typedNode)
+}
+
+const traverse = (state: State, typedNode: TypedNode<TermNode>): string =>
   traverseScopes(
     typedNode.node,
-    () => handleNode(typedNode),
-    // TODO: enter nested scope here
-    () => handleNode(typedNode),
+    () => handleNode(state, typedNode),
+    () => nest(state, typedNode as TypedNode<NestingTermNode>, handleNode),
   )
 
-const handleNode = (typedNode: TypedNode<TermNode>): string => {
+const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
   assert(
     typedNode.node.type !== SyntaxType.ERROR,
     'Code generation should not be run on scopes that include errors.',
@@ -37,7 +84,7 @@ const handleNode = (typedNode: TypedNode<TermNode>): string => {
 
   switch (typedNode.node.type) {
     case SyntaxType.Abstraction:
-      return handleAbstraction(typedNode as TypedNode<AbstractionNode>)
+      return handleAbstraction(state, typedNode as TypedNode<AbstractionNode>)
     case SyntaxType.AbstractionBranch:
       throw new NotImplementedError(
         'Tony cannot generate code for abstraction branches yet.',
@@ -231,7 +278,12 @@ const handleNode = (typedNode: TypedNode<TermNode>): string => {
   }
 }
 
-const handleAbstraction = (typedNode: TypedNode<AbstractionNode>): string => {
-  const branches = typedNode.branchNodes.map((branch) => traverse(branch))
+const handleAbstraction = (
+  state: State,
+  typedNode: TypedNode<AbstractionNode>,
+): string => {
+  const branches = typedNode.branchNodes.map((branch) =>
+    traverse(state, branch),
+  )
   return generateAbstraction(branches)
 }
