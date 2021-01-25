@@ -30,13 +30,13 @@ import {
   TypedNodeChildren,
   buildTypedNode,
 } from '../types/type_inference/nodes'
+import { addErrorUnless, traverseScopes } from '../util/traverse'
 import { filterFileScopeByTermScopes, findScopeOfNode } from '../util/scopes'
 import { mapAnswers, reduceAnswers } from '../util/answers'
 import { Config } from '../config'
 import { ResolvedType } from '../types/type_inference/categories'
 import { TermNode } from '../types/nodes'
 import { TypeAssignment } from '../types/analyze/bindings'
-import { addErrorUnless } from '../util/traverse'
 import { buildAmbiguousTypeError } from '../types/errors/annotations'
 import { buildTemporaryTypeVariable } from '../types/type_inference/types'
 import { isInstanceOf } from './instances'
@@ -212,12 +212,15 @@ const leaveBlock = (answer: Answer<State, Return<NestingTermNode>>): State => {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const nest = <T extends NestingTermNode>(
+  state: State,
+  node: T,
+  context: Context,
   callback: (
     state: State,
     node: T,
     context: Context,
-  ) => Answers<State, Return<T>>,
-) => (state: State, node: T, context: Context) => {
+  ) => Answers<State, Return<NestingTermNode>>,
+) => {
   const nestedState = enterBlock(state, node)
   const answers = callback(nestedState, node, context)
   return mapAnswers(answers, (answer) => [
@@ -264,7 +267,21 @@ const traverse = <T extends TermNode>(
   node: T,
   context: Context,
 ): Answers<State, Return<T>> => {
-  const answers = handleNode(state, node, context) as Answers<State, Return<T>>
+  const answers = traverseScopes(
+    node,
+    () => handleNode(state, node, context),
+    (node) =>
+      nest(
+        state,
+        node,
+        context,
+        (state, node, context) =>
+          handleNode(state, node, context) as Answers<
+            State,
+            Return<NestingTermNode>
+          >,
+      ),
+  ) as Answers<State, Return<T>>
   assert(answers.length > 0, 'The universe requires at least one answer.')
   return mapAnswers(answers, (answer) => ensureIsInstanceOf(answer, context))
 }

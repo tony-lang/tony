@@ -7,6 +7,7 @@ import { Config } from '../config'
 import { TermNode } from '../types/nodes'
 import { TypedNode } from '../types/type_inference/nodes'
 import { generateAbstraction } from './util'
+import { traverseScopes } from '../util/traverse'
 
 export const generateCode = (
   config: Config,
@@ -20,7 +21,15 @@ export const generateCode = (
 const generateCodeForFile = (fileScope: TypedFileScope) =>
   buildFileEmit(fileScope.file, traverse(fileScope.typedNode))
 
-const traverse = (typedNode: TypedNode<TermNode>): string => {
+const traverse = (typedNode: TypedNode<TermNode>): string =>
+  traverseScopes(
+    typedNode.node,
+    () => handleNode(typedNode),
+    // TODO: enter nested scope here
+    () => handleNode(typedNode),
+  )
+
+const handleNode = (typedNode: TypedNode<TermNode>): string => {
   assert(
     typedNode.node.type !== SyntaxType.ERROR,
     'Code generation should not be run on scopes that include errors.',

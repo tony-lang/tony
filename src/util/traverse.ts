@@ -1,6 +1,7 @@
+import { NamedNode, SyntaxNode } from 'tree-sitter-tony'
+import { NestingNode, isNestingNode } from '../types/analyze/scopes'
 import { AbstractState } from '../types/state'
 import { ErrorAnnotation } from '../types/errors/annotations'
-import { SyntaxNode } from 'tree-sitter-tony'
 import { addErrorToScope } from './scopes'
 
 export const addError = <T extends AbstractState>(
@@ -44,4 +45,17 @@ export const conditionalApply = <T extends AbstractState, U>(
 ) => (state: T, arg: U | undefined): T => {
   if (arg) return callback(state, arg)
   return state
+}
+
+/**
+ * If node is a nesting node enter its scope; otherwise just apply the given
+ * callback.
+ */
+export const traverseScopes = <T extends NamedNode, U>(
+  node: T,
+  callback: () => U,
+  nest: (node: NestingNode & T) => U,
+): U => {
+  if (isNestingNode(node)) return nest(node)
+  else return callback()
 }

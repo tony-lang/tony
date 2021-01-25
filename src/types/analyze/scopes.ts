@@ -3,8 +3,11 @@ import {
   BlockNode,
   InterfaceNode,
   ListComprehensionNode,
+  NamedNode,
   ProgramNode,
   RefinementTypeNode,
+  SyntaxNode,
+  SyntaxType,
   TypeAliasNode,
   WhenNode,
 } from 'tree-sitter-tony'
@@ -56,6 +59,10 @@ export type ScopeWithErrors = {
   readonly errors: MountedErrorAnnotation[]
 }
 
+export type ScopeWithNode<T extends SyntaxNode> = {
+  readonly node: T
+}
+
 export type TypedScope<T extends TermNode> = {
   readonly typedNode: TypedNode<T>
 }
@@ -76,10 +83,10 @@ export type FileScope<T extends NestingNode = NestingNode> = RecursiveScope<
 > &
   ScopeWithTerms &
   ScopeWithTypes &
-  ScopeWithErrors & {
+  ScopeWithErrors &
+  ScopeWithNode<ProgramNode> & {
     readonly kind: typeof ScopeKind.File
     readonly file: AbsolutePath
-    readonly node: ProgramNode
     readonly dependencies: AbsolutePath[]
   }
 
@@ -92,9 +99,9 @@ export interface NestedScope<T extends NestingNode = NestingNode>
   extends RecursiveScope<NestedScope<T>>,
     ScopeWithTerms,
     ScopeWithTypes,
-    ScopeWithErrors {
+    ScopeWithErrors,
+    ScopeWithNode<T> {
   readonly kind: typeof ScopeKind.Nested
-  readonly node: T
 }
 
 export interface TypedNestedScope<T extends NestingTermNode = NestingTermNode>
@@ -165,5 +172,20 @@ export const buildTypedNestedScope = <T extends NestingTermNode>(
 })
 
 export const isFileScope = <T extends FileScope>(
-  scope: T | NestedScope,
+  scope: T | { kind: ScopeKind },
 ): scope is T => scope.kind === ScopeKind.File
+
+export const isNestingNode = (node: NamedNode): node is NestingNode => {
+  switch (node.type) {
+    case SyntaxType.AbstractionBranch:
+    case SyntaxType.Block:
+    case SyntaxType.Interface:
+    case SyntaxType.ListComprehension:
+    case SyntaxType.RefinementType:
+    case SyntaxType.TypeAlias:
+    case SyntaxType.When:
+      return true
+    default:
+      return false
+  }
+}

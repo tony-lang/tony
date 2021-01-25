@@ -4,6 +4,7 @@ import {
   NestingNode,
   NestingTermNode,
   ScopeWithErrors,
+  ScopeWithNode,
   ScopeWithTerms,
   ScopeWithTypes,
   TypingEnvironment,
@@ -46,7 +47,7 @@ export const getTypeAssignments = (
 
 export const findScopeOfNode = <
   T extends NestingNode,
-  U extends FileScope<T> | NestedScope<T>
+  U extends ScopeWithNode<T>
 >(
   scopes: U[],
   node: T,
