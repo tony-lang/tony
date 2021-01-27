@@ -1,11 +1,9 @@
 import { ConfigOptions, buildConfig } from './config'
 import { LogLevel, log } from './logger'
-import { buildReport, reportHasError } from './errors'
+import { check, checkSuccessful } from './check'
 import { AbsolutePath } from './types/path'
 import { Report } from './types/errors/reports'
-import { analyze } from './analyze'
 import { generateCode } from './code_generation'
-import { inferTypes } from './type_inference'
 import { writeEmit } from './emit'
 
 export const compile = async (
@@ -16,13 +14,10 @@ export const compile = async (
 
   log(config, LogLevel.Info, 'Compiling', config.entry.path)
 
-  const globalScope = await analyze(config)
-  const typedGlobalScope = inferTypes(config, globalScope)
+  const checkResult = await check(config)
+  if (!checkSuccessful(checkResult)) return checkResult
 
-  const report = buildReport(typedGlobalScope)
-  if (reportHasError(report)) return Promise.reject<Report>(report)
-
-  const emit = generateCode(config, typedGlobalScope)
+  const emit = generateCode(config, checkResult)
   await writeEmit(config, emit)
 
   return { out: config.out }
