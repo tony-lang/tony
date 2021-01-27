@@ -11,7 +11,7 @@ import { writeEmit } from './emit'
 export const compile = async (
   entry: string,
   options: ConfigOptions,
-): Promise<AbsolutePath | Report> => {
+): Promise<{ out: AbsolutePath } | Report> => {
   const config = buildConfig(entry, options)
 
   log(config, LogLevel.Info, 'Compiling', config.entry.path)
@@ -25,5 +25,5 @@ export const compile = async (
   const emit = generateCode(config, typedGlobalScope)
   await writeEmit(config, emit)
 
-  return config.out
+  return { out: config.out }
 }
