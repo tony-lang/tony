@@ -12,6 +12,7 @@ import {
   WhenNode,
 } from 'tree-sitter-tony'
 import { ErrorAnnotation, MountedErrorAnnotation } from '../errors/annotations'
+import { NonTypeNode, TermNode } from '../nodes'
 import {
   TermBinding,
   TypeAssignment,
@@ -19,7 +20,6 @@ import {
   TypeVariableBinding,
 } from './bindings'
 import { AbsolutePath } from '../path'
-import { TermNode } from '../nodes'
 import { TypedNode } from '../type_inference/nodes'
 
 // ---- Types ----
@@ -63,7 +63,7 @@ export type ScopeWithNode<T extends SyntaxNode> = {
   readonly node: T
 }
 
-export type TypedScope<T extends TermNode> = {
+export type TypedScope<T extends NonTypeNode> = {
   readonly typedNode: TypedNode<T>
 }
 

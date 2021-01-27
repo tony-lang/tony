@@ -34,8 +34,8 @@ import { addErrorUnless, traverseScopes } from '../util/traverse'
 import { filterFileScopeByTermScopes, findScopeOfNode } from '../util/scopes'
 import { mapAnswers, reduceAnswers } from '../util/answers'
 import { Config } from '../config'
+import { NonTypeNode } from '../types/nodes'
 import { ResolvedType } from '../types/type_inference/categories'
-import { TermNode } from '../types/nodes'
 import { TypeAssignment } from '../types/analyze/bindings'
 import { buildAmbiguousTypeError } from '../types/errors/annotations'
 import { buildTemporaryTypeVariable } from '../types/type_inference/types'
@@ -67,7 +67,7 @@ type State = {
  * Represents a type annotation (an "explanation") for a given node in the
  * syntax tree.
  */
-type Return<T extends TermNode = TermNode> = {
+type Return<T extends NonTypeNode = NonTypeNode> = {
   typedNode: TypedNode<T>
 }
 
@@ -131,7 +131,7 @@ const buildContext = (
   constraints: Constraints = buildConstraints(),
 ): Context => ({ type, constraints })
 
-const buildPrimitiveAnswer = <T extends TermNode>(
+const buildPrimitiveAnswer = <T extends NonTypeNode>(
   state: State,
   node: T,
   type: PrimitiveType,
@@ -141,7 +141,7 @@ const buildPrimitiveAnswer = <T extends TermNode>(
     typedNode: buildTypedNode(node, type, buildConstraints(), childNodes),
   })
 
-const wrapAnswer = <T extends TermNode, U extends TermNode>(
+const wrapAnswer = <T extends NonTypeNode, U extends NonTypeNode>(
   answer: Answer<State, { results: Return<U>[] }>,
   callback: (
     state: State,
@@ -228,7 +228,7 @@ const nest = <T extends NestingTermNode>(
   ])
 }
 
-const traverseAll = <T extends TermNode>(
+const traverseAll = <T extends NonTypeNode>(
   state: State,
   nodes: T[],
   buildConcreteContext: () => Context = buildContext,
@@ -245,7 +245,7 @@ const traverseAll = <T extends TermNode>(
     [buildAnswer(state, { results: [] })],
   )
 
-const ensureIsInstanceOf = <T extends TermNode>(
+const ensureIsInstanceOf = <T extends NonTypeNode>(
   answer: Answer<State, Return<T>>,
   { type, constraints }: Context,
 ): Answers<State, Return<T>> =>
@@ -262,7 +262,7 @@ const ensureIsInstanceOf = <T extends TermNode>(
       ),
   )
 
-const traverse = <T extends TermNode>(
+const traverse = <T extends NonTypeNode>(
   state: State,
   node: T,
   context: Context,
@@ -288,7 +288,7 @@ const traverse = <T extends TermNode>(
 
 const handleNode = (
   state: State,
-  node: TermNode,
+  node: NonTypeNode,
   context: Context,
 ): Answers<State, Return> => {
   switch (node.type) {

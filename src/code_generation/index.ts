@@ -1,4 +1,8 @@
-import { AbstractionNode, SyntaxType } from 'tree-sitter-tony'
+import {
+  AbstractionBranchNode,
+  AbstractionNode,
+  SyntaxType,
+} from 'tree-sitter-tony'
 import { Emit, buildFileEmit } from '../types/emit'
 import {
   FileScope,
@@ -10,11 +14,11 @@ import {
 import { LogLevel, log } from '../logger'
 import { NotImplementedError, assert } from '../types/errors/internal'
 import { filterFileScopeByTermScopes, findScopeOfNode } from '../util/scopes'
+import { generateAbstraction, generateAbstractionBranch } from './generators'
+import { safeApply, traverseScopes } from '../util/traverse'
 import { Config } from '../config'
-import { TermNodeWithoutError } from '../types/nodes'
+import { TermNode } from '../types/nodes'
 import { TypedNode } from '../types/type_inference/nodes'
-import { generateAbstraction } from './util'
-import { traverseScopes } from '../util/traverse'
 
 type State = {
   /**
@@ -69,26 +73,21 @@ const nest = <T extends NestingTermNode>(
   return callback(nestedState, typedNode)
 }
 
-const traverse = (
-  state: State,
-  typedNode: TypedNode<TermNodeWithoutError>,
-): string =>
+const traverse = (state: State, typedNode: TypedNode<TermNode>): string =>
   traverseScopes(
     typedNode.node,
     () => handleNode(state, typedNode),
     () => nest(state, typedNode as TypedNode<NestingTermNode>, handleNode),
   )
 
-const handleNode = (
-  state: State,
-  typedNode: TypedNode<TermNodeWithoutError>,
-): string => {
-  switch (typedNode.node.type) {
+const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
+  switch (typedNode.kind) {
     case SyntaxType.Abstraction:
       return handleAbstraction(state, typedNode as TypedNode<AbstractionNode>)
     case SyntaxType.AbstractionBranch:
-      throw new NotImplementedError(
-        'Tony cannot generate code for abstraction branches yet.',
+      return handleAbstractionBranch(
+        state,
+        typedNode as TypedNode<AbstractionBranchNode>,
       )
     case SyntaxType.Access:
       throw new NotImplementedError(
@@ -287,4 +286,16 @@ const handleAbstraction = (
     traverse(state, branch),
   )
   return generateAbstraction(branches)
+}
+
+const handleAbstractionBranch = (
+  state: State,
+  typedNode: TypedNode<AbstractionBranchNode>,
+): string => {
+  const parameters = typedNode.elementNodes.map((parameter) =>
+    traverse(state, parameter),
+  )
+  const restParameter = safeApply(traverse)(state, typedNode.restNode)
+  const body = traverse(state, typedNode.bodyNode)
+  return generateAbstractionBranch(parameters, restParameter, body)
 }

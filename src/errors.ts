@@ -11,12 +11,12 @@ export const hasError = (scope: AbstractScope): boolean =>
 
 export const buildReport = (scope: GlobalScope): Report => ({
   errors: scope.errors,
-  mountedErrors: scope.scopes.map((fileScope) => [
-    fileScope.file,
-    collectErrors(fileScope),
-  ]),
+  mountedErrors: scope.scopes.map((fileScope) => ({
+    file: fileScope.file,
+    errors: collectErrors(fileScope),
+  })),
 })
 
 export const reportHasError = (report: Report): boolean =>
   report.errors.length > 0 ||
-  report.mountedErrors.some(([, errors]) => errors.length > 0)
+  report.mountedErrors.some(({ errors }) => errors.length > 0)

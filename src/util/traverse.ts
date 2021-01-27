@@ -38,13 +38,23 @@ export const ensure = <T extends AbstractState, U extends SyntaxNode>(
 }
 
 /**
- * Conditionally applies argument to callback depending on whether it exists.
+ * Conditionally applies argument to state reduces depending on whether it
+ * exists.
  */
 export const conditionalApply = <T extends AbstractState, U>(
   callback: (state: T, arg: U) => T,
 ) => (state: T, arg: U | undefined): T => {
   if (arg) return callback(state, arg)
   return state
+}
+
+/**
+ * Conditionally applies argument to callback depending on whether it exists.
+ */
+export const safeApply = <T extends AbstractState, U, V>(
+  callback: (state: T, arg: U) => V,
+) => (state: T, arg: U | undefined): V | undefined => {
+  if (arg) return callback(state, arg)
 }
 
 /**
