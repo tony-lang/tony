@@ -11,7 +11,7 @@ import { LogLevel, log } from '../logger'
 import { NotImplementedError, assert } from '../types/errors/internal'
 import { filterFileScopeByTermScopes, findScopeOfNode } from '../util/scopes'
 import { Config } from '../config'
-import { TermNode } from '../types/nodes'
+import { TermNodeWithoutError } from '../types/nodes'
 import { TypedNode } from '../types/type_inference/nodes'
 import { generateAbstraction } from './util'
 import { traverseScopes } from '../util/traverse'
@@ -69,19 +69,20 @@ const nest = <T extends NestingTermNode>(
   return callback(nestedState, typedNode)
 }
 
-const traverse = (state: State, typedNode: TypedNode<TermNode>): string =>
+const traverse = (
+  state: State,
+  typedNode: TypedNode<TermNodeWithoutError>,
+): string =>
   traverseScopes(
     typedNode.node,
     () => handleNode(state, typedNode),
     () => nest(state, typedNode as TypedNode<NestingTermNode>, handleNode),
   )
 
-const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
-  assert(
-    typedNode.node.type !== SyntaxType.ERROR,
-    'Code generation should not be run on scopes that include errors.',
-  )
-
+const handleNode = (
+  state: State,
+  typedNode: TypedNode<TermNodeWithoutError>,
+): string => {
   switch (typedNode.node.type) {
     case SyntaxType.Abstraction:
       return handleAbstraction(state, typedNode as TypedNode<AbstractionNode>)

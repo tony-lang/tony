@@ -72,7 +72,7 @@ export type RecursiveScope<T> = {
 }
 
 export type GlobalScope<
-  T extends FileScope | TypedFileScope
+  T extends FileScope | TypedFileScope = FileScope | TypedFileScope
 > = RecursiveScope<T> & {
   readonly kind: typeof ScopeKind.Global
   readonly errors: ErrorAnnotation[]

@@ -56,7 +56,7 @@ import {
   WhenNode,
 } from 'tree-sitter-tony'
 
-export type TermNode =
+export type TermNodeWithoutError =
   | AbstractionNode
   | AbstractionBranchNode
   | AccessNode
@@ -111,4 +111,5 @@ export type TermNode =
   | TypeAliasNode
   | TypeHintNode
   | WhenNode
-  | ErrorNode
+
+export type TermNode = TermNodeWithoutError | ErrorNode
