@@ -1,6 +1,9 @@
 import {
   AbstractionBranchNode,
   AbstractionNode,
+  AccessNode,
+  AssignmentNode,
+  BlockNode,
   SyntaxType,
 } from 'tree-sitter-tony'
 import { Emit, buildFileEmit } from '../types/emit'
@@ -14,7 +17,13 @@ import {
 import { LogLevel, log } from '../logger'
 import { NotImplementedError, assert } from '../types/errors/internal'
 import { filterFileScopeByTermScopes, findScopeOfNode } from '../util/scopes'
-import { generateAbstraction, generateAbstractionBranch } from './generators'
+import {
+  generateAbstraction,
+  generateAbstractionBranch,
+  generateAccess,
+  generateAssignment,
+  generateBlock,
+} from './generators'
 import { safeApply, traverseScopes } from '../util/traverse'
 import { Config } from '../config'
 import { TermNode } from '../types/nodes'
@@ -90,9 +99,7 @@ const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
         typedNode as TypedNode<AbstractionBranchNode>,
       )
     case SyntaxType.Access:
-      throw new NotImplementedError(
-        'Tony cannot generate code for access operations yet.',
-      )
+      return handleAccess(state, typedNode as TypedNode<AccessNode>)
     case SyntaxType.Application:
       throw new NotImplementedError(
         'Tony cannot generate code for applications yet.',
@@ -102,11 +109,9 @@ const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
         'Tony cannot generate code for arguments yet.',
       )
     case SyntaxType.Assignment:
-      throw new NotImplementedError(
-        'Tony cannot generate code for assignments yet.',
-      )
+      return handleAssignment(state, typedNode as TypedNode<AssignmentNode>)
     case SyntaxType.Block:
-      throw new NotImplementedError('Tony cannot generate code for blocks yet.')
+      return handleBlock(state, typedNode as TypedNode<BlockNode>)
     case SyntaxType.Boolean:
       return typedNode.node.text
     case SyntaxType.Case:
@@ -298,4 +303,28 @@ const handleAbstractionBranch = (
   const restParameter = safeApply(traverse)(state, typedNode.restNode)
   const body = traverse(state, typedNode.bodyNode)
   return generateAbstractionBranch(parameters, restParameter, body)
+}
+
+const handleAccess = (
+  state: State,
+  typedNode: TypedNode<AccessNode>,
+): string => {
+  const name = traverse(state, typedNode.nameNode)
+  const value = traverse(state, typedNode.valueNode)
+  return generateAccess(name, value)
+}
+
+const handleAssignment = (
+  state: State,
+  typedNode: TypedNode<AssignmentNode>,
+): string => {
+  const pattern = traverse(state, typedNode.patternNode)
+  const value = traverse(state, typedNode.valueNode)
+  return generateAssignment(pattern, value)
+}
+
+const handleBlock = (state: State, typedNode: TypedNode<BlockNode>): string => {
+  const terms = typedNode.termNodes.map((term) => traverse(state, term))
+  const endsWithReturn = typedNode.termNodes.pop()?.kind === SyntaxType.Return
+  return generateBlock(state.scopes[0], terms, endsWithReturn)
 }

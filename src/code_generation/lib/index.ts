@@ -11,5 +11,15 @@ export const resolveAbstractionBranch = (branches: string[]): string => {
 export const curry = (fn: string): string =>
   `${CURRY_FUNCTION}((...${ARGUMENTS_NAME})=>${fn})`
 
-export const patternMatch = (parameters: string[], body: string): string =>
-  `(match)=>{const [${parameters.join(',')}]=match;return ${body}}`
+export const patternMatchForAbstraction = (
+  parameters: string,
+  value: string,
+): string => `(match)=>{const ${parameters}=match;return ${value}}`
+
+export const patternMatch = (
+  pattern: string,
+  identifiers: string,
+  defaults: string,
+  value: string,
+): string =>
+  `(()=>{const value=${value};${identifiers}=new stdlib.PatternMatch({defaults:${defaults},overmatching:true}).perform(${pattern},value);return value})()`

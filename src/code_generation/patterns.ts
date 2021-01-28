@@ -1,4 +1,7 @@
 export const resolvePattern = (
-  parameters: string[],
-  restPattern?: string,
-): [pattern: string, identifiers: string[], defaults: string[]] => {}
+  pattern: string,
+): [pattern: string, identifiersPattern: string, defaultsPattern: string] => {
+  const object = parsePattern(pattern)
+}
+
+const parsePattern = (pattern: string): object => JSON.parse(pattern)
