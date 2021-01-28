@@ -1,23 +1,27 @@
-import { ConfigOptions, buildConfig } from './config'
 import { LogLevel, log } from './logger'
-import { check, checkSuccessful } from './check'
+import { buildReport, reportHasError } from './errors'
 import { AbsolutePath } from './types/path'
+import { Config } from './config'
 import { Report } from './types/errors/reports'
+import { check } from './check'
 import { generateCode } from './code_generation'
 import { writeEmit } from './emit'
 
+/**
+ * Analyzes code. If analysis finds errors, returns a report. Otherwise,
+ * generates and emits code.
+ */
 export const compile = async (
-  entry: string,
-  options: ConfigOptions,
+  config: Config,
 ): Promise<{ out: AbsolutePath } | Report> => {
-  const config = buildConfig(entry, options)
-
   log(config, LogLevel.Info, 'Compiling', config.entry.path)
 
-  const checkResult = await check(config)
-  if (!checkSuccessful(checkResult)) return checkResult
+  const typedGlobalScope = await check(config)
 
-  const emit = generateCode(config, checkResult)
+  const report = buildReport(typedGlobalScope)
+  if (reportHasError(report)) return report
+
+  const emit = generateCode(config, typedGlobalScope)
   await writeEmit(config, emit)
 
   return { out: config.out }
