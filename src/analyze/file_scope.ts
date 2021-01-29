@@ -489,14 +489,18 @@ const handleDestructuringPattern = (
   node: DestructuringPatternNode,
 ): State => {
   if (node.aliasNode === undefined) return traverse(state, node.patternNode)
-
-  const { exportNextBindings: isExported } = state
+  const {
+    exportNextBindings: isExported,
+    nextIdentifierPatternBindingsImplicit: isImplicit,
+    importNextBindingsFrom: importedFrom,
+  } = state
   const name = getIdentifierName(node.aliasNode)
   const stateWithAlias = traverse(state, node.aliasNode)
   const stateWithBinding = addTermBinding(
     name,
-    false,
+    !!isImplicit,
     isExported,
+    importedFrom,
   )(stateWithAlias, node)
   return traverse(stateWithBinding, node.patternNode)
 }
