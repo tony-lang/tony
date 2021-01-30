@@ -236,6 +236,10 @@ const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
       throw new NotImplementedError(
         'Tony cannot generate code for right sections yet.',
       )
+    case SyntaxType.ShorthandAccessIdentifier:
+      throw new NotImplementedError(
+        'Tony cannot generate code for shorthand access identifiers yet.',
+      )
     case SyntaxType.ShorthandMemberPattern:
       throw new NotImplementedError(
         'Tony cannot generate code for shorthand member patterns yet.',
