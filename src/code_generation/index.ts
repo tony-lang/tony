@@ -6,6 +6,7 @@ import {
   BlockNode,
   CaseNode,
   ElseIfNode,
+  ExportNode,
   SyntaxType,
 } from 'tree-sitter-tony'
 import { Emit, buildFileEmit } from '../types/emit'
@@ -133,9 +134,7 @@ const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
         'Tony cannot generate code for enum values yet.',
       )
     case SyntaxType.Export:
-      throw new NotImplementedError(
-        'Tony cannot generate code for exports yet.',
-      )
+      return handleExport(state, typedNode as TypedNode<ExportNode>)
     case SyntaxType.ExportedImport:
       throw new NotImplementedError(
         'Tony cannot generate code for exported imports yet.',
@@ -351,3 +350,6 @@ const handleElseIf = (
   const body = traverse(state, typedNode.bodyNode)
   return generateEliseIf(condition, body)
 }
+
+const handleExport = (state: State, typedNode: TypedNode<ExportNode>): string =>
+  traverse(state, typedNode.declarationNode)
