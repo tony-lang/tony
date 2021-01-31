@@ -13,6 +13,7 @@ import {
   IdentifierNode,
   IdentifierPatternNode,
   IfNode,
+  InfixApplicationNode,
   MemberNode,
   SyntaxType,
 } from 'tree-sitter-tony'
@@ -40,6 +41,7 @@ import {
   generateGenerator,
   generateIdentifierPattern,
   generateIf,
+  generateInfixApplication,
   generateMember,
 } from './generators'
 import {
@@ -183,8 +185,9 @@ const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
         'Tony cannot generate code for type imports yet.',
       )
     case SyntaxType.InfixApplication:
-      throw new NotImplementedError(
-        'Tony cannot generate code for infix applications yet.',
+      return handleInfixApplication(
+        state,
+        typedNode as TypedNode<InfixApplicationNode>,
       )
     case SyntaxType.Interface:
       throw new NotImplementedError(
@@ -428,6 +431,16 @@ const handleIf = (state: State, typedNode: TypedNode<IfNode>): string => {
   )
   const alternativeBody = safeApply(traverse)(state, typedNode.elseNode)
   return generateIf(condition, body, alternativeBodies, alternativeBody)
+}
+
+const handleInfixApplication = (
+  state: State,
+  typedNode: TypedNode<InfixApplicationNode>,
+): string => {
+  const value = traverse(state, typedNode.nameNode)
+  const left = traverse(state, typedNode.leftNode)
+  const right = traverse(state, typedNode.rightNode)
+  return generateInfixApplication(value, left, right)
 }
 
 const handleMember = (

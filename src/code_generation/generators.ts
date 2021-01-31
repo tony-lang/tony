@@ -86,5 +86,11 @@ export const generateIf = (
   }})()`
 }
 
+export const generateInfixApplication = (
+  value: string,
+  left: string,
+  right: string,
+): string => `${value}(${left},${right})`
+
 export const generateMember = (key: string, value: string): string =>
   `[${key}]:${value}`
