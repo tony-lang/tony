@@ -7,6 +7,7 @@ import {
   CaseNode,
   ElseIfNode,
   ExportNode,
+  GeneratorNode,
   MemberNode,
   SyntaxType,
 } from 'tree-sitter-tony'
@@ -29,8 +30,10 @@ import {
   generateBlock,
   generateCase,
   generateEliseIf,
+  generateGenerator,
   generateMember,
 } from './generators'
+import { generateDeclarations, getBindingName } from './bindings'
 import { safeApply, traverseScopes } from '../util/traverse'
 import { Config } from '../config'
 import { TermNode } from '../types/nodes'
@@ -135,16 +138,18 @@ const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
       throw new NotImplementedError(
         'Tony cannot generate code for enum values yet.',
       )
+    // exports are generated in handleProgram
     case SyntaxType.Export:
-      return handleExport(state, typedNode as TypedNode<ExportNode>)
+      return traverse(
+        state,
+        (typedNode as TypedNode<ExportNode>).declarationNode,
+      )
     case SyntaxType.ExportedImport:
       throw new NotImplementedError(
         'Tony cannot generate code for exported imports yet.',
       )
     case SyntaxType.Generator:
-      throw new NotImplementedError(
-        'Tony cannot generate code for generators yet.',
-      )
+      return handleGenerator(state, typedNode as TypedNode<GeneratorNode>)
     case SyntaxType.Group:
       throw new NotImplementedError('Tony cannot generate code for groups yet.')
     case SyntaxType.Identifier:
@@ -157,10 +162,9 @@ const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
       )
     case SyntaxType.If:
       throw new NotImplementedError('Tony cannot generate code for ifs yet.')
+    // imports are generated in handleProgram
     case SyntaxType.Import:
-      throw new NotImplementedError(
-        'Tony cannot generate code for imports yet.',
-      )
+      return ''
     case SyntaxType.ImportIdentifier:
       throw new NotImplementedError(
         'Tony cannot generate code for identifier imports yet.',
@@ -336,7 +340,8 @@ const handleBlock = (state: State, typedNode: TypedNode<BlockNode>): string => {
   const terms = typedNode.termNodes.map((term) => traverse(state, term))
   const endsWithReturn =
     typedNode.termNodes.pop()?.node.type === SyntaxType.Return
-  return generateBlock(state.scopes[0], terms, endsWithReturn)
+  const declarations = generateDeclarations(state.scopes[0].terms)
+  return generateBlock(declarations, terms, endsWithReturn)
 }
 
 const handleCase = (state: State, typedNode: TypedNode<CaseNode>): string => {
@@ -355,8 +360,19 @@ const handleElseIf = (
   return generateEliseIf(condition, body)
 }
 
-const handleExport = (state: State, typedNode: TypedNode<ExportNode>): string =>
-  traverse(state, typedNode.declarationNode)
+const handleGenerator = (
+  state: State,
+  typedNode: TypedNode<GeneratorNode>,
+): string => {
+  const value = traverse(state, typedNode.valueNode)
+  const condition = safeApply(traverse)(state, typedNode.conditionNode)
+  const name = getBindingName(state.scopes[0].terms, typedNode.node)
+  assert(
+    name !== undefined,
+    'Generator nodes should always have an associated binding.',
+  )
+  return generateGenerator(name, value, condition)
+}
 
 const handleMember = (
   state: State,
