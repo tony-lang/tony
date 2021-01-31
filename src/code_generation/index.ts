@@ -10,6 +10,7 @@ import {
   GeneratorNode,
   IdentifierNode,
   IdentifierPatternNode,
+  IfNode,
   MemberNode,
   SyntaxType,
 } from 'tree-sitter-tony'
@@ -34,6 +35,7 @@ import {
   generateEliseIf,
   generateGenerator,
   generateIdentifierPattern,
+  generateIf,
   generateMember,
 } from './generators'
 import {
@@ -168,7 +170,7 @@ const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
         typedNode as TypedNode<IdentifierPatternNode>,
       )
     case SyntaxType.If:
-      throw new NotImplementedError('Tony cannot generate code for ifs yet.')
+      return handleIf(state, typedNode as TypedNode<IfNode>)
     // imports are generated in handleProgram
     case SyntaxType.Import:
       return ''
@@ -397,6 +399,16 @@ const handleIdentifierPattern = (
     'Identifier pattern nodes should always have an associated binding.',
   )
   return generateIdentifierPattern(name)
+}
+
+const handleIf = (state: State, typedNode: TypedNode<IfNode>): string => {
+  const condition = traverse(state, typedNode.conditionNode)
+  const body = traverse(state, typedNode.bodyNode)
+  const alternativeBodies = typedNode.elseIfNodes.map((elseIf) =>
+    traverse(state, elseIf),
+  )
+  const alternativeBody = safeApply(traverse)(state, typedNode.elseNode)
+  return generateIf(condition, body, alternativeBodies, alternativeBody)
 }
 
 const handleMember = (

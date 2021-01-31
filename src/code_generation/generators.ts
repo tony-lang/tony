@@ -57,13 +57,25 @@ export const generateGenerator = (
   name: string,
   value: string,
   condition?: string,
-): string => {
-  if (condition === undefined) return `${value}.map((${name})=>`
-  return `${value}.map((${name})=>!${condition} ? "${INTERNAL_TEMP_TOKEN}" : `
-}
+): string =>
+  `${value}.map((${name})=>${
+    condition ? `!${condition} ? "${INTERNAL_TEMP_TOKEN}" : ` : ''
+  }`
 
 export const generateIdentifierPattern = (name: string): string =>
   `"${INTERNAL_TEMP_TOKEN}${name}"`
+
+export const generateIf = (
+  condition: string,
+  body: string,
+  alternativeBodies: string[],
+  alternativeBody?: string,
+): string => {
+  const joinedAlternativeBodies = alternativeBodies.join('')
+  return `(()=>{if(${condition}){return ${body}}${joinedAlternativeBodies}${
+    alternativeBody ? `else{return ${alternativeBody}}` : ''
+  }})()`
+}
 
 export const generateMember = (key: string, value: string): string =>
   `[${key}]:${value}`
