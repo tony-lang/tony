@@ -8,6 +8,7 @@ import {
   ElseIfNode,
   ExportNode,
   GeneratorNode,
+  IdentifierNode,
   MemberNode,
   SyntaxType,
 } from 'tree-sitter-tony'
@@ -33,7 +34,11 @@ import {
   generateGenerator,
   generateMember,
 } from './generators'
-import { generateDeclarations, getBindingName } from './bindings'
+import {
+  generateBindingName,
+  generateDeclarations,
+  generateDeclaredBindingName,
+} from './bindings'
 import { safeApply, traverseScopes } from '../util/traverse'
 import { Config } from '../config'
 import { TermNode } from '../types/nodes'
@@ -144,17 +149,16 @@ const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
         state,
         (typedNode as TypedNode<ExportNode>).declarationNode,
       )
+    // imports are generated in handleProgram
     case SyntaxType.ExportedImport:
-      throw new NotImplementedError(
-        'Tony cannot generate code for exported imports yet.',
-      )
+      return ''
     case SyntaxType.Generator:
       return handleGenerator(state, typedNode as TypedNode<GeneratorNode>)
     case SyntaxType.Group:
       throw new NotImplementedError('Tony cannot generate code for groups yet.')
     case SyntaxType.Identifier:
-      throw new NotImplementedError(
-        'Tony cannot generate code for identifiers yet.',
+      return generateBindingName(
+        (typedNode as TypedNode<IdentifierNode>).binding,
       )
     case SyntaxType.IdentifierPattern:
       throw new NotImplementedError(
@@ -366,7 +370,10 @@ const handleGenerator = (
 ): string => {
   const value = traverse(state, typedNode.valueNode)
   const condition = safeApply(traverse)(state, typedNode.conditionNode)
-  const name = getBindingName(state.scopes[0].terms, typedNode.node)
+  const name = generateDeclaredBindingName(
+    state.scopes[0].terms,
+    typedNode.node,
+  )
   assert(
     name !== undefined,
     'Generator nodes should always have an associated binding.',

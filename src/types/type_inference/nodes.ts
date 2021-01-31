@@ -1,6 +1,8 @@
 import { Constraints } from './constraints'
+import { IdentifierNode } from 'tree-sitter-tony'
 import { NonTypeNode } from '../nodes'
 import { ResolvedType } from './categories'
+import { TermBinding } from '../analyze/bindings'
 
 // ---- Types ----
 
@@ -30,13 +32,21 @@ export type TypedNodeChildren<T extends NonTypeNode> = Omit<
 >
 
 /**
+ * Extensions to the typed node of certain node types.
+ */
+export type TypedNodeExtensions<
+  T extends NonTypeNode
+> = T extends IdentifierNode ? { binding: TermBinding } : {}
+
+/**
  * A type annotation for a given node in the syntax tree.
  */
-export type TypedNode<T extends NonTypeNode> = TypedNodeChildren<T> & {
-  readonly node: T
-  readonly type: ResolvedType
-  readonly constraints: Constraints
-}
+export type TypedNode<T extends NonTypeNode> = TypedNodeChildren<T> &
+  TypedNodeExtensions<T> & {
+    readonly node: T
+    readonly type: ResolvedType
+    readonly constraints: Constraints
+  }
 
 // ---- Factories ----
 
@@ -45,9 +55,11 @@ export const buildTypedNode = <T extends NonTypeNode>(
   type: ResolvedType,
   constraints: Constraints,
   childNodes: TypedNodeChildren<T>,
+  extensions: TypedNodeExtensions<T>,
 ): TypedNode<T> => ({
   ...childNodes,
   node,
   type,
   constraints,
+  ...extensions,
 })

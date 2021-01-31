@@ -28,6 +28,7 @@ import { NotImplementedError, assert } from '../types/errors/internal'
 import {
   TypedNode,
   TypedNodeChildren,
+  TypedNodeExtensions,
   buildTypedNode,
 } from '../types/type_inference/nodes'
 import { addErrorUnless, traverseScopes } from '../util/traverse'
@@ -136,9 +137,16 @@ const buildPrimitiveAnswer = <T extends NonTypeNode>(
   node: T,
   type: PrimitiveType,
   childNodes: TypedNodeChildren<T>,
+  extensions: TypedNodeExtensions<T>,
 ): Answer<State, Return<T>> =>
   buildAnswer(state, {
-    typedNode: buildTypedNode(node, type, buildConstraints(), childNodes),
+    typedNode: buildTypedNode(
+      node,
+      type,
+      buildConstraints(),
+      childNodes,
+      extensions,
+    ),
   })
 
 const wrapAnswer = <T extends NonTypeNode, U extends NonTypeNode>(
@@ -322,7 +330,7 @@ const handleNode = (
     case SyntaxType.Block:
       throw new NotImplementedError('Tony cannot infer the type of blocks yet.')
     case SyntaxType.Boolean:
-      return [buildPrimitiveAnswer(state, node, BOOLEAN_TYPE, {})]
+      return [buildPrimitiveAnswer(state, node, BOOLEAN_TYPE, {}, {})]
     case SyntaxType.Case:
       throw new NotImplementedError('Tony cannot infer the type of cases yet.')
     case SyntaxType.DestructuringPattern:
@@ -410,7 +418,7 @@ const handleNode = (
         'Tony cannot infer the type of member patterns yet.',
       )
     case SyntaxType.Number:
-      return [buildPrimitiveAnswer(state, node, NUMBER_TYPE, {})]
+      return [buildPrimitiveAnswer(state, node, NUMBER_TYPE, {}, {})]
     case SyntaxType.PatternGroup:
       throw new NotImplementedError(
         'Tony cannot infer the type of pattern groups yet.',
@@ -426,9 +434,9 @@ const handleNode = (
     case SyntaxType.Program:
       return handleProgram(state, node)
     case SyntaxType.RawString:
-      return [buildPrimitiveAnswer(state, node, STRING_TYPE, {})]
+      return [buildPrimitiveAnswer(state, node, STRING_TYPE, {}, {})]
     case SyntaxType.Regex:
-      return [buildPrimitiveAnswer(state, node, REG_EXP_TYPE, {})]
+      return [buildPrimitiveAnswer(state, node, REG_EXP_TYPE, {}, {})]
     case SyntaxType.Rest:
       throw new NotImplementedError(
         'Tony cannot infer the type of rest parameters yet.',
@@ -501,7 +509,7 @@ const handleError = (
   node: ErrorNode,
   { type, constraints }: Context,
 ): Answers<State, Return<ErrorNode>> => {
-  const typedNode = buildTypedNode(node, type, constraints, {})
+  const typedNode = buildTypedNode(node, type, constraints, {}, {})
   return [buildAnswer(state, { typedNode })]
 }
 
@@ -510,7 +518,7 @@ const handleProgram = (
   node: ProgramNode,
 ): Answers<State, Return<ProgramNode>> => {
   if (node.termNodes.length === 0)
-    return [buildPrimitiveAnswer(state, node, VOID_TYPE, { termNodes: [] })]
+    return [buildPrimitiveAnswer(state, node, VOID_TYPE, { termNodes: [] }, {})]
   return mapAnswers(traverseAll(state, node.termNodes), (answer) =>
     wrapAnswer(answer, (state, termNodes, constraints) => {
       assert(
@@ -520,7 +528,7 @@ const handleProgram = (
       const type = termNodes[termNodes.length - 1].type
       return [
         buildAnswer(state, {
-          typedNode: buildTypedNode(node, type, constraints, { termNodes }),
+          typedNode: buildTypedNode(node, type, constraints, { termNodes }, {}),
         }),
       ]
     }),

@@ -1,23 +1,34 @@
 import { TermBinding, TermBindingNode } from '../types/analyze/bindings'
 
-const buildBindingName = (binding: TermBinding) =>
+/**
+ * Given a binding, generates the name representing that binding.
+ */
+export const generateBindingName = (binding: TermBinding): string =>
   `${binding.name}${binding.index}`
 
+/**
+ * Generates a declaration of all non-implicit bindings in the given set of
+ * bindings.
+ */
 export const generateDeclarations = (bindings: TermBinding[]): string => {
   const declarations = bindings
     .filter((binding) => !binding.isImplicit)
-    .map(buildBindingName)
+    .map(generateBindingName)
   if (declarations.length > 0) return `const ${declarations.join(',')}`
   return ''
 }
 
-const getBindingOfNode = (bindings: TermBinding[], node: TermBindingNode) =>
+const findBindingOfNode = (bindings: TermBinding[], node: TermBindingNode) =>
   bindings.find((binding) => binding.node === node)
 
-export const getBindingName = (
+/**
+ * Given a set of bindings and a node, finds the binding declared by the node
+ * and generates the name representing that binding.
+ */
+export const generateDeclaredBindingName = (
   bindings: TermBinding[],
   node: TermBindingNode,
 ): string | undefined => {
-  const binding = getBindingOfNode(bindings, node)
-  if (binding) return buildBindingName(binding)
+  const binding = findBindingOfNode(bindings, node)
+  if (binding) return generateBindingName(binding)
 }
