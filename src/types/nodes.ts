@@ -43,6 +43,7 @@ import {
   ReturnNode,
   RightSectionNode,
   ShorthandAccessIdentifierNode,
+  ShorthandMemberIdentifierNode,
   ShorthandMemberPatternNode,
   SpreadNode,
   StringNode,
@@ -101,6 +102,7 @@ export type TermNode =
   | ReturnNode
   | RightSectionNode
   | ShorthandAccessIdentifierNode
+  | ShorthandMemberIdentifierNode
   | ShorthandMemberPatternNode
   | SpreadNode
   | StringNode

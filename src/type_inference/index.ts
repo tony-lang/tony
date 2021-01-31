@@ -449,6 +449,10 @@ const handleNode = (
       throw new NotImplementedError(
         'Tony cannot infer the type of shorthand member patterns yet.',
       )
+    case SyntaxType.ShorthandMemberIdentifier:
+      throw new NotImplementedError(
+        'Tony cannot infer the type of shorthand member identifiers yet.',
+      )
     case SyntaxType.Spread:
       throw new NotImplementedError(
         'Tony cannot infer the type of spreads yet.',

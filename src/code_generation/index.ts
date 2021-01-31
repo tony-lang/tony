@@ -7,6 +7,7 @@ import {
   CaseNode,
   ElseIfNode,
   ExportNode,
+  MemberNode,
   SyntaxType,
 } from 'tree-sitter-tony'
 import { Emit, buildFileEmit } from '../types/emit'
@@ -28,6 +29,7 @@ import {
   generateBlock,
   generateCase,
   generateEliseIf,
+  generateMember,
 } from './generators'
 import { safeApply, traverseScopes } from '../util/traverse'
 import { Config } from '../config'
@@ -194,9 +196,7 @@ const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
         'Tony cannot generate code for list patterns yet.',
       )
     case SyntaxType.Member:
-      throw new NotImplementedError(
-        'Tony cannot generate code for members yet.',
-      )
+      return handleMember(state, typedNode as TypedNode<MemberNode>)
     case SyntaxType.MemberPattern:
       throw new NotImplementedError(
         'Tony cannot generate code for member patterns yet.',
@@ -240,6 +240,10 @@ const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
     case SyntaxType.ShorthandAccessIdentifier:
       throw new NotImplementedError(
         'Tony cannot generate code for shorthand access identifiers yet.',
+      )
+    case SyntaxType.ShorthandMemberIdentifier:
+      throw new NotImplementedError(
+        'Tony cannot generate code for shorthand member identifiers yet.',
       )
     case SyntaxType.ShorthandMemberPattern:
       throw new NotImplementedError(
@@ -353,3 +357,12 @@ const handleElseIf = (
 
 const handleExport = (state: State, typedNode: TypedNode<ExportNode>): string =>
   traverse(state, typedNode.declarationNode)
+
+const handleMember = (
+  state: State,
+  typedNode: TypedNode<MemberNode>,
+): string => {
+  const key = traverse(state, typedNode.keyNode)
+  const value = traverse(state, typedNode.valueNode)
+  return generateMember(key, value)
+}

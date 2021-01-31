@@ -54,3 +54,6 @@ export const generateCase = resolveAbstractionBranch
 
 export const generateEliseIf = (condition: string, body: string): string =>
   `else if(${condition}){return ${body}}`
+
+export const generateMember = (key: string, value: string): string =>
+  `[${key}]:${value}`
