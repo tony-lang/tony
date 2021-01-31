@@ -5,6 +5,7 @@ import {
   AssignmentNode,
   BlockNode,
   CaseNode,
+  ElseIfNode,
   SyntaxType,
 } from 'tree-sitter-tony'
 import { Emit, buildFileEmit } from '../types/emit'
@@ -25,6 +26,7 @@ import {
   generateAssignment,
   generateBlock,
   generateCase,
+  generateEliseIf,
 } from './generators'
 import { safeApply, traverseScopes } from '../util/traverse'
 import { Config } from '../config'
@@ -123,9 +125,7 @@ const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
         'Tony cannot generate code for destructuring patterns yet.',
       )
     case SyntaxType.ElseIf:
-      throw new NotImplementedError(
-        'Tony cannot generate code for else ifs yet.',
-      )
+      return handleElseIf(state, typedNode as TypedNode<ElseIfNode>)
     case SyntaxType.Enum:
       throw new NotImplementedError('Tony cannot generate code for enums yet.')
     case SyntaxType.EnumValue:
@@ -341,4 +341,13 @@ const handleCase = (state: State, typedNode: TypedNode<CaseNode>): string => {
   const branches = typedNode.whenNodes.map((branch) => traverse(state, branch))
   const elseBranch = traverse(state, typedNode.elseNode)
   return generateCase(value, branches, elseBranch)
+}
+
+const handleElseIf = (
+  state: State,
+  typedNode: TypedNode<ElseIfNode>,
+): string => {
+  const condition = traverse(state, typedNode.conditionNode)
+  const body = traverse(state, typedNode.bodyNode)
+  return generateEliseIf(condition, body)
 }

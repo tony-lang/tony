@@ -51,3 +51,6 @@ export const generateBlock = (
 }
 
 export const generateCase = resolveAbstractionBranch
+
+export const generateEliseIf = (condition: string, body: string): string =>
+  `else if(${condition}){return ${body}}`
