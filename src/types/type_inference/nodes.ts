@@ -20,7 +20,7 @@ type TypedNodeChildrenWithNever<T extends NonTypeNode> = {
 }
 type TypedNodeChildrenNeverKeys<T extends NonTypeNode> = ExtractKeysOfValueType<
   TypedNodeChildrenWithNever<T>,
-  never
+  never | undefined
 >
 
 /**

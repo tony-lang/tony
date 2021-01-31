@@ -8,6 +8,7 @@ import { resolvePattern } from './patterns'
 
 const ARGUMENTS_NAME = 'args'
 const INTERNAL_TEMP_TOKEN = '$INTERNAL_TEMP_TOKEN'
+const TRANSFORM_PLACEHOLDER_ARGUMENT = '$TRANSFORM_PLACEHOLDER_ARGUMENT'
 
 export const generateAbstraction = (branches: string[]): string =>
   curry(ARGUMENTS_NAME, resolveAbstractionBranch(ARGUMENTS_NAME, branches))
@@ -35,6 +36,9 @@ export const generateApplication = (value: string, args: string[]): string => {
   const joinedArgs = args.join(',')
   return `${value}(${joinedArgs})`
 }
+
+export const generateArgument = (value?: string): string =>
+  value ? value : `"${TRANSFORM_PLACEHOLDER_ARGUMENT}"`
 
 export const generateAssignment = (pattern: string, value: string): string => {
   const [resolvedPattern, identifiers, defaults] = resolvePattern(pattern)

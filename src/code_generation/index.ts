@@ -3,6 +3,7 @@ import {
   AbstractionNode,
   AccessNode,
   ApplicationNode,
+  ArgumentNode,
   AssignmentNode,
   BlockNode,
   CaseNode,
@@ -31,6 +32,7 @@ import {
   generateAbstractionBranch,
   generateAccess,
   generateApplication,
+  generateArgument,
   generateAssignment,
   generateBlock,
   generateCase,
@@ -124,9 +126,7 @@ const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
     case SyntaxType.Application:
       return handleApplication(state, typedNode as TypedNode<ApplicationNode>)
     case SyntaxType.Argument:
-      throw new NotImplementedError(
-        'Tony cannot generate code for arguments yet.',
-      )
+      return handleArgument(state, typedNode as TypedNode<ArgumentNode>)
     case SyntaxType.Assignment:
       return handleAssignment(state, typedNode as TypedNode<AssignmentNode>)
     case SyntaxType.Block:
@@ -345,6 +345,14 @@ const handleApplication = (
     traverse(state, argument),
   )
   return generateApplication(value, args)
+}
+
+const handleArgument = (
+  state: State,
+  typedNode: TypedNode<ArgumentNode>,
+): string => {
+  const value = safeApply(traverse)(state, typedNode.valueNode)
+  return generateArgument(value)
 }
 
 const handleAssignment = (
