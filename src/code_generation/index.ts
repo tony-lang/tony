@@ -2,6 +2,7 @@ import {
   AbstractionBranchNode,
   AbstractionNode,
   AccessNode,
+  ApplicationNode,
   AssignmentNode,
   BlockNode,
   CaseNode,
@@ -29,6 +30,7 @@ import {
   generateAbstraction,
   generateAbstractionBranch,
   generateAccess,
+  generateApplication,
   generateAssignment,
   generateBlock,
   generateCase,
@@ -120,9 +122,7 @@ const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
     case SyntaxType.Access:
       return handleAccess(state, typedNode as TypedNode<AccessNode>)
     case SyntaxType.Application:
-      throw new NotImplementedError(
-        'Tony cannot generate code for applications yet.',
-      )
+      return handleApplication(state, typedNode as TypedNode<ApplicationNode>)
     case SyntaxType.Argument:
       throw new NotImplementedError(
         'Tony cannot generate code for arguments yet.',
@@ -334,6 +334,17 @@ const handleAccess = (
   const name = traverse(state, typedNode.nameNode)
   const value = traverse(state, typedNode.valueNode)
   return generateAccess(name, value)
+}
+
+const handleApplication = (
+  state: State,
+  typedNode: TypedNode<ApplicationNode>,
+): string => {
+  const value = traverse(state, typedNode.nameNode)
+  const args = typedNode.elementNodes.map((argument) =>
+    traverse(state, argument),
+  )
+  return generateApplication(value, args)
 }
 
 const handleAssignment = (

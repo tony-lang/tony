@@ -31,6 +31,11 @@ export const generateAbstractionBranch = (
 export const generateAccess = (name: string, value: string): string =>
   `${name}[${value}]`
 
+export const generateApplication = (value: string, args: string[]): string => {
+  const joinedArgs = args.join(',')
+  return `${value}(${joinedArgs})`
+}
+
 export const generateAssignment = (pattern: string, value: string): string => {
   const [resolvedPattern, identifiers, defaults] = resolvePattern(pattern)
   return patternMatch(resolvedPattern, identifiers, defaults, value)
