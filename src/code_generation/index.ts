@@ -14,6 +14,7 @@ import {
   IdentifierPatternNode,
   IfNode,
   InfixApplicationNode,
+  InterpolationNode,
   MemberNode,
   SyntaxType,
 } from 'tree-sitter-tony'
@@ -194,8 +195,9 @@ const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
         'Tony cannot generate code for interfaces yet.',
       )
     case SyntaxType.Interpolation:
-      throw new NotImplementedError(
-        'Tony cannot generate code for interpolations yet.',
+      return traverse(
+        state,
+        (typedNode as TypedNode<InterpolationNode>).termNode,
       )
     case SyntaxType.LeftSection:
       throw new NotImplementedError(
