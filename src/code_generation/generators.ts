@@ -8,8 +8,10 @@ import { ScopeWithTerms } from '../types/analyze/scopes'
 import { generateDeclarations } from './bindings'
 import { resolvePattern } from './patterns'
 
+const ARGUMENTS_NAME = 'args'
+
 export const generateAbstraction = (branches: string[]): string =>
-  curry(resolveAbstractionBranch(branches))
+  curry(ARGUMENTS_NAME, resolveAbstractionBranch(ARGUMENTS_NAME, branches))
 
 export const generateAbstractionBranch = (
   parameters: string[],
@@ -47,3 +49,5 @@ export const generateBlock = (
     ';',
   )};${explicitReturn}${returnValue}})()`
 }
+
+export const generateCase = resolveAbstractionBranch

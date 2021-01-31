@@ -441,6 +441,10 @@ const handleNode = (
       throw new NotImplementedError(
         'Tony cannot infer the type of right sections yet.',
       )
+    case SyntaxType.ShorthandAccessIdentifier:
+      throw new NotImplementedError(
+        'Tony cannot infer the type of shorthand access identifiers yet.',
+      )
     case SyntaxType.ShorthandMemberPattern:
       throw new NotImplementedError(
         'Tony cannot infer the type of shorthand member patterns yet.',

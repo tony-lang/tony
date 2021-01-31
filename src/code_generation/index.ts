@@ -4,6 +4,7 @@ import {
   AccessNode,
   AssignmentNode,
   BlockNode,
+  CaseNode,
   SyntaxType,
 } from 'tree-sitter-tony'
 import { Emit, buildFileEmit } from '../types/emit'
@@ -23,6 +24,7 @@ import {
   generateAccess,
   generateAssignment,
   generateBlock,
+  generateCase,
 } from './generators'
 import { safeApply, traverseScopes } from '../util/traverse'
 import { Config } from '../config'
@@ -90,7 +92,7 @@ const traverse = (state: State, typedNode: TypedNode<TermNode>): string =>
   )
 
 const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
-  switch (typedNode.kind) {
+  switch (typedNode.node.type) {
     case SyntaxType.Abstraction:
       return handleAbstraction(state, typedNode as TypedNode<AbstractionNode>)
     case SyntaxType.AbstractionBranch:
@@ -115,7 +117,7 @@ const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
     case SyntaxType.Boolean:
       return typedNode.node.text
     case SyntaxType.Case:
-      throw new NotImplementedError('Tony cannot generate code for cases yet.')
+      return handleCase(state, typedNode as TypedNode<CaseNode>)
     case SyntaxType.DestructuringPattern:
       throw new NotImplementedError(
         'Tony cannot generate code for destructuring patterns yet.',
@@ -329,6 +331,14 @@ const handleAssignment = (
 
 const handleBlock = (state: State, typedNode: TypedNode<BlockNode>): string => {
   const terms = typedNode.termNodes.map((term) => traverse(state, term))
-  const endsWithReturn = typedNode.termNodes.pop()?.kind === SyntaxType.Return
+  const endsWithReturn =
+    typedNode.termNodes.pop()?.node.type === SyntaxType.Return
   return generateBlock(state.scopes[0], terms, endsWithReturn)
+}
+
+const handleCase = (state: State, typedNode: TypedNode<CaseNode>): string => {
+  const value = traverse(state, typedNode.valueNode)
+  const branches = typedNode.whenNodes.map((branch) => traverse(state, branch))
+  const elseBranch = traverse(state, typedNode.elseNode)
+  return generateCase(value, branches, elseBranch)
 }

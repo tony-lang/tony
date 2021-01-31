@@ -10,6 +10,8 @@ type ExtractKeysOfValueType<T, K> = {
 type TypedNodeChildrenWithNever<T extends NonTypeNode> = {
   [P in keyof T]: T[P] extends NonTypeNode
     ? TypedNode<T[P]>
+    : T[P] extends NonTypeNode | undefined
+    ? TypedNode<T[P] & object> | undefined // NonNullable<T[P]> doesn't work here
     : T[P] extends NonTypeNode[]
     ? TypedNode<T[P][0]>[]
     : never
@@ -31,7 +33,6 @@ export type TypedNodeChildren<T extends NonTypeNode> = Omit<
  * A type annotation for a given node in the syntax tree.
  */
 export type TypedNode<T extends NonTypeNode> = TypedNodeChildren<T> & {
-  readonly kind: T['type']
   readonly node: T
   readonly type: ResolvedType
   readonly constraints: Constraints
@@ -46,7 +47,6 @@ export const buildTypedNode = <T extends NonTypeNode>(
   childNodes: TypedNodeChildren<T>,
 ): TypedNode<T> => ({
   ...childNodes,
-  kind: node.type,
   node,
   type,
   constraints,

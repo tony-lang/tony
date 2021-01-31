@@ -1,15 +1,21 @@
 const UTILS_MODULE = 'codeGeneration'
 const CURRY_FUNCTION = `${UTILS_MODULE}.curry`
+const PATTERN_MATCH_FUNCTION = `${UTILS_MODULE}.patternMatch`
 const RESOLVE_ABSTRACTION_BRANCH_FUNCTION = `${UTILS_MODULE}.resolveAbstractionBranch`
-const ARGUMENTS_NAME = 'args'
 
-export const resolveAbstractionBranch = (branches: string[]): string => {
+export const resolveAbstractionBranch = (
+  value: string,
+  branches: string[],
+  elseBranch?: string,
+): string => {
   const joinedBranches = branches.join(',')
-  return `${RESOLVE_ABSTRACTION_BRANCH_FUNCTION}(${ARGUMENTS_NAME},[${joinedBranches}])`
+  return `${RESOLVE_ABSTRACTION_BRANCH_FUNCTION}(${value},[${joinedBranches}],${
+    elseBranch ? `()=>${elseBranch}` : ''
+  })`
 }
 
-export const curry = (fn: string): string =>
-  `${CURRY_FUNCTION}((...${ARGUMENTS_NAME})=>${fn})`
+export const curry = (argumentsName: string, fn: string): string =>
+  `${CURRY_FUNCTION}((...${argumentsName})=>${fn})`
 
 export const patternMatchForAbstraction = (
   parameters: string,
@@ -22,4 +28,4 @@ export const patternMatch = (
   defaults: string,
   value: string,
 ): string =>
-  `(()=>{const value=${value};${identifiers}=new stdlib.PatternMatch({defaults:${defaults},overmatching:true}).perform(${pattern},value);return value})()`
+  `(()=>{const value=${value};${identifiers}=${PATTERN_MATCH_FUNCTION}({defaults:${defaults},overmatching:true},${pattern},value);return value})()`
