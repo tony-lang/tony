@@ -62,5 +62,8 @@ export const generateGenerator = (
   return `${value}.map((${name})=>!${condition} ? "${INTERNAL_TEMP_TOKEN}" : `
 }
 
+export const generateIdentifierPattern = (name: string): string =>
+  `"${INTERNAL_TEMP_TOKEN}${name}"`
+
 export const generateMember = (key: string, value: string): string =>
   `[${key}]:${value}`

@@ -9,6 +9,7 @@ import {
   ExportNode,
   GeneratorNode,
   IdentifierNode,
+  IdentifierPatternNode,
   MemberNode,
   SyntaxType,
 } from 'tree-sitter-tony'
@@ -32,6 +33,7 @@ import {
   generateCase,
   generateEliseIf,
   generateGenerator,
+  generateIdentifierPattern,
   generateMember,
 } from './generators'
 import {
@@ -161,8 +163,9 @@ const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
         (typedNode as TypedNode<IdentifierNode>).binding,
       )
     case SyntaxType.IdentifierPattern:
-      throw new NotImplementedError(
-        'Tony cannot generate code for identifier patterns yet.',
+      return handleIdentifierPattern(
+        state,
+        typedNode as TypedNode<IdentifierPatternNode>,
       )
     case SyntaxType.If:
       throw new NotImplementedError('Tony cannot generate code for ifs yet.')
@@ -379,6 +382,21 @@ const handleGenerator = (
     'Generator nodes should always have an associated binding.',
   )
   return generateGenerator(name, value, condition)
+}
+
+const handleIdentifierPattern = (
+  state: State,
+  typedNode: TypedNode<IdentifierPatternNode>,
+): string => {
+  const name = generateDeclaredBindingName(
+    state.scopes[0].terms,
+    typedNode.node,
+  )
+  assert(
+    name !== undefined,
+    'Identifier pattern nodes should always have an associated binding.',
+  )
+  return generateIdentifierPattern(name)
 }
 
 const handleMember = (
