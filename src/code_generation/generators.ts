@@ -1,30 +1,49 @@
+import { GeneratedPattern, GeneratedPatterns } from './patterns'
 import {
   curry,
   patternMatch,
   patternMatchForAbstraction,
   resolveAbstractionBranch,
 } from './lib'
-import { resolvePattern } from './patterns'
 
 const ARGUMENTS_NAME = 'args'
 const INTERNAL_TEMP_TOKEN = '$INTERNAL_TEMP_TOKEN'
 const TRANSFORM_PLACEHOLDER_ARGUMENT = '$TRANSFORM_PLACEHOLDER_ARGUMENT'
 
+const generateListPattern = (
+  parameters: string[],
+  restParameter: string | undefined,
+) =>
+  restParameter
+    ? `[${parameters.join(',')},...${restParameter}]`
+    : `[${parameters.join(',')}]`
+
 export const generateAbstraction = (branches: string[]): string =>
   curry(ARGUMENTS_NAME, resolveAbstractionBranch(ARGUMENTS_NAME, branches))
 
 export const generateAbstractionBranch = (
-  parameters: string[],
-  restParameter: string | undefined,
+  [
+    parameterPatterns,
+    parameterIdentifiersPatterns,
+    parameterDefaultsPatterns,
+  ]: GeneratedPatterns,
+  restParameter: GeneratedPattern | undefined,
   body: string,
 ): string => {
-  const [pattern, identifiers, defaults] = resolvePattern(
-    restParameter
-      ? `[${parameters.join(',')},...${restParameter}]`
-      : `[${parameters.join(',')}]`,
+  const pattern = generateListPattern(
+    parameterPatterns,
+    restParameter && restParameter[0],
   )
-  return `[${pattern},${defaults},${patternMatchForAbstraction(
-    identifiers,
+  const identifiersPattern = generateListPattern(
+    parameterIdentifiersPatterns,
+    restParameter && restParameter[1],
+  )
+  const defaultsPattern = generateListPattern(
+    parameterDefaultsPatterns,
+    restParameter && restParameter[2],
+  )
+  return `[${pattern},${defaultsPattern},${patternMatchForAbstraction(
+    identifiersPattern,
     body,
   )}]`
 }
@@ -40,10 +59,10 @@ export const generateApplication = (value: string, args: string[]): string => {
 export const generateArgument = (value?: string): string =>
   value ? value : `"${TRANSFORM_PLACEHOLDER_ARGUMENT}"`
 
-export const generateAssignment = (pattern: string, value: string): string => {
-  const [resolvedPattern, identifiers, defaults] = resolvePattern(pattern)
-  return patternMatch(resolvedPattern, identifiers, defaults, value)
-}
+export const generateAssignment = (
+  [pattern, identifiersPattern, defaultsPattern]: GeneratedPattern,
+  value: string,
+): string => patternMatch(pattern, identifiersPattern, defaultsPattern, value)
 
 export const generateBlock = (
   declarations: string,

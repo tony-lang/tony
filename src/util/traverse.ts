@@ -43,19 +43,7 @@ export const ensure = <T extends AbstractState, U extends SyntaxNode>(
  */
 export const conditionalApply = <T extends AbstractState, U>(
   callback: (state: T, arg: U) => T,
-) => (state: T, arg: U | undefined): T => {
-  if (arg) return callback(state, arg)
-  return state
-}
-
-/**
- * Conditionally applies argument to callback depending on whether it exists.
- */
-export const safeApply = <T extends AbstractState, U, V>(
-  callback: (state: T, arg: U) => V,
-) => (state: T, arg: U | undefined): V | undefined => {
-  if (arg) return callback(state, arg)
-}
+) => (state: T, arg: U | undefined): T => (arg && callback(state, arg)) || state
 
 /**
  * If node is a nesting node enter its scope; otherwise just apply the given

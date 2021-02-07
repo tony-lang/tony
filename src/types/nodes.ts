@@ -58,7 +58,10 @@ import {
   WhenNode,
 } from 'tree-sitter-tony'
 
+type LiteralNode = BooleanNode | NumberNode | RawStringNode | RegexNode
+
 export type TermNode =
+  | LiteralNode
   | AbstractionNode
   | AbstractionBranchNode
   | AccessNode
@@ -66,9 +69,7 @@ export type TermNode =
   | ArgumentNode
   | AssignmentNode
   | BlockNode
-  | BooleanNode
   | CaseNode
-  | DestructuringPatternNode
   | ElseIfNode
   | EnumNode
   | EnumValueNode
@@ -77,7 +78,6 @@ export type TermNode =
   | GeneratorNode
   | GroupNode
   | IdentifierNode
-  | IdentifierPatternNode
   | IfNode
   | ImportNode
   | ImportIdentifierNode
@@ -88,32 +88,34 @@ export type TermNode =
   | LeftSectionNode
   | ListNode
   | ListComprehensionNode
-  | ListPatternNode
   | MemberNode
-  | MemberPatternNode
-  | NumberNode
-  | PatternGroupNode
   | PipelineNode
   | PrefixApplicationNode
   | ProgramNode
-  | RawStringNode
-  | RegexNode
-  | RestNode
   | ReturnNode
   | RightSectionNode
   | ShorthandAccessIdentifierNode
   | ShorthandMemberIdentifierNode
-  | ShorthandMemberPatternNode
   | SpreadNode
   | StringNode
   | StructNode
-  | StructPatternNode
-  | TaggedPatternNode
   | TaggedValueNode
   | TupleNode
-  | TuplePatternNode
   | TypeAliasNode
   | TypeHintNode
   | WhenNode
 
-export type NonTypeNode = TermNode | ErrorNode
+export type PatternNode =
+  | LiteralNode
+  | DestructuringPatternNode
+  | IdentifierPatternNode
+  | ListPatternNode
+  | MemberPatternNode
+  | PatternGroupNode
+  | RestNode
+  | ShorthandMemberPatternNode
+  | StructPatternNode
+  | TaggedPatternNode
+  | TuplePatternNode
+
+export type NonTypeNode = TermNode | PatternNode | ErrorNode

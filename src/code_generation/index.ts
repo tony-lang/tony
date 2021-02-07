@@ -11,7 +11,6 @@ import {
   ExportNode,
   GeneratorNode,
   IdentifierNode,
-  IdentifierPatternNode,
   IfNode,
   InfixApplicationNode,
   InterpolationNode,
@@ -42,7 +41,6 @@ import {
   generateCase,
   generateEliseIf,
   generateGenerator,
-  generateIdentifierPattern,
   generateIf,
   generateInfixApplication,
   generateList,
@@ -54,10 +52,11 @@ import {
   generateDeclarations,
   generateDeclaredBindingName,
 } from './bindings'
-import { safeApply, traverseScopes } from '../util/traverse'
+import { resolvePattern, resolvePatterns } from './patterns'
 import { Config } from '../config'
 import { TermNode } from '../types/nodes'
 import { TypedNode } from '../types/type_inference/nodes'
+import { traverseScopes } from '../util/traverse'
 
 type State = {
   /**
@@ -142,10 +141,6 @@ const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
       return typedNode.node.text
     case SyntaxType.Case:
       return handleCase(state, typedNode as TypedNode<CaseNode>)
-    case SyntaxType.DestructuringPattern:
-      throw new NotImplementedError(
-        'Tony cannot generate code for destructuring patterns yet.',
-      )
     case SyntaxType.ElseIf:
       return handleElseIf(state, typedNode as TypedNode<ElseIfNode>)
     case SyntaxType.Enum:
@@ -170,11 +165,6 @@ const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
     case SyntaxType.Identifier:
       return generateBindingName(
         (typedNode as TypedNode<IdentifierNode>).binding,
-      )
-    case SyntaxType.IdentifierPattern:
-      return handleIdentifierPattern(
-        state,
-        typedNode as TypedNode<IdentifierPatternNode>,
       )
     case SyntaxType.If:
       return handleIf(state, typedNode as TypedNode<IfNode>)
@@ -214,22 +204,10 @@ const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
         state,
         typedNode as TypedNode<ListComprehensionNode>,
       )
-    case SyntaxType.ListPattern:
-      throw new NotImplementedError(
-        'Tony cannot generate code for list patterns yet.',
-      )
     case SyntaxType.Member:
       return handleMember(state, typedNode as TypedNode<MemberNode>)
-    case SyntaxType.MemberPattern:
-      throw new NotImplementedError(
-        'Tony cannot generate code for member patterns yet.',
-      )
     case SyntaxType.Number:
       return typedNode.node.text
-    case SyntaxType.PatternGroup:
-      throw new NotImplementedError(
-        'Tony cannot generate code for pattern groups yet.',
-      )
     case SyntaxType.Pipeline:
       throw new NotImplementedError(
         'Tony cannot generate code for pipelines yet.',
@@ -248,10 +226,6 @@ const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
       )
     case SyntaxType.Regex:
       return typedNode.node.text
-    case SyntaxType.Rest:
-      throw new NotImplementedError(
-        'Tony cannot generate code for rest parameters yet.',
-      )
     case SyntaxType.Return:
       throw new NotImplementedError(
         'Tony cannot generate code for returns yet.',
@@ -268,10 +242,6 @@ const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
       throw new NotImplementedError(
         'Tony cannot generate code for shorthand member identifiers yet.',
       )
-    case SyntaxType.ShorthandMemberPattern:
-      throw new NotImplementedError(
-        'Tony cannot generate code for shorthand member patterns yet.',
-      )
     case SyntaxType.Spread:
       throw new NotImplementedError(
         'Tony cannot generate code for spreads yet.',
@@ -284,24 +254,12 @@ const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
       throw new NotImplementedError(
         'Tony cannot generate code for structs yet.',
       )
-    case SyntaxType.StructPattern:
-      throw new NotImplementedError(
-        'Tony cannot generate code for struct patterns yet.',
-      )
-    case SyntaxType.TaggedPattern:
-      throw new NotImplementedError(
-        'Tony cannot generate code for tagged patterns yet.',
-      )
     case SyntaxType.TaggedValue:
       throw new NotImplementedError(
         'Tony cannot generate code for tagged values yet.',
       )
     case SyntaxType.Tuple:
       throw new NotImplementedError('Tony cannot generate code for tuples yet.')
-    case SyntaxType.TuplePattern:
-      throw new NotImplementedError(
-        'Tony cannot generate code for tuple patterns yet.',
-      )
     case SyntaxType.TypeAlias:
       throw new NotImplementedError(
         'Tony cannot generate code for type aliases yet.',
@@ -329,10 +287,8 @@ const handleAbstractionBranch = (
   state: State,
   typedNode: TypedNode<AbstractionBranchNode>,
 ): string => {
-  const parameters = typedNode.elementNodes.map((parameter) =>
-    traverse(state, parameter),
-  )
-  const restParameter = safeApply(traverse)(state, typedNode.restNode)
+  const parameters = resolvePatterns(typedNode.elementNodes)
+  const restParameter = typedNode.restNode && resolvePattern(typedNode.restNode)
   const body = traverse(state, typedNode.bodyNode)
   return generateAbstractionBranch(parameters, restParameter, body)
 }
@@ -361,7 +317,7 @@ const handleArgument = (
   state: State,
   typedNode: TypedNode<ArgumentNode>,
 ): string => {
-  const value = safeApply(traverse)(state, typedNode.valueNode)
+  const value = typedNode.valueNode && traverse(state, typedNode.valueNode)
   return generateArgument(value)
 }
 
@@ -369,7 +325,7 @@ const handleAssignment = (
   state: State,
   typedNode: TypedNode<AssignmentNode>,
 ): string => {
-  const pattern = traverse(state, typedNode.patternNode)
+  const pattern = resolvePattern(typedNode.patternNode)
   const value = traverse(state, typedNode.valueNode)
   return generateAssignment(pattern, value)
 }
@@ -403,7 +359,8 @@ const handleGenerator = (
   typedNode: TypedNode<GeneratorNode>,
 ): string => {
   const value = traverse(state, typedNode.valueNode)
-  const condition = safeApply(traverse)(state, typedNode.conditionNode)
+  const condition =
+    typedNode.conditionNode && traverse(state, typedNode.conditionNode)
   const name = generateDeclaredBindingName(
     state.scopes[0].terms,
     typedNode.node,
@@ -415,28 +372,14 @@ const handleGenerator = (
   return generateGenerator(name, value, condition)
 }
 
-const handleIdentifierPattern = (
-  state: State,
-  typedNode: TypedNode<IdentifierPatternNode>,
-): string => {
-  const name = generateDeclaredBindingName(
-    state.scopes[0].terms,
-    typedNode.node,
-  )
-  assert(
-    name !== undefined,
-    'Identifier pattern nodes should always have an associated binding.',
-  )
-  return generateIdentifierPattern(name)
-}
-
 const handleIf = (state: State, typedNode: TypedNode<IfNode>): string => {
   const condition = traverse(state, typedNode.conditionNode)
   const body = traverse(state, typedNode.bodyNode)
   const alternativeBodies = typedNode.elseIfNodes.map((elseIf) =>
     traverse(state, elseIf),
   )
-  const alternativeBody = safeApply(traverse)(state, typedNode.elseNode)
+  const alternativeBody =
+    typedNode.elseNode && traverse(state, typedNode.elseNode)
   return generateIf(condition, body, alternativeBodies, alternativeBody)
 }
 
