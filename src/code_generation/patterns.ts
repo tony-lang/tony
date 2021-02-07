@@ -159,6 +159,10 @@ export const traverse = (
         typedNode as TypedNode<StructPatternNode>,
         generateCode,
       )
+    case SyntaxType.TaggedPattern:
+      throw new NotImplementedError(
+        'Tony cannot generate code for tagged patterns yet.',
+      )
     case SyntaxType.TuplePattern:
       return handleTuplePattern(
         state,
@@ -189,7 +193,7 @@ const handleDestructuringPattern = (
   )
   if (name !== undefined)
     throw new NotImplementedError(
-      'Destructuring pattern bindings cannot yet be generated.',
+      'Tony cannot generate code for destructuring patterns with bindings yet.',
     )
   return traverse(state, typedNode.patternNode, generateCode)
 }
