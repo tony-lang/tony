@@ -1,7 +1,12 @@
+import path from 'path'
+
 const UTILS_MODULE = 'codeGeneration'
+const UTILS_PATH = path.join(__dirname, 'utils')
 const CURRY_FUNCTION = `${UTILS_MODULE}.curry`
 const PATTERN_MATCH_FUNCTION = `${UTILS_MODULE}.patternMatch`
 const RESOLVE_ABSTRACTION_BRANCH_FUNCTION = `${UTILS_MODULE}.resolveAbstractionBranch`
+
+export const UTILS_IMPORT = `import * as ${UTILS_MODULE} from ${UTILS_PATH}`
 
 export const resolveAbstractionBranch = (
   value: string,

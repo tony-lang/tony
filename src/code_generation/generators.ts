@@ -1,5 +1,6 @@
 import { GeneratedPattern, GeneratedPatterns } from './patterns'
 import {
+  UTILS_IMPORT,
   curry,
   patternMatch,
   patternMatchForAbstraction,
@@ -118,6 +119,16 @@ export const generateListComprehension = (
 
 export const generateMember = (key: string, value: string): string =>
   `[${key}]:${value}`
+
+export const generateProgram = (
+  declarations: string,
+  imports: string,
+  exports: string,
+  terms: string[],
+): string => {
+  const joinedTerms = terms.join(';')
+  return `${UTILS_IMPORT};${imports};${declarations};${joinedTerms};${exports}`
+}
 
 export const generateStruct = (members: string[]): string =>
   `{${members.join(',')}}`

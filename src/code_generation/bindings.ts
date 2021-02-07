@@ -1,4 +1,10 @@
-import { TermBinding, TermBindingNode } from '../types/analyze/bindings'
+import {
+  ImportedTermBinding,
+  TermBinding,
+  TermBindingNode,
+  isImportedBinding,
+} from '../types/analyze/bindings'
+import { AbsolutePath } from '../types/path'
 
 /**
  * Given a binding, generates the name representing that binding.
@@ -15,6 +21,40 @@ export const generateDeclarations = (bindings: TermBinding[]): string => {
     .filter((binding) => !binding.isImplicit)
     .map(generateBindingName)
   if (declarations.length > 0) return `const ${declarations.join(',')}`
+  return ''
+}
+
+/**
+ * Generates import statements for all imported bindings.
+ */
+export const generateImports = (
+  dependencies: AbsolutePath[],
+  bindings: ImportedTermBinding[],
+): string => {
+  return dependencies
+    .map((source) =>
+      generateImport(
+        source,
+        bindings.filter((binding) => binding.file === source),
+      ),
+    )
+    .join(';')
+}
+
+const generateImport = (
+  source: AbsolutePath,
+  bindings: ImportedTermBinding[],
+): string => {}
+
+/**
+ * Generates export statement for all exported bindings.
+ */
+export const generateExports = (bindings: TermBinding[]): string => {
+  const exportedBindings = bindings
+    .filter((binding) => binding.isExported)
+    .map(generateBindingName)
+  if (exportedBindings.length > 0)
+    return `export {${exportedBindings.join(',')}}`
   return ''
 }
 

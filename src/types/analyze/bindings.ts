@@ -204,10 +204,11 @@ export const buildTypeAssignment = (
   type,
 })
 
-export const isImportedBinding = (binding: {
-  location: BindingLocation
-}): binding is ImportedBinding => binding.location === BindingLocation.Imported
+export const isImportedBinding = <T extends TermBinding | TypeBinding>(
+  binding: T,
+): binding is T & ImportedBinding =>
+  binding.location === BindingLocation.Imported
 
-export const isLocalBinding = (binding: {
-  location: BindingLocation
-}): binding is LocalBinding => binding.location === BindingLocation.Local
+export const isLocalBinding = <T extends TermBinding | TypeBinding>(
+  binding: T,
+): binding is T & LocalBinding => binding.location === BindingLocation.Local

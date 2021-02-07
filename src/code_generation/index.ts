@@ -19,6 +19,7 @@ import {
   MemberNode,
   PipelineNode,
   PrefixApplicationNode,
+  ProgramNode,
   StructNode,
   SyntaxType,
 } from 'tree-sitter-tony'
@@ -29,6 +30,7 @@ import {
   NestedScope,
   NestingTermNode,
   TypedFileScope,
+  isFileScope,
 } from '../types/analyze/scopes'
 import { LogLevel, log } from '../logger'
 import { NotImplementedError, assert } from '../types/errors/internal'
@@ -48,18 +50,25 @@ import {
   generateList,
   generateListComprehension,
   generateMember,
+  generateProgram,
   generateStruct,
 } from './generators'
 import {
   generateBindingName,
   generateDeclarations,
   generateDeclaredBindingName,
+  generateExports,
+  generateImports,
 } from './bindings'
 import { generatePattern, generatePatterns } from './patterns'
 import { Config } from '../config'
 import { TermNode } from '../types/nodes'
 import { TypedNode } from '../types/type_inference/nodes'
 import { traverseScopes } from '../util/traverse'
+import {
+  ImportedTermBinding,
+  isImportedBinding,
+} from '../types/analyze/bindings'
 
 type State = {
   /**
@@ -219,9 +228,7 @@ const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
         typedNode as TypedNode<PrefixApplicationNode>,
       )
     case SyntaxType.Program:
-      throw new NotImplementedError(
-        'Tony cannot generate code for programs yet.',
-      )
+      return handleProgram(state, typedNode as TypedNode<ProgramNode>)
     case SyntaxType.RawString:
       throw new NotImplementedError(
         'Tony cannot generate code for raw strings yet.',
@@ -441,6 +448,25 @@ const handlePrefixApplication = (
   const name = traverse(state, typedNode.nameNode)
   const value = traverse(state, typedNode.valueNode)
   return generateApplication(name, [value])
+}
+
+const handleProgram = (
+  state: State,
+  typedNode: TypedNode<ProgramNode>,
+): string => {
+  const terms = typedNode.termNodes.map((term) => traverse(state, term))
+  const scope = state.scopes[0]
+  assert(
+    isFileScope(scope),
+    'Traverse should arrive at the top-level file scope.',
+  )
+  const declarations = generateDeclarations(scope.terms)
+  const imports = generateImports(
+    scope.dependencies,
+    scope.terms.filter(isImportedBinding),
+  )
+  const exports = generateExports(scope.terms)
+  return generateProgram(declarations, imports, exports, terms)
 }
 
 const handleStruct = (
