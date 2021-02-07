@@ -1,31 +1,38 @@
-import {
-  FileScope,
-  NestedScope,
-  NestingTermNode,
-} from '../types/analyze/scopes'
-import { PatternNode } from '../types/nodes'
+import { IdentifierPatternNode, SyntaxType } from 'tree-sitter-tony'
+import { PatternNode, TermNode } from '../types/nodes'
+import { generateIdentifierPattern, generateListPattern } from './generators'
+import { State } from './types'
 import { TypedNode } from '../types/type_inference/nodes'
+import { assert } from '../types/errors/internal'
+import { generateDeclaredBindingName } from './bindings'
 
 export type GeneratedPattern = [
   pattern: string,
   identifiersPattern: string,
   defaultsPattern: string,
 ]
+
 export type GeneratedPatterns = [
   patterns: string[],
   identifiersPatterns: string[],
   defaultsPatterns: string[],
 ]
 
+type Return = [pattern: string, identifiers: string[], defaults: string[]]
+
+type GenerateCode = (state: State, typedNode: TypedNode<TermNode>) => string
+
 export const generatePatterns = (
-  scope: FileScope<NestingTermNode> | NestedScope<NestingTermNode>,
+  state: State,
   typedNodes: TypedNode<PatternNode>[],
+  generateCode: GenerateCode,
 ): GeneratedPatterns =>
   typedNodes.reduce<GeneratedPatterns>(
     ([patterns, identifiersPatterns, defaultsPatterns], typedNode) => {
       const [pattern, identifiersPattern, defaultsPattern] = generatePattern(
-        scope,
+        state,
         typedNode,
+        generateCode,
       )
       return [
         [...patterns, pattern],
@@ -37,21 +44,53 @@ export const generatePatterns = (
   )
 
 export const generatePattern = (
-  scope: FileScope<NestingTermNode> | NestedScope<NestingTermNode>,
+  state: State,
   typedNode: TypedNode<PatternNode>,
-): GeneratedPattern => {}
+  generateCode: GenerateCode,
+): GeneratedPattern => {
+  const [pattern, identifiers, defaults] = traverse(
+    state,
+    typedNode,
+    generateCode,
+  )
+  return [
+    pattern,
+    generateListPattern(identifiers),
+    generateListPattern(defaults),
+  ]
+}
 
-// const handleIdentifierPattern = (
-//   state: State,
-//   typedNode: TypedNode<IdentifierPatternNode>,
-// ): string => {
-//   const name = generateDeclaredBindingName(
-//     state.scopes[0].terms,
-//     typedNode.node,
-//   )
-//   assert(
-//     name !== undefined,
-//     'Identifier pattern nodes should always have an associated binding.',
-//   )
-//   return generateIdentifierPattern(name)
-// }
+export const traverse = (
+  state: State,
+  typedNode: TypedNode<PatternNode>,
+  generateCode: GenerateCode,
+): Return => {
+  switch (typedNode.node.type) {
+    case SyntaxType.IdentifierPattern:
+      return handleIdentifierPattern(
+        state,
+        typedNode as TypedNode<IdentifierPatternNode>,
+        generateCode,
+      )
+  }
+}
+
+const handleIdentifierPattern = (
+  state: State,
+  typedNode: TypedNode<IdentifierPatternNode>,
+  generateCode: GenerateCode,
+): Return => {
+  const name = generateDeclaredBindingName(
+    state.scopes[0].terms,
+    typedNode.node,
+  )
+  assert(
+    name !== undefined,
+    'Identifier pattern nodes should always have an associated binding.',
+  )
+  return [
+    generateIdentifierPattern(),
+    [name],
+    [typedNode.defaultNode ? generateCode(state, typedNode.defaultNode) : ''],
+  ]
+}

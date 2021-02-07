@@ -34,9 +34,7 @@ import {
 } from 'tree-sitter-tony'
 import { Emit, buildFileEmit } from '../types/emit'
 import {
-  FileScope,
   GlobalScope,
-  NestedScope,
   NestingTermNode,
   TypedFileScope,
   isFileScope,
@@ -78,18 +76,11 @@ import {
 import { generatePattern, generatePatterns } from './patterns'
 import { injectInterpolations, parseStringContent } from './strings'
 import { Config } from '../config'
+import { State } from './types'
 import { TermNode } from '../types/nodes'
 import { TypedNode } from '../types/type_inference/nodes'
 import { isImportedBinding } from '../types/analyze/bindings'
 import { traverseScopes } from '../util/traverse'
-
-type State = {
-  /**
-   * A stack of all scopes starting with the closest scope and ending with the
-   * symbol table.
-   */
-  scopes: (FileScope<NestingTermNode> | NestedScope<NestingTermNode>)[]
-}
 
 export const generateCode = (
   config: Config,
@@ -295,9 +286,14 @@ const handleAbstractionBranch = (
   state: State,
   typedNode: TypedNode<AbstractionBranchNode>,
 ): string => {
-  const parameters = generatePatterns(state.scopes[0], typedNode.elementNodes)
+  const parameters = generatePatterns(
+    state.scopes[0],
+    typedNode.elementNodes,
+    handleNode,
+  )
   const restParameter =
-    typedNode.restNode && generatePattern(state.scopes[0], typedNode.restNode)
+    typedNode.restNode &&
+    generatePattern(state.scopes[0], typedNode.restNode, handleNode)
   const body = traverse(state, typedNode.bodyNode)
   return generateAbstractionBranch(parameters, restParameter, body)
 }
@@ -334,7 +330,11 @@ const handleAssignment = (
   state: State,
   typedNode: TypedNode<AssignmentNode>,
 ): string => {
-  const pattern = generatePattern(state.scopes[0], typedNode.patternNode)
+  const pattern = generatePattern(
+    state.scopes[0],
+    typedNode.patternNode,
+    handleNode,
+  )
   const value = traverse(state, typedNode.valueNode)
   return generateAssignment(pattern, value)
 }
@@ -538,7 +538,7 @@ const handleTuple = (state: State, typedNode: TypedNode<TupleNode>): string => {
 
 const handleWhen = (state: State, typedNode: TypedNode<WhenNode>): string => {
   const patterns = typedNode.patternNodes.map((patternNode) =>
-    generatePattern(state.scopes[0], patternNode),
+    generatePattern(state.scopes[0], patternNode, handleNode),
   )
   const body = traverse(state, typedNode.bodyNode)
   return generateWhen(patterns, body)

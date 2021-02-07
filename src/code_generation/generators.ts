@@ -9,15 +9,8 @@ import {
 
 const ARGUMENTS_NAME = '$ARGS'
 const INTERNAL_TEMP_TOKEN = '$INTERNAL_TEMP_TOKEN'
+const TRANSFORM_IDENTIFIER_PATTERN = '$TRANSFORM_IDENTIFIER_PATTERN'
 const TRANSFORM_PLACEHOLDER_ARGUMENT = '$TRANSFORM_PLACEHOLDER_ARGUMENT'
-
-const generateListPattern = (
-  parameters: string[],
-  restParameter: string | undefined,
-) =>
-  restParameter
-    ? `[${parameters.join(',')},...${restParameter}]`
-    : `[${parameters.join(',')}]`
 
 export const generateAbstraction = (branches: string[]): string =>
   curry(ARGUMENTS_NAME, resolveAbstractionBranch(ARGUMENTS_NAME, branches))
@@ -91,8 +84,8 @@ export const generateGenerator = (
     condition ? `!${condition} ? "${INTERNAL_TEMP_TOKEN}" : ` : ''
   }`
 
-export const generateIdentifierPattern = (name: string): string =>
-  `"${INTERNAL_TEMP_TOKEN}${name}"`
+export const generateIdentifierPattern = (): string =>
+  `"${TRANSFORM_IDENTIFIER_PATTERN}"`
 
 export const generateIf = (
   condition: string,
@@ -116,6 +109,14 @@ export const generateListComprehension = (
   `${generators}${body}${')'.repeat(generators.length)}.flat(${
     generators.length - 1
   }).filter(e=>e!=="${INTERNAL_TEMP_TOKEN}")`
+
+export const generateListPattern = (
+  parameters: string[],
+  restParameter?: string,
+): string =>
+  restParameter
+    ? `[${parameters.join(',')},...${restParameter}]`
+    : `[${parameters.join(',')}]`
 
 export const generateMember = (key: string, value: string): string =>
   `[${key}]:${value}`
