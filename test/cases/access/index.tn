@@ -1,9 +1,0 @@
-# @file index.tn
-print([0, 1][0].to_str)
-print({ a: 1, b: 2 }->a.to_str)
-print({ a: 1, b: 2 }['b'].to_str)
-
-# @output
-# 0
-# 1
-# 2

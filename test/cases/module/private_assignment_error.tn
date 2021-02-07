@@ -1,7 +1,0 @@
-# @error index.tn:18:0 InvalidPropertyAccessError
-
-# @file index.tn
-module M
-  internal := (x) => x
-  export fn := (x) => internal(x)
-M->internal(0)

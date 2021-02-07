@@ -1,7 +1,0 @@
-# @file index.tn
-module IO
-  export puts := print
-IO->puts('hello world')
-
-# @output
-# hello world
