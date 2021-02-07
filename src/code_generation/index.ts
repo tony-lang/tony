@@ -22,8 +22,10 @@ import {
   ProgramNode,
   ReturnNode,
   ShorthandAccessIdentifierNode,
+  SpreadNode,
   StructNode,
   SyntaxType,
+  TupleNode,
   TypeHintNode,
   WhenNode,
 } from 'tree-sitter-tony'
@@ -57,6 +59,7 @@ import {
   generateProgram,
   generateReturn,
   generateShorthandAccessIdentifier,
+  generateSpread,
   generateStruct,
   generateWhen,
 } from './generators'
@@ -258,9 +261,7 @@ const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
         'Tony cannot generate code for shorthand members yet.',
       )
     case SyntaxType.Spread:
-      throw new NotImplementedError(
-        'Tony cannot generate code for spreads yet.',
-      )
+      return handleSpread(state, typedNode as TypedNode<SpreadNode>)
     case SyntaxType.String:
       throw new NotImplementedError(
         'Tony cannot generate code for strings yet.',
@@ -272,7 +273,7 @@ const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
         'Tony cannot generate code for tagged values yet.',
       )
     case SyntaxType.Tuple:
-      throw new NotImplementedError('Tony cannot generate code for tuples yet.')
+      return handleTuple(state, typedNode as TypedNode<TupleNode>)
     case SyntaxType.TypeAlias:
       return ''
     case SyntaxType.TypeHint:
@@ -484,6 +485,14 @@ const handleShorthandAccessIdentifier = (
   return generateShorthandAccessIdentifier(name)
 }
 
+const handleSpread = (
+  state: State,
+  typedNode: TypedNode<SpreadNode>,
+): string => {
+  const value = traverse(state, typedNode.valueNode)
+  return generateSpread(value)
+}
+
 const handleStruct = (
   state: State,
   typedNode: TypedNode<StructNode>,
@@ -492,8 +501,14 @@ const handleStruct = (
   return generateStruct(members)
 }
 
+const handleTuple = (state: State, typedNode: TypedNode<TupleNode>): string => {
+  const elements = typedNode.elementNodes.map((element) =>
+    traverse(state, element),
+  )
+  return generateList(elements)
+}
+
 const handleWhen = (state: State, typedNode: TypedNode<WhenNode>): string => {
-  // we may need to change the scope here
   const patterns = typedNode.patternNodes.map((patternNode) =>
     generatePattern(state.scopes[0], patternNode),
   )
