@@ -15,6 +15,7 @@ import {
   IfNode,
   InfixApplicationNode,
   InterpolationNode,
+  ListComprehensionNode,
   ListNode,
   MemberNode,
   SyntaxType,
@@ -45,6 +46,7 @@ import {
   generateIf,
   generateInfixApplication,
   generateList,
+  generateListComprehension,
   generateMember,
 } from './generators'
 import {
@@ -208,8 +210,9 @@ const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
     case SyntaxType.List:
       return handleList(state, typedNode as TypedNode<ListNode>)
     case SyntaxType.ListComprehension:
-      throw new NotImplementedError(
-        'Tony cannot generate code for list comprehensions yet.',
+      return handleListComprehension(
+        state,
+        typedNode as TypedNode<ListComprehensionNode>,
       )
     case SyntaxType.ListPattern:
       throw new NotImplementedError(
@@ -452,6 +455,17 @@ const handleList = (state: State, typedNode: TypedNode<ListNode>): string => {
     traverse(state, element),
   )
   return generateList(elements)
+}
+
+const handleListComprehension = (
+  state: State,
+  typedNode: TypedNode<ListComprehensionNode>,
+): string => {
+  const generators = typedNode.generatorNodes.map((generator) =>
+    traverse(state, generator),
+  )
+  const body = traverse(state, typedNode.bodyNode)
+  return generateListComprehension(generators, body)
 }
 
 const handleMember = (

@@ -95,5 +95,13 @@ export const generateInfixApplication = (
 export const generateList = (elements: string[]): string =>
   `[${elements.join(',')}]`
 
+export const generateListComprehension = (
+  generators: string[],
+  body: string,
+): string =>
+  `${generators}${body}${')'.repeat(generators.length)}.flat(${
+    generators.length - 1
+  }).filter(e=>e!=="${INTERNAL_TEMP_TOKEN}")`
+
 export const generateMember = (key: string, value: string): string =>
   `[${key}]:${value}`
