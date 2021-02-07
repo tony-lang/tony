@@ -6,6 +6,7 @@ import {
   PatternGroupNode,
   RestNode,
   ShorthandMemberPatternNode,
+  StructPatternNode,
   SyntaxType,
 } from 'tree-sitter-tony'
 import { LiteralNode, PatternNode, TermNode } from '../types/nodes'
@@ -15,6 +16,7 @@ import {
   generateListPattern,
   generateMember,
   generateShorthandMemberPattern,
+  generateStructPattern,
 } from './generators'
 import { State } from './types'
 import { TypedNode } from '../types/type_inference/nodes'
@@ -95,6 +97,13 @@ const traverseAll = (
     [[], [], []],
   )
 
+const safeTraverse = (
+  state: State,
+  typedNode: TypedNode<PatternNode> | undefined,
+  generateCode: GenerateCode,
+): [pattern: string | undefined, identifiers: string[], defaults: string[]] =>
+  typedNode ? traverse(state, typedNode, generateCode) : [undefined, [], []]
+
 export const traverse = (
   state: State,
   typedNode: TypedNode<PatternNode>,
@@ -141,6 +150,12 @@ export const traverse = (
       return handleShorthandMemberPattern(
         state,
         typedNode as TypedNode<ShorthandMemberPatternNode>,
+        generateCode,
+      )
+    case SyntaxType.StructPattern:
+      return handleStructPattern(
+        state,
+        typedNode as TypedNode<StructPatternNode>,
         generateCode,
       )
 
@@ -197,27 +212,20 @@ const handleListPattern = (
   typedNode: TypedNode<ListPatternNode>,
   generateCode: GenerateCode,
 ): Return => {
-  const [
-    parameterPatterns,
-    parameterIdentifiers,
-    parameterDefaults,
-  ] = traverseAll(state, typedNode.elementNodes, generateCode)
-  if (typedNode.restNode) {
-    const [restPattern, restIdentifiers, restDefaults] = traverse(
-      state,
-      typedNode.restNode,
-      generateCode,
-    )
-    return [
-      generateListPattern(parameterPatterns, restPattern),
-      [...parameterIdentifiers, ...restIdentifiers],
-      [...parameterDefaults, ...restDefaults],
-    ]
-  }
+  const [elementPatterns, elementIdentifiers, elementDefaults] = traverseAll(
+    state,
+    typedNode.elementNodes,
+    generateCode,
+  )
+  const [restPattern, restIdentifiers, restDefaults] = safeTraverse(
+    state,
+    typedNode.restNode,
+    generateCode,
+  )
   return [
-    generateListPattern(parameterPatterns),
-    parameterIdentifiers,
-    parameterDefaults,
+    generateListPattern(elementPatterns, restPattern),
+    [...elementIdentifiers, ...restIdentifiers],
+    [...elementDefaults, ...restDefaults],
   ]
 }
 
@@ -263,5 +271,27 @@ const handleShorthandMemberPattern = (
     generateShorthandMemberPattern(name, value),
     [name],
     [typedNode.defaultNode ? generateCode(state, typedNode.defaultNode) : ''],
+  ]
+}
+
+const handleStructPattern = (
+  state: State,
+  typedNode: TypedNode<StructPatternNode>,
+  generateCode: GenerateCode,
+): Return => {
+  const [memberPatterns, memberIdentifiers, memberDefaults] = traverseAll(
+    state,
+    typedNode.memberNodes,
+    generateCode,
+  )
+  const [restPattern, restIdentifiers, restDefaults] = safeTraverse(
+    state,
+    typedNode.restNode,
+    generateCode,
+  )
+  return [
+    generateStructPattern(memberPatterns, restPattern),
+    [...memberIdentifiers, ...restIdentifiers],
+    [...memberDefaults, ...restDefaults],
   ]
 }

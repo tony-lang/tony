@@ -111,12 +111,10 @@ export const generateListComprehension = (
   }).filter(e=>e!=="${INTERNAL_TEMP_TOKEN}")`
 
 export const generateListPattern = (
-  parameters: string[],
-  restParameter?: string,
+  elements: string[],
+  rest?: string,
 ): string =>
-  restParameter
-    ? `[${parameters.join(',')},...${restParameter}]`
-    : `[${parameters.join(',')}]`
+  rest ? `[${elements.join(',')},...${rest}]` : `[${elements.join(',')}]`
 
 export const generateMember = (key: string, value: string): string =>
   `[${key}]:${value}`
@@ -150,6 +148,12 @@ export const generateString = (content: string): string => `\`${content}\``
 
 export const generateStruct = (members: string[]): string =>
   `{${members.join(',')}}`
+
+export const generateStructPattern = (
+  members: string[],
+  rest?: string,
+): string =>
+  rest ? `{${members.join(',')},...${rest}}` : `{${members.join(',')}}`
 
 export const generateWhen = (
   patterns: GeneratedPattern[],
