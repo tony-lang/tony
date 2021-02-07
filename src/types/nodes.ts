@@ -59,7 +59,7 @@ import {
   WhenNode,
 } from 'tree-sitter-tony'
 
-type LiteralNode = BooleanNode | NumberNode | RawStringNode | RegexNode
+export type LiteralNode = BooleanNode | NumberNode | RawStringNode | RegexNode
 
 export type TermNode =
   | LiteralNode

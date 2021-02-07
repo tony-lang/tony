@@ -1,5 +1,5 @@
 import { IdentifierPatternNode, SyntaxType } from 'tree-sitter-tony'
-import { PatternNode, TermNode } from '../types/nodes'
+import { LiteralNode, PatternNode, TermNode } from '../types/nodes'
 import { generateIdentifierPattern, generateListPattern } from './generators'
 import { State } from './types'
 import { TypedNode } from '../types/type_inference/nodes'
@@ -11,7 +11,6 @@ export type GeneratedPattern = [
   identifiersPattern: string,
   defaultsPattern: string,
 ]
-
 export type GeneratedPatterns = [
   patterns: string[],
   identifiersPatterns: string[],
@@ -19,7 +18,6 @@ export type GeneratedPatterns = [
 ]
 
 type Return = [pattern: string, identifiers: string[], defaults: string[]]
-
 type GenerateCode = (state: State, typedNode: TypedNode<TermNode>) => string
 
 export const generatePatterns = (
@@ -72,6 +70,15 @@ export const traverse = (
         typedNode as TypedNode<IdentifierPatternNode>,
         generateCode,
       )
+    case SyntaxType.Boolean:
+    case SyntaxType.Number:
+    case SyntaxType.RawString:
+    case SyntaxType.Regex:
+      return handleLiteral(
+        state,
+        typedNode as TypedNode<LiteralNode>,
+        generateCode,
+      )
   }
 }
 
@@ -94,3 +101,9 @@ const handleIdentifierPattern = (
     [typedNode.defaultNode ? generateCode(state, typedNode.defaultNode) : ''],
   ]
 }
+
+const handleLiteral = (
+  state: State,
+  typedNode: TypedNode<LiteralNode>,
+  generateCode: GenerateCode,
+): Return => [generateCode(state, typedNode), [], []]
