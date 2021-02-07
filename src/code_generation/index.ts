@@ -52,7 +52,7 @@ import {
   generateDeclarations,
   generateDeclaredBindingName,
 } from './bindings'
-import { resolvePattern, resolvePatterns } from './patterns'
+import { generatePattern, generatePatterns } from './patterns'
 import { Config } from '../config'
 import { TermNode } from '../types/nodes'
 import { TypedNode } from '../types/type_inference/nodes'
@@ -287,9 +287,9 @@ const handleAbstractionBranch = (
   state: State,
   typedNode: TypedNode<AbstractionBranchNode>,
 ): string => {
-  const parameters = resolvePatterns(state.scopes[0], typedNode.elementNodes)
+  const parameters = generatePatterns(state.scopes[0], typedNode.elementNodes)
   const restParameter =
-    typedNode.restNode && resolvePattern(state.scopes[0], typedNode.restNode)
+    typedNode.restNode && generatePattern(state.scopes[0], typedNode.restNode)
   const body = traverse(state, typedNode.bodyNode)
   return generateAbstractionBranch(parameters, restParameter, body)
 }
@@ -326,7 +326,7 @@ const handleAssignment = (
   state: State,
   typedNode: TypedNode<AssignmentNode>,
 ): string => {
-  const pattern = resolvePattern(state.scopes[0], typedNode.patternNode)
+  const pattern = generatePattern(state.scopes[0], typedNode.patternNode)
   const value = traverse(state, typedNode.valueNode)
   return generateAssignment(pattern, value)
 }

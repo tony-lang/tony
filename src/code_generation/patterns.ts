@@ -17,13 +17,13 @@ export type GeneratedPatterns = [
   defaultsPatterns: string[],
 ]
 
-export const resolvePatterns = (
+export const generatePatterns = (
   scope: FileScope<NestingTermNode> | NestedScope<NestingTermNode>,
   typedNodes: TypedNode<PatternNode>[],
 ): GeneratedPatterns =>
   typedNodes.reduce<GeneratedPatterns>(
     ([patterns, identifiersPatterns, defaultsPatterns], typedNode) => {
-      const [pattern, identifiersPattern, defaultsPattern] = resolvePattern(
+      const [pattern, identifiersPattern, defaultsPattern] = generatePattern(
         scope,
         typedNode,
       )
@@ -36,7 +36,7 @@ export const resolvePatterns = (
     [[], [], []],
   )
 
-export const resolvePattern = (
+export const generatePattern = (
   scope: FileScope<NestingTermNode> | NestedScope<NestingTermNode>,
   typedNode: TypedNode<PatternNode>,
 ): GeneratedPattern => {}
