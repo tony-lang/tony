@@ -25,6 +25,7 @@ import {
   StructNode,
   SyntaxType,
   TypeHintNode,
+  WhenNode,
 } from 'tree-sitter-tony'
 import { Emit, buildFileEmit } from '../types/emit'
 import {
@@ -57,6 +58,7 @@ import {
   generateReturn,
   generateShorthandAccessIdentifier,
   generateStruct,
+  generateWhen,
 } from './generators'
 import {
   generateBindingName,
@@ -276,7 +278,7 @@ const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
     case SyntaxType.TypeHint:
       return traverse(state, (typedNode as TypedNode<TypeHintNode>).valueNode)
     case SyntaxType.When:
-      throw new NotImplementedError('Tony cannot generate code for whens yet.')
+      return handleWhen(state, typedNode as TypedNode<WhenNode>)
   }
 }
 
@@ -488,4 +490,13 @@ const handleStruct = (
 ): string => {
   const members = typedNode.memberNodes.map((member) => traverse(state, member))
   return generateStruct(members)
+}
+
+const handleWhen = (state: State, typedNode: TypedNode<WhenNode>): string => {
+  // we may need to change the scope here
+  const patterns = typedNode.patternNodes.map((patternNode) =>
+    generatePattern(state.scopes[0], patternNode),
+  )
+  const body = traverse(state, typedNode.bodyNode)
+  return generateWhen(patterns, body)
 }

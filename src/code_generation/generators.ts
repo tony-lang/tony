@@ -137,3 +137,14 @@ export const generateShorthandAccessIdentifier = (name: string): string =>
 
 export const generateStruct = (members: string[]): string =>
   `{${members.join(',')}}`
+
+export const generateWhen = (
+  patterns: GeneratedPattern[],
+  body: string,
+): string =>
+  patterns
+    .map(
+      ([pattern, identifiersPattern, defaultsPattern]) =>
+        `[${pattern},${defaultsPattern},(match)=>{const [${identifiersPattern}]=match;return ${body}}]`,
+    )
+    .join(',')
