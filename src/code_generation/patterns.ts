@@ -4,6 +4,7 @@ import {
   ListPatternNode,
   MemberPatternNode,
   PatternGroupNode,
+  RestNode,
   SyntaxType,
 } from 'tree-sitter-tony'
 import { LiteralNode, PatternNode, TermNode } from '../types/nodes'
@@ -126,6 +127,12 @@ export const traverse = (
       return traverse(
         state,
         (typedNode as TypedNode<PatternGroupNode>).patternNode,
+        generateCode,
+      )
+    case SyntaxType.Rest:
+      return traverse(
+        state,
+        (typedNode as TypedNode<RestNode>).nameNode,
         generateCode,
       )
 
