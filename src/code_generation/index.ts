@@ -24,6 +24,7 @@ import {
   ShorthandAccessIdentifierNode,
   StructNode,
   SyntaxType,
+  TypeHintNode,
 } from 'tree-sitter-tony'
 import { Emit, buildFileEmit } from '../types/emit'
 import {
@@ -271,13 +272,9 @@ const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
     case SyntaxType.Tuple:
       throw new NotImplementedError('Tony cannot generate code for tuples yet.')
     case SyntaxType.TypeAlias:
-      throw new NotImplementedError(
-        'Tony cannot generate code for type aliases yet.',
-      )
+      return ''
     case SyntaxType.TypeHint:
-      throw new NotImplementedError(
-        'Tony cannot generate code for type hints yet.',
-      )
+      return traverse(state, (typedNode as TypedNode<TypeHintNode>).valueNode)
     case SyntaxType.When:
       throw new NotImplementedError('Tony cannot generate code for whens yet.')
   }
