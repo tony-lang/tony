@@ -7,7 +7,7 @@ import {
   resolveAbstractionBranch,
 } from './lib'
 
-const ARGUMENTS_NAME = 'args'
+const ARGUMENTS_NAME = '$ARGS'
 const INTERNAL_TEMP_TOKEN = '$INTERNAL_TEMP_TOKEN'
 const TRANSFORM_PLACEHOLDER_ARGUMENT = '$TRANSFORM_PLACEHOLDER_ARGUMENT'
 
@@ -136,6 +136,8 @@ export const generateShorthandAccessIdentifier = (name: string): string =>
   `'${name}'`
 
 export const generateSpread = (value: string): string => `...${value}`
+
+export const generateString = (content: string): string => `\`${content}\``
 
 export const generateStruct = (members: string[]): string =>
   `{${members.join(',')}}`

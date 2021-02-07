@@ -20,9 +20,11 @@ import {
   PipelineNode,
   PrefixApplicationNode,
   ProgramNode,
+  RawStringNode,
   ReturnNode,
   ShorthandAccessIdentifierNode,
   SpreadNode,
+  StringNode,
   StructNode,
   SyntaxType,
   TupleNode,
@@ -60,6 +62,7 @@ import {
   generateReturn,
   generateShorthandAccessIdentifier,
   generateSpread,
+  generateString,
   generateStruct,
   generateWhen,
 } from './generators'
@@ -71,6 +74,7 @@ import {
   generateImports,
 } from './bindings'
 import { generatePattern, generatePatterns } from './patterns'
+import { injectInterpolations, parseStringContent } from './strings'
 import { Config } from '../config'
 import { TermNode } from '../types/nodes'
 import { TypedNode } from '../types/type_inference/nodes'
@@ -237,9 +241,7 @@ const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
     case SyntaxType.Program:
       return handleProgram(state, typedNode as TypedNode<ProgramNode>)
     case SyntaxType.RawString:
-      throw new NotImplementedError(
-        'Tony cannot generate code for raw strings yet.',
-      )
+      return handleRawString(typedNode as TypedNode<RawStringNode>)
     case SyntaxType.Regex:
       return typedNode.node.text
     case SyntaxType.Return:
@@ -263,9 +265,7 @@ const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
     case SyntaxType.Spread:
       return handleSpread(state, typedNode as TypedNode<SpreadNode>)
     case SyntaxType.String:
-      throw new NotImplementedError(
-        'Tony cannot generate code for strings yet.',
-      )
+      return handleString(state, typedNode as TypedNode<StringNode>)
     case SyntaxType.Struct:
       return handleStruct(state, typedNode as TypedNode<StructNode>)
     case SyntaxType.TaggedValue:
@@ -468,6 +468,11 @@ const handleProgram = (
   return generateProgram(declarations, imports, exports, terms)
 }
 
+const handleRawString = (typedNode: TypedNode<RawStringNode>): string => {
+  const content = parseStringContent(typedNode.node.text)
+  return generateString(content)
+}
+
 const handleReturn = (
   state: State,
   typedNode: TypedNode<ReturnNode>,
@@ -491,6 +496,20 @@ const handleSpread = (
 ): string => {
   const value = traverse(state, typedNode.valueNode)
   return generateSpread(value)
+}
+
+const handleString = (
+  state: State,
+  typedNode: TypedNode<StringNode>,
+): string => {
+  const interpolations = typedNode.interpolationNodes.map((child) =>
+    traverse(state, child),
+  )
+  const content = injectInterpolations(
+    parseStringContent(typedNode.node.text),
+    interpolations,
+  )
+  return generateString(content)
 }
 
 const handleStruct = (
