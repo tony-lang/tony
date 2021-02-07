@@ -2,11 +2,16 @@ import {
   DestructuringPatternNode,
   IdentifierPatternNode,
   ListPatternNode,
+  MemberPatternNode,
   SyntaxType,
 } from 'tree-sitter-tony'
 import { LiteralNode, PatternNode, TermNode } from '../types/nodes'
 import { NotImplementedError, assert } from '../types/errors/internal'
-import { generateIdentifierPattern, generateListPattern } from './generators'
+import {
+  generateIdentifierPattern,
+  generateListPattern,
+  generateMember,
+} from './generators'
 import { State } from './types'
 import { TypedNode } from '../types/type_inference/nodes'
 import { generateDeclaredBindingName } from './bindings'
@@ -110,6 +115,12 @@ export const traverse = (
         typedNode as TypedNode<ListPatternNode>,
         generateCode,
       )
+    case SyntaxType.MemberPattern:
+      return handleMemberPattern(
+        state,
+        typedNode as TypedNode<MemberPatternNode>,
+        generateCode,
+      )
     case SyntaxType.Boolean:
     case SyntaxType.Number:
     case SyntaxType.RawString:
@@ -192,3 +203,17 @@ const handleLiteralPattern = (
   typedNode: TypedNode<LiteralNode>,
   generateCode: GenerateCode,
 ): Return => [generateCode(state, typedNode), [], []]
+
+const handleMemberPattern = (
+  state: State,
+  typedNode: TypedNode<MemberPatternNode>,
+  generateCode: GenerateCode,
+): Return => {
+  const key = generateCode(state, typedNode.keyNode)
+  const [valuePattern, valueIdentifiers, valueDefaults] = traverse(
+    state,
+    typedNode.valueNode,
+    generateCode,
+  )
+  return [generateMember(key, valuePattern), valueIdentifiers, valueDefaults]
+}
