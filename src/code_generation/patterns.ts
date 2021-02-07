@@ -8,6 +8,7 @@ import {
   ShorthandMemberPatternNode,
   StructPatternNode,
   SyntaxType,
+  TuplePatternNode,
 } from 'tree-sitter-tony'
 import { LiteralNode, PatternNode, TermNode } from '../types/nodes'
 import { NotImplementedError, assert } from '../types/errors/internal'
@@ -158,6 +159,12 @@ export const traverse = (
         typedNode as TypedNode<StructPatternNode>,
         generateCode,
       )
+    case SyntaxType.TuplePattern:
+      return handleTuplePattern(
+        state,
+        typedNode as TypedNode<TuplePatternNode>,
+        generateCode,
+      )
 
     case SyntaxType.Boolean:
     case SyntaxType.Number:
@@ -293,5 +300,27 @@ const handleStructPattern = (
     generateStructPattern(memberPatterns, restPattern),
     [...memberIdentifiers, ...restIdentifiers],
     [...memberDefaults, ...restDefaults],
+  ]
+}
+
+const handleTuplePattern = (
+  state: State,
+  typedNode: TypedNode<TuplePatternNode>,
+  generateCode: GenerateCode,
+): Return => {
+  const [elementPatterns, elementIdentifiers, elementDefaults] = traverseAll(
+    state,
+    typedNode.elementNodes,
+    generateCode,
+  )
+  const [restPattern, restIdentifiers, restDefaults] = safeTraverse(
+    state,
+    typedNode.restNode,
+    generateCode,
+  )
+  return [
+    generateListPattern(elementPatterns, restPattern),
+    [...elementIdentifiers, ...restIdentifiers],
+    [...elementDefaults, ...restDefaults],
   ]
 }
