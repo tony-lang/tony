@@ -1,5 +1,0 @@
-# @error index.tn:16:0 DuplicateBindingError
-
-# @file index.tn
-x := 1
-x := 2

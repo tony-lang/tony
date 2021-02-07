@@ -1,4 +1,0 @@
-# @runtime-error Pattern does not match
-
-# @file index.tn
-[a, 2, b] := [0, 1, 2, 3]
