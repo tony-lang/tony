@@ -287,8 +287,9 @@ const handleAbstractionBranch = (
   state: State,
   typedNode: TypedNode<AbstractionBranchNode>,
 ): string => {
-  const parameters = resolvePatterns(typedNode.elementNodes)
-  const restParameter = typedNode.restNode && resolvePattern(typedNode.restNode)
+  const parameters = resolvePatterns(state.scopes[0], typedNode.elementNodes)
+  const restParameter =
+    typedNode.restNode && resolvePattern(state.scopes[0], typedNode.restNode)
   const body = traverse(state, typedNode.bodyNode)
   return generateAbstractionBranch(parameters, restParameter, body)
 }
@@ -325,7 +326,7 @@ const handleAssignment = (
   state: State,
   typedNode: TypedNode<AssignmentNode>,
 ): string => {
-  const pattern = resolvePattern(typedNode.patternNode)
+  const pattern = resolvePattern(state.scopes[0], typedNode.patternNode)
   const value = traverse(state, typedNode.valueNode)
   return generateAssignment(pattern, value)
 }

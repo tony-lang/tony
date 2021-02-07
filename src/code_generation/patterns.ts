@@ -1,3 +1,8 @@
+import {
+  FileScope,
+  NestedScope,
+  NestingTermNode,
+} from '../types/analyze/scopes'
 import { PatternNode } from '../types/nodes'
 import { TypedNode } from '../types/type_inference/nodes'
 
@@ -13,11 +18,13 @@ export type GeneratedPatterns = [
 ]
 
 export const resolvePatterns = (
+  scope: FileScope<NestingTermNode> | NestedScope<NestingTermNode>,
   typedNodes: TypedNode<PatternNode>[],
 ): GeneratedPatterns =>
   typedNodes.reduce<GeneratedPatterns>(
     ([patterns, identifiersPatterns, defaultsPatterns], typedNode) => {
       const [pattern, identifiersPattern, defaultsPattern] = resolvePattern(
+        scope,
         typedNode,
       )
       return [
@@ -30,6 +37,7 @@ export const resolvePatterns = (
   )
 
 export const resolvePattern = (
+  scope: FileScope<NestingTermNode> | NestedScope<NestingTermNode>,
   typedNode: TypedNode<PatternNode>,
 ): GeneratedPattern => {}
 
