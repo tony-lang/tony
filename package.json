@@ -16,7 +16,7 @@
     "test": "mocha -r ts-node/register test/index.ts"
   },
   "engines": {
-    "node": "15"
+    "node": ">=10"
   },
   "repository": {
     "type": "git",
