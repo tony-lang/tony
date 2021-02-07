@@ -8,14 +8,14 @@ enum PathKind {
 }
 
 export type AbsolutePath = {
-  kind: typeof PathKind.Absolute
-  path: string
+  readonly kind: typeof PathKind.Absolute
+  readonly path: string
 }
 
 export type RelativePath = {
-  kind: typeof PathKind.Relative
-  path: string
-  mount: AbsolutePath
+  readonly kind: typeof PathKind.Relative
+  readonly path: string
+  readonly mount: AbsolutePath
 }
 
 export type Path = AbsolutePath | RelativePath

@@ -8,13 +8,13 @@ enum ValueKind {
 }
 
 type BindingValue = {
-  kind: typeof ValueKind.Binding
-  name: string
+  readonly kind: typeof ValueKind.Binding
+  readonly name: string
 }
 
 type LiteralValue<T extends Literal> = {
-  kind: typeof ValueKind.Literal
-  value: T
+  readonly kind: typeof ValueKind.Literal
+  readonly value: T
 }
 
 type Value = BindingValue | LiteralValue<Literal>
@@ -24,8 +24,8 @@ type Value = BindingValue | LiteralValue<Literal>
  * boolean value.
  */
 export type Predicate = {
-  name: string
-  arguments: Value[]
+  readonly name: string
+  readonly arguments: Value[]
 }
 
 // ---- Constants ----

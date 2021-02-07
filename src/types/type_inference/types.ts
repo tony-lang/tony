@@ -9,8 +9,8 @@ import { flattenType } from '../../util/types'
  * A property represents the mapping of a key to a value.
  */
 export type Property<T extends Type = Type> = {
-  key: T
-  value: T
+  readonly key: T
+  readonly value: T
 }
 
 export enum TypeKind {
@@ -42,9 +42,9 @@ export enum TypeKind {
  * An access type reduces to the type a property of an object type maps to.
  */
 export interface AccessType {
-  kind: typeof TypeKind.Access
-  type: Type
-  property: Type
+  readonly kind: typeof TypeKind.Access
+  readonly type: Type
+  readonly property: Type
 }
 
 /**
@@ -52,11 +52,11 @@ export interface AccessType {
  * type fulfills some constraints.
  */
 export interface ConditionalType {
-  kind: typeof TypeKind.Conditional
-  type: Type
-  constraints: Type[]
-  consequence: Type
-  alternative: Type
+  readonly kind: typeof TypeKind.Conditional
+  readonly type: Type
+  readonly constraints: Type[]
+  readonly consequence: Type
+  readonly alternative: Type
 }
 
 /**
@@ -64,24 +64,24 @@ export interface ConditionalType {
  * returning the `to` type.
  */
 export interface CurriedType<T extends Type = Type> {
-  kind: typeof TypeKind.Curried
-  from: T
-  to: T
+  readonly kind: typeof TypeKind.Curried
+  readonly from: T
+  readonly to: T
   /**
    * A curried type is external when it represents an uncurried function
    * imported from JavaScript. Before values of this type are used, they should
    * be curried.
    */
-  isExternal: boolean
+  readonly isExternal: boolean
 }
 
 /**
  * A generic type represents a type that may depend on other types.
  */
 export interface GenericType {
-  kind: typeof TypeKind.Generic
-  name: string
-  typeParameters: TypeVariable[]
+  readonly kind: typeof TypeKind.Generic
+  readonly name: string
+  readonly typeParameters: TypeVariable[]
 }
 
 /**
@@ -89,8 +89,8 @@ export interface GenericType {
  * to be an instance of an interface.
  */
 export interface InterfaceType<T extends Type = Type> {
-  kind: typeof TypeKind.Interface
-  members: Property<T>[]
+  readonly kind: typeof TypeKind.Interface
+  readonly members: Property<T>[]
 }
 
 /**
@@ -98,16 +98,16 @@ export interface InterfaceType<T extends Type = Type> {
  * parameters.
  */
 export interface IntersectionType<T extends Type = Type> {
-  kind: typeof TypeKind.Intersection
-  parameters: T[]
+  readonly kind: typeof TypeKind.Intersection
+  readonly parameters: T[]
 }
 
 /**
  * An object type represents the scope of an object (e.g. its properties).
  */
 export interface ObjectType<T extends Type = Type> {
-  kind: typeof TypeKind.Object
-  properties: Property<T>[]
+  readonly kind: typeof TypeKind.Object
+  readonly properties: Property<T>[]
 }
 
 /**
@@ -115,10 +115,10 @@ export interface ObjectType<T extends Type = Type> {
  * type.
  */
 export interface ParametricType {
-  kind: typeof TypeKind.Parametric
-  name: string
-  typeArguments: Type[]
-  termArguments: SyntaxNode[]
+  readonly kind: typeof TypeKind.Parametric
+  readonly name: string
+  readonly typeArguments: Type[]
+  readonly termArguments: SyntaxNode[]
 }
 
 /**
@@ -126,9 +126,9 @@ export interface ParametricType {
  * type.
  */
 export interface RefinedType<T extends Type = Type> {
-  kind: typeof TypeKind.Refined
-  type: T
-  predicates: Predicate[]
+  readonly kind: typeof TypeKind.Refined
+  readonly type: T
+  readonly predicates: Predicate[]
 }
 
 /**
@@ -136,8 +136,8 @@ export interface RefinedType<T extends Type = Type> {
  * constrained by predicates.
  */
 export interface RefinedTerm {
-  kind: typeof TypeKind.RefinedTerm
-  name: string
+  readonly kind: typeof TypeKind.RefinedTerm
+  readonly name: string
 }
 
 /**
@@ -145,31 +145,31 @@ export interface RefinedTerm {
  * union that do not appear in the right union.
  */
 export interface SubtractionType {
-  kind: typeof TypeKind.Subtraction
-  left: Type
-  right: Type
+  readonly kind: typeof TypeKind.Subtraction
+  readonly left: Type
+  readonly right: Type
 }
 
 /**
  * A type variable that is used internally and cannot be related to other types.
  */
 export interface TemporaryTypeVariable {
-  kind: typeof TypeKind.TemporaryVariable
+  readonly kind: typeof TypeKind.TemporaryVariable
 }
 
 /**
  * A type variable represents any type.
  */
 export interface TypeVariable {
-  kind: typeof TypeKind.Variable
+  readonly kind: typeof TypeKind.Variable
 }
 
 /**
  * A union type represents the type of any of its parameters.
  */
 export interface UnionType<T extends Type = Type> {
-  kind: typeof TypeKind.Union
-  parameters: T[]
+  readonly kind: typeof TypeKind.Union
+  readonly parameters: T[]
 }
 
 // ---- Factories ----

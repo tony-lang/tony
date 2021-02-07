@@ -14,6 +14,9 @@ export type ConfigOptions = {
   verbose?: boolean
 }
 
+/**
+ * Constructs a config from a path to the entry file and some config options.
+ */
 export const buildConfig = (entry: string, options: ConfigOptions): Config => {
   const { out } = options
 

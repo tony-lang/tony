@@ -3,13 +3,16 @@ import {
   BlockNode,
   InterfaceNode,
   ListComprehensionNode,
+  NamedNode,
   ProgramNode,
   RefinementTypeNode,
   SyntaxNode,
+  SyntaxType,
   TypeAliasNode,
   WhenNode,
 } from 'tree-sitter-tony'
 import { ErrorAnnotation, MountedErrorAnnotation } from '../errors/annotations'
+import { NonTypeNode, TermNode } from '../nodes'
 import {
   TermBinding,
   TypeAssignment,
@@ -30,6 +33,8 @@ export type NestingNode =
   | TypeAliasNode
   | WhenNode
 
+export type NestingTermNode = NestingNode & TermNode
+
 enum ScopeKind {
   Global,
   File,
@@ -38,45 +43,51 @@ enum ScopeKind {
 }
 
 export type ScopeWithTerms = {
-  terms: TermBinding[]
+  readonly terms: TermBinding[]
 }
 
 export type TypingEnvironment = {
-  typeAssignments: TypeAssignment[]
+  readonly typeAssignments: TypeAssignment[]
 }
 
 export type ScopeWithTypes = {
-  types: TypeBinding[]
-  typeVariables: TypeVariableBinding[]
+  readonly types: TypeBinding[]
+  readonly typeVariables: TypeVariableBinding[]
 }
 
 export type ScopeWithErrors = {
-  errors: MountedErrorAnnotation[]
+  readonly errors: MountedErrorAnnotation[]
 }
 
-export type TypedScope<T extends SyntaxNode> = {
-  typedNode: TypedNode<T>
+export type ScopeWithNode<T extends SyntaxNode> = {
+  readonly node: T
+}
+
+export type TypedScope<T extends NonTypeNode> = {
+  readonly typedNode: TypedNode<T>
 }
 
 export type RecursiveScope<T> = {
-  scopes: T[]
+  readonly scopes: T[]
 }
 
 export type GlobalScope<
-  T extends FileScope | TypedFileScope
+  T extends FileScope | TypedFileScope = FileScope | TypedFileScope
 > = RecursiveScope<T> & {
-  kind: typeof ScopeKind.Global
-  errors: ErrorAnnotation[]
+  readonly kind: typeof ScopeKind.Global
+  readonly errors: ErrorAnnotation[]
 }
 
-export type FileScope = RecursiveScope<NestedScope> &
+export type FileScope<T extends NestingNode = NestingNode> = RecursiveScope<
+  NestedScope<T>
+> &
   ScopeWithTerms &
   ScopeWithTypes &
-  ScopeWithErrors & {
-    kind: typeof ScopeKind.File
-    file: AbsolutePath
-    node: ProgramNode
-    dependencies: AbsolutePath[]
+  ScopeWithErrors &
+  ScopeWithNode<ProgramNode> & {
+    readonly kind: typeof ScopeKind.File
+    readonly file: AbsolutePath
+    readonly dependencies: AbsolutePath[]
   }
 
 export type TypedFileScope = FileScope &
@@ -85,19 +96,19 @@ export type TypedFileScope = FileScope &
   TypedScope<ProgramNode>
 
 export interface NestedScope<T extends NestingNode = NestingNode>
-  extends RecursiveScope<NestedScope>,
+  extends RecursiveScope<NestedScope<T>>,
     ScopeWithTerms,
     ScopeWithTypes,
-    ScopeWithErrors {
-  kind: typeof ScopeKind.Nested
-  node: T
+    ScopeWithErrors,
+    ScopeWithNode<T> {
+  readonly kind: typeof ScopeKind.Nested
 }
 
-export interface TypedNestedScope<T extends NestingNode = NestingNode>
+export interface TypedNestedScope<T extends NestingTermNode = NestingTermNode>
   extends NestedScope<T>,
     TypingEnvironment,
     TypedScope<T> {
-  scopes: TypedNestedScope[]
+  readonly scopes: TypedNestedScope<T>[]
 }
 
 // ---- Factories ----
@@ -148,9 +159,9 @@ export const buildNestedScope = (node: NestingNode): NestedScope => ({
   errors: [],
 })
 
-export const buildTypedNestedScope = <T extends NestingNode>(
+export const buildTypedNestedScope = <T extends NestingTermNode>(
   scope: NestedScope<T>,
-  scopes: TypedNestedScope[],
+  scopes: TypedNestedScope<T>[],
   typedNode: TypedNode<T>,
   typeAssignments: TypeAssignment[],
 ): TypedNestedScope<T> => ({
@@ -161,5 +172,20 @@ export const buildTypedNestedScope = <T extends NestingNode>(
 })
 
 export const isFileScope = <T extends FileScope>(
-  scope: T | NestedScope,
+  scope: T | { kind: ScopeKind },
 ): scope is T => scope.kind === ScopeKind.File
+
+export const isNestingNode = (node: NamedNode): node is NestingNode => {
+  switch (node.type) {
+    case SyntaxType.AbstractionBranch:
+    case SyntaxType.Block:
+    case SyntaxType.Interface:
+    case SyntaxType.ListComprehension:
+    case SyntaxType.RefinementType:
+    case SyntaxType.TypeAlias:
+    case SyntaxType.When:
+      return true
+    default:
+      return false
+  }
+}

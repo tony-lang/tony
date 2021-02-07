@@ -5,26 +5,26 @@ import { TypeKind } from './types'
 export type Literal = string | number | boolean | RegExp
 
 type BooleanType = {
-  kind: typeof TypeKind.Boolean
+  readonly kind: typeof TypeKind.Boolean
 }
 
 type NumberType = {
-  kind: typeof TypeKind.Number
+  readonly kind: typeof TypeKind.Number
 }
 
 type RegExpType = {
-  kind: typeof TypeKind.RegExp
+  readonly kind: typeof TypeKind.RegExp
 }
 
 type StringType = {
-  kind: typeof TypeKind.String
+  readonly kind: typeof TypeKind.String
 }
 
 /**
  * The type of operations that do not return anything.
  */
 type VoidType = {
-  kind: typeof TypeKind.Void
+  readonly kind: typeof TypeKind.Void
 }
 
 export type PrimitiveType =

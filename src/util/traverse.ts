@@ -1,13 +1,10 @@
+import { NamedNode, SyntaxNode } from 'tree-sitter-tony'
+import { NestingNode, isNestingNode } from '../types/analyze/scopes'
+import { AbstractState } from '../types/state'
 import { ErrorAnnotation } from '../types/errors/annotations'
-import { ScopeWithErrors } from '../types/analyze/scopes'
-import { SyntaxNode } from 'tree-sitter-tony'
 import { addErrorToScope } from './scopes'
 
-type State = {
-  scopes: ScopeWithErrors[]
-}
-
-export const addError = <T extends State>(
+export const addError = <T extends AbstractState>(
   state: T,
   node: SyntaxNode,
   error: ErrorAnnotation,
@@ -20,7 +17,7 @@ export const addError = <T extends State>(
   }
 }
 
-export const addErrorUnless = <T extends State>(
+export const addErrorUnless = <T extends AbstractState>(
   predicate: boolean,
   error: ErrorAnnotation,
 ) => (state: T, node: SyntaxNode): T => {
@@ -31,7 +28,7 @@ export const addErrorUnless = <T extends State>(
 /**
  * Checks predicate. If true, returns callback. Else, adds error annotation.
  */
-export const ensure = <T extends State, U extends SyntaxNode>(
+export const ensure = <T extends AbstractState, U extends SyntaxNode>(
   predicate: (state: T, node: U) => boolean,
   callback: (state: T, node: U) => T,
   error: ErrorAnnotation,
@@ -41,11 +38,22 @@ export const ensure = <T extends State, U extends SyntaxNode>(
 }
 
 /**
- * Conditionally applies argument to callback depending on whether it exists.
+ * Conditionally applies argument to state reduces depending on whether it
+ * exists.
  */
-export const conditionalApply = <T extends State, U>(
+export const conditionalApply = <T extends AbstractState, U>(
   callback: (state: T, arg: U) => T,
-) => (state: T, arg: U | undefined): T => {
-  if (arg) return callback(state, arg)
-  return state
+) => (state: T, arg: U | undefined): T => (arg && callback(state, arg)) || state
+
+/**
+ * If node is a nesting node enter its scope; otherwise just apply the given
+ * callback.
+ */
+export const traverseScopes = <T extends NamedNode, U>(
+  node: T,
+  callback: () => U,
+  nest: (node: NestingNode & T) => U,
+): U => {
+  if (isNestingNode(node)) return nest(node)
+  else return callback()
 }
