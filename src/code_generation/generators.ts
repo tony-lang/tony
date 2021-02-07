@@ -130,5 +130,7 @@ export const generateProgram = (
   return `${UTILS_IMPORT};${imports};${declarations};${joinedTerms};${exports}`
 }
 
+export const generateReturn = (value: string): string => `return ${value}`
+
 export const generateStruct = (members: string[]): string =>
   `{${members.join(',')}}`

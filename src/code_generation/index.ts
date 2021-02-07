@@ -20,6 +20,7 @@ import {
   PipelineNode,
   PrefixApplicationNode,
   ProgramNode,
+  ReturnNode,
   StructNode,
   SyntaxType,
 } from 'tree-sitter-tony'
@@ -51,6 +52,7 @@ import {
   generateListComprehension,
   generateMember,
   generateProgram,
+  generateReturn,
   generateStruct,
 } from './generators'
 import {
@@ -236,9 +238,7 @@ const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
     case SyntaxType.Regex:
       return typedNode.node.text
     case SyntaxType.Return:
-      throw new NotImplementedError(
-        'Tony cannot generate code for returns yet.',
-      )
+      return handleReturn(state, typedNode as TypedNode<ReturnNode>)
     case SyntaxType.RightSection:
       throw new NotImplementedError(
         'Tony cannot generate code for right sections yet.',
@@ -467,6 +467,14 @@ const handleProgram = (
   )
   const exports = generateExports(scope.terms)
   return generateProgram(declarations, imports, exports, terms)
+}
+
+const handleReturn = (
+  state: State,
+  typedNode: TypedNode<ReturnNode>,
+): string => {
+  const value = traverse(state, typedNode.valueNode)
+  return generateReturn(value)
 }
 
 const handleStruct = (
