@@ -92,5 +92,8 @@ export const generateInfixApplication = (
   right: string,
 ): string => `${value}(${left},${right})`
 
+export const generateList = (elements: string[]): string =>
+  `[${elements.join(',')}]`
+
 export const generateMember = (key: string, value: string): string =>
   `[${key}]:${value}`

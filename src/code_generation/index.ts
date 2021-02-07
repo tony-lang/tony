@@ -15,6 +15,7 @@ import {
   IfNode,
   InfixApplicationNode,
   InterpolationNode,
+  ListNode,
   MemberNode,
   SyntaxType,
 } from 'tree-sitter-tony'
@@ -43,6 +44,7 @@ import {
   generateIdentifierPattern,
   generateIf,
   generateInfixApplication,
+  generateList,
   generateMember,
 } from './generators'
 import {
@@ -204,7 +206,7 @@ const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
         'Tony cannot generate code for left sections yet.',
       )
     case SyntaxType.List:
-      throw new NotImplementedError('Tony cannot generate code for lists yet.')
+      return handleList(state, typedNode as TypedNode<ListNode>)
     case SyntaxType.ListComprehension:
       throw new NotImplementedError(
         'Tony cannot generate code for list comprehensions yet.',
@@ -443,6 +445,13 @@ const handleInfixApplication = (
   const left = traverse(state, typedNode.leftNode)
   const right = traverse(state, typedNode.rightNode)
   return generateInfixApplication(value, left, right)
+}
+
+const handleList = (state: State, typedNode: TypedNode<ListNode>): string => {
+  const elements = typedNode.elementNodes.map((element) =>
+    traverse(state, element),
+  )
+  return generateList(elements)
 }
 
 const handleMember = (
