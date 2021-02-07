@@ -1,6 +1,7 @@
 import {
   DestructuringPatternNode,
   IdentifierPatternNode,
+  ListPatternNode,
   SyntaxType,
 } from 'tree-sitter-tony'
 import { LiteralNode, PatternNode, TermNode } from '../types/nodes'
@@ -62,6 +63,29 @@ export const generatePattern = (
   ]
 }
 
+const traverseAll = (
+  state: State,
+  typedNodes: TypedNode<PatternNode>[],
+  generateCode: GenerateCode,
+) =>
+  typedNodes.reduce<
+    [patterns: string[], identifiers: string[], defaults: string[]]
+  >(
+    ([patterns, identifiers, defaults], typedNode) => {
+      const [pattern, newIdentifiers, newDefaults] = traverse(
+        state,
+        typedNode,
+        generateCode,
+      )
+      return [
+        [...patterns, pattern],
+        [...identifiers, ...newIdentifiers],
+        [...defaults, ...newDefaults],
+      ]
+    },
+    [[], [], []],
+  )
+
 export const traverse = (
   state: State,
   typedNode: TypedNode<PatternNode>,
@@ -78,6 +102,12 @@ export const traverse = (
       return handleIdentifierPattern(
         state,
         typedNode as TypedNode<IdentifierPatternNode>,
+        generateCode,
+      )
+    case SyntaxType.ListPattern:
+      return handleListPattern(
+        state,
+        typedNode as TypedNode<ListPatternNode>,
         generateCode,
       )
     case SyntaxType.Boolean:
@@ -125,6 +155,35 @@ const handleIdentifierPattern = (
     generateIdentifierPattern(),
     [name],
     [typedNode.defaultNode ? generateCode(state, typedNode.defaultNode) : ''],
+  ]
+}
+
+const handleListPattern = (
+  state: State,
+  typedNode: TypedNode<ListPatternNode>,
+  generateCode: GenerateCode,
+): Return => {
+  const [
+    parameterPatterns,
+    parameterIdentifiers,
+    parameterDefaults,
+  ] = traverseAll(state, typedNode.elementNodes, generateCode)
+  if (typedNode.restNode) {
+    const [restPattern, restIdentifiers, restDefaults] = traverse(
+      state,
+      typedNode.restNode,
+      generateCode,
+    )
+    return [
+      generateListPattern(parameterPatterns, restPattern),
+      [...parameterIdentifiers, ...restIdentifiers],
+      [...parameterDefaults, ...restDefaults],
+    ]
+  }
+  return [
+    generateListPattern(parameterPatterns),
+    parameterIdentifiers,
+    parameterDefaults,
   ]
 }
 
