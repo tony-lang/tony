@@ -2,7 +2,6 @@ import {
   ImportedTermBinding,
   TermBinding,
   TermBindingNode,
-  isImportedBinding,
 } from '../types/analyze/bindings'
 import { AbsolutePath } from '../types/path'
 

@@ -132,5 +132,8 @@ export const generateProgram = (
 
 export const generateReturn = (value: string): string => `return ${value}`
 
+export const generateShorthandAccessIdentifier = (name: string): string =>
+  `'${name}'`
+
 export const generateStruct = (members: string[]): string =>
   `{${members.join(',')}}`

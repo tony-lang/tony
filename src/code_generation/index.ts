@@ -21,6 +21,7 @@ import {
   PrefixApplicationNode,
   ProgramNode,
   ReturnNode,
+  ShorthandAccessIdentifierNode,
   StructNode,
   SyntaxType,
 } from 'tree-sitter-tony'
@@ -53,6 +54,7 @@ import {
   generateMember,
   generateProgram,
   generateReturn,
+  generateShorthandAccessIdentifier,
   generateStruct,
 } from './generators'
 import {
@@ -66,11 +68,8 @@ import { generatePattern, generatePatterns } from './patterns'
 import { Config } from '../config'
 import { TermNode } from '../types/nodes'
 import { TypedNode } from '../types/type_inference/nodes'
+import { isImportedBinding } from '../types/analyze/bindings'
 import { traverseScopes } from '../util/traverse'
-import {
-  ImportedTermBinding,
-  isImportedBinding,
-} from '../types/analyze/bindings'
 
 type State = {
   /**
@@ -244,8 +243,8 @@ const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
         'Tony cannot generate code for right sections yet.',
       )
     case SyntaxType.ShorthandAccessIdentifier:
-      throw new NotImplementedError(
-        'Tony cannot generate code for shorthand access identifiers yet.',
+      return handleShorthandAccessIdentifier(
+        typedNode as TypedNode<ShorthandAccessIdentifierNode>,
       )
     case SyntaxType.ShorthandMemberIdentifier:
       throw new NotImplementedError(
@@ -475,6 +474,15 @@ const handleReturn = (
 ): string => {
   const value = traverse(state, typedNode.valueNode)
   return generateReturn(value)
+}
+
+const handleShorthandAccessIdentifier = (
+  typedNode: TypedNode<ShorthandAccessIdentifierNode>,
+): string => {
+  const name = generateBindingName(
+    (typedNode as TypedNode<ShorthandAccessIdentifierNode>).binding,
+  )
+  return generateShorthandAccessIdentifier(name)
 }
 
 const handleStruct = (

@@ -1,5 +1,5 @@
+import { IdentifierNode, ShorthandAccessIdentifierNode } from 'tree-sitter-tony'
 import { Constraints } from './constraints'
-import { IdentifierNode } from 'tree-sitter-tony'
 import { NonTypeNode } from '../nodes'
 import { ResolvedType } from './categories'
 import { TermBinding } from '../analyze/bindings'
@@ -34,9 +34,11 @@ export type TypedNodeChildren<T extends NonTypeNode> = Omit<
 /**
  * Extensions to the typed node of certain node types.
  */
-export type TypedNodeExtensions<
-  T extends NonTypeNode
-> = T extends IdentifierNode ? { binding: TermBinding } : {}
+export type TypedNodeExtensions<T extends NonTypeNode> = T extends
+  | IdentifierNode
+  | ShorthandAccessIdentifierNode
+  ? { binding: TermBinding }
+  : {}
 
 /**
  * A type annotation for a given node in the syntax tree.
