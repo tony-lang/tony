@@ -1,9 +1,13 @@
-import { IdentifierPatternNode, SyntaxType } from 'tree-sitter-tony'
+import {
+  DestructuringPatternNode,
+  IdentifierPatternNode,
+  SyntaxType,
+} from 'tree-sitter-tony'
 import { LiteralNode, PatternNode, TermNode } from '../types/nodes'
+import { NotImplementedError, assert } from '../types/errors/internal'
 import { generateIdentifierPattern, generateListPattern } from './generators'
 import { State } from './types'
 import { TypedNode } from '../types/type_inference/nodes'
-import { assert } from '../types/errors/internal'
 import { generateDeclaredBindingName } from './bindings'
 
 export type GeneratedPattern = [
@@ -64,6 +68,12 @@ export const traverse = (
   generateCode: GenerateCode,
 ): Return => {
   switch (typedNode.node.type) {
+    case SyntaxType.DestructuringPattern:
+      return handleDestructuringPattern(
+        state,
+        typedNode as TypedNode<DestructuringPatternNode>,
+        generateCode,
+      )
     case SyntaxType.IdentifierPattern:
       return handleIdentifierPattern(
         state,
@@ -74,12 +84,28 @@ export const traverse = (
     case SyntaxType.Number:
     case SyntaxType.RawString:
     case SyntaxType.Regex:
-      return handleLiteral(
+      return handleLiteralPattern(
         state,
         typedNode as TypedNode<LiteralNode>,
         generateCode,
       )
   }
+}
+
+const handleDestructuringPattern = (
+  state: State,
+  typedNode: TypedNode<DestructuringPatternNode>,
+  generateCode: GenerateCode,
+): Return => {
+  const name = generateDeclaredBindingName(
+    state.scopes[0].terms,
+    typedNode.node,
+  )
+  if (name !== undefined)
+    throw new NotImplementedError(
+      'Destructuring pattern bindings cannot yet be generated.',
+    )
+  return traverse(state, typedNode.patternNode, generateCode)
 }
 
 const handleIdentifierPattern = (
@@ -102,7 +128,7 @@ const handleIdentifierPattern = (
   ]
 }
 
-const handleLiteral = (
+const handleLiteralPattern = (
   state: State,
   typedNode: TypedNode<LiteralNode>,
   generateCode: GenerateCode,
