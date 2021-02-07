@@ -117,7 +117,6 @@ const enterBlock = (
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const nest = <T extends NestingTermNode>(
   state: State,
   typedNode: TypedNode<T>,

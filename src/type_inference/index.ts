@@ -218,7 +218,6 @@ const leaveBlock = (answer: Answer<State, Return<NestingTermNode>>): State => {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const nest = <T extends NestingTermNode>(
   state: State,
   node: T,
