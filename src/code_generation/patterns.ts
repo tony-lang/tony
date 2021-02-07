@@ -5,6 +5,7 @@ import {
   MemberPatternNode,
   PatternGroupNode,
   RestNode,
+  ShorthandMemberPatternNode,
   SyntaxType,
 } from 'tree-sitter-tony'
 import { LiteralNode, PatternNode, TermNode } from '../types/nodes'
@@ -13,6 +14,7 @@ import {
   generateIdentifierPattern,
   generateListPattern,
   generateMember,
+  generateShorthandMemberPattern,
 } from './generators'
 import { State } from './types'
 import { TypedNode } from '../types/type_inference/nodes'
@@ -135,6 +137,12 @@ export const traverse = (
         (typedNode as TypedNode<RestNode>).nameNode,
         generateCode,
       )
+    case SyntaxType.ShorthandMemberPattern:
+      return handleShorthandMemberPattern(
+        state,
+        typedNode as TypedNode<ShorthandMemberPatternNode>,
+        generateCode,
+      )
 
     case SyntaxType.Boolean:
     case SyntaxType.Number:
@@ -231,4 +239,29 @@ const handleMemberPattern = (
     generateCode,
   )
   return [generateMember(key, valuePattern), valueIdentifiers, valueDefaults]
+}
+
+const handleShorthandMemberPattern = (
+  state: State,
+  typedNode: TypedNode<ShorthandMemberPatternNode>,
+  generateCode: GenerateCode,
+): Return => {
+  const name = generateDeclaredBindingName(
+    state.scopes[0].terms,
+    typedNode.node,
+  )
+  const value = generateDeclaredBindingName(
+    state.scopes[0].terms,
+    typedNode.node,
+    true,
+  )
+  assert(
+    name !== undefined && value !== undefined,
+    'Shorthand member pattern nodes should always have an associated binding.',
+  )
+  return [
+    generateShorthandMemberPattern(name, value),
+    [name],
+    [typedNode.defaultNode ? generateCode(state, typedNode.defaultNode) : ''],
+  ]
 }

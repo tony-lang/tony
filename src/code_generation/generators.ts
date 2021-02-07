@@ -139,6 +139,11 @@ export const generateShorthandAccessIdentifier = (name: string): string =>
 export const generateShorthandMember = (name: string, value: string): string =>
   `${name}:${value}`
 
+export const generateShorthandMemberPattern = (
+  name: string,
+  value: string,
+): string => `"${name}":"${value}"`
+
 export const generateSpread = (value: string): string => `...${value}`
 
 export const generateString = (content: string): string => `\`${content}\``

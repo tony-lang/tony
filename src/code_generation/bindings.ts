@@ -69,7 +69,8 @@ const findBindingOfNode = (bindings: TermBinding[], node: TermBindingNode) =>
 export const generateDeclaredBindingName = (
   bindings: TermBinding[],
   node: TermBindingNode,
+  ignoreIndex = false,
 ): string | undefined => {
   const binding = findBindingOfNode(bindings, node)
-  if (binding) return generateBindingName(binding)
+  if (binding) return generateBindingName(binding, ignoreIndex)
 }
