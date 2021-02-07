@@ -18,6 +18,7 @@ import {
   ListNode,
   MemberNode,
   PipelineNode,
+  PrefixApplicationNode,
   StructNode,
   SyntaxType,
 } from 'tree-sitter-tony'
@@ -44,11 +45,9 @@ import {
   generateEliseIf,
   generateGenerator,
   generateIf,
-  generateInfixApplication,
   generateList,
   generateListComprehension,
   generateMember,
-  generatePipeline,
   generateStruct,
 } from './generators'
 import {
@@ -215,8 +214,9 @@ const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
     case SyntaxType.Pipeline:
       return handlePipeline(state, typedNode as TypedNode<PipelineNode>)
     case SyntaxType.PrefixApplication:
-      throw new NotImplementedError(
-        'Tony cannot generate code for prefix applications yet.',
+      return handlePrefixApplication(
+        state,
+        typedNode as TypedNode<PrefixApplicationNode>,
       )
     case SyntaxType.Program:
       throw new NotImplementedError(
@@ -395,7 +395,7 @@ const handleInfixApplication = (
   const value = traverse(state, typedNode.nameNode)
   const left = traverse(state, typedNode.leftNode)
   const right = traverse(state, typedNode.rightNode)
-  return generateInfixApplication(value, left, right)
+  return generateApplication(value, [left, right])
 }
 
 const handleList = (state: State, typedNode: TypedNode<ListNode>): string => {
@@ -431,7 +431,16 @@ const handlePipeline = (
 ): string => {
   const name = traverse(state, typedNode.nameNode)
   const value = traverse(state, typedNode.valueNode)
-  return generatePipeline(name, value)
+  return generateApplication(name, [value])
+}
+
+const handlePrefixApplication = (
+  state: State,
+  typedNode: TypedNode<PrefixApplicationNode>,
+): string => {
+  const name = traverse(state, typedNode.nameNode)
+  const value = traverse(state, typedNode.valueNode)
+  return generateApplication(name, [value])
 }
 
 const handleStruct = (

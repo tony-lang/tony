@@ -105,12 +105,6 @@ export const generateIf = (
   }})()`
 }
 
-export const generateInfixApplication = (
-  value: string,
-  left: string,
-  right: string,
-): string => `${value}(${left},${right})`
-
 export const generateList = (elements: string[]): string =>
   `[${elements.join(',')}]`
 
@@ -124,9 +118,6 @@ export const generateListComprehension = (
 
 export const generateMember = (key: string, value: string): string =>
   `[${key}]:${value}`
-
-export const generatePipeline = (name: string, value: string): string =>
-  `${name}(${value})`
 
 export const generateStruct = (members: string[]): string =>
   `{${members.join(',')}}`
