@@ -23,6 +23,7 @@ import {
   RawStringNode,
   ReturnNode,
   ShorthandAccessIdentifierNode,
+  ShorthandMemberNode,
   SpreadNode,
   StringNode,
   StructNode,
@@ -61,6 +62,7 @@ import {
   generateProgram,
   generateReturn,
   generateShorthandAccessIdentifier,
+  generateShorthandMember,
   generateSpread,
   generateString,
   generateStruct,
@@ -255,13 +257,9 @@ const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
         typedNode as TypedNode<ShorthandAccessIdentifierNode>,
       )
     case SyntaxType.ShorthandMemberIdentifier:
-      throw new NotImplementedError(
-        'Tony cannot generate code for shorthand member identifiers yet.',
-      )
+      return typedNode.node.text
     case SyntaxType.ShorthandMember:
-      throw new NotImplementedError(
-        'Tony cannot generate code for shorthand members yet.',
-      )
+      return handleShorthandMember(typedNode as TypedNode<ShorthandMemberNode>)
     case SyntaxType.Spread:
       return handleSpread(state, typedNode as TypedNode<SpreadNode>)
     case SyntaxType.String:
@@ -484,10 +482,21 @@ const handleReturn = (
 const handleShorthandAccessIdentifier = (
   typedNode: TypedNode<ShorthandAccessIdentifierNode>,
 ): string => {
-  const name = generateBindingName(
-    (typedNode as TypedNode<ShorthandAccessIdentifierNode>).binding,
-  )
+  const name = typedNode.node.text
   return generateShorthandAccessIdentifier(name)
+}
+
+const handleShorthandMember = (
+  typedNode: TypedNode<ShorthandMemberNode>,
+): string => {
+  const name = generateBindingName(
+    (typedNode as TypedNode<ShorthandMemberNode>).binding,
+    true,
+  )
+  const value = generateBindingName(
+    (typedNode as TypedNode<ShorthandMemberNode>).binding,
+  )
+  return generateShorthandMember(name, value)
 }
 
 const handleSpread = (

@@ -8,8 +8,10 @@ import { AbsolutePath } from '../types/path'
 /**
  * Given a binding, generates the name representing that binding.
  */
-export const generateBindingName = (binding: TermBinding): string =>
-  `${binding.name}${binding.index}`
+export const generateBindingName = (
+  binding: TermBinding,
+  ignoreIndex = false,
+): string => (ignoreIndex ? binding.name : `${binding.name}${binding.index}`)
 
 /**
  * Generates a declaration of all non-implicit bindings in the given set of
@@ -18,7 +20,7 @@ export const generateBindingName = (binding: TermBinding): string =>
 export const generateDeclarations = (bindings: TermBinding[]): string => {
   const declarations = bindings
     .filter((binding) => !binding.isImplicit)
-    .map(generateBindingName)
+    .map((binding) => generateBindingName(binding))
   if (declarations.length > 0) return `const ${declarations.join(',')}`
   return ''
 }
@@ -51,7 +53,7 @@ const generateImport = (
 export const generateExports = (bindings: TermBinding[]): string => {
   const exportedBindings = bindings
     .filter((binding) => binding.isExported)
-    .map(generateBindingName)
+    .map((binding) => generateBindingName(binding))
   if (exportedBindings.length > 0)
     return `export {${exportedBindings.join(',')}}`
   return ''

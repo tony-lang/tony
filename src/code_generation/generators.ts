@@ -135,6 +135,9 @@ export const generateReturn = (value: string): string => `return ${value}`
 export const generateShorthandAccessIdentifier = (name: string): string =>
   `'${name}'`
 
+export const generateShorthandMember = (name: string, value: string): string =>
+  `${name}:${value}`
+
 export const generateSpread = (value: string): string => `...${value}`
 
 export const generateString = (content: string): string => `\`${content}\``

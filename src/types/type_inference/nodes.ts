@@ -1,4 +1,4 @@
-import { IdentifierNode, ShorthandAccessIdentifierNode } from 'tree-sitter-tony'
+import { IdentifierNode, ShorthandMemberNode } from 'tree-sitter-tony'
 import { Constraints } from './constraints'
 import { NonTypeNode } from '../nodes'
 import { ResolvedType } from './categories'
@@ -36,7 +36,7 @@ export type TypedNodeChildren<T extends NonTypeNode> = Omit<
  */
 export type TypedNodeExtensions<T extends NonTypeNode> = T extends
   | IdentifierNode
-  | ShorthandAccessIdentifierNode
+  | ShorthandMemberNode
   ? { binding: TermBinding }
   : {}
 
