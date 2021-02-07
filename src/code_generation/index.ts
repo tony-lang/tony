@@ -17,6 +17,7 @@ import {
   ListComprehensionNode,
   ListNode,
   MemberNode,
+  StructNode,
   SyntaxType,
 } from 'tree-sitter-tony'
 import { Emit, buildFileEmit } from '../types/emit'
@@ -46,6 +47,7 @@ import {
   generateList,
   generateListComprehension,
   generateMember,
+  generateStruct,
 } from './generators'
 import {
   generateBindingName,
@@ -251,9 +253,7 @@ const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
         'Tony cannot generate code for strings yet.',
       )
     case SyntaxType.Struct:
-      throw new NotImplementedError(
-        'Tony cannot generate code for structs yet.',
-      )
+      return handleStruct(state, typedNode as TypedNode<StructNode>)
     case SyntaxType.TaggedValue:
       throw new NotImplementedError(
         'Tony cannot generate code for tagged values yet.',
@@ -419,4 +419,12 @@ const handleMember = (
   const key = traverse(state, typedNode.keyNode)
   const value = traverse(state, typedNode.valueNode)
   return generateMember(key, value)
+}
+
+const handleStruct = (
+  state: State,
+  typedNode: TypedNode<StructNode>,
+): string => {
+  const members = typedNode.memberNodes.map((member) => traverse(state, member))
+  return generateStruct(members)
 }
