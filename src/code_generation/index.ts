@@ -17,6 +17,7 @@ import {
   ListComprehensionNode,
   ListNode,
   MemberNode,
+  PipelineNode,
   StructNode,
   SyntaxType,
 } from 'tree-sitter-tony'
@@ -47,6 +48,7 @@ import {
   generateList,
   generateListComprehension,
   generateMember,
+  generatePipeline,
   generateStruct,
 } from './generators'
 import {
@@ -211,9 +213,7 @@ const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
     case SyntaxType.Number:
       return typedNode.node.text
     case SyntaxType.Pipeline:
-      throw new NotImplementedError(
-        'Tony cannot generate code for pipelines yet.',
-      )
+      return handlePipeline(state, typedNode as TypedNode<PipelineNode>)
     case SyntaxType.PrefixApplication:
       throw new NotImplementedError(
         'Tony cannot generate code for prefix applications yet.',
@@ -243,6 +243,10 @@ const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
     case SyntaxType.ShorthandMemberIdentifier:
       throw new NotImplementedError(
         'Tony cannot generate code for shorthand member identifiers yet.',
+      )
+    case SyntaxType.ShorthandMember:
+      throw new NotImplementedError(
+        'Tony cannot generate code for shorthand members yet.',
       )
     case SyntaxType.Spread:
       throw new NotImplementedError(
@@ -419,6 +423,15 @@ const handleMember = (
   const key = traverse(state, typedNode.keyNode)
   const value = traverse(state, typedNode.valueNode)
   return generateMember(key, value)
+}
+
+const handlePipeline = (
+  state: State,
+  typedNode: TypedNode<PipelineNode>,
+): string => {
+  const name = traverse(state, typedNode.nameNode)
+  const value = traverse(state, typedNode.valueNode)
+  return generatePipeline(name, value)
 }
 
 const handleStruct = (
