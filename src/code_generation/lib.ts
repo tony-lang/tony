@@ -1,7 +1,7 @@
 import path from 'path'
 
-const UTILS_MODULE = 'codeGeneration'
-const UTILS_PATH = path.join(__dirname, 'utils')
+const UTILS_MODULE = '$CODE_GENERATION'
+const UTILS_PATH = path.join(__dirname, '..', 'utils')
 const CURRY_FUNCTION = `${UTILS_MODULE}.curry`
 const PATTERN_MATCH_FUNCTION = `${UTILS_MODULE}.patternMatch`
 const RESOLVE_ABSTRACTION_BRANCH_FUNCTION = `${UTILS_MODULE}.resolveAbstractionBranch`
