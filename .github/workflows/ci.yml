@@ -29,5 +29,5 @@ jobs:
         run: yarn eslint
       - name: Tests
         run: |
-          node -v
-          yarn test
+          sudo node -v
+          sudo yarn test
