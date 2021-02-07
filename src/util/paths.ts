@@ -14,8 +14,11 @@ const IMPORT_FILE_EXTENSIONS = [
 
 const fileExists = (file: AbsolutePath) => fs.existsSync(file.path)
 
-const fileHasTonyExtension = (file: Path) =>
+export const fileHasTonyExtension = (file: Path): boolean =>
   FILE_EXTENSION_REGEX.test(file.path)
+
+export const fileHasJavaScriptExtension = (file: Path): boolean =>
+  JAVASCRIPT_FILE_EXTENSION_REGEX.test(file.path)
 
 const fileHasImportExtension = (file: Path) =>
   !!IMPORT_FILE_EXTENSIONS.find((regex) => regex.test(file.path))
@@ -51,6 +54,11 @@ export const writeFile = async (
 
 export const getOutFilename = (filename: string): string =>
   filename.replace(FILE_EXTENSION, TARGET_FILE_EXTENSION)
+
+export const getOutPath = <T extends Path>(path: T): T => ({
+  ...path,
+  path: getOutFilename(path.path),
+})
 
 export const isSamePath = (path1: AbsolutePath, path2: AbsolutePath): boolean =>
   path1.path === path2.path
