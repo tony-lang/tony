@@ -12,7 +12,7 @@ import {
   WhenNode,
 } from 'tree-sitter-tony'
 import { ErrorAnnotation, MountedErrorAnnotation } from '../errors/annotations'
-import { NonTypeNode, TermNode } from '../nodes'
+import { NonTypeLevelNode, TermLevelNode } from '../nodes'
 import {
   TermBinding,
   TypeAssignment,
@@ -33,7 +33,7 @@ export type NestingNode =
   | TypeAliasNode
   | WhenNode
 
-export type NestingTermNode = NestingNode & TermNode
+export type NestingTermLevelNode = NestingNode & TermLevelNode
 
 enum ScopeKind {
   Global,
@@ -63,7 +63,7 @@ export type ScopeWithNode<T extends SyntaxNode> = {
   readonly node: T
 }
 
-export type TypedScope<T extends NonTypeNode> = {
+export type TypedScope<T extends NonTypeLevelNode> = {
   readonly typedNode: TypedNode<T>
 }
 
@@ -104,8 +104,9 @@ export interface NestedScope<T extends NestingNode = NestingNode>
   readonly kind: typeof ScopeKind.Nested
 }
 
-export interface TypedNestedScope<T extends NestingTermNode = NestingTermNode>
-  extends NestedScope<T>,
+export interface TypedNestedScope<
+  T extends NestingTermLevelNode = NestingTermLevelNode
+> extends NestedScope<T>,
     TypingEnvironment,
     TypedScope<T> {
   readonly scopes: TypedNestedScope<T>[]
@@ -159,7 +160,7 @@ export const buildNestedScope = (node: NestingNode): NestedScope => ({
   errors: [],
 })
 
-export const buildTypedNestedScope = <T extends NestingTermNode>(
+export const buildTypedNestedScope = <T extends NestingTermLevelNode>(
   scope: NestedScope<T>,
   scopes: TypedNestedScope<T>[],
   typedNode: TypedNode<T>,

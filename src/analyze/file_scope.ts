@@ -10,6 +10,7 @@ import {
   ExportedImportNode,
   GeneratorNode,
   IdentifierNode,
+  IdentifierPatternNameNode,
   IdentifierPatternNode,
   ImportIdentifierNode,
   ImportNode,
@@ -35,6 +36,11 @@ import {
   buildNestedScope,
   isFileScope,
 } from '../types/analyze/scopes'
+import {
+  ImportLevelNode,
+  NodeWithinProgram,
+  isNodeWithinProgram,
+} from '../types/nodes'
 import {
   LocalTypeBinding,
   TermBinding,
@@ -133,9 +139,10 @@ export const constructFileScope = (
     terms: [],
   }
 
+  const stateWithImports = traverseImports(initialState, node.importNodes)
   const {
     scopes: [fileScope],
-  } = traverse(initialState, node)
+  } = traverseAll(stateWithImports, node.termNodes)
   assert(
     isFileScope(fileScope),
     'Traverse should arrive at the top-level file scope.',
@@ -374,15 +381,13 @@ const exportAndReset = (
   { ...state, exportNextBindings: undefined },
 ]
 
-const traverseAll = (state: State, nodes: SyntaxNode[]): State =>
+const traverseAll = (state: State, nodes: NodeWithinProgram[]): State =>
   nodes.reduce((acc, child) => traverse(acc, child), state)
 
 const traverseAllChildren = (state: State, node: SyntaxNode): State =>
-  traverseAll(state, node.namedChildren)
+  traverseAll(state, node.namedChildren.filter(isNodeWithinProgram))
 
-const traverse = (state: State, node: SyntaxNode): State => {
-  if (!node.isNamed) return state
-
+const traverse = (state: State, node: NodeWithinProgram): State => {
   switch (node.type) {
     case SyntaxType.AbstractionBranch:
       return handleAbstractionBranch(state, node)
@@ -398,20 +403,12 @@ const traverse = (state: State, node: SyntaxNode): State => {
       return handleEnumValue(state, node)
     case SyntaxType.Export:
       return handleExport(state, node)
-    case SyntaxType.ExportedImport:
-      return handleImportAndExportedImport(true)(state, node)
     case SyntaxType.Generator:
       return handleGenerator(state, node)
     case SyntaxType.Identifier:
       return handleIdentifier(state, node)
     case SyntaxType.IdentifierPattern:
       return handleIdentifierPatternAndShorthandMemberPattern(state, node)
-    case SyntaxType.Import:
-      return handleImportAndExportedImport(false)(state, node)
-    case SyntaxType.ImportIdentifier:
-      return handleImportIdentifier(state, node)
-    case SyntaxType.ImportType:
-      return handleImportType(state, node)
     case SyntaxType.Interface:
       return handleInterface(state, node)
     case SyntaxType.ListComprehension:
@@ -495,13 +492,12 @@ const handleDestructuringPattern = (
     importNextBindingsFrom: importedFrom,
   } = state
   const name = getIdentifierName(node.aliasNode)
-  const stateWithAlias = traverse(state, node.aliasNode)
   const stateWithBinding = addTermBinding(
     name,
     !!isImplicit,
     isExported,
     importedFrom,
-  )(stateWithAlias, node)
+  )(state, node)
   return traverse(stateWithBinding, node.patternNode)
 }
 
@@ -520,7 +516,7 @@ const handleEnum = (state: State, node: EnumNode): State => {
 const handleEnumValue = (state: State, node: EnumValueNode): State => {
   const { exportNextBindings: isExported } = state
   const name = getIdentifierName(node.nameNode)
-  const stateWithName = traverse(state, node.nameNode)
+  const stateWithName = handleIdentifierPatternName(state, node.nameNode)
   const stateWithBinding = addTermBinding(
     name,
     false,
@@ -542,46 +538,9 @@ const handleExport = ensure<State, ExportNode>(
   buildExportOutsideFileScopeError(),
 )
 
-const handleImportAndExportedImport = (isExported: boolean) =>
-  ensure<State, ImportNode | ExportedImportNode>(
-    (state) => isFileScope(state.scopes[0]),
-    (state, node) => {
-      const source = buildRelativePath(
-        state.file,
-        '..',
-        parseRawString(node.sourceNode),
-      )
-      const resolvedSource = resolveRelativePath(
-        state.config,
-        source,
-        fileMayBeImported,
-      )
-      if (resolvedSource === undefined)
-        return addError(state, node.sourceNode, buildUnknownFileError(source))
-
-      const stateWithDependency = addDependency(state, resolvedSource)
-      const stateWithBindings = traverseAll(
-        {
-          ...stateWithDependency,
-          exportNextBindings: isExported,
-          importNextBindingsFrom: { file: resolvedSource },
-        },
-        node.importNodes,
-      )
-      const stateWithFlushedBindings = flushTermBindings(stateWithBindings)
-      return {
-        ...stateWithFlushedBindings,
-        exportNextBindings: undefined,
-        importNextBindingsFrom: undefined,
-      }
-    },
-    buildImportOutsideFileScopeError(),
-  )
-
 const handleGenerator = (state: State, node: GeneratorNode): State => {
   const name = getIdentifierName(node.nameNode)
-  const stateWithName = traverse(state, node.nameNode)
-  const stateWithValue = traverse(stateWithName, node.valueNode)
+  const stateWithValue = traverse(state, node.valueNode)
   const stateWithBinding = addTermBinding(name, true)(stateWithValue, node)
   const stateWithFlushedBinding = flushTermBindings(stateWithBinding)
   return conditionalApply(traverse)(stateWithFlushedBinding, node.conditionNode)
@@ -607,8 +566,7 @@ const handleIdentifierPatternAndShorthandMemberPattern = (
     importNextBindingsFrom: importedFrom,
   } = state
   const name = getIdentifierName(node.nameNode)
-  const stateWithName = traverse(state, node.nameNode)
-  const stateWithType = conditionalApply(traverse)(stateWithName, node.typeNode)
+  const stateWithType = conditionalApply(traverse)(state, node.typeNode)
   const stateWithDefault = conditionalApply(traverse)(
     stateWithType,
     node.defaultNode,
@@ -619,55 +577,6 @@ const handleIdentifierPatternAndShorthandMemberPattern = (
     isExported,
     importedFrom,
   )(stateWithDefault, node)
-}
-
-const handleImportIdentifier = (
-  state: State,
-  node: ImportIdentifierNode,
-): State => {
-  const { importNextBindingsFrom } = state
-
-  assert(
-    importNextBindingsFrom !== undefined,
-    'Within an import statement, there should be an import config.',
-  )
-
-  const originalName = node.nameNode
-    ? getIdentifierName(node.nameNode)
-    : undefined
-  const stateWithName = conditionalApply(traverse)(
-    {
-      ...state,
-      importNextBindingsFrom: {
-        ...importNextBindingsFrom,
-        originalName,
-      },
-    },
-    node.nameNode,
-  )
-
-  return traverse(stateWithName, node.asNode)
-}
-
-const handleImportType = (state: State, node: ImportTypeNode): State => {
-  const {
-    exportNextBindings: isExported,
-    importNextBindingsFrom: importedFrom,
-  } = state
-  const originalName = getTypeName(node.nameNode)
-  const stateWithName = traverse(state, node.nameNode)
-  const name = node.asNode ? getTypeName(node.asNode) : originalName
-  const stateWithAs = conditionalApply(traverse)(stateWithName, node.asNode)
-
-  assert(
-    importedFrom !== undefined,
-    'Within an import statement, there should be an import config.',
-  )
-
-  return addTypeBinding(name, isExported, {
-    ...importedFrom,
-    originalName,
-  })(stateWithAs, node)
 }
 
 const handleInterface = nest<InterfaceNode>((state, node) => {
@@ -737,8 +646,7 @@ const handleTypeVariableDeclaration = (
   node: TypeVariableDeclarationNode,
 ): State => {
   const name = getTypeVariableName(node.nameNode)
-  const stateWithName = traverse(state, node.nameNode)
-  const stateWithBinding = addTypeVariableBinding(name)(stateWithName, node)
+  const stateWithBinding = addTypeVariableBinding(name)(state, node)
   return conditionalApply(traverseAll)(stateWithBinding, node.constraintNodes)
 }
 
@@ -802,3 +710,122 @@ const handleWhen = nest<WhenNode>((state, node) => {
     node.bodyNode,
   )
 })
+
+const traverseImports = (state: State, nodes: ImportLevelNode[]): State =>
+  nodes.reduce((acc, child) => traversImport(acc, child), state)
+
+const traversImport = (state: State, node: ImportLevelNode): State => {
+  switch (node.type) {
+    case SyntaxType.ExportedImport:
+      return handleImportAndExportedImport(true)(state, node)
+    case SyntaxType.Import:
+      return handleImportAndExportedImport(false)(state, node)
+    case SyntaxType.ImportIdentifier:
+      return handleImportIdentifier(state, node)
+    case SyntaxType.ImportType:
+      return handleImportType(state, node)
+  }
+}
+
+const handleImportAndExportedImport = (isExported: boolean) =>
+  ensure<State, ImportNode | ExportedImportNode>(
+    (state) => isFileScope(state.scopes[0]),
+    (state, node) => {
+      const source = buildRelativePath(
+        state.file,
+        '..',
+        parseRawString(node.sourceNode),
+      )
+      const resolvedSource = resolveRelativePath(
+        state.config,
+        source,
+        fileMayBeImported,
+      )
+      if (resolvedSource === undefined)
+        return addError(state, node.sourceNode, buildUnknownFileError(source))
+
+      const stateWithDependency = addDependency(state, resolvedSource)
+      const stateWithBindings = traverseImports(
+        {
+          ...stateWithDependency,
+          exportNextBindings: isExported,
+          importNextBindingsFrom: { file: resolvedSource },
+        },
+        node.importNodes,
+      )
+      const stateWithFlushedBindings = flushTermBindings(stateWithBindings)
+      return {
+        ...stateWithFlushedBindings,
+        exportNextBindings: undefined,
+        importNextBindingsFrom: undefined,
+      }
+    },
+    buildImportOutsideFileScopeError(),
+  )
+
+const handleImportIdentifier = (
+  state: State,
+  node: ImportIdentifierNode,
+): State => {
+  const { importNextBindingsFrom } = state
+
+  assert(
+    importNextBindingsFrom !== undefined,
+    'Within an import statement, there should be an import config.',
+  )
+
+  const originalName = node.nameNode
+    ? getIdentifierName(node.nameNode)
+    : undefined
+  const stateWithName = conditionalApply(handleIdentifierPatternName)(
+    {
+      ...state,
+      importNextBindingsFrom: {
+        ...importNextBindingsFrom,
+        originalName,
+      },
+    },
+    node.nameNode,
+  )
+
+  return traverse(stateWithName, node.asNode)
+}
+
+const handleImportType = (state: State, node: ImportTypeNode): State => {
+  const {
+    exportNextBindings: isExported,
+    importNextBindingsFrom: importedFrom,
+  } = state
+  const originalName = getTypeName(node.nameNode)
+  const stateWithName = traverse(state, node.nameNode)
+  const name = node.asNode ? getTypeName(node.asNode) : originalName
+  const stateWithAs = conditionalApply(traverse)(stateWithName, node.asNode)
+
+  assert(
+    importedFrom !== undefined,
+    'Within an import statement, there should be an import config.',
+  )
+
+  return addTypeBinding(name, isExported, {
+    ...importedFrom,
+    originalName,
+  })(stateWithAs, node)
+}
+
+const handleIdentifierPatternName = (
+  state: State,
+  node: IdentifierPatternNameNode,
+): State => {
+  const {
+    exportNextBindings: isExported,
+    nextIdentifierPatternBindingsImplicit: isImplicit,
+    importNextBindingsFrom: importedFrom,
+  } = state
+  const name = getIdentifierName(node)
+  return addTermBinding(
+    name,
+    !!isImplicit,
+    isExported,
+    importedFrom,
+  )(state, node)
+}
