@@ -14,8 +14,9 @@ module.exports = {
     ecmaVersion: 2020,
     sourceType: 'module',
   },
-  plugins: ['@typescript-eslint'],
+  plugins: ['@typescript-eslint', 'filenames'],
   rules: {
+    'filenames/match-regex': [2, /^[a-z_]+$/, true],
     'sort-imports': 'error',
     '@typescript-eslint/ban-types': 'off',
     '@typescript-eslint/camelcase': 'off',

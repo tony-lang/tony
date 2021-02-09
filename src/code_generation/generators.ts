@@ -5,7 +5,7 @@ import {
   patternMatchForAbstraction,
   resolveAbstractionBranch,
 } from './lib'
-import { TRANSFORM_IDENTIFIER_PATTERN } from '../lib/patternMatch'
+import { TRANSFORM_IDENTIFIER_PATTERN } from '../lib/pattern_match'
 import { TRANSFORM_PLACEHOLDER_ARGUMENT } from '../lib/curry'
 import { UTILS_IMPORT } from '../lib'
 

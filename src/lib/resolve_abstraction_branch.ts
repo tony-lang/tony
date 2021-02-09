@@ -3,7 +3,7 @@ import {
   PatternDoesNotMatch,
   PatternDoesOnlyPartiallyMatch,
 } from '../types/errors/runtime'
-import { patternMatch } from './patternMatch'
+import { patternMatch } from './pattern_match'
 
 export const resolveAbstractionBranch = (
   args: unknown,

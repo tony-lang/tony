@@ -4,8 +4,8 @@ const UTILS_MODULE = '$CODE_GENERATION'
 const UTILS_PATH = path.join(__dirname)
 
 export { curry, curryJS } from './curry'
-export { patternMatch } from './patternMatch'
-export { resolveAbstractionBranch } from './resolveAbstractionBranch'
+export { patternMatch } from './pattern_match'
+export { resolveAbstractionBranch } from './resolve_abstraction_branch'
 
 export const CURRY_UTIL = `${UTILS_MODULE}.curry`
 export const CURRY_JS_UTIL = `${UTILS_MODULE}.curryJS`
