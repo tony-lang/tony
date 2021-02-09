@@ -18,10 +18,9 @@ type TypedNodeChildrenWithNever<T extends NonTypeLevelNode> = {
     ? TypedNode<T[P][0]>[]
     : never
 }
-type TypedNodeChildrenNeverKeys<T extends NonTypeLevelNode> = ExtractKeysOfValueType<
-  TypedNodeChildrenWithNever<T>,
-  never | undefined
->
+type TypedNodeChildrenNeverKeys<
+  T extends NonTypeLevelNode
+> = ExtractKeysOfValueType<TypedNodeChildrenWithNever<T>, never | undefined>
 
 /**
  * Type annotations for all node children (that are term nodes).

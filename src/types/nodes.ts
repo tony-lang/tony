@@ -16,8 +16,8 @@ import {
   EnumNode,
   EnumValueNode,
   ErrorNode,
-  ExportedImportNode,
   ExportNode,
+  ExportedImportNode,
   GeneratorNode,
   GroupNode,
   IdentifierNode,
@@ -76,9 +76,9 @@ import {
   TypeGroupNode,
   TypeHintNode,
   TypeNode,
-  TypeofNode,
   TypeVariableDeclarationNode,
   TypeVariableNode,
+  TypeofNode,
   UnionTypeNode,
   WhenNode,
 } from 'tree-sitter-tony'
@@ -178,7 +178,9 @@ export type NodeWithinProgram = TermLevelNode | PatternLevelNode | TypeLevelNode
 
 // ---- Factories ----
 
-export const isNodeWithinProgram = (node: SyntaxNode): node is NodeWithinProgram => {
+export const isNodeWithinProgram = (
+  node: SyntaxNode,
+): node is NodeWithinProgram => {
   if (!node.isNamed) return false
 
   switch (node.type) {
@@ -186,6 +188,7 @@ export const isNodeWithinProgram = (node: SyntaxNode): node is NodeWithinProgram
     case SyntaxType.Number:
     case SyntaxType.RawString:
     case SyntaxType.Regex:
+    // falls through
 
     case SyntaxType.Abstraction:
     case SyntaxType.AbstractionBranch:
@@ -228,6 +231,7 @@ export const isNodeWithinProgram = (node: SyntaxNode): node is NodeWithinProgram
     case SyntaxType.TypeAlias:
     case SyntaxType.TypeHint:
     case SyntaxType.When:
+    // falls through
 
     case SyntaxType.DestructuringPattern:
     case SyntaxType.IdentifierPattern:
@@ -238,6 +242,7 @@ export const isNodeWithinProgram = (node: SyntaxNode): node is NodeWithinProgram
     case SyntaxType.StructPattern:
     case SyntaxType.TaggedPattern:
     case SyntaxType.TuplePattern:
+    // falls through
 
     case SyntaxType.AccessType:
     case SyntaxType.ConditionalType:

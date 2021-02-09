@@ -104,8 +104,9 @@ export interface NestedScope<T extends NestingNode = NestingNode>
   readonly kind: typeof ScopeKind.Nested
 }
 
-export interface TypedNestedScope<T extends NestingTermLevelNode = NestingTermLevelNode>
-  extends NestedScope<T>,
+export interface TypedNestedScope<
+  T extends NestingTermLevelNode = NestingTermLevelNode
+> extends NestedScope<T>,
     TypingEnvironment,
     TypedScope<T> {
   readonly scopes: TypedNestedScope<T>[]

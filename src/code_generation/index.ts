@@ -133,7 +133,10 @@ const traverse = (state: State, typedNode: TypedNode<TermLevelNode>): string =>
     () => nest(state, typedNode as TypedNode<NestingTermLevelNode>, handleNode),
   )
 
-const handleNode = (state: State, typedNode: TypedNode<TermLevelNode>): string => {
+const handleNode = (
+  state: State,
+  typedNode: TypedNode<TermLevelNode>,
+): string => {
   switch (typedNode.node.type) {
     case SyntaxType.Abstraction:
       return handleAbstraction(state, typedNode as TypedNode<AbstractionNode>)
@@ -190,6 +193,10 @@ const handleNode = (state: State, typedNode: TypedNode<TermLevelNode>): string =
         typedNode as TypedNode<InfixApplicationNode>,
       )
     case SyntaxType.Interface:
+      throw new NotImplementedError(
+        'Tony cannot generate code for interfaces yet.',
+      )
+    case SyntaxType.InterfaceMember:
       throw new NotImplementedError(
         'Tony cannot generate code for interfaces yet.',
       )

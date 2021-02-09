@@ -10,6 +10,7 @@ import {
   ExportedImportNode,
   GeneratorNode,
   IdentifierNode,
+  IdentifierPatternNameNode,
   IdentifierPatternNode,
   ImportIdentifierNode,
   ImportNode,
@@ -26,8 +27,6 @@ import {
   TypeVariableDeclarationNode,
   TypeVariableNode,
   WhenNode,
-  TypeVariableDeclarationNameNode,
-  IdentifierPatternNameNode,
 } from 'tree-sitter-tony'
 import {
   FileScope,
@@ -37,6 +36,11 @@ import {
   buildNestedScope,
   isFileScope,
 } from '../types/analyze/scopes'
+import {
+  ImportLevelNode,
+  NodeWithinProgram,
+  isNodeWithinProgram,
+} from '../types/nodes'
 import {
   LocalTypeBinding,
   TermBinding,
@@ -85,7 +89,6 @@ import { buildConstraintsFromType } from '../util/types'
 import { isPrimitiveTypeName } from '../types/type_inference/primitive_types'
 import { mergeDeferredAssignments } from '../type_inference/constraints'
 import { resolveRelativePath } from './resolve'
-import { ImportLevelNode, isNodeWithinProgram, NodeWithinProgram } from '../types/nodes'
 
 type ImportedBindingConfig = { file: AbsolutePath; originalName?: string }
 

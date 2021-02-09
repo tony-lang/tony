@@ -34,7 +34,10 @@ export type GeneratedPatterns = [
 ]
 
 type Return = [pattern: string, identifiers: string[], defaults: string[]]
-type GenerateCode = (state: State, typedNode: TypedNode<TermLevelNode>) => string
+type GenerateCode = (
+  state: State,
+  typedNode: TypedNode<TermLevelNode>,
+) => string
 
 export const generatePatterns = (
   state: State,

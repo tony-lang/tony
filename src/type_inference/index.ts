@@ -52,7 +52,10 @@ type State = {
    * A stack of all scopes starting with the closest scope and ending with the
    * symbol table.
    */
-  scopes: (FileScope<NestingTermLevelNode> | NestedScope<NestingTermLevelNode>)[]
+  scopes: (
+    | FileScope<NestingTermLevelNode>
+    | NestedScope<NestingTermLevelNode>
+  )[]
   /**
    * A list of type assignments for each scope on the scope stack.
    */
@@ -185,7 +188,9 @@ const enterBlock = (state: State, node: NestingTermLevelNode): State => {
   }
 }
 
-const leaveBlock = (answer: Answer<State, Return<NestingTermLevelNode>>): State => {
+const leaveBlock = (
+  answer: Answer<State, Return<NestingTermLevelNode>>,
+): State => {
   const [scope, parentScope, ...parentScopes] = answer.state.scopes
   const [
     typedScopes,
@@ -375,6 +380,10 @@ const handleNode = (
         'Tony cannot infer the type of infix applications yet.',
       )
     case SyntaxType.Interface:
+      throw new NotImplementedError(
+        'Tony cannot infer the type of interfaces yet.',
+      )
+    case SyntaxType.InterfaceMember:
       throw new NotImplementedError(
         'Tony cannot infer the type of interfaces yet.',
       )
