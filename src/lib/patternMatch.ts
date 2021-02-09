@@ -1,24 +1,10 @@
+import {
+  PatternDoesNotMatch,
+  PatternDoesOnlyPartiallyMatch,
+} from '../types/errors/runtime'
 import deepEqual from 'deep-equal'
 
 export const TRANSFORM_IDENTIFIER_PATTERN = '$TRANSFORM_IDENTIFIER_PATTERN'
-
-export class PatternNotMatching extends Error {
-  constructor(message: string) {
-    super(
-      `${message} This is a runtime error that should not occur, but instead caught at compile time.`,
-    )
-    this.name = this.constructor.name
-  }
-}
-
-export class PatternPartiallyMatching extends Error {
-  constructor(message: string) {
-    super(
-      `${message} This is a runtime error that should not occur, but instead caught at compile time.`,
-    )
-    this.name = this.constructor.name
-  }
-}
 
 type PatternMatchConfig = {
   readonly defaults: unknown[]
@@ -52,7 +38,7 @@ export const patternMatch = (
     return patternMatchObject(config, pattern, value, depth)
   else if (omitsPattern(config, pattern, value))
     return patternMatchOmittedPattern(config, pattern)
-  else throw new PatternNotMatching('Pattern does not match.')
+  else throw new PatternDoesNotMatch()
 }
 
 const patternMatchIdentifier = (
@@ -65,8 +51,8 @@ const patternMatchIdentifier = (
   if (value === undefined)
     if (defaultValue === undefined)
       if (config.allowFewerArguments && depth == 1)
-        throw new PatternPartiallyMatching('Pattern does only partially match.')
-      else throw new PatternNotMatching('Pattern does not match.')
+        throw new PatternDoesOnlyPartiallyMatch()
+      else throw new PatternDoesNotMatch()
     else return [value || defaultValue]
   else return [value]
 }
@@ -78,7 +64,7 @@ const patternMatchArray = (
   depth: number,
 ): unknown[][] => {
   if (!config.allowMoreArguments && tooManyArgumentsForArray(patterns, arr))
-    throw new PatternNotMatching('Pattern does not match.')
+    throw new PatternDoesNotMatch()
 
   return patterns.slice(0).reduce<unknown[][]>((acc, pattern, i, tmp) => {
     if (isRestPattern(pattern)) {
@@ -97,7 +83,7 @@ const patternMatchObject = (
   depth: number,
 ): unknown[] => {
   if (!config.allowMoreArguments && tooManyArgumentsForObject(patterns, obj))
-    throw new PatternNotMatching('Pattern does not match')
+    throw new PatternDoesNotMatch()
 
   const tmpObj = { ...obj }
   return Object.entries(patterns).reduce(
