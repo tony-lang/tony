@@ -16,14 +16,11 @@ export enum ErrorAnnotationKind {
   IncompleteWhenPattern,
   AmbiguousType,
   MissingBinding,
-  MissingExternalImportTypeHint,
   PrimitiveTypeArguments,
   RefinementTypeDeclarationOutsideRefinementType,
   Type,
   UnknownFile,
   UnknownImport,
-  UnsupportedSyntax,
-  UseOfTypeAsValue,
 }
 
 export type CyclicDependencyError = {
@@ -63,11 +60,6 @@ export type MissingBindingError = {
   readonly name: string
 }
 
-export type MissingExternalImportTypeHintError = {
-  readonly kind: typeof ErrorAnnotationKind.MissingExternalImportTypeHint
-  readonly binding: TermBinding
-}
-
 export type PrimitiveTypeArgumentsError = {
   readonly kind: typeof ErrorAnnotationKind.PrimitiveTypeArguments
 }
@@ -93,15 +85,6 @@ export type UnknownImportError = {
   readonly name: string
 }
 
-export type UnsupportedSyntaxError = {
-  readonly kind: typeof ErrorAnnotationKind.UnsupportedSyntax
-}
-
-export type UseOfTypeAsValueError = {
-  readonly kind: typeof ErrorAnnotationKind.UseOfTypeAsValue
-  readonly type: Type
-}
-
 export type ErrorAnnotation =
   | CyclicDependencyError
   | DuplicateBindingError
@@ -111,14 +94,11 @@ export type ErrorAnnotation =
   | IncompleteWhenPatternError
   | AmbiguousTypeError
   | MissingBindingError
-  | MissingExternalImportTypeHintError
   | PrimitiveTypeArgumentsError
   | RefinementTypeDeclarationOutsideRefinementTypeError
   | TypeError
   | UnknownFileError
   | UnknownImportError
-  | UnsupportedSyntaxError
-  | UseOfTypeAsValueError
 
 export type MountedErrorAnnotation = {
   node: SyntaxNode
