@@ -1,7 +1,7 @@
 import {
   FileScope,
   NestedScope,
-  NestingTermNode,
+  NestingTermLevelNode,
 } from '../types/analyze/scopes'
 
 export type State = {
@@ -9,5 +9,5 @@ export type State = {
    * A stack of all scopes starting with the closest scope and ending with the
    * symbol table.
    */
-  scopes: (FileScope<NestingTermNode> | NestedScope<NestingTermNode>)[]
+  scopes: (FileScope<NestingTermLevelNode> | NestedScope<NestingTermLevelNode>)[]
 }

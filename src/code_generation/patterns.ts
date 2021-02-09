@@ -4,13 +4,12 @@ import {
   ListPatternNode,
   MemberPatternNode,
   PatternGroupNode,
-  RestNode,
   ShorthandMemberPatternNode,
   StructPatternNode,
   SyntaxType,
   TuplePatternNode,
 } from 'tree-sitter-tony'
-import { LiteralNode, PatternNode, TermNode } from '../types/nodes'
+import { LiteralNode, PatternLevelNode, TermLevelNode } from '../types/nodes'
 import { NotImplementedError, assert } from '../types/errors/internal'
 import {
   generateIdentifierPattern,
@@ -35,11 +34,11 @@ export type GeneratedPatterns = [
 ]
 
 type Return = [pattern: string, identifiers: string[], defaults: string[]]
-type GenerateCode = (state: State, typedNode: TypedNode<TermNode>) => string
+type GenerateCode = (state: State, typedNode: TypedNode<TermLevelNode>) => string
 
 export const generatePatterns = (
   state: State,
-  typedNodes: TypedNode<PatternNode>[],
+  typedNodes: TypedNode<PatternLevelNode>[],
   generateCode: GenerateCode,
 ): GeneratedPatterns =>
   typedNodes.reduce<GeneratedPatterns>(
@@ -60,7 +59,7 @@ export const generatePatterns = (
 
 export const generatePattern = (
   state: State,
-  typedNode: TypedNode<PatternNode>,
+  typedNode: TypedNode<PatternLevelNode>,
   generateCode: GenerateCode,
 ): GeneratedPattern => {
   const [pattern, identifiers, defaults] = traverse(
@@ -77,7 +76,7 @@ export const generatePattern = (
 
 const traverseAll = (
   state: State,
-  typedNodes: TypedNode<PatternNode>[],
+  typedNodes: TypedNode<PatternLevelNode>[],
   generateCode: GenerateCode,
 ) =>
   typedNodes.reduce<
@@ -100,14 +99,14 @@ const traverseAll = (
 
 const safeTraverse = (
   state: State,
-  typedNode: TypedNode<PatternNode> | undefined,
+  typedNode: TypedNode<PatternLevelNode> | undefined,
   generateCode: GenerateCode,
 ): [pattern: string | undefined, identifiers: string[], defaults: string[]] =>
   typedNode ? traverse(state, typedNode, generateCode) : [undefined, [], []]
 
 export const traverse = (
   state: State,
-  typedNode: TypedNode<PatternNode>,
+  typedNode: TypedNode<PatternLevelNode>,
   generateCode: GenerateCode,
 ): Return => {
   switch (typedNode.node.type) {
@@ -139,12 +138,6 @@ export const traverse = (
       return traverse(
         state,
         (typedNode as TypedNode<PatternGroupNode>).patternNode,
-        generateCode,
-      )
-    case SyntaxType.Rest:
-      return traverse(
-        state,
-        (typedNode as TypedNode<RestNode>).nameNode,
         generateCode,
       )
     case SyntaxType.ShorthandMemberPattern:

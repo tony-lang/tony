@@ -8,6 +8,7 @@ import {
   EnumNode,
   EnumValueNode,
   GeneratorNode,
+  IdentifierPatternNameNode,
   IdentifierPatternNode,
   ImportTypeNode,
   InterfaceNode,
@@ -28,6 +29,7 @@ export type TermBindingNode =
   | EnumValueNode
   | GeneratorNode
   | IdentifierPatternNode
+  | IdentifierPatternNameNode
   | ShorthandMemberPatternNode
   | TaggedTypeNode
   | RefinementTypeDeclarationNode

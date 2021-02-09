@@ -2,7 +2,7 @@ import {
   FileScope,
   NestedScope,
   NestingNode,
-  NestingTermNode,
+  NestingTermLevelNode,
   ScopeWithErrors,
   ScopeWithNode,
   ScopeWithTerms,
@@ -55,7 +55,7 @@ export const findScopeOfNode = <
 
 export const filterFileScopeByTermScopes = (
   scope: FileScope,
-): FileScope<NestingTermNode> => ({
+): FileScope<NestingTermLevelNode> => ({
   ...scope,
   scopes: scope.scopes
     .map(filterNestedScopeByTermScopes)
@@ -64,7 +64,7 @@ export const filterFileScopeByTermScopes = (
 
 const filterNestedScopeByTermScopes = (
   scope: NestedScope,
-): NestedScope<NestingTermNode> | undefined => {
+): NestedScope<NestingTermLevelNode> | undefined => {
   const node = scope.node
   if (node.type === SyntaxType.RefinementType) return undefined
   return {

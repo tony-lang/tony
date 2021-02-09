@@ -100,7 +100,7 @@ type InternalTypeNode =
   | TypeofNode
   | UnionTypeNode
 
-type ImmediateTermNode =
+type ImmediateTermLevelNode =
   | BooleanNode
   | IdentifierNode
   | NumberNode
@@ -592,7 +592,7 @@ const handleMemberType = <T extends AbstractState<Scope>>(
 
 const handleTerm = <T extends AbstractState<Scope>>(
   state: T,
-  node: ImmediateTermNode,
+  node: ImmediateTermLevelNode,
 ): Return<T, Type> => {
   switch (node.type) {
     case SyntaxType.Boolean:

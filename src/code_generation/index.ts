@@ -35,7 +35,7 @@ import {
 import { Emit, buildFileEmit } from '../types/emit'
 import {
   GlobalScope,
-  NestingTermNode,
+  NestingTermLevelNode,
   TypedFileScope,
   isFileScope,
 } from '../types/analyze/scopes'
@@ -77,7 +77,7 @@ import { generatePattern, generatePatterns } from './patterns'
 import { injectInterpolations, parseStringContent } from './strings'
 import { Config } from '../config'
 import { State } from './types'
-import { TermNode } from '../types/nodes'
+import { TermLevelNode } from '../types/nodes'
 import { TypedNode } from '../types/type_inference/nodes'
 import { isImportedBinding } from '../types/analyze/bindings'
 import { traverseScopes } from '../util/traverse'
@@ -103,7 +103,7 @@ const generateCodeForFile = (fileScope: TypedFileScope) => {
 
 const enterBlock = (
   state: State,
-  typedNode: TypedNode<NestingTermNode>,
+  typedNode: TypedNode<NestingTermLevelNode>,
 ): State => {
   const [scope, ...scopes] = state.scopes
   const newScope = findScopeOfNode(scope.scopes, typedNode.node)
@@ -117,7 +117,7 @@ const enterBlock = (
   }
 }
 
-const nest = <T extends NestingTermNode>(
+const nest = <T extends NestingTermLevelNode>(
   state: State,
   typedNode: TypedNode<T>,
   callback: (state: State, typedNode: TypedNode<T>) => string,
@@ -126,14 +126,14 @@ const nest = <T extends NestingTermNode>(
   return callback(nestedState, typedNode)
 }
 
-const traverse = (state: State, typedNode: TypedNode<TermNode>): string =>
+const traverse = (state: State, typedNode: TypedNode<TermLevelNode>): string =>
   traverseScopes(
     typedNode.node,
     () => handleNode(state, typedNode),
-    () => nest(state, typedNode as TypedNode<NestingTermNode>, handleNode),
+    () => nest(state, typedNode as TypedNode<NestingTermLevelNode>, handleNode),
   )
 
-const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
+const handleNode = (state: State, typedNode: TypedNode<TermLevelNode>): string => {
   switch (typedNode.node.type) {
     case SyntaxType.Abstraction:
       return handleAbstraction(state, typedNode as TypedNode<AbstractionNode>)
@@ -170,9 +170,6 @@ const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
         state,
         (typedNode as TypedNode<ExportNode>).declarationNode,
       )
-    // imports are generated in handleProgram
-    case SyntaxType.ExportedImport:
-      return ''
     case SyntaxType.Generator:
       return handleGenerator(state, typedNode as TypedNode<GeneratorNode>)
     case SyntaxType.Group:
@@ -183,16 +180,9 @@ const handleNode = (state: State, typedNode: TypedNode<TermNode>): string => {
       )
     case SyntaxType.If:
       return handleIf(state, typedNode as TypedNode<IfNode>)
-    // imports are generated in handleProgram
-    case SyntaxType.Import:
-      return ''
-    case SyntaxType.ImportIdentifier:
+    case SyntaxType.Implement:
       throw new NotImplementedError(
-        'Tony cannot generate code for identifier imports yet.',
-      )
-    case SyntaxType.ImportType:
-      throw new NotImplementedError(
-        'Tony cannot generate code for type imports yet.',
+        'Tony cannot generate code for implements yet.',
       )
     case SyntaxType.InfixApplication:
       return handleInfixApplication(

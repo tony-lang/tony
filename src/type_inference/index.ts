@@ -16,7 +16,7 @@ import {
   FileScope,
   GlobalScope,
   NestedScope,
-  NestingTermNode,
+  NestingTermLevelNode,
   TypedFileScope,
   TypedNestedScope,
   buildTypedFileScope,
@@ -35,7 +35,7 @@ import { addErrorUnless, traverseScopes } from '../util/traverse'
 import { filterFileScopeByTermScopes, findScopeOfNode } from '../util/scopes'
 import { mapAnswers, reduceAnswers } from '../util/answers'
 import { Config } from '../config'
-import { NonTypeNode } from '../types/nodes'
+import { NonTypeLevelNode } from '../types/nodes'
 import { ResolvedType } from '../types/type_inference/categories'
 import { TypeAssignment } from '../types/analyze/bindings'
 import { buildAmbiguousTypeError } from '../types/errors/annotations'
@@ -52,7 +52,7 @@ type State = {
    * A stack of all scopes starting with the closest scope and ending with the
    * symbol table.
    */
-  scopes: (FileScope<NestingTermNode> | NestedScope<NestingTermNode>)[]
+  scopes: (FileScope<NestingTermLevelNode> | NestedScope<NestingTermLevelNode>)[]
   /**
    * A list of type assignments for each scope on the scope stack.
    */
@@ -68,7 +68,7 @@ type State = {
  * Represents a type annotation (an "explanation") for a given node in the
  * syntax tree.
  */
-type Return<T extends NonTypeNode = NonTypeNode> = {
+type Return<T extends NonTypeLevelNode = NonTypeLevelNode> = {
   typedNode: TypedNode<T>
 }
 
@@ -132,7 +132,7 @@ const buildContext = (
   constraints: Constraints = buildConstraints(),
 ): Context => ({ type, constraints })
 
-const buildPrimitiveAnswer = <T extends NonTypeNode>(
+const buildPrimitiveAnswer = <T extends NonTypeLevelNode>(
   state: State,
   node: T,
   type: PrimitiveType,
@@ -149,7 +149,7 @@ const buildPrimitiveAnswer = <T extends NonTypeNode>(
     ),
   })
 
-const wrapAnswer = <T extends NonTypeNode, U extends NonTypeNode>(
+const wrapAnswer = <T extends NonTypeLevelNode, U extends NonTypeLevelNode>(
   answer: Answer<State, { results: Return<U>[] }>,
   callback: (
     state: State,
@@ -170,7 +170,7 @@ const wrapAnswer = <T extends NonTypeNode, U extends NonTypeNode>(
       ),
   )
 
-const enterBlock = (state: State, node: NestingTermNode): State => {
+const enterBlock = (state: State, node: NestingTermLevelNode): State => {
   const [scope, ...scopes] = state.scopes
   const newScope = findScopeOfNode(scope.scopes, node)
   assert(
@@ -185,7 +185,7 @@ const enterBlock = (state: State, node: NestingTermNode): State => {
   }
 }
 
-const leaveBlock = (answer: Answer<State, Return<NestingTermNode>>): State => {
+const leaveBlock = (answer: Answer<State, Return<NestingTermLevelNode>>): State => {
   const [scope, parentScope, ...parentScopes] = answer.state.scopes
   const [
     typedScopes,
@@ -218,7 +218,7 @@ const leaveBlock = (answer: Answer<State, Return<NestingTermNode>>): State => {
   }
 }
 
-const nest = <T extends NestingTermNode>(
+const nest = <T extends NestingTermLevelNode>(
   state: State,
   node: T,
   context: Context,
@@ -226,7 +226,7 @@ const nest = <T extends NestingTermNode>(
     state: State,
     node: T,
     context: Context,
-  ) => Answers<State, Return<NestingTermNode>>,
+  ) => Answers<State, Return<NestingTermLevelNode>>,
 ) => {
   const nestedState = enterBlock(state, node)
   const answers = callback(nestedState, node, context)
@@ -235,7 +235,7 @@ const nest = <T extends NestingTermNode>(
   ])
 }
 
-const traverseAll = <T extends NonTypeNode>(
+const traverseAll = <T extends NonTypeLevelNode>(
   state: State,
   nodes: T[],
   buildConcreteContext: () => Context = buildContext,
@@ -252,7 +252,7 @@ const traverseAll = <T extends NonTypeNode>(
     [buildAnswer(state, { results: [] })],
   )
 
-const ensureIsInstanceOf = <T extends NonTypeNode>(
+const ensureIsInstanceOf = <T extends NonTypeLevelNode>(
   answer: Answer<State, Return<T>>,
   { type, constraints }: Context,
 ): Answers<State, Return<T>> =>
@@ -269,7 +269,7 @@ const ensureIsInstanceOf = <T extends NonTypeNode>(
       ),
   )
 
-const traverse = <T extends NonTypeNode>(
+const traverse = <T extends NonTypeLevelNode>(
   state: State,
   node: T,
   context: Context,
@@ -285,7 +285,7 @@ const traverse = <T extends NonTypeNode>(
         (state, node, context) =>
           handleNode(state, node, context) as Answers<
             State,
-            Return<NestingTermNode>
+            Return<NestingTermLevelNode>
           >,
       ),
   ) as Answers<State, Return<T>>
@@ -295,7 +295,7 @@ const traverse = <T extends NonTypeNode>(
 
 const handleNode = (
   state: State,
-  node: NonTypeNode,
+  node: NonTypeLevelNode,
   context: Context,
 ): Answers<State, Return> => {
   switch (node.type) {
@@ -350,10 +350,6 @@ const handleNode = (
       throw new NotImplementedError(
         'Tony cannot infer the type of exports yet.',
       )
-    case SyntaxType.ExportedImport:
-      throw new NotImplementedError(
-        'Tony cannot infer the type of exported imports yet.',
-      )
     case SyntaxType.Generator:
       throw new NotImplementedError(
         'Tony cannot infer the type of generators yet.',
@@ -370,17 +366,9 @@ const handleNode = (
       )
     case SyntaxType.If:
       throw new NotImplementedError('Tony cannot infer the type of ifs yet.')
-    case SyntaxType.Import:
+    case SyntaxType.Implement:
       throw new NotImplementedError(
-        'Tony cannot infer the type of imports yet.',
-      )
-    case SyntaxType.ImportIdentifier:
-      throw new NotImplementedError(
-        'Tony cannot infer the type of identifier imports yet.',
-      )
-    case SyntaxType.ImportType:
-      throw new NotImplementedError(
-        'Tony cannot infer the type of type imports yet.',
+        'Tony cannot infer the type of implements yet.',
       )
     case SyntaxType.InfixApplication:
       throw new NotImplementedError(
@@ -436,10 +424,6 @@ const handleNode = (
       return [buildPrimitiveAnswer(state, node, STRING_TYPE, {}, {})]
     case SyntaxType.Regex:
       return [buildPrimitiveAnswer(state, node, REG_EXP_TYPE, {}, {})]
-    case SyntaxType.Rest:
-      throw new NotImplementedError(
-        'Tony cannot infer the type of rest parameters yet.',
-      )
     case SyntaxType.Return:
       throw new NotImplementedError(
         'Tony cannot infer the type of returns yet.',
