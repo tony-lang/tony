@@ -5,14 +5,12 @@ export enum LogLevel {
   Info,
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const print = (messages: any[]) => console.log(...messages)
+const print = (messages: unknown[]) => console.log(...messages)
 
 export const log = (
   { debug, verbose }: Config,
   kind: LogLevel,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ...messages: any[]
+  ...messages: unknown[]
 ): void => {
   if (!verbose) return
 
