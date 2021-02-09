@@ -1,16 +1,16 @@
 import { GeneratedPattern, GeneratedPatterns } from './patterns'
 import {
-  UTILS_IMPORT,
   curry,
   patternMatch,
   patternMatchForAbstraction,
   resolveAbstractionBranch,
 } from './lib'
+import { TRANSFORM_IDENTIFIER_PATTERN } from '../lib/patternMatch'
+import { TRANSFORM_PLACEHOLDER_ARGUMENT } from '../lib/curry'
+import { UTILS_IMPORT } from '../lib'
 
 const ARGUMENTS_NAME = '$ARGS'
 const INTERNAL_TEMP_TOKEN = '$INTERNAL_TEMP_TOKEN'
-const TRANSFORM_IDENTIFIER_PATTERN = '$TRANSFORM_IDENTIFIER_PATTERN'
-const TRANSFORM_PLACEHOLDER_ARGUMENT = '$TRANSFORM_PLACEHOLDER_ARGUMENT'
 
 export const generateAbstraction = (branches: string[]): string =>
   curry(ARGUMENTS_NAME, resolveAbstractionBranch(ARGUMENTS_NAME, branches))

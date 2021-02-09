@@ -1,6 +1,5 @@
 export function assert(value: boolean, message: string): asserts value {
   if (value) return
-
   throw new InternalError(message)
 }
 
