@@ -27,7 +27,7 @@ import {
   TypeVariableDeclarationNode,
   TypeVariableNode,
   WhenNode,
-} from 'tree-sitter-tony'
+} from 'tree-sitter-tony/tony'
 import {
   FileScope,
   NestedScope,
@@ -774,10 +774,8 @@ const handleImportIdentifier = (
     'Within an import statement, there should be an import config.',
   )
 
-  const originalName = node.nameNode
-    ? getIdentifierName(node.nameNode)
-    : undefined
-  const stateWithName = conditionalApply(handleIdentifierPatternName)(
+  const originalName = node.nameNode && getIdentifierName(node.nameNode)
+  return handleIdentifierPatternName(
     {
       ...state,
       importNextBindingsFrom: {
@@ -785,10 +783,8 @@ const handleImportIdentifier = (
         originalName,
       },
     },
-    node.nameNode,
+    node.asNode,
   )
-
-  return traverse(stateWithName, node.asNode)
 }
 
 const handleImportType = (state: State, node: ImportTypeNode): State => {
@@ -796,10 +792,10 @@ const handleImportType = (state: State, node: ImportTypeNode): State => {
     exportNextBindings: isExported,
     importNextBindingsFrom: importedFrom,
   } = state
-  const originalName = getTypeName(node.nameNode)
-  const stateWithName = traverse(state, node.nameNode)
-  const name = node.asNode ? getTypeName(node.asNode) : originalName
-  const stateWithAs = conditionalApply(traverse)(stateWithName, node.asNode)
+  const originalName = node.nameNode && getTypeName(node.nameNode)
+  const stateWithName = conditionalApply(traverse)(state, node.nameNode)
+  const name = getTypeName(node.asNode)
+  const stateWithAs = traverse(stateWithName, node.asNode)
 
   assert(
     importedFrom !== undefined,

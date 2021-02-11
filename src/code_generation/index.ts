@@ -31,7 +31,7 @@ import {
   TupleNode,
   TypeHintNode,
   WhenNode,
-} from 'tree-sitter-tony'
+} from 'tree-sitter-tony/tony'
 import { Emit, buildFileEmit } from '../types/emit'
 import {
   GlobalScope,

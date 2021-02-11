@@ -1,5 +1,5 @@
 import { Predicate } from './predicates'
-import { SyntaxNode } from 'tree-sitter-tony'
+import { SyntaxNode } from 'tree-sitter-tony/tony'
 import { Type } from './categories'
 import { flattenType } from '../../util/types'
 

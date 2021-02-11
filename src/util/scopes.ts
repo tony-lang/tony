@@ -9,7 +9,7 @@ import {
   ScopeWithTypes,
   TypingEnvironment,
 } from '../types/analyze/scopes'
-import { SyntaxNode, SyntaxType } from 'tree-sitter-tony'
+import { SyntaxNode, SyntaxType } from 'tree-sitter-tony/tony'
 import {
   TermBinding,
   TypeAssignment,

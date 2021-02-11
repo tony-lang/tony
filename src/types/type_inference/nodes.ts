@@ -1,4 +1,4 @@
-import { IdentifierNode, ShorthandMemberNode } from 'tree-sitter-tony'
+import { IdentifierNode, ShorthandMemberNode } from 'tree-sitter-tony/tony'
 import { Constraints } from './constraints'
 import { NonTypeLevelNode } from '../nodes'
 import { ResolvedType } from './categories'

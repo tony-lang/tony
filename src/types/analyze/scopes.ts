@@ -10,7 +10,7 @@ import {
   SyntaxType,
   TypeAliasNode,
   WhenNode,
-} from 'tree-sitter-tony'
+} from 'tree-sitter-tony/tony'
 import { ErrorAnnotation, MountedErrorAnnotation } from '../errors/annotations'
 import { NonTypeLevelNode, TermLevelNode } from '../nodes'
 import {

@@ -18,7 +18,7 @@ import {
   TaggedTypeNode,
   TypeAliasNode,
   TypeVariableDeclarationNode,
-} from 'tree-sitter-tony'
+} from 'tree-sitter-tony/tony'
 import { AbsolutePath } from '../path'
 import { TypeVariable } from '../type_inference/types'
 

@@ -11,7 +11,7 @@ import {
   Constraints,
   buildConstraints,
 } from '../types/type_inference/constraints'
-import { ErrorNode, ProgramNode, SyntaxType } from 'tree-sitter-tony'
+import { ErrorNode, ProgramNode, SyntaxType } from 'tree-sitter-tony/tony'
 import {
   FileScope,
   GlobalScope,

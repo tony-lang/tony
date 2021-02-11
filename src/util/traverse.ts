@@ -1,4 +1,4 @@
-import { NamedNode, SyntaxNode } from 'tree-sitter-tony'
+import { NamedNode, SyntaxNode } from 'tree-sitter-tony/tony'
 import { NestingNode, isNestingNode } from '../types/analyze/scopes'
 import { AbstractState } from '../types/state'
 import { ErrorAnnotation } from '../types/errors/annotations'
