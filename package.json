@@ -32,7 +32,7 @@
   },
   "homepage": "https://tony-lang.github.io/",
   "dependencies": {
-    "tree-sitter-tony": "0.2.0-alpha.30"
+    "tree-sitter-tony": "0.2.0-alpha.31"
   },
   "devDependencies": {
     "@types/deep-equal": "^1.0.1",
