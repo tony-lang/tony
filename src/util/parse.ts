@@ -6,7 +6,7 @@ import {
   TypeNode,
   TypeVariableDeclarationNameNode,
   TypeVariableNode,
-} from 'tree-sitter-tony'
+} from 'tree-sitter-tony/tony'
 
 export const parseRawString = (node: RawStringNode): string => eval(node.text)
 

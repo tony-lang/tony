@@ -2947,15 +2947,15 @@ touch@^3.1.0:
   dependencies:
     nopt "~1.0.10"
 
-tree-sitter-tony@0.2.0-alpha.30:
-  version "0.2.0-alpha.30"
-  resolved "https://registry.yarnpkg.com/tree-sitter-tony/-/tree-sitter-tony-0.2.0-alpha.30.tgz#d6d3e7cd6f5ae5d25c12ff1e570a789ff6946adf"
-  integrity sha512-a7/sCn7KqVNzIiG1+FIYqzTrzaCvT23cc/6NY9tuX3Mdk3C9pdENiIa1Kf0YJSHFTgyV8TyVeMlQb0CngGG8KQ==
+tree-sitter-tony@0.2.0-alpha.36:
+  version "0.2.0-alpha.36"
+  resolved "https://registry.yarnpkg.com/tree-sitter-tony/-/tree-sitter-tony-0.2.0-alpha.36.tgz#f4c89d41eb218579f16b28a781d693db89c7d47a"
+  integrity sha512-bsEvn7gB+JYgrVXvR+xPorpCDN3ckKjZz4K83cAY/+I4XIvcGYT3qmvpMPqy/9KE31I94aiPjY4FkUEzeKLxtg==
   dependencies:
     nan "^2.14.1"
     prebuild-install "^6.0.0"
 
-tree-sitter@^0.17.0:
+tree-sitter@^0.17.1:
   version "0.17.1"
   resolved "https://registry.yarnpkg.com/tree-sitter/-/tree-sitter-0.17.1.tgz#821c5a4ac1afdb623d63f5ffc7916663e732a95c"
   integrity sha512-obIe804bwfAGFMhTjQz0NXF75GDupCVXo7Sv0NVVdA3s/Q4ZI4mdirIN8cpw6bVhz/K1qgUdEuI3SEoOE/q75A==

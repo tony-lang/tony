@@ -81,7 +81,7 @@ import {
   TypeofNode,
   UnionTypeNode,
   WhenNode,
-} from 'tree-sitter-tony'
+} from 'tree-sitter-tony/tony'
 
 // ---- Types ----
 

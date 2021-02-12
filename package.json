@@ -32,7 +32,7 @@
   },
   "homepage": "https://tony-lang.github.io/",
   "dependencies": {
-    "tree-sitter-tony": "0.2.0-alpha.30"
+    "tree-sitter-tony": "0.2.0-alpha.36"
   },
   "devDependencies": {
     "@types/deep-equal": "^1.0.1",
@@ -48,7 +48,7 @@
     "mkdirp": "^1.0.3",
     "nodemon": "^2.0.4",
     "prettier": "^2.0.5",
-    "tree-sitter": "^0.17.0",
+    "tree-sitter": "^0.17.1",
     "typescript": "^4.1.2"
   }
 }

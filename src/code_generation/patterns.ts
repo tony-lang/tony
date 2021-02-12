@@ -8,7 +8,7 @@ import {
   StructPatternNode,
   SyntaxType,
   TuplePatternNode,
-} from 'tree-sitter-tony'
+} from 'tree-sitter-tony/tony'
 import { LiteralNode, PatternLevelNode, TermLevelNode } from '../types/nodes'
 import { NotImplementedError, assert } from '../types/errors/internal'
 import {

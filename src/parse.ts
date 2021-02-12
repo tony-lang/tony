@@ -1,5 +1,5 @@
 import { LogLevel, log } from './logger'
-import TreeSitterTony, { Tree } from 'tree-sitter-tony'
+import TreeSitterTony, { Tree } from 'tree-sitter-tony/tony'
 import { AbsolutePath } from './types/path'
 import { Config } from './config'
 import Parser from 'tree-sitter'

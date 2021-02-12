@@ -31,7 +31,7 @@ import {
   TypeVariableNode,
   TypeofNode,
   UnionTypeNode,
-} from 'tree-sitter-tony'
+} from 'tree-sitter-tony/tony'
 import {
   BOOLEAN_TYPE,
   NUMBER_TYPE,
