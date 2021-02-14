@@ -3,6 +3,7 @@ import {
   AbstractionBranchNode,
   AssignmentNode,
   BlockNode,
+  ClassNode,
   DestructuringPatternNode,
   EnumNode,
   EnumValueNode,
@@ -15,7 +16,6 @@ import {
   ImportIdentifierNode,
   ImportNode,
   ImportTypeNode,
-  InterfaceNode,
   ListComprehensionNode,
   ProgramNode,
   RefinementTypeDeclarationNode,
@@ -334,8 +334,8 @@ const buildTypeBinding = (
   }
 
   assert(
-    node.type === SyntaxType.Enum ||
-      node.type === SyntaxType.Interface ||
+    node.type === SyntaxType.Class ||
+      node.type === SyntaxType.Enum ||
       node.type === SyntaxType.TypeAlias,
     'node should be type binding node when importConfig is not given',
   )
@@ -395,6 +395,8 @@ const traverse = (state: State, node: NodeWithinProgram): State => {
       return handleAssignment(state, node)
     case SyntaxType.Block:
       return handleBlock(state, node)
+    case SyntaxType.Class:
+      return handleClass(state, node)
     case SyntaxType.DestructuringPattern:
       return handleDestructuringPattern(state, node)
     case SyntaxType.Enum:
@@ -409,8 +411,6 @@ const traverse = (state: State, node: NodeWithinProgram): State => {
       return handleIdentifier(state, node)
     case SyntaxType.IdentifierPattern:
       return handleIdentifierPatternAndShorthandMemberPattern(state, node)
-    case SyntaxType.Interface:
-      return handleInterface(state, node)
     case SyntaxType.ListComprehension:
       return handleListComprehension(state, node)
     case SyntaxType.ShorthandMemberPattern:
@@ -579,7 +579,7 @@ const handleIdentifierPatternAndShorthandMemberPattern = (
   )(stateWithDefault, node)
 }
 
-const handleInterface = nest<InterfaceNode>((state, node) => {
+const handleClass = nest<ClassNode>((state, node) => {
   const [isExported, stateWithoutExport] = exportAndReset(state)
   const name = getTypeName(node.nameNode.nameNode)
   const stateWithName = traverse(stateWithoutExport, node.nameNode)

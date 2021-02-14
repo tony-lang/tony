@@ -15,11 +15,12 @@ export type Property<T extends Type = Type> = {
 
 export enum TypeKind {
   Access,
+  Class,
   Conditional,
   Curried,
   Generic,
-  Interface,
   Intersection,
+  Keyof,
   Object,
   Parametric,
   Refined,
@@ -88,8 +89,8 @@ export interface GenericType {
  * An interface type represents all members that implementors have to implement
  * to be an instance of an interface.
  */
-export interface InterfaceType<T extends Type = Type> {
-  readonly kind: typeof TypeKind.Interface
+export interface ClassType<T extends Type = Type> {
+  readonly kind: typeof TypeKind.Class
   readonly members: Property<T>[]
 }
 
@@ -100,6 +101,14 @@ export interface InterfaceType<T extends Type = Type> {
 export interface IntersectionType<T extends Type = Type> {
   readonly kind: typeof TypeKind.Intersection
   readonly parameters: T[]
+}
+
+/**
+ * A keyof represents the type of the keys of an object type.
+ */
+export interface Keyof {
+  readonly kind: typeof TypeKind.Keyof
+  readonly type: Type
 }
 
 /**
@@ -221,10 +230,10 @@ export const buildGenericType = (
   typeParameters,
 })
 
-export const buildInterfaceType = <T extends Type>(
+export const buildClassType = <T extends Type>(
   members: Property<T>[] = [],
-): InterfaceType<T> => ({
-  kind: TypeKind.Interface,
+): ClassType<T> => ({
+  kind: TypeKind.Class,
   members,
 })
 
@@ -235,6 +244,11 @@ export const buildIntersectionType = <T extends Type>(
     kind: TypeKind.Intersection,
     parameters,
   })
+
+export const buildKeyof = (type: Type): Keyof => ({
+  kind: TypeKind.Keyof,
+  type,
+})
 
 export const buildObjectType = <T extends Type>(
   properties: Property<T>[],

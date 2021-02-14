@@ -9,6 +9,8 @@ import {
   BlockNode,
   BooleanNode,
   CaseNode,
+  ClassMemberNode,
+  ClassNode,
   ConditionalTypeNode,
   CurriedTypeNode,
   DestructuringPatternNode,
@@ -23,15 +25,14 @@ import {
   IdentifierNode,
   IdentifierPatternNode,
   IfNode,
-  ImplementNode,
   ImportIdentifierNode,
   ImportNode,
   ImportTypeNode,
   InfixApplicationNode,
-  InterfaceMemberNode,
-  InterfaceNode,
+  InstanceNode,
   InterpolationNode,
   IntersectionTypeNode,
+  KeyofNode,
   LeftSectionNode,
   ListComprehensionNode,
   ListNode,
@@ -97,6 +98,8 @@ export type TermLevelNode =
   | AssignmentNode
   | BlockNode
   | CaseNode
+  | ClassMemberNode
+  | ClassNode
   | ElseIfNode
   | EnumNode
   | EnumValueNode
@@ -105,10 +108,8 @@ export type TermLevelNode =
   | GroupNode
   | IdentifierNode
   | IfNode
-  | ImplementNode
   | InfixApplicationNode
-  | InterfaceMemberNode
-  | InterfaceNode
+  | InstanceNode
   | InterpolationNode
   | LeftSectionNode
   | ListNode
@@ -148,6 +149,7 @@ type TypeLevelNode =
   | ConditionalTypeNode
   | CurriedTypeNode
   | IntersectionTypeNode
+  | KeyofNode
   | ListTypeNode
   | MapTypeNode
   | MemberTypeNode
@@ -198,6 +200,8 @@ export const isNodeWithinProgram = (
     case SyntaxType.Assignment:
     case SyntaxType.Block:
     case SyntaxType.Case:
+    case SyntaxType.ClassMember:
+    case SyntaxType.Class:
     case SyntaxType.ElseIf:
     case SyntaxType.Enum:
     case SyntaxType.EnumValue:
@@ -206,10 +210,8 @@ export const isNodeWithinProgram = (
     case SyntaxType.Group:
     case SyntaxType.Identifier:
     case SyntaxType.If:
-    case SyntaxType.Implement:
     case SyntaxType.InfixApplication:
-    case SyntaxType.InterfaceMember:
-    case SyntaxType.Interface:
+    case SyntaxType.Instance:
     case SyntaxType.Interpolation:
     case SyntaxType.LeftSection:
     case SyntaxType.List:
@@ -248,6 +250,7 @@ export const isNodeWithinProgram = (
     case SyntaxType.ConditionalType:
     case SyntaxType.CurriedType:
     case SyntaxType.IntersectionType:
+    case SyntaxType.Keyof:
     case SyntaxType.ListType:
     case SyntaxType.MapType:
     case SyntaxType.MemberType:

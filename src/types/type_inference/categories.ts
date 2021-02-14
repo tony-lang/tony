@@ -1,10 +1,11 @@
 import {
   AccessType,
+  ClassType,
   ConditionalType,
   CurriedType,
   GenericType,
-  InterfaceType,
   IntersectionType,
+  Keyof,
   ObjectType,
   ParametricType,
   RefinedTerm,
@@ -22,8 +23,8 @@ export type DeclaredType = VariableType | GenericType
 
 export type ResolvedType =
   | VariableType
+  | ClassType<ResolvedType>
   | CurriedType<ResolvedType>
-  | InterfaceType<ResolvedType>
   | IntersectionType<ResolvedType>
   | ObjectType<ResolvedType>
   | PrimitiveType
@@ -34,8 +35,8 @@ export type ResolvedType =
 export type Type =
   | ResolvedType
   // overriding types
+  | ClassType<Type>
   | CurriedType<Type>
-  | InterfaceType<Type>
   | IntersectionType<Type>
   | ObjectType<Type>
   | RefinedType<Type>
@@ -43,5 +44,6 @@ export type Type =
   // solely unresolved types
   | AccessType
   | ConditionalType
+  | Keyof
   | ParametricType
   | SubtractionType

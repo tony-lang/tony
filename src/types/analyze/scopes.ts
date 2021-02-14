@@ -1,7 +1,7 @@
 import {
   AbstractionBranchNode,
   BlockNode,
-  InterfaceNode,
+  ClassNode,
   ListComprehensionNode,
   NamedNode,
   ProgramNode,
@@ -27,7 +27,7 @@ import { TypedNode } from '../type_inference/nodes'
 export type NestingNode =
   | AbstractionBranchNode
   | BlockNode
-  | InterfaceNode
+  | ClassNode
   | ListComprehensionNode
   | RefinementTypeNode
   | TypeAliasNode
@@ -180,7 +180,7 @@ export const isNestingNode = (node: NamedNode): node is NestingNode => {
   switch (node.type) {
     case SyntaxType.AbstractionBranch:
     case SyntaxType.Block:
-    case SyntaxType.Interface:
+    case SyntaxType.Class:
     case SyntaxType.ListComprehension:
     case SyntaxType.RefinementType:
     case SyntaxType.TypeAlias:

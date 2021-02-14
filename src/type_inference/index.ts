@@ -337,6 +337,14 @@ const handleNode = (
       return [buildPrimitiveAnswer(state, node, BOOLEAN_TYPE, {}, {})]
     case SyntaxType.Case:
       throw new NotImplementedError('Tony cannot infer the type of cases yet.')
+    case SyntaxType.Class:
+      throw new NotImplementedError(
+        'Tony cannot infer the type of classes yet.',
+      )
+    case SyntaxType.ClassMember:
+      throw new NotImplementedError(
+        'Tony cannot infer the type of classes yet.',
+      )
     case SyntaxType.DestructuringPattern:
       throw new NotImplementedError(
         'Tony cannot infer the type of destructuring patterns yet.',
@@ -371,21 +379,13 @@ const handleNode = (
       )
     case SyntaxType.If:
       throw new NotImplementedError('Tony cannot infer the type of ifs yet.')
-    case SyntaxType.Implement:
-      throw new NotImplementedError(
-        'Tony cannot infer the type of implements yet.',
-      )
     case SyntaxType.InfixApplication:
       throw new NotImplementedError(
         'Tony cannot infer the type of infix applications yet.',
       )
-    case SyntaxType.Interface:
+    case SyntaxType.Instance:
       throw new NotImplementedError(
-        'Tony cannot infer the type of interfaces yet.',
-      )
-    case SyntaxType.InterfaceMember:
-      throw new NotImplementedError(
-        'Tony cannot infer the type of interfaces yet.',
+        'Tony cannot infer the type of instances yet.',
       )
     case SyntaxType.Interpolation:
       throw new NotImplementedError(

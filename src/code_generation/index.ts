@@ -159,6 +159,14 @@ const handleNode = (
       return typedNode.node.text
     case SyntaxType.Case:
       return handleCase(state, typedNode as TypedNode<CaseNode>)
+    case SyntaxType.Class:
+      throw new NotImplementedError(
+        'Tony cannot generate code for classes yet.',
+      )
+    case SyntaxType.ClassMember:
+      throw new NotImplementedError(
+        'Tony cannot generate code for classes yet.',
+      )
     case SyntaxType.ElseIf:
       return handleElseIf(state, typedNode as TypedNode<ElseIfNode>)
     case SyntaxType.Enum:
@@ -183,22 +191,14 @@ const handleNode = (
       )
     case SyntaxType.If:
       return handleIf(state, typedNode as TypedNode<IfNode>)
-    case SyntaxType.Implement:
-      throw new NotImplementedError(
-        'Tony cannot generate code for implements yet.',
-      )
     case SyntaxType.InfixApplication:
       return handleInfixApplication(
         state,
         typedNode as TypedNode<InfixApplicationNode>,
       )
-    case SyntaxType.Interface:
+    case SyntaxType.Instance:
       throw new NotImplementedError(
-        'Tony cannot generate code for interfaces yet.',
-      )
-    case SyntaxType.InterfaceMember:
-      throw new NotImplementedError(
-        'Tony cannot generate code for interfaces yet.',
+        'Tony cannot generate code for instances yet.',
       )
     case SyntaxType.Interpolation:
       return traverse(
