@@ -35,6 +35,7 @@ import { addErrorUnless, traverseScopes } from '../util/traverse'
 import { filterFileScopeByTermScopes, findScopeOfNode } from '../util/scopes'
 import { mapAnswers, reduceAnswers } from '../util/answers'
 import { Config } from '../config'
+import { Dependency } from '../types/analyze/dependencies'
 import { NonTypeLevelNode } from '../types/nodes'
 import { ResolvedType } from '../types/type_inference/categories'
 import { TypeAssignment } from '../types/analyze/bindings'
@@ -43,7 +44,7 @@ import { buildTemporaryTypeVariable } from '../types/type_inference/types'
 import { isInstanceOf } from './instances'
 import { unifyConstraints } from './constraints'
 
-type State = {
+type State<T extends Dependency = Dependency> = {
   /**
    * A list of file scopes that are already typed.
    */
@@ -53,7 +54,7 @@ type State = {
    * symbol table.
    */
   scopes: (
-    | FileScope<NestingTermLevelNode>
+    | FileScope<T, NestingTermLevelNode>
     | NestedScope<NestingTermLevelNode>
   )[]
   /**

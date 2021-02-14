@@ -71,7 +71,11 @@ const resolveBindingType = <
   if (fileScope === undefined)
     return [
       buildAnswer(),
-      addErrorToScope(scope, binding.node, buildUnknownFileError(binding.dependency.file)),
+      addErrorToScope(
+        scope,
+        binding.node,
+        buildUnknownFileError(binding.dependency.file),
+      ),
       fileScopes,
     ]
 
@@ -100,7 +104,9 @@ const resolveBindingType = <
     importedBinding,
   )
   const newFileScopesWithNewFileScope = newFileScopes.map((fileScope) =>
-    isSamePath(fileScope.dependency.file, newFileScope.dependency.file) ? newFileScope : fileScope,
+    isSamePath(fileScope.dependency.file, newFileScope.dependency.file)
+      ? newFileScope
+      : fileScope,
   )
   return [type, scope, newFileScopesWithNewFileScope]
 }

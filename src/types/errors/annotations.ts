@@ -1,9 +1,9 @@
 import { AbsolutePath, RelativePath } from '../path'
 import { ProgramNode, SyntaxNode } from 'tree-sitter-tony/tony'
 import { CyclicDependency } from '../cyclic_dependency'
+import { Dependency } from '../analyze/dependencies'
 import { Type } from '../type_inference/categories'
 import { TypedNode } from '../type_inference/nodes'
-import { Dependency } from '../analyze/dependencies'
 
 // ---- Types ----
 

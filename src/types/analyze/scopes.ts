@@ -19,9 +19,8 @@ import {
   TypeBinding,
   TypeVariableBinding,
 } from './bindings'
-import { AbsolutePath } from '../path'
-import { TypedNode } from '../type_inference/nodes'
 import { Dependency } from './dependencies'
+import { TypedNode } from '../type_inference/nodes'
 
 // ---- Types ----
 
@@ -79,19 +78,20 @@ export type GlobalScope<
   readonly errors: ErrorAnnotation[]
 }
 
-export type FileScope<T extends NestingNode = NestingNode> = RecursiveScope<
-  NestedScope<T>
-> &
+export type FileScope<
+  T extends Dependency = Dependency,
+  U extends NestingNode = NestingNode
+> = RecursiveScope<NestedScope<U>> &
   ScopeWithTerms &
   ScopeWithTypes &
   ScopeWithErrors &
   ScopeWithNode<ProgramNode> & {
     readonly kind: typeof ScopeKind.File
-    readonly dependency: Dependency
+    readonly dependency: T
     readonly dependencies: Dependency[]
   }
 
-export type TypedFileScope = FileScope &
+export type TypedFileScope<T extends Dependency = Dependency> = FileScope<T> &
   RecursiveScope<TypedNestedScope> &
   TypingEnvironment &
   TypedScope<ProgramNode>

@@ -1,4 +1,8 @@
 import {
+  Dependency,
+  isDeclarationDependency,
+} from '../types/analyze/dependencies'
+import {
   ImportedTermBinding,
   TermBinding,
   TermBindingNode,
@@ -6,13 +10,9 @@ import {
 } from '../types/analyze/bindings'
 import { OPERATOR } from 'tree-sitter-tony/common/constants'
 import { charCodes } from '../util'
-import { getOutPath } from '../util/paths'
-import {
-  Dependency,
-  isDeclarationDependency,
-} from '../types/analyze/dependencies'
-import { indent } from './util'
 import { curryJS } from './lib'
+import { getOutPath } from '../util/paths'
+import { indent } from './util'
 
 const OPERATOR_BINDING_PREFIX = '$OP'
 

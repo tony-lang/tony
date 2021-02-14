@@ -29,6 +29,12 @@ import {
   WhenNode,
 } from 'tree-sitter-tony/tony'
 import {
+  Dependency,
+  SourceDependency,
+  buildDependency,
+  isSourceDependency,
+} from '../types/analyze/dependencies'
+import {
   FileScope,
   NestedScope,
   NestingNode,
@@ -51,7 +57,6 @@ import {
 import { NodeWithinProgram, isNodeWithinProgram } from '../types/nodes'
 import {
   addError,
-  addErrorUnless,
   conditionalApply,
   ensure,
   ensureAsync,
@@ -70,7 +75,6 @@ import {
   buildTypeVariable,
   buildUnionType,
 } from '../types/type_inference/types'
-import { fileMayBeImported } from '../util/paths'
 import { findBinding, findBindings, itemsMissingFrom } from '../util/bindings'
 import {
   getIdentifierName,
@@ -83,10 +87,10 @@ import { Config } from '../config'
 import { assert } from '../types/errors/internal'
 import { buildConstraintsFromType } from '../util/types'
 import { buildPromise } from '../util'
+import { fileMayBeImported } from '../util/paths'
 import { isPrimitiveTypeName } from '../types/type_inference/primitive_types'
 import { mergeDeferredAssignments } from '../type_inference/constraints'
 import { resolveRelativePath } from './resolve'
-import { Dependency, buildDependency } from '../types/analyze/dependencies'
 
 type ImportedBindingConfig = { dependency: Dependency; originalName?: string }
 
@@ -124,15 +128,15 @@ type State = {
   nextBlockScopeAlreadyCreated?: boolean
 }
 
-export const constructFileScope = async (
+export const constructFileScopeFromSource = async (
   config: Config,
-  file: AbsolutePath,
+  dependency: SourceDependency,
   node: ProgramNode,
-): Promise<FileScope> => {
-  const initialFileScope = buildFileScope(file, node)
+): Promise<FileScope<SourceDependency>> => {
+  const initialFileScope = buildFileScope(dependency, node)
   const initialState: State = {
     config,
-    file,
+    file: dependency.file,
     scopes: [initialFileScope],
     terms: [],
   }
@@ -142,11 +146,11 @@ export const constructFileScope = async (
     scopes: [fileScope],
   } = traverseAll(stateWithImports, node.termNodes)
   assert(
-    isFileScope(fileScope),
+    isFileScope(fileScope) && isSourceDependency(fileScope.dependency),
     'Traverse should arrive at the top-level file scope.',
   )
 
-  return fileScope
+  return fileScope as FileScope<SourceDependency>
 }
 
 const addDependency = (state: State, dependency: Dependency): State => {

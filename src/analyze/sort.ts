@@ -7,9 +7,9 @@ import { LogLevel, log } from '../logger'
 import { TopologicalSortError, topologicalSort } from '../util/topological_sort'
 import { Config } from '../config'
 import { CyclicDependency } from '../types/cyclic_dependency'
+import { Dependency } from '../types/analyze/dependencies'
 import { buildCyclicDependencyError } from '../types/errors/annotations'
 import { isSamePath } from '../util/paths'
-import { Dependency } from '../types/analyze/dependencies'
 
 export const sortFileScopes = (
   config: Config,
@@ -27,7 +27,9 @@ export const sortFileScopes = (
       config,
       LogLevel.Debug,
       'Topological sorting on files returned:',
-      sortedFileScopes.map((fileScope) => fileScope.dependency.file.path).join('>'),
+      sortedFileScopes
+        .map((fileScope) => fileScope.dependency.file.path)
+        .join('>'),
     )
     return buildGlobalScope(sortedFileScopes)
   } catch (error: unknown) {
@@ -53,7 +55,9 @@ const buildDependencyGraph = (fileScopes: FileScope[]): number[][] =>
   fileScopes.map((fileScope) =>
     fileScope.dependencies
       .map((dependency) =>
-        fileScopes.findIndex((fileScope) => isSamePath(fileScope.dependency.file, dependency.file)),
+        fileScopes.findIndex((fileScope) =>
+          isSamePath(fileScope.dependency.file, dependency.file),
+        ),
       )
       .filter((i) => i != -1),
   )

@@ -41,6 +41,10 @@ import {
 } from '../types/analyze/scopes'
 import { LogLevel, log } from '../logger'
 import { NotImplementedError, assert } from '../types/errors/internal'
+import {
+  SourceDependency,
+  isSourceDependency,
+} from '../types/analyze/dependencies'
 import { filterFileScopeByTermScopes, findScopeOfNode } from '../util/scopes'
 import {
   generateAbstraction,
@@ -88,10 +92,13 @@ export const generateCode = (
 ): Emit => {
   log(config, LogLevel.Info, 'Generating code')
 
-  return globalScope.scopes.map(generateCodeForFile)
+  const sourceDependencies = globalScope.scopes.filter((fileScope) =>
+    isSourceDependency(fileScope.dependency),
+  ) as TypedFileScope<SourceDependency>[]
+  return sourceDependencies.map(generateCodeForFile)
 }
 
-const generateCodeForFile = (fileScope: TypedFileScope) => {
+const generateCodeForFile = (fileScope: TypedFileScope<SourceDependency>) => {
   const initialState: State = {
     scopes: [filterFileScopeByTermScopes(fileScope)],
   }

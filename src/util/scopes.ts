@@ -16,16 +16,18 @@ import {
   TypeBinding,
   TypeVariableBinding,
 } from '../types/analyze/bindings'
+import { Dependency } from '../types/analyze/dependencies'
 import { ErrorAnnotation } from '../types/errors/annotations'
 import { isNotUndefined } from '.'
 import { isSamePath } from './paths'
-import { Dependency } from '../types/analyze/dependencies'
 
 export const findFileScope = <T extends FileScope>(
   fileScopes: T[],
   dependency: Dependency,
 ): T | undefined =>
-  fileScopes.find((fileScope) => isSamePath(fileScope.dependency.file, dependency.file))
+  fileScopes.find((fileScope) =>
+    isSamePath(fileScope.dependency.file, dependency.file),
+  )
 
 export const addErrorToScope = <T extends ScopeWithErrors>(
   scope: T,
@@ -53,9 +55,9 @@ export const findScopeOfNode = <
   node: T,
 ): U | undefined => scopes.find((scope) => scope.node === node)
 
-export const filterFileScopeByTermScopes = (
-  scope: FileScope,
-): FileScope<NestingTermLevelNode> => ({
+export const filterFileScopeByTermScopes = <T extends Dependency>(
+  scope: FileScope<T>,
+): FileScope<T, NestingTermLevelNode> => ({
   ...scope,
   scopes: scope.scopes
     .map(filterNestedScopeByTermScopes)

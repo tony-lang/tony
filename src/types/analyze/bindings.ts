@@ -19,9 +19,8 @@ import {
   DeferredTypeVariableAssignment,
 } from '../type_inference/constraints'
 import { DeclaredType, ResolvedType, Type } from '../type_inference/categories'
-import { AbsolutePath } from '../path'
-import { TypeVariable } from '../type_inference/types'
 import { Dependency } from './dependencies'
+import { TypeVariable } from '../type_inference/types'
 
 // ---- Types ----
 

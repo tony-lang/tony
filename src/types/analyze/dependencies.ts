@@ -1,6 +1,6 @@
 import { isDeclarationFile, isSourceFile } from '../../util/paths'
-import { assert } from '../errors/internal'
 import { AbsolutePath } from '../path'
+import { assert } from '../errors/internal'
 
 // ---- Types ----
 

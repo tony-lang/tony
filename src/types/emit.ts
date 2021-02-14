@@ -1,5 +1,4 @@
 import { SourceDependency } from './analyze/dependencies'
-import { AbsolutePath } from './path'
 
 // ---- Types ----
 
