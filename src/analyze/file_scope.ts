@@ -37,11 +37,6 @@ import {
   isFileScope,
 } from '../types/analyze/scopes'
 import {
-  ImportLevelNode,
-  NodeWithinProgram,
-  isNodeWithinProgram,
-} from '../types/nodes'
-import {
   LocalTypeBinding,
   TermBinding,
   TermBindingNode,
@@ -53,11 +48,13 @@ import {
   buildLocalTypeBinding,
   buildTypeVariableBinding,
 } from '../types/analyze/bindings'
+import { NodeWithinProgram, isNodeWithinProgram } from '../types/nodes'
 import {
   addError,
   addErrorUnless,
   conditionalApply,
   ensure,
+  ensureAsync,
 } from '../util/traverse'
 import { buildAliasType, buildAliasedType, buildTypes } from './build_type'
 import {
@@ -86,6 +83,7 @@ import { getTerms, getTypeVariables, getTypes } from '../util/scopes'
 import { Config } from '../config'
 import { assert } from '../types/errors/internal'
 import { buildConstraintsFromType } from '../util/types'
+import { buildPromise } from '../util'
 import { isPrimitiveTypeName } from '../types/type_inference/primitive_types'
 import { mergeDeferredAssignments } from '../type_inference/constraints'
 import { resolveRelativePath } from './resolve'
@@ -126,11 +124,11 @@ type State = {
   nextBlockScopeAlreadyCreated?: boolean
 }
 
-export const constructFileScope = (
+export const constructFileScope = async (
   config: Config,
   file: AbsolutePath,
   node: ProgramNode,
-): FileScope => {
+): Promise<FileScope> => {
   const initialFileScope = buildFileScope(file, node)
   const initialState: State = {
     config,
@@ -139,7 +137,7 @@ export const constructFileScope = (
     terms: [],
   }
 
-  const stateWithImports = traverseImports(initialState, node.importNodes)
+  const stateWithImports = await handleImports(initialState, node.importNodes)
   const {
     scopes: [fileScope],
   } = traverseAll(stateWithImports, node.termNodes)
@@ -711,57 +709,67 @@ const handleWhen = nest<WhenNode>((state, node) => {
   )
 })
 
-const traverseImports = (state: State, nodes: ImportLevelNode[]): State =>
-  nodes.reduce((acc, child) => traversImport(acc, child), state)
+const handleImports = async (
+  state: State,
+  nodes: (ImportNode | ExportedImportNode)[],
+) =>
+  nodes.reduce<Promise<State>>(
+    async (acc, child) => handleImport(await acc, child),
+    buildPromise(state),
+  )
 
-const traversImport = (state: State, node: ImportLevelNode): State => {
+const handleImport = ensureAsync<State, ImportNode | ExportedImportNode>(
+  (state) => isFileScope(state.scopes[0]),
+  async (state, node) => {
+    const source = buildRelativePath(
+      state.file,
+      '..',
+      parseRawString(node.sourceNode),
+    )
+    const resolvedSource = await resolveRelativePath(
+      state.config,
+      source,
+      fileMayBeImported,
+    )
+    if (resolvedSource === undefined)
+      return addError(state, node.sourceNode, buildUnknownFileError(source))
+
+    const isExported = node.type === SyntaxType.ExportedImport
+    const stateWithDependency = addDependency(state, resolvedSource)
+    const stateWithBindings = traverseImports(
+      {
+        ...stateWithDependency,
+        exportNextBindings: isExported,
+        importNextBindingsFrom: { file: resolvedSource },
+      },
+      node.importNodes,
+    )
+    const stateWithFlushedBindings = flushTermBindings(stateWithBindings)
+    return {
+      ...stateWithFlushedBindings,
+      exportNextBindings: undefined,
+      importNextBindingsFrom: undefined,
+    }
+  },
+  buildImportOutsideFileScopeError(),
+)
+
+const traverseImports = (
+  state: State,
+  nodes: (ImportIdentifierNode | ImportTypeNode)[],
+): State => nodes.reduce((acc, child) => traverseImport(acc, child), state)
+
+const traverseImport = (
+  state: State,
+  node: ImportIdentifierNode | ImportTypeNode,
+): State => {
   switch (node.type) {
-    case SyntaxType.ExportedImport:
-      return handleImportAndExportedImport(true)(state, node)
-    case SyntaxType.Import:
-      return handleImportAndExportedImport(false)(state, node)
     case SyntaxType.ImportIdentifier:
       return handleImportIdentifier(state, node)
     case SyntaxType.ImportType:
       return handleImportType(state, node)
   }
 }
-
-const handleImportAndExportedImport = (isExported: boolean) =>
-  ensure<State, ImportNode | ExportedImportNode>(
-    (state) => isFileScope(state.scopes[0]),
-    (state, node) => {
-      const source = buildRelativePath(
-        state.file,
-        '..',
-        parseRawString(node.sourceNode),
-      )
-      const resolvedSource = resolveRelativePath(
-        state.config,
-        source,
-        fileMayBeImported,
-      )
-      if (resolvedSource === undefined)
-        return addError(state, node.sourceNode, buildUnknownFileError(source))
-
-      const stateWithDependency = addDependency(state, resolvedSource)
-      const stateWithBindings = traverseImports(
-        {
-          ...stateWithDependency,
-          exportNextBindings: isExported,
-          importNextBindingsFrom: { file: resolvedSource },
-        },
-        node.importNodes,
-      )
-      const stateWithFlushedBindings = flushTermBindings(stateWithBindings)
-      return {
-        ...stateWithFlushedBindings,
-        exportNextBindings: undefined,
-        importNextBindingsFrom: undefined,
-      }
-    },
-    buildImportOutsideFileScopeError(),
-  )
 
 const handleImportIdentifier = (
   state: State,

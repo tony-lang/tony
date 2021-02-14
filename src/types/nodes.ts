@@ -19,15 +19,11 @@ import {
   EnumValueNode,
   ErrorNode,
   ExportNode,
-  ExportedImportNode,
   GeneratorNode,
   GroupNode,
   IdentifierNode,
   IdentifierPatternNode,
   IfNode,
-  ImportIdentifierNode,
-  ImportNode,
-  ImportTypeNode,
   InfixApplicationNode,
   InstanceNode,
   InterpolationNode,
@@ -167,12 +163,6 @@ type TypeLevelNode =
   | TypeofNode
   | UnionTypeNode
   | TypeNode
-
-export type ImportLevelNode =
-  | ExportedImportNode
-  | ImportNode
-  | ImportIdentifierNode
-  | ImportTypeNode
 
 export type NonTypeLevelNode = TermLevelNode | PatternLevelNode | ErrorNode
 
