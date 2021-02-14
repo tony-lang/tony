@@ -3,6 +3,7 @@ import { NestingNode, isNestingNode } from '../types/analyze/scopes'
 import { AbstractState } from '../types/state'
 import { ErrorAnnotation } from '../types/errors/annotations'
 import { addErrorToScope } from './scopes'
+import { buildPromise } from '.'
 
 export const addError = <T extends AbstractState>(
   state: T,
@@ -35,6 +36,19 @@ export const ensure = <T extends AbstractState, U extends SyntaxNode>(
 ) => (state: T, node: U): T => {
   if (predicate(state, node)) return callback(state, node)
   return addError(state, node, error)
+}
+
+/**
+ * Checks predicate. If true, returns asynchronous callback. Else, adds error
+ * annotation.
+ */
+export const ensureAsync = <T extends AbstractState, U extends SyntaxNode>(
+  predicate: (state: T, node: U) => boolean,
+  callback: (state: T, node: U) => Promise<T>,
+  error: ErrorAnnotation,
+) => (state: T, node: U): Promise<T> => {
+  if (predicate(state, node)) return callback(state, node)
+  return buildPromise(addError(state, node, error))
 }
 
 /**

@@ -6,3 +6,6 @@ export const filterUnique = <T>(list: T[]): T[] =>
 
 export const charCodes = (value: string): number[] =>
   Array(value.length).map((_, i) => value.charCodeAt(i))
+
+export const buildPromise = <T>(value: T): Promise<T> =>
+  new Promise((resolve) => resolve(value))

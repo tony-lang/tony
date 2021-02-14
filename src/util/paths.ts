@@ -12,7 +12,8 @@ const IMPORT_FILE_EXTENSIONS = [
   JAVASCRIPT_FILE_EXTENSION_REGEX,
 ]
 
-const fileExists = (file: AbsolutePath) => fs.existsSync(file.path)
+export const fileExists = (file: AbsolutePath): boolean =>
+  fs.existsSync(file.path)
 
 export const fileHasTonyExtension = (file: Path): boolean =>
   FILE_EXTENSION_REGEX.test(file.path)
