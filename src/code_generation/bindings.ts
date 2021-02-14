@@ -4,7 +4,14 @@ import {
   TermBindingNode,
 } from '../types/analyze/bindings'
 import { AbsolutePath } from '../types/path'
+import { OPERATOR } from 'tree-sitter-tony/common/constants'
+import { charCodes } from '../util'
 import { getOutPath } from '../util/paths'
+
+const OPERATOR_BINDING_PREFIX = '$OP'
+
+const generateOperatorBindingName = (name: string) =>
+  `${OPERATOR_BINDING_PREFIX}_${charCodes(name).join('_')}`
 
 /**
  * Given a binding, generates the name representing that binding.
@@ -12,7 +19,12 @@ import { getOutPath } from '../util/paths'
 export const generateBindingName = (
   binding: TermBinding,
   ignoreIndex = false,
-): string => (ignoreIndex ? binding.name : `${binding.name}${binding.index}`)
+): string => {
+  const name = OPERATOR.test(binding.name)
+    ? generateOperatorBindingName(binding.name)
+    : binding.name
+  return ignoreIndex ? name : `${name}${binding.index}`
+}
 
 const findBindingOfNode = (bindings: TermBinding[], node: TermBindingNode) =>
   bindings.find((binding) => binding.node === node)
