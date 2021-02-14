@@ -2,11 +2,17 @@ import {
   ImportedTermBinding,
   TermBinding,
   TermBindingNode,
+  isImportedBinding,
 } from '../types/analyze/bindings'
-import { AbsolutePath } from '../types/path'
 import { OPERATOR } from 'tree-sitter-tony/common/constants'
 import { charCodes } from '../util'
 import { getOutPath } from '../util/paths'
+import {
+  Dependency,
+  isDeclarationDependency,
+} from '../types/analyze/dependencies'
+import { indent } from './util'
+import { curryJS } from './lib'
 
 const OPERATOR_BINDING_PREFIX = '$OP'
 
@@ -20,10 +26,13 @@ export const generateBindingName = (
   binding: TermBinding,
   ignoreIndex = false,
 ): string => {
+  const isJS =
+    isImportedBinding(binding) && isDeclarationDependency(binding.dependency)
   const name = OPERATOR.test(binding.name)
     ? generateOperatorBindingName(binding.name)
     : binding.name
-  return ignoreIndex ? name : `${name}${binding.index}`
+  const nameWithIndex = ignoreIndex ? name : `${name}${binding.index}`
+  return isJS ? curryJS(nameWithIndex) : nameWithIndex
 }
 
 const findBindingOfNode = (bindings: TermBinding[], node: TermBindingNode) =>
@@ -50,7 +59,7 @@ export const generateDeclarations = (bindings: TermBinding[]): string => {
   const declarations = bindings
     .filter((binding) => !binding.isImplicit)
     .map((binding) => generateBindingName(binding))
-  if (declarations.length > 0) return `const ${declarations.join(',')}`
+  if (declarations.length > 0) return `const ${declarations.join(', ')}`
   return ''
 }
 
@@ -62,7 +71,7 @@ export const generateExports = (bindings: TermBinding[]): string => {
     .filter((binding) => binding.isExported)
     .map((binding) => generateBindingName(binding))
   if (exportedBindings.length > 0)
-    return `export {${exportedBindings.join(',')}}`
+    return `export {${indent(exportedBindings.join(',\n'))}}`
   return ''
 }
 
@@ -70,28 +79,28 @@ export const generateExports = (bindings: TermBinding[]): string => {
  * Generates import statements for all imported bindings.
  */
 export const generateImports = (
-  dependencies: AbsolutePath[],
+  dependencies: Dependency[],
   bindings: ImportedTermBinding[],
 ): string => {
   return dependencies
     .map((source) =>
       generateImport(
         source,
-        bindings.filter((binding) => binding.file === source),
+        bindings.filter((binding) => binding.dependency === source),
       ),
     )
-    .join(';')
+    .join('\n')
 }
 
 const generateImport = (
-  source: AbsolutePath,
+  source: Dependency,
   bindings: ImportedTermBinding[],
 ): string => {
-  const outSource = getOutPath(source)
+  const outSource = getOutPath(source.file)
   const aliases = bindings
     .map(({ name, originalName }) =>
       originalName ? `${name} as ${originalName}` : name,
     )
-    .join(',')
-  return `import {${aliases}} from '${outSource.path}'`
+    .join(',\n')
+  return `import {${indent(aliases)}} from '${outSource.path}'`
 }

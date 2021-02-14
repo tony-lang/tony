@@ -16,16 +16,16 @@ import {
   TypeBinding,
   TypeVariableBinding,
 } from '../types/analyze/bindings'
-import { AbsolutePath } from '../types/path'
 import { ErrorAnnotation } from '../types/errors/annotations'
 import { isNotUndefined } from '.'
 import { isSamePath } from './paths'
+import { Dependency } from '../types/analyze/dependencies'
 
 export const findFileScope = <T extends FileScope>(
   fileScopes: T[],
-  file: AbsolutePath,
+  dependency: Dependency,
 ): T | undefined =>
-  fileScopes.find((fileScope) => isSamePath(fileScope.file, file))
+  fileScopes.find((fileScope) => isSamePath(fileScope.dependency.file, dependency.file))
 
 export const addErrorToScope = <T extends ScopeWithErrors>(
   scope: T,

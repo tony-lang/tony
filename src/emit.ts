@@ -10,13 +10,13 @@ import { buildAbsolutePath } from './types/path'
 export const writeEmit = async (config: Config, emit: Emit): Promise<void> => {
   await Promise.all(
     emit.map(async ({ originalFile, content }) => {
-      const out = buildAbsolutePath(getOutFilename(originalFile.path))
+      const out = buildAbsolutePath(getOutFilename(originalFile.file.path))
 
       log(
         config,
         LogLevel.Info,
         'Emitting code for',
-        originalFile.path,
+        originalFile.file.path,
         'to',
         out.path,
       )

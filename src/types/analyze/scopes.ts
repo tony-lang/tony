@@ -21,6 +21,7 @@ import {
 } from './bindings'
 import { AbsolutePath } from '../path'
 import { TypedNode } from '../type_inference/nodes'
+import { Dependency } from './dependencies'
 
 // ---- Types ----
 
@@ -86,8 +87,8 @@ export type FileScope<T extends NestingNode = NestingNode> = RecursiveScope<
   ScopeWithErrors &
   ScopeWithNode<ProgramNode> & {
     readonly kind: typeof ScopeKind.File
-    readonly file: AbsolutePath
-    readonly dependencies: AbsolutePath[]
+    readonly dependency: Dependency
+    readonly dependencies: Dependency[]
   }
 
 export type TypedFileScope = FileScope &
@@ -124,11 +125,11 @@ export const buildGlobalScope = <T extends FileScope | TypedFileScope>(
 })
 
 export const buildFileScope = (
-  file: AbsolutePath,
+  dependency: Dependency,
   node: ProgramNode,
 ): FileScope => ({
   kind: ScopeKind.File,
-  file,
+  dependency,
   node,
   scopes: [],
   dependencies: [],

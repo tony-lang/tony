@@ -96,7 +96,7 @@ const generateCodeForFile = (fileScope: TypedFileScope) => {
     scopes: [filterFileScopeByTermScopes(fileScope)],
   }
   return buildFileEmit(
-    fileScope.file,
+    fileScope.dependency,
     traverse(initialState, fileScope.typedNode),
   )
 }

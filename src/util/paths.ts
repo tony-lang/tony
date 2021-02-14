@@ -3,35 +3,33 @@ import fs from 'fs'
 import mkdirp from 'mkdirp'
 import path from 'path'
 
-const FILE_EXTENSION = '.tn'
-const TARGET_FILE_EXTENSION = '.js'
-const FILE_EXTENSION_REGEX = new RegExp(`^(.+\\${FILE_EXTENSION}|[^.]+)$`)
-const JAVASCRIPT_FILE_EXTENSION_REGEX = /^.+\.js$/
-const IMPORT_FILE_EXTENSIONS = [
-  FILE_EXTENSION_REGEX,
-  JAVASCRIPT_FILE_EXTENSION_REGEX,
-]
+const buildFileRegexFromExtension = (ext: string) =>
+  new RegExp(`^(.+\\${ext}|[^.]+)$`)
+
+const SOURCE_EXTENSION = '.tn'
+const DECLARATION_EXTENSION = '.dtn'
+const TARGET_EXTENSION = '.js'
+
+const SOURCE_REGEX = buildFileRegexFromExtension(SOURCE_EXTENSION)
+const DECLARATION_REGEX = buildFileRegexFromExtension(DECLARATION_EXTENSION)
 
 export const fileExists = (file: AbsolutePath): boolean =>
   fs.existsSync(file.path)
 
-export const fileHasTonyExtension = (file: Path): boolean =>
-  FILE_EXTENSION_REGEX.test(file.path)
+export const isSourceFile = (file: Path): boolean =>
+  SOURCE_REGEX.test(file.path)
 
-export const fileHasJavaScriptExtension = (file: Path): boolean =>
-  JAVASCRIPT_FILE_EXTENSION_REGEX.test(file.path)
+export const isDeclarationFile = (file: Path): boolean =>
+  DECLARATION_REGEX.test(file.path)
 
 const fileHasImportExtension = (file: Path) =>
-  !!IMPORT_FILE_EXTENSIONS.find((regex) => regex.test(file.path))
+  isSourceFile(file) || isDeclarationFile(file)
 
 export const fileMayBeEntry = (file: AbsolutePath): boolean =>
-  fileHasTonyExtension(file) && fileExists(file)
+  isSourceFile(file) && fileExists(file)
 
 export const fileMayBeImported = (file: AbsolutePath): boolean =>
   fileHasImportExtension(file) && fileExists(file)
-
-export const fileIsExternal = (file: Path): boolean =>
-  JAVASCRIPT_FILE_EXTENSION_REGEX.test(file.path)
 
 export const readFile = (file: AbsolutePath): Promise<string> =>
   new Promise((resolve, reject) =>
@@ -54,7 +52,7 @@ export const writeFile = async (
 }
 
 export const getOutFilename = (filename: string): string =>
-  filename.replace(FILE_EXTENSION, TARGET_FILE_EXTENSION)
+  filename.replace(SOURCE_EXTENSION, TARGET_EXTENSION)
 
 export const getOutPath = <T extends Path>(path: T): T => ({
   ...path,

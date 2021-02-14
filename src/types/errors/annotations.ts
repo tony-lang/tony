@@ -3,6 +3,7 @@ import { ProgramNode, SyntaxNode } from 'tree-sitter-tony/tony'
 import { CyclicDependency } from '../cyclic_dependency'
 import { Type } from '../type_inference/categories'
 import { TypedNode } from '../type_inference/nodes'
+import { Dependency } from '../analyze/dependencies'
 
 // ---- Types ----
 
@@ -10,7 +11,6 @@ export enum ErrorAnnotationKind {
   CyclicDependency,
   DuplicateBinding,
   ExportOutsideFileScope,
-  ExternalTypeImport,
   ImportOutsideFileScope,
   IncompleteWhenPattern,
   AmbiguousType,
@@ -24,7 +24,7 @@ export enum ErrorAnnotationKind {
 
 export type CyclicDependencyError = {
   readonly kind: typeof ErrorAnnotationKind.CyclicDependency
-  readonly cyclicDependency: CyclicDependency<AbsolutePath>
+  readonly cyclicDependency: CyclicDependency<Dependency>
 }
 
 export type DuplicateBindingError = {
@@ -34,10 +34,6 @@ export type DuplicateBindingError = {
 
 export type ExportOutsideFileScopeError = {
   readonly kind: typeof ErrorAnnotationKind.ExportOutsideFileScope
-}
-
-export type ExternalTypeImportError = {
-  readonly kind: typeof ErrorAnnotationKind.ExternalTypeImport
 }
 
 export type ImportOutsideFileScopeError = {
@@ -88,7 +84,6 @@ export type ErrorAnnotation =
   | CyclicDependencyError
   | DuplicateBindingError
   | ExportOutsideFileScopeError
-  | ExternalTypeImportError
   | ImportOutsideFileScopeError
   | IncompleteWhenPatternError
   | AmbiguousTypeError
@@ -107,7 +102,7 @@ export type MountedErrorAnnotation = {
 // ---- Factories ----
 
 export const buildCyclicDependencyError = (
-  cyclicDependency: CyclicDependency<AbsolutePath>,
+  cyclicDependency: CyclicDependency<Dependency>,
 ): CyclicDependencyError => ({
   kind: ErrorAnnotationKind.CyclicDependency,
   cyclicDependency,
@@ -122,10 +117,6 @@ export const buildDuplicateBindingError = (
 
 export const buildExportOutsideFileScopeError = (): ExportOutsideFileScopeError => ({
   kind: ErrorAnnotationKind.ExportOutsideFileScope,
-})
-
-export const buildExternalTypeImportError = (): ExternalTypeImportError => ({
-  kind: ErrorAnnotationKind.ExternalTypeImport,
 })
 
 export const buildImportOutsideFileScopeError = (): ImportOutsideFileScopeError => ({

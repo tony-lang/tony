@@ -21,7 +21,7 @@ export const hasError = (scope: AbstractScope): boolean =>
 export const buildReport = (scope: GlobalScope): Report => ({
   errors: scope.errors,
   mountedErrors: scope.scopes.map((fileScope) => ({
-    file: fileScope.file,
+    file: fileScope.dependency.file,
     errors: collectErrors(fileScope),
   })),
 })

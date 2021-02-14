@@ -21,6 +21,7 @@ import {
 import { DeclaredType, ResolvedType, Type } from '../type_inference/categories'
 import { AbsolutePath } from '../path'
 import { TypeVariable } from '../type_inference/types'
+import { Dependency } from './dependencies'
 
 // ---- Types ----
 
@@ -75,7 +76,7 @@ enum BindingLocation {
 
 export type ImportedBinding = {
   readonly location: typeof BindingLocation.Imported
-  readonly file: AbsolutePath
+  readonly dependency: Dependency
   readonly originalName?: string
 }
 
@@ -115,13 +116,13 @@ export type TypeAssignment = TermBinding & {
 // ---- Factories ----
 
 export const buildImportedTermBinding = (
-  file: AbsolutePath,
+  dependency: Dependency,
   name: string,
   index: number,
   originalName: string | undefined,
   node: TermBindingNode,
   isImplicit: boolean,
-  isExported = false,
+  isExported: boolean,
 ): ImportedTermBinding => ({
   kind: BindingKind.Term,
   location: BindingLocation.Imported,
@@ -130,7 +131,7 @@ export const buildImportedTermBinding = (
   node,
   isExported,
   isImplicit,
-  file,
+  dependency,
   originalName,
 })
 
@@ -139,7 +140,7 @@ export const buildLocalTermBinding = (
   index: number,
   node: TermBindingNode,
   isImplicit: boolean,
-  isExported = false,
+  isExported: boolean,
 ): LocalTermBinding => ({
   kind: BindingKind.Term,
   location: BindingLocation.Local,
@@ -151,18 +152,18 @@ export const buildLocalTermBinding = (
 })
 
 export const buildImportedTypeBinding = (
-  file: AbsolutePath,
+  dependency: Dependency,
   name: string,
   originalName: string | undefined,
   node: ImportTypeNode,
-  isExported = false,
+  isExported: boolean,
 ): ImportedTypeBinding => ({
   kind: BindingKind.Type,
   location: BindingLocation.Imported,
   name,
   node,
   isExported,
-  file,
+  dependency,
   originalName,
 })
 
@@ -172,7 +173,7 @@ export const buildLocalTypeBinding = (
   alias: Type,
   node: TypeBindingNode,
   deferredAssignments: DeferredTypeVariableAssignment[],
-  isExported = false,
+  isExported: boolean,
 ): LocalTypeBinding => ({
   kind: BindingKind.Type,
   location: BindingLocation.Local,

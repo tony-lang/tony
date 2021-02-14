@@ -60,7 +60,6 @@ import { buildAliasType, buildAliasedType, buildTypes } from './build_type'
 import {
   buildDuplicateBindingError,
   buildExportOutsideFileScopeError,
-  buildExternalTypeImportError,
   buildImportOutsideFileScopeError,
   buildIncompleteWhenPatternError,
   buildMissingBindingError,
@@ -71,7 +70,7 @@ import {
   buildTypeVariable,
   buildUnionType,
 } from '../types/type_inference/types'
-import { fileIsExternal, fileMayBeImported } from '../util/paths'
+import { fileMayBeImported } from '../util/paths'
 import { findBinding, findBindings, itemsMissingFrom } from '../util/bindings'
 import {
   getIdentifierName,
@@ -87,8 +86,9 @@ import { buildPromise } from '../util'
 import { isPrimitiveTypeName } from '../types/type_inference/primitive_types'
 import { mergeDeferredAssignments } from '../type_inference/constraints'
 import { resolveRelativePath } from './resolve'
+import { Dependency, buildDependency } from '../types/analyze/dependencies'
 
-type ImportedBindingConfig = { file: AbsolutePath; originalName?: string }
+type ImportedBindingConfig = { dependency: Dependency; originalName?: string }
 
 type State = {
   config: Config
@@ -149,7 +149,7 @@ export const constructFileScope = async (
   return fileScope
 }
 
-const addDependency = (state: State, absolutePath: AbsolutePath): State => {
+const addDependency = (state: State, dependency: Dependency): State => {
   const [fileScope] = state.scopes
 
   assert(
@@ -159,7 +159,7 @@ const addDependency = (state: State, absolutePath: AbsolutePath): State => {
 
   const newFileScope = {
     ...fileScope,
-    dependencies: [...fileScope.dependencies, absolutePath],
+    dependencies: [...fileScope.dependencies, dependency],
   }
   return {
     ...state,
@@ -225,7 +225,7 @@ const addTermBinding = (
     findBindings(name, state.scopes.map(getTerms)).length
   const binding = importedFrom
     ? buildImportedTermBinding(
-        importedFrom.file,
+        importedFrom.dependency,
         name,
         index,
         importedFrom.originalName,
@@ -317,12 +317,9 @@ const buildTypeBinding = (
       'node should be an imported type when importConfig is given',
     )
     return [
-      addErrorUnless<State>(
-        !fileIsExternal(importedFrom.file),
-        buildExternalTypeImportError(),
-      )(state, node),
+      state,
       buildImportedTypeBinding(
-        importedFrom.file,
+        importedFrom.dependency,
         name,
         importedFrom.originalName,
         node,
@@ -734,13 +731,13 @@ const handleImport = ensureAsync<State, ImportNode | ExportedImportNode>(
     if (resolvedSource === undefined)
       return addError(state, node.sourceNode, buildUnknownFileError(source))
 
-    const isExported = node.type === SyntaxType.ExportedImport
-    const stateWithDependency = addDependency(state, resolvedSource)
+    const dependency = buildDependency(resolvedSource)
+    const stateWithDependency = addDependency(state, dependency)
     const stateWithBindings = traverseImports(
       {
         ...stateWithDependency,
-        exportNextBindings: isExported,
-        importNextBindingsFrom: { file: resolvedSource },
+        exportNextBindings: node.type === SyntaxType.ExportedImport,
+        importNextBindingsFrom: { dependency },
       },
       node.importNodes,
     )

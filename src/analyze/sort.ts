@@ -5,11 +5,11 @@ import {
 } from '../types/analyze/scopes'
 import { LogLevel, log } from '../logger'
 import { TopologicalSortError, topologicalSort } from '../util/topological_sort'
-import { AbsolutePath } from '../types/path'
 import { Config } from '../config'
 import { CyclicDependency } from '../types/cyclic_dependency'
 import { buildCyclicDependencyError } from '../types/errors/annotations'
 import { isSamePath } from '../util/paths'
+import { Dependency } from '../types/analyze/dependencies'
 
 export const sortFileScopes = (
   config: Config,
@@ -27,7 +27,7 @@ export const sortFileScopes = (
       config,
       LogLevel.Debug,
       'Topological sorting on files returned:',
-      sortedFileScopes.map((fileScope) => fileScope.file.path).join('>'),
+      sortedFileScopes.map((fileScope) => fileScope.dependency.file.path).join('>'),
     )
     return buildGlobalScope(sortedFileScopes)
   } catch (error: unknown) {
@@ -52,8 +52,8 @@ export const sortFileScopes = (
 const buildDependencyGraph = (fileScopes: FileScope[]): number[][] =>
   fileScopes.map((fileScope) =>
     fileScope.dependencies
-      .map((file) =>
-        fileScopes.findIndex((fileScope) => isSamePath(fileScope.file, file)),
+      .map((dependency) =>
+        fileScopes.findIndex((fileScope) => isSamePath(fileScope.dependency.file, dependency.file)),
       )
       .filter((i) => i != -1),
   )
@@ -61,12 +61,12 @@ const buildDependencyGraph = (fileScopes: FileScope[]): number[][] =>
 const buildCyclicDependency = (
   fileScopes: FileScope[],
   cyclicDependency: CyclicDependency<number>,
-): CyclicDependency<AbsolutePath> => {
-  const a = fileScopes[cyclicDependency.a].file
-  const b = fileScopes[cyclicDependency.b].file
+): CyclicDependency<Dependency> => {
+  const a = fileScopes[cyclicDependency.a].dependency
+  const b = fileScopes[cyclicDependency.b].dependency
   const ancestorsOfA = cyclicDependency.ancestorsOfA
     .map((i) => fileScopes[i])
-    .map((fileScope) => fileScope.file)
+    .map((fileScope) => fileScope.dependency)
 
   return { a, b, ancestorsOfA }
 }
