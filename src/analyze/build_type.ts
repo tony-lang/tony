@@ -77,8 +77,8 @@ import {
   getTypeVariableName,
 } from '../util/parse'
 import { getTerms, getTypeVariables } from '../util/scopes'
-import { AbstractState } from '../types/state'
-import { TypeBindingNode } from '../types/analyze/bindings'
+import { AbstractState } from './types'
+import { LocalTypeBindingNode } from '../types/analyze/bindings'
 import { addErrorUnless } from '../util/traverse'
 import { buildPrimitiveTypeArgumentsError } from '../types/errors/annotations'
 import { mergeDeferredAssignments } from '../type_inference/constraints'
@@ -110,19 +110,13 @@ type ImmediateTermLevelNode =
   | RegexNode
   | StringNode
 
-interface Scope
-  extends ScopeWithErrors,
-    ScopeWithTerms,
-    ScopeWithTypes,
-    RecursiveScope<Scope> {}
-
-type Return<T extends AbstractState<Scope>, U> = [
+type Return<T extends AbstractState, U> = [
   newState: T,
   deferredAssignments: DeferredTypeVariableAssignment[],
   type: U,
 ]
 
-const withState = <T extends AbstractState<Scope>, U extends SyntaxNode, V>(
+const withState = <T extends AbstractState, U extends SyntaxNode, V>(
   state: T,
   nodes: U[],
   callback: (state: T, node: U, i: number) => Return<T, V>,
@@ -139,7 +133,7 @@ const withState = <T extends AbstractState<Scope>, U extends SyntaxNode, V>(
     [state, [], []],
   )
 
-const findTypeVariable = <T extends AbstractState<Scope>>(
+const findTypeVariable = <T extends AbstractState>(
   state: T,
   node: TypeVariableNode | TypeVariableDeclarationNameNode,
 ) => {
@@ -159,9 +153,9 @@ const findTypeVariable = <T extends AbstractState<Scope>>(
  * Given a node in the syntax tree and some state, returns the type defined by
  * the node.
  */
-export const buildAliasType = <T extends AbstractState<Scope>>(
+export const buildAliasType = <T extends AbstractState>(
   state: T,
-  node: TypeBindingNode,
+  node: LocalTypeBindingNode,
 ): Return<T, DeclaredType> => {
   switch (node.type) {
     case SyntaxType.Class:
@@ -175,7 +169,7 @@ export const buildAliasType = <T extends AbstractState<Scope>>(
 const handleTypeNode = (node: TypeNode) =>
   buildGenericType(getTypeName(node), [])
 
-const handleTypeDeclaration = <T extends AbstractState<Scope>>(
+const handleTypeDeclaration = <T extends AbstractState>(
   state: T,
   node: TypeDeclarationNode,
 ): Return<T, DeclaredType> => {
@@ -190,9 +184,9 @@ const handleTypeDeclaration = <T extends AbstractState<Scope>>(
  * Given a node in the syntax tree and some state, returns the type represented
  * by the type binding.
  */
-export const buildAliasedType = <T extends AbstractState<Scope>>(
+export const buildAliasedType = <T extends AbstractState>(
   state: T,
-  node: TypeBindingNode,
+  node: LocalTypeBindingNode,
 ): Return<T, Type> => {
   switch (node.type) {
     case SyntaxType.Class:
@@ -204,7 +198,7 @@ export const buildAliasedType = <T extends AbstractState<Scope>>(
   }
 }
 
-const handleClass = <T extends AbstractState<Scope>>(
+const handleClass = <T extends AbstractState>(
   state: T,
   node: ClassNode,
 ): Return<T, Type> => {
@@ -216,7 +210,7 @@ const handleClass = <T extends AbstractState<Scope>>(
   return [stateWithValues, deferredAssignments, buildClassType(memberTypes)]
 }
 
-const handleEnum = <T extends AbstractState<Scope>>(
+const handleEnum = <T extends AbstractState>(
   state: T,
   node: EnumNode,
 ): Return<T, Type> => {
@@ -232,7 +226,7 @@ const handleEnum = <T extends AbstractState<Scope>>(
  * Given a node in the syntax tree and some state, returns the type represented
  * by the node.
  */
-export const buildType = <T extends AbstractState<Scope>>(
+export const buildType = <T extends AbstractState>(
   state: T,
   node: InternalTypeNode,
 ): Return<T, Type> => {
@@ -280,12 +274,12 @@ export const buildType = <T extends AbstractState<Scope>>(
  * Given nodes in the syntax tree and some state, returns the types represented
  * by the nodes.
  */
-export const buildTypes = <T extends AbstractState<Scope>>(
+export const buildTypes = <T extends AbstractState>(
   state: T,
   nodes: InternalTypeNode[],
 ): Return<T, Type[]> => withState(state, nodes, buildType)
 
-const handleAccessType = <T extends AbstractState<Scope>>(
+const handleAccessType = <T extends AbstractState>(
   state: T,
   node: AccessTypeNode,
 ): Return<T, Type> => {
@@ -308,7 +302,7 @@ const handleAccessType = <T extends AbstractState<Scope>>(
   ]
 }
 
-const handleConditionalType = <T extends AbstractState<Scope>>(
+const handleConditionalType = <T extends AbstractState>(
   state: T,
   node: ConditionalTypeNode,
 ): Return<T, Type> => {
@@ -343,7 +337,7 @@ const handleConditionalType = <T extends AbstractState<Scope>>(
   ]
 }
 
-const handleCurriedType = <T extends AbstractState<Scope>>(
+const handleCurriedType = <T extends AbstractState>(
   state: T,
   node: CurriedTypeNode,
 ): Return<T, Type> => {
@@ -365,7 +359,7 @@ const handleCurriedType = <T extends AbstractState<Scope>>(
   ]
 }
 
-const handleIntersectionType = <T extends AbstractState<Scope>>(
+const handleIntersectionType = <T extends AbstractState>(
   state: T,
   node: IntersectionTypeNode,
 ): Return<T, Type> => {
@@ -387,7 +381,7 @@ const handleIntersectionType = <T extends AbstractState<Scope>>(
   ]
 }
 
-const handleKeyof = <T extends AbstractState<Scope>>(
+const handleKeyof = <T extends AbstractState>(
   state: T,
   node: KeyofNode,
 ): Return<T, Type> => {
@@ -398,7 +392,7 @@ const handleKeyof = <T extends AbstractState<Scope>>(
   return [stateWithType, deferredAssignments, buildKeyof(type)]
 }
 
-const handleListType = <T extends AbstractState<Scope>>(
+const handleListType = <T extends AbstractState>(
   state: T,
   node: ListTypeNode,
 ): Return<T, Type> => {
@@ -413,7 +407,7 @@ const handleListType = <T extends AbstractState<Scope>>(
   ]
 }
 
-const handleMapType = <T extends AbstractState<Scope>>(
+const handleMapType = <T extends AbstractState>(
   state: T,
   node: MapTypeNode,
 ): Return<T, Type> => {
@@ -435,7 +429,7 @@ const handleMapType = <T extends AbstractState<Scope>>(
   ]
 }
 
-const handleParametricType = <T extends AbstractState<Scope>>(
+const handleParametricType = <T extends AbstractState>(
   state: T,
   node: ParametricTypeNode,
 ): Return<T, Type> => {
@@ -461,7 +455,7 @@ const handleParametricType = <T extends AbstractState<Scope>>(
   ]
 }
 
-const handleStructType = <T extends AbstractState<Scope>>(
+const handleStructType = <T extends AbstractState>(
   state: T,
   node: StructTypeNode,
 ): Return<T, Type> => {
@@ -473,7 +467,7 @@ const handleStructType = <T extends AbstractState<Scope>>(
   return [stateWithMembers, deferredAssignments, buildObjectType(properties)]
 }
 
-const handleSubtractionType = <T extends AbstractState<Scope>>(
+const handleSubtractionType = <T extends AbstractState>(
   state: T,
   node: SubtractionTypeNode,
 ): Return<T, Type> => {
@@ -495,7 +489,7 @@ const handleSubtractionType = <T extends AbstractState<Scope>>(
   ]
 }
 
-const handleTaggedType = <T extends AbstractState<Scope>>(
+const handleTaggedType = <T extends AbstractState>(
   state: T,
   node: TaggedTypeNode,
 ): Return<T, Type> => {
@@ -513,7 +507,7 @@ const handleTaggedType = <T extends AbstractState<Scope>>(
   return [stateWithValue, deferredAssignments, buildObjectType([tag, value])]
 }
 
-const handleTupleType = <T extends AbstractState<Scope>>(
+const handleTupleType = <T extends AbstractState>(
   state: T,
   node: TupleTypeNode,
 ): Return<T, Type> => {
@@ -530,22 +524,22 @@ const handleTupleType = <T extends AbstractState<Scope>>(
   ]
 }
 
-const handleTypeGroup = <T extends AbstractState<Scope>>(
+const handleTypeGroup = <T extends AbstractState>(
   state: T,
   node: TypeGroupNode,
 ): Return<T, Type> => buildType(state, node.typeNode)
 
-const handleTypeVariable = <T extends AbstractState<Scope>>(
+const handleTypeVariable = <T extends AbstractState>(
   state: T,
   node: TypeVariableNode,
 ): Return<T, Type> => [state, [], findTypeVariable(state, node)]
 
-const handleTypeof = <T extends AbstractState<Scope>>(
+const handleTypeof = <T extends AbstractState>(
   state: T,
   node: TypeofNode,
 ): Return<T, Type> => handleTerm(state, node.valueNode)
 
-const handleUnionType = <T extends AbstractState<Scope>>(
+const handleUnionType = <T extends AbstractState>(
   state: T,
   node: UnionTypeNode,
 ): Return<T, Type> => {
@@ -567,7 +561,7 @@ const handleUnionType = <T extends AbstractState<Scope>>(
   ]
 }
 
-const handleClassMember = <T extends AbstractState<Scope>>(
+const handleClassMember = <T extends AbstractState>(
   state: T,
   node: ClassMemberNode,
 ): Return<T, Property<Type>> => {
@@ -582,7 +576,7 @@ const handleClassMember = <T extends AbstractState<Scope>>(
   ]
 }
 
-const handleEnumValue = <T extends AbstractState<Scope>>(
+const handleEnumValue = <T extends AbstractState>(
   state: T,
   node: EnumValueNode,
   i: number,
@@ -591,7 +585,7 @@ const handleEnumValue = <T extends AbstractState<Scope>>(
   return [state, [], buildLiteralType(i)]
 }
 
-const handleMemberType = <T extends AbstractState<Scope>>(
+const handleMemberType = <T extends AbstractState>(
   state: T,
   node: MemberTypeNode,
 ): Return<T, Property<Type>> => {
@@ -606,7 +600,7 @@ const handleMemberType = <T extends AbstractState<Scope>>(
   ]
 }
 
-const handleTerm = <T extends AbstractState<Scope>>(
+const handleTerm = <T extends AbstractState>(
   state: T,
   node: ImmediateTermLevelNode,
 ): Return<T, Type> => {

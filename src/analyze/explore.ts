@@ -12,8 +12,8 @@ import { SyntaxType as DeclarationSyntaxType } from 'tree-sitter-tony/dtn'
 import { FileScope } from '../types/analyze/scopes'
 import { SyntaxType as SourceSyntaxType } from 'tree-sitter-tony/tony'
 import { assert } from '../types/errors/internal'
-import { constructFileScopeFromDeclaration } from './analyze_declaration'
-import { constructFileScopeFromSource } from './analyze_source'
+import { constructFileScopeFromDeclaration } from './declarations'
+import { constructFileScopeFromSource } from './sources'
 import { graphSearch } from '../util/graph_search'
 
 export const analyzeFiles = (config: Config): Promise<FileScope[]> =>

@@ -43,7 +43,6 @@ import {
   PatternGroupNode,
   PipelineNode,
   PrefixApplicationNode,
-  ProgramNode,
   RawStringNode,
   RefinementTypeDeclarationNode,
   RefinementTypeNode,
@@ -54,6 +53,7 @@ import {
   ShorthandMemberIdentifierNode,
   ShorthandMemberNode,
   ShorthandMemberPatternNode,
+  ProgramNode as SourceProgramNode,
   SpreadNode,
   StringNode,
   StructNode,
@@ -79,6 +79,7 @@ import {
   UnionTypeNode,
   WhenNode,
 } from 'tree-sitter-tony/tony'
+import { ProgramNode as DeclarationProgramNode } from 'tree-sitter-tony/dtn'
 
 // ---- Types ----
 
@@ -113,7 +114,7 @@ export type TermLevelNode =
   | MemberNode
   | PipelineNode
   | PrefixApplicationNode
-  | ProgramNode
+  | SourceProgramNode
   | ReturnNode
   | RightSectionNode
   | ShorthandAccessIdentifierNode
@@ -164,7 +165,11 @@ type TypeLevelNode =
   | UnionTypeNode
   | TypeNode
 
-export type NonTypeLevelNode = TermLevelNode | PatternLevelNode | ErrorNode
+export type NodeWithInferrableType =
+  | TermLevelNode
+  | PatternLevelNode
+  | ErrorNode
+  | DeclarationProgramNode
 
 export type NodeWithinProgram = TermLevelNode | PatternLevelNode | TypeLevelNode
 

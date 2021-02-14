@@ -1,17 +1,21 @@
 import {
-  FileScope,
+  DeclarationFileScope,
   NestedScope,
   NestingTermLevelNode,
+  SourceFileScope,
 } from '../types/analyze/scopes'
-import { Dependency } from '../types/analyze/dependencies'
 
-export type State<T extends Dependency = Dependency> = {
+export type State = {
   /**
    * A stack of all scopes starting with the closest scope and ending with the
    * symbol table.
    */
   scopes: (
-    | FileScope<T, NestingTermLevelNode>
+    | SourceFileScope<NestingTermLevelNode>
     | NestedScope<NestingTermLevelNode>
   )[]
+  /**
+   * The list of all declaration file scopes.
+   */
+  declarationScopes: DeclarationFileScope[]
 }

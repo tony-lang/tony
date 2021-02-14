@@ -1,19 +1,5 @@
-import {
-  ClassNode,
-  DestructuringPatternNode,
-  EnumNode,
-  EnumValueNode,
-  GeneratorNode,
-  IdentifierPatternNameNode,
-  IdentifierPatternNode,
-  ImportTypeNode,
-  MemberTypeNode,
-  RefinementTypeDeclarationNode,
-  ShorthandMemberPatternNode,
-  TaggedTypeNode,
-  TypeAliasNode,
-  TypeVariableDeclarationNode,
-} from 'tree-sitter-tony/tony'
+import * as Source from 'tree-sitter-tony/tony'
+import * as Declaration from 'tree-sitter-tony/dtn'
 import {
   Constraints,
   DeferredTypeVariableAssignment,
@@ -21,21 +7,29 @@ import {
 import { DeclaredType, ResolvedType, Type } from '../type_inference/categories'
 import { Dependency } from './dependencies'
 import { TypeVariable } from '../type_inference/types'
+import { AbsolutePath } from '../path'
 
 // ---- Types ----
 
 export type TermBindingNode =
-  | DestructuringPatternNode
-  | EnumValueNode
-  | GeneratorNode
-  | IdentifierPatternNode
-  | IdentifierPatternNameNode
-  | ShorthandMemberPatternNode
-  | TaggedTypeNode
-  | RefinementTypeDeclarationNode
-  | MemberTypeNode
+  | Source.DestructuringPatternNode
+  | Source.EnumValueNode
+  | Source.GeneratorNode
+  | Source.IdentifierPatternNode
+  | Source.IdentifierPatternNameNode
+  | Source.ShorthandMemberPatternNode
+  | Source.TaggedTypeNode
+  | Source.RefinementTypeDeclarationNode
+  | Source.MemberTypeNode
+  | Declaration.DeclarationMemberNode
 
-export type TypeBindingNode = ClassNode | EnumNode | TypeAliasNode
+export type ImportedTypeBindingNode =
+  | Declaration.ImportTypeNode
+  | Source.ImportTypeNode
+export type LocalTypeBindingNode =
+  | Source.ClassNode
+  | Source.EnumNode
+  | Source.TypeAliasNode
 
 type AbstractBinding = {
   readonly name: string
@@ -51,6 +45,9 @@ enum BindingKind {
 type AbstractTermBinding = AbstractBinding & {
   readonly kind: typeof BindingKind.Term
   readonly node: TermBindingNode
+}
+
+type SourceTermBinding = AbstractTermBinding & {
   /**
    * The index tracks the number of times a binding is overloaded. Among all
    * bindings with a given name that have overlapping scopes, index is a unique
@@ -69,8 +66,13 @@ type AbstractTypeBinding = AbstractBinding & {
 }
 
 enum BindingLocation {
+  Declared,
   Imported,
   Local,
+}
+
+export type DeclaredBinding = {
+  readonly location: typeof BindingLocation.Declared
 }
 
 export type ImportedBinding = {
@@ -83,15 +85,19 @@ export type LocalBinding = {
   readonly location: typeof BindingLocation.Local
 }
 
-export type ImportedTermBinding = AbstractTermBinding & ImportedBinding
-export type LocalTermBinding = AbstractTermBinding & LocalBinding
-export type TermBinding = ImportedTermBinding | LocalTermBinding
+export type DeclaredTermBinding = AbstractTermBinding & DeclaredBinding
+export type ImportedTermBinding = SourceTermBinding & ImportedBinding
+export type LocalTermBinding = SourceTermBinding & LocalBinding
+export type TermBinding =
+  | DeclaredTermBinding
+  | ImportedTermBinding
+  | LocalTermBinding
 
 export type ImportedTypeBinding = AbstractTypeBinding &
-  ImportedBinding & { readonly node: ImportTypeNode }
+  ImportedBinding & { readonly node: ImportedTypeBindingNode }
 export type LocalTypeBinding = AbstractTypeBinding &
   LocalBinding & {
-    readonly node: TypeBindingNode
+    readonly node: LocalTypeBindingNode
     readonly value: DeclaredType
     readonly alias: Type
     readonly deferredAssignments: DeferredTypeVariableAssignment[]
@@ -100,7 +106,7 @@ export type TypeBinding = ImportedTypeBinding | LocalTypeBinding
 
 export type TypeVariableBinding = AbstractBinding & {
   readonly kind: typeof BindingKind.TypeVariable
-  readonly node: TypeVariableDeclarationNode
+  readonly node: Source.TypeVariableDeclarationNode
   readonly value: TypeVariable
   readonly constraints: Constraints<Type>
 }
@@ -113,6 +119,17 @@ export type TypeAssignment = TermBinding & {
 }
 
 // ---- Factories ----
+
+export const buildDeclaredTermBinding = (
+  name: string,
+  node: TermBindingNode,
+): DeclaredTermBinding => ({
+  kind: BindingKind.Term,
+  location: BindingLocation.Declared,
+  name,
+  node,
+  isExported: true,
+})
 
 export const buildImportedTermBinding = (
   dependency: Dependency,
@@ -154,7 +171,7 @@ export const buildImportedTypeBinding = (
   dependency: Dependency,
   name: string,
   originalName: string | undefined,
-  node: ImportTypeNode,
+  node: ImportedTypeBindingNode,
   isExported: boolean,
 ): ImportedTypeBinding => ({
   kind: BindingKind.Type,
@@ -170,7 +187,7 @@ export const buildLocalTypeBinding = (
   name: string,
   value: DeclaredType,
   alias: Type,
-  node: TypeBindingNode,
+  node: LocalTypeBindingNode,
   deferredAssignments: DeferredTypeVariableAssignment[],
   isExported: boolean,
 ): LocalTypeBinding => ({
@@ -186,7 +203,7 @@ export const buildLocalTypeBinding = (
 
 export const buildTypeVariableBinding = (
   name: string,
-  node: TypeVariableDeclarationNode,
+  node: Source.TypeVariableDeclarationNode,
   value: TypeVariable,
   constraints: Constraints<Type>,
 ): TypeVariableBinding => ({
@@ -205,6 +222,11 @@ export const buildTypeAssignment = (
   ...binding,
   type,
 })
+
+export const isDeclaredBinding = (
+  binding: TermBinding,
+): binding is DeclaredTermBinding =>
+  binding.location === BindingLocation.Declared
 
 export const isImportedBinding = <T extends TermBinding | TypeBinding>(
   binding: T,

@@ -18,8 +18,8 @@ import {
   buildConstraints,
 } from '../types/type_inference/constraints'
 import { ResolvedType, Type } from '../types/type_inference/categories'
-import { AbstractState } from '../types/state'
 import { NotImplementedError } from '../types/errors/internal'
+import { StateForAnswers } from '../util/answers'
 
 type Return = { constraints: Constraints; type: ResolvedType }
 
@@ -27,7 +27,7 @@ type Return = { constraints: Constraints; type: ResolvedType }
  * Given a type, reduce the type until it is normal (i.e. cannot be reduced
  * further).
  */
-export const normalize = <T extends AbstractState>(
+export const normalize = <T extends StateForAnswers>(
   state: T,
   type: Type,
 ): Answers<T, Return> => {
@@ -59,77 +59,77 @@ export const normalize = <T extends AbstractState>(
   }
 }
 
-const handleAccessType = <T extends AbstractState>(
+const handleAccessType = <T extends StateForAnswers>(
   state: T, // eslint-disable-line @typescript-eslint/no-unused-vars
   type: AccessType, // eslint-disable-line @typescript-eslint/no-unused-vars
 ): Answers<T, Return> => {
   throw new NotImplementedError('Cannot normalize access types yet.')
 }
 
-const handleClassType = <T extends AbstractState>(
+const handleClassType = <T extends StateForAnswers>(
   state: T, // eslint-disable-line @typescript-eslint/no-unused-vars
   type: ClassType, // eslint-disable-line @typescript-eslint/no-unused-vars
 ): Answers<T, Return> => {
   throw new NotImplementedError('Cannot normalize interface types yet.')
 }
 
-const handleConditionalType = <T extends AbstractState>(
+const handleConditionalType = <T extends StateForAnswers>(
   state: T, // eslint-disable-line @typescript-eslint/no-unused-vars
   type: ConditionalType, // eslint-disable-line @typescript-eslint/no-unused-vars
 ): Answers<T, Return> => {
   throw new NotImplementedError('Cannot normalize conditional types yet.')
 }
 
-const handleCurriedType = <T extends AbstractState>(
+const handleCurriedType = <T extends StateForAnswers>(
   state: T, // eslint-disable-line @typescript-eslint/no-unused-vars
   type: CurriedType, // eslint-disable-line @typescript-eslint/no-unused-vars
 ): Answers<T, Return> => {
   throw new NotImplementedError('Cannot normalize curried types yet.')
 }
 
-const handleIntersectionType = <T extends AbstractState>(
+const handleIntersectionType = <T extends StateForAnswers>(
   state: T, // eslint-disable-line @typescript-eslint/no-unused-vars
   type: IntersectionType, // eslint-disable-line @typescript-eslint/no-unused-vars
 ): Answers<T, Return> => {
   throw new NotImplementedError('Cannot normalize intersection types yet.')
 }
 
-const handleKeyof = <T extends AbstractState>(
+const handleKeyof = <T extends StateForAnswers>(
   state: T, // eslint-disable-line @typescript-eslint/no-unused-vars
   type: Keyof, // eslint-disable-line @typescript-eslint/no-unused-vars
 ): Answers<T, Return> => {
   throw new NotImplementedError('Cannot normalize keyofs yet.')
 }
 
-const handleObjectType = <T extends AbstractState>(
+const handleObjectType = <T extends StateForAnswers>(
   state: T, // eslint-disable-line @typescript-eslint/no-unused-vars
   type: ObjectType, // eslint-disable-line @typescript-eslint/no-unused-vars
 ): Answers<T, Return> => {
   throw new NotImplementedError('Cannot normalize object types yet.')
 }
 
-const handleParametricType = <T extends AbstractState>(
+const handleParametricType = <T extends StateForAnswers>(
   state: T, // eslint-disable-line @typescript-eslint/no-unused-vars
   type: ParametricType, // eslint-disable-line @typescript-eslint/no-unused-vars
 ): Answers<T, Return> => {
   throw new NotImplementedError('Cannot normalize parametric types yet.')
 }
 
-const handleRefinedType = <T extends AbstractState>(
+const handleRefinedType = <T extends StateForAnswers>(
   state: T, // eslint-disable-line @typescript-eslint/no-unused-vars
   type: RefinedType, // eslint-disable-line @typescript-eslint/no-unused-vars
 ): Answers<T, Return> => {
   throw new NotImplementedError('Cannot normalize refined types yet.')
 }
 
-const handleSubtractionType = <T extends AbstractState>(
+const handleSubtractionType = <T extends StateForAnswers>(
   state: T, // eslint-disable-line @typescript-eslint/no-unused-vars
   type: SubtractionType, // eslint-disable-line @typescript-eslint/no-unused-vars
 ): Answers<T, Return> => {
   throw new NotImplementedError('Cannot normalize subtraction types yet.')
 }
 
-const handleUnionType = <T extends AbstractState>(
+const handleUnionType = <T extends StateForAnswers>(
   state: T, // eslint-disable-line @typescript-eslint/no-unused-vars
   type: UnionType, // eslint-disable-line @typescript-eslint/no-unused-vars
 ): Answers<T, Return> => {

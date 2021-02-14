@@ -7,9 +7,11 @@ import {
   ScopeWithNode,
   ScopeWithTerms,
   ScopeWithTypes,
+  SourceFileScope,
   TypingEnvironment,
 } from '../types/analyze/scopes'
-import { SyntaxNode, SyntaxType } from 'tree-sitter-tony/tony'
+import * as Source from 'tree-sitter-tony/tony'
+import * as Declaration from 'tree-sitter-tony/dtn'
 import {
   TermBinding,
   TypeAssignment,
@@ -31,7 +33,7 @@ export const findFileScope = <T extends FileScope>(
 
 export const addErrorToScope = <T extends ScopeWithErrors>(
   scope: T,
-  node: SyntaxNode,
+  node: Declaration.SyntaxNode | Source.SyntaxNode,
   error: ErrorAnnotation,
 ): T => ({
   ...scope,
@@ -55,9 +57,9 @@ export const findScopeOfNode = <
   node: T,
 ): U | undefined => scopes.find((scope) => scope.node === node)
 
-export const filterFileScopeByTermScopes = <T extends Dependency>(
-  scope: FileScope<T>,
-): FileScope<T, NestingTermLevelNode> => ({
+export const filterFileScopeByTermScopes = (
+  scope: SourceFileScope,
+): SourceFileScope<NestingTermLevelNode> => ({
   ...scope,
   scopes: scope.scopes
     .map(filterNestedScopeByTermScopes)
@@ -68,7 +70,7 @@ const filterNestedScopeByTermScopes = (
   scope: NestedScope,
 ): NestedScope<NestingTermLevelNode> | undefined => {
   const node = scope.node
-  if (node.type === SyntaxType.RefinementType) return undefined
+  if (node.type === Source.SyntaxType.RefinementType) return undefined
   return {
     ...scope,
     node,

@@ -1,37 +1,34 @@
-import {
-  AbstractionBranchNode,
-  BlockNode,
-  ClassNode,
-  ListComprehensionNode,
-  NamedNode,
-  ProgramNode,
-  RefinementTypeNode,
-  SyntaxNode,
-  SyntaxType,
-  TypeAliasNode,
-  WhenNode,
-} from 'tree-sitter-tony/tony'
+import * as Source from 'tree-sitter-tony/tony'
+import * as Declaration from 'tree-sitter-tony/dtn'
 import { ErrorAnnotation, MountedErrorAnnotation } from '../errors/annotations'
-import { NonTypeLevelNode, TermLevelNode } from '../nodes'
+import { NodeWithInferrableType, TermLevelNode } from '../nodes'
 import {
+  DeclaredTermBinding,
+  ImportedTermBinding,
+  LocalTermBinding,
   TermBinding,
   TypeAssignment,
   TypeBinding,
   TypeVariableBinding,
 } from './bindings'
-import { Dependency } from './dependencies'
+import {
+  DeclarationDependency,
+  Dependency,
+  SourceDependency,
+} from './dependencies'
 import { TypedNode } from '../type_inference/nodes'
+import { AbsolutePath } from '../path'
 
 // ---- Types ----
 
 export type NestingNode =
-  | AbstractionBranchNode
-  | BlockNode
-  | ClassNode
-  | ListComprehensionNode
-  | RefinementTypeNode
-  | TypeAliasNode
-  | WhenNode
+  | Source.AbstractionBranchNode
+  | Source.BlockNode
+  | Source.ClassNode
+  | Source.ListComprehensionNode
+  | Source.RefinementTypeNode
+  | Source.TypeAliasNode
+  | Source.WhenNode
 
 export type NestingTermLevelNode = NestingNode & TermLevelNode
 
@@ -42,8 +39,8 @@ enum ScopeKind {
   RefinementType,
 }
 
-export type ScopeWithTerms = {
-  readonly terms: TermBinding[]
+export type ScopeWithTerms<T extends TermBinding = TermBinding> = {
+  readonly terms: T[]
 }
 
 export type TypingEnvironment = {
@@ -59,17 +56,23 @@ export type ScopeWithErrors = {
   readonly errors: MountedErrorAnnotation[]
 }
 
-export type ScopeWithNode<T extends SyntaxNode> = {
+export type ScopeWithNode<
+  T extends Declaration.SyntaxNode | Source.SyntaxNode
+> = {
   readonly node: T
 }
 
-export type TypedScope<T extends NonTypeLevelNode> = {
+export type TypedScope<T extends NodeWithInferrableType> = {
   readonly typedNode: TypedNode<T>
 }
 
 export type RecursiveScope<T> = {
   readonly scopes: T[]
 }
+
+export interface RecursiveScopeWithErrors
+  extends RecursiveScope<RecursiveScopeWithErrors>,
+    ScopeWithErrors {}
 
 export type GlobalScope<
   T extends FileScope | TypedFileScope = FileScope | TypedFileScope
@@ -78,27 +81,42 @@ export type GlobalScope<
   readonly errors: ErrorAnnotation[]
 }
 
-export type FileScope<
-  T extends Dependency = Dependency,
-  U extends NestingNode = NestingNode
-> = RecursiveScope<NestedScope<U>> &
-  ScopeWithTerms &
-  ScopeWithTypes &
-  ScopeWithErrors &
-  ScopeWithNode<ProgramNode> & {
+type AbstractFileScope = ScopeWithTypes & ScopeWithErrors
+export type DeclarationFileScope = AbstractFileScope &
+  ScopeWithTerms<DeclaredTermBinding> &
+  ScopeWithNode<Declaration.ProgramNode> & {
     readonly kind: typeof ScopeKind.File
-    readonly dependency: T
+    readonly dependency: DeclarationDependency
+    readonly source: AbsolutePath
     readonly dependencies: Dependency[]
   }
+export type SourceFileScope<
+  T extends NestingNode = NestingNode
+> = AbstractFileScope &
+  RecursiveScope<NestedScope<T>> &
+  ScopeWithTerms<ImportedTermBinding | LocalTermBinding> &
+  ScopeWithNode<Source.ProgramNode> & {
+    readonly kind: typeof ScopeKind.File
+    readonly dependency: SourceDependency
+    readonly dependencies: Dependency[]
+  }
+export type FileScope<T extends NestingNode = NestingNode> =
+  | DeclarationFileScope
+  | SourceFileScope<T>
 
-export type TypedFileScope<T extends Dependency = Dependency> = FileScope<T> &
+export type TypedDeclarationFileScope = DeclarationFileScope &
   RecursiveScope<TypedNestedScope> &
-  TypingEnvironment &
-  TypedScope<ProgramNode>
+  TypedScope<Declaration.ProgramNode> &
+  TypingEnvironment
+export type TypedSourceFileScope = SourceFileScope &
+  RecursiveScope<TypedNestedScope> &
+  TypedScope<Source.ProgramNode> &
+  TypingEnvironment
+export type TypedFileScope = TypedDeclarationFileScope | TypedSourceFileScope
 
 export interface NestedScope<T extends NestingNode = NestingNode>
   extends RecursiveScope<NestedScope<T>>,
-    ScopeWithTerms,
+    ScopeWithTerms<ImportedTermBinding | LocalTermBinding>,
     ScopeWithTypes,
     ScopeWithErrors,
     ScopeWithNode<T> {
@@ -124,10 +142,28 @@ export const buildGlobalScope = <T extends FileScope | TypedFileScope>(
   errors,
 })
 
-export const buildFileScope = (
-  dependency: Dependency,
-  node: ProgramNode,
-): FileScope => ({
+export const buildDeclarationFileScope = (
+  dependency: DeclarationDependency,
+  source: AbsolutePath,
+  node: Declaration.ProgramNode,
+): DeclarationFileScope => ({
+  kind: ScopeKind.File,
+  dependency,
+  source,
+  node,
+  dependencies: [],
+  terms: [],
+  types: [],
+  typeVariables: [],
+  errors: [],
+})
+
+export const buildSourceFileScope = <
+  T extends NestingNode | never = NestingNode
+>(
+  dependency: SourceDependency,
+  node: Source.ProgramNode,
+): SourceFileScope<T> => ({
   kind: ScopeKind.File,
   dependency,
   node,
@@ -139,12 +175,24 @@ export const buildFileScope = (
   errors: [],
 })
 
-export const buildTypedFileScope = (
-  fileScope: FileScope,
+export const buildTypedDeclarationFileScope = (
+  fileScope: DeclarationFileScope,
   scopes: TypedNestedScope[],
-  typedNode: TypedNode<ProgramNode>,
+  typedNode: TypedNode<Declaration.ProgramNode>,
   typeAssignments: TypeAssignment[],
-): TypedFileScope => ({
+): TypedDeclarationFileScope => ({
+  ...fileScope,
+  scopes,
+  typedNode,
+  typeAssignments,
+})
+
+export const buildTypedSourceFileScope = (
+  fileScope: SourceFileScope,
+  scopes: TypedNestedScope[],
+  typedNode: TypedNode<Source.ProgramNode>,
+  typeAssignments: TypeAssignment[],
+): TypedSourceFileScope => ({
   ...fileScope,
   scopes,
   typedNode,
@@ -173,19 +221,19 @@ export const buildTypedNestedScope = <T extends NestingTermLevelNode>(
   typeAssignments,
 })
 
-export const isFileScope = <T extends FileScope>(
-  scope: T | { kind: ScopeKind },
-): scope is T => scope.kind === ScopeKind.File
+export const isFileScope = <T extends { kind: ScopeKind }>(
+  scope: T,
+): scope is T & FileScope => scope.kind === ScopeKind.File
 
-export const isNestingNode = (node: NamedNode): node is NestingNode => {
+export const isNestingNode = (node: Source.NamedNode): node is NestingNode => {
   switch (node.type) {
-    case SyntaxType.AbstractionBranch:
-    case SyntaxType.Block:
-    case SyntaxType.Class:
-    case SyntaxType.ListComprehension:
-    case SyntaxType.RefinementType:
-    case SyntaxType.TypeAlias:
-    case SyntaxType.When:
+    case Source.SyntaxType.AbstractionBranch:
+    case Source.SyntaxType.Block:
+    case Source.SyntaxType.Class:
+    case Source.SyntaxType.ListComprehension:
+    case Source.SyntaxType.RefinementType:
+    case Source.SyntaxType.TypeAlias:
+    case Source.SyntaxType.When:
       return true
     default:
       return false

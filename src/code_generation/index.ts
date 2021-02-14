@@ -34,15 +34,18 @@ import {
 } from 'tree-sitter-tony/tony'
 import { Emit, buildFileEmit } from '../types/emit'
 import {
+  DeclarationFileScope,
   GlobalScope,
   NestingTermLevelNode,
   TypedFileScope,
+  TypedSourceFileScope,
   isFileScope,
 } from '../types/analyze/scopes'
 import { LogLevel, log } from '../logger'
 import { NotImplementedError, assert } from '../types/errors/internal'
 import {
   SourceDependency,
+  isDeclarationDependency,
   isSourceDependency,
 } from '../types/analyze/dependencies'
 import { filterFileScopeByTermScopes, findScopeOfNode } from '../util/scopes'
@@ -92,15 +95,24 @@ export const generateCode = (
 ): Emit => {
   log(config, LogLevel.Info, 'Generating code')
 
-  const sourceDependencies = globalScope.scopes.filter((fileScope) =>
+  const declarationScopes = globalScope.scopes.filter((fileScope) =>
+    isDeclarationDependency(fileScope.dependency),
+  ) as DeclarationFileScope[]
+  const sourceScopes = globalScope.scopes.filter((fileScope) =>
     isSourceDependency(fileScope.dependency),
-  ) as TypedFileScope<SourceDependency>[]
-  return sourceDependencies.map(generateCodeForFile)
+  ) as TypedSourceFileScope[]
+  return sourceScopes.map((fileScope) =>
+    generateCodeForFile(fileScope, declarationScopes),
+  )
 }
 
-const generateCodeForFile = (fileScope: TypedFileScope<SourceDependency>) => {
+const generateCodeForFile = (
+  fileScope: TypedSourceFileScope,
+  declarationScopes: DeclarationFileScope[],
+) => {
   const initialState: State = {
     scopes: [filterFileScopeByTermScopes(fileScope)],
+    declarationScopes,
   }
   return buildFileEmit(
     fileScope.dependency,
@@ -121,6 +133,14 @@ const enterBlock = (
   return {
     ...state,
     scopes: [newScope, scope, ...scopes],
+  }
+}
+
+const peekBlock = (state: State): State => {
+  const [, ...scopes] = state.scopes
+  return {
+    ...state,
+    scopes,
   }
 }
 
@@ -290,13 +310,13 @@ const handleAbstractionBranch = (
   typedNode: TypedNode<AbstractionBranchNode>,
 ): string => {
   const parameters = generatePatterns(
-    state.scopes[0],
+    peekBlock(state),
     typedNode.elementNodes,
     handleNode,
   )
   const restParameter =
     typedNode.restNode &&
-    generatePattern(state.scopes[0], typedNode.restNode, handleNode)
+    generatePattern(peekBlock(state), typedNode.restNode, handleNode)
   const body = traverse(state, typedNode.bodyNode)
   return generateAbstractionBranch(parameters, restParameter, body)
 }
@@ -334,7 +354,7 @@ const handleAssignment = (
   typedNode: TypedNode<AssignmentNode>,
 ): string => {
   const pattern = generatePattern(
-    state.scopes[0],
+    peekBlock(state),
     typedNode.patternNode,
     handleNode,
   )
@@ -462,6 +482,7 @@ const handleProgram = (
   )
   const declarations = generateDeclarations(scope.terms)
   const imports = generateImports(
+    state.declarationScopes,
     scope.dependencies,
     scope.terms.filter(isImportedBinding),
   )
@@ -541,7 +562,7 @@ const handleTuple = (state: State, typedNode: TypedNode<TupleNode>): string => {
 
 const handleWhen = (state: State, typedNode: TypedNode<WhenNode>): string => {
   const patterns = typedNode.patternNodes.map((patternNode) =>
-    generatePattern(state.scopes[0], patternNode, handleNode),
+    generatePattern(peekBlock(state), patternNode, handleNode),
   )
   const body = traverse(state, typedNode.bodyNode)
   return generateWhen(patterns, body)

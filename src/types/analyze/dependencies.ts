@@ -10,15 +10,15 @@ export enum DependencyKind {
 }
 
 type AbstractDependency = {
-  file: AbsolutePath
+  readonly file: AbsolutePath
 }
 
 export type DeclarationDependency = AbstractDependency & {
-  kind: typeof DependencyKind.Declaration
+  readonly kind: typeof DependencyKind.Declaration
 }
 
 export type SourceDependency = AbstractDependency & {
-  kind: typeof DependencyKind.Source
+  readonly kind: typeof DependencyKind.Source
 }
 
 export type Dependency = DeclarationDependency | SourceDependency

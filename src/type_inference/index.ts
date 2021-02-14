@@ -19,7 +19,6 @@ import {
   NestingTermLevelNode,
   TypedFileScope,
   TypedNestedScope,
-  buildTypedFileScope,
   buildTypedNestedScope,
   isFileScope,
 } from '../types/analyze/scopes'
@@ -35,8 +34,7 @@ import { addErrorUnless, traverseScopes } from '../util/traverse'
 import { filterFileScopeByTermScopes, findScopeOfNode } from '../util/scopes'
 import { mapAnswers, reduceAnswers } from '../util/answers'
 import { Config } from '../config'
-import { Dependency } from '../types/analyze/dependencies'
-import { NonTypeLevelNode } from '../types/nodes'
+import { NodeWithInferrableType } from '../types/nodes'
 import { ResolvedType } from '../types/type_inference/categories'
 import { TypeAssignment } from '../types/analyze/bindings'
 import { buildAmbiguousTypeError } from '../types/errors/annotations'
@@ -44,7 +42,7 @@ import { buildTemporaryTypeVariable } from '../types/type_inference/types'
 import { isInstanceOf } from './instances'
 import { unifyConstraints } from './constraints'
 
-type State<T extends Dependency = Dependency> = {
+type State = {
   /**
    * A list of file scopes that are already typed.
    */
@@ -54,7 +52,7 @@ type State<T extends Dependency = Dependency> = {
    * symbol table.
    */
   scopes: (
-    | FileScope<T, NestingTermLevelNode>
+    | FileScope<NestingTermLevelNode>
     | NestedScope<NestingTermLevelNode>
   )[]
   /**
@@ -72,7 +70,7 @@ type State<T extends Dependency = Dependency> = {
  * Represents a type annotation (an "explanation") for a given node in the
  * syntax tree.
  */
-type Return<T extends NonTypeLevelNode = NonTypeLevelNode> = {
+type Return<T extends NodeWithInferrableType = NodeWithInferrableType> = {
   typedNode: TypedNode<T>
 }
 
@@ -136,7 +134,7 @@ const buildContext = (
   constraints: Constraints = buildConstraints(),
 ): Context => ({ type, constraints })
 
-const buildPrimitiveAnswer = <T extends NonTypeLevelNode>(
+const buildPrimitiveAnswer = <T extends NodeWithInferrableType>(
   state: State,
   node: T,
   type: PrimitiveType,
@@ -153,7 +151,10 @@ const buildPrimitiveAnswer = <T extends NonTypeLevelNode>(
     ),
   })
 
-const wrapAnswer = <T extends NonTypeLevelNode, U extends NonTypeLevelNode>(
+const wrapAnswer = <
+  T extends NodeWithInferrableType,
+  U extends NodeWithInferrableType
+>(
   answer: Answer<State, { results: Return<U>[] }>,
   callback: (
     state: State,
@@ -241,7 +242,7 @@ const nest = <T extends NestingTermLevelNode>(
   ])
 }
 
-const traverseAll = <T extends NonTypeLevelNode>(
+const traverseAll = <T extends NodeWithInferrableType>(
   state: State,
   nodes: T[],
   buildConcreteContext: () => Context = buildContext,
@@ -258,7 +259,7 @@ const traverseAll = <T extends NonTypeLevelNode>(
     [buildAnswer(state, { results: [] })],
   )
 
-const ensureIsInstanceOf = <T extends NonTypeLevelNode>(
+const ensureIsInstanceOf = <T extends NodeWithInferrableType>(
   answer: Answer<State, Return<T>>,
   { type, constraints }: Context,
 ): Answers<State, Return<T>> =>
@@ -275,7 +276,7 @@ const ensureIsInstanceOf = <T extends NonTypeLevelNode>(
       ),
   )
 
-const traverse = <T extends NonTypeLevelNode>(
+const traverse = <T extends NodeWithInferrableType>(
   state: State,
   node: T,
   context: Context,
@@ -301,7 +302,7 @@ const traverse = <T extends NonTypeLevelNode>(
 
 const handleNode = (
   state: State,
-  node: NonTypeLevelNode,
+  node: NodeWithInferrableType,
   context: Context,
 ): Answers<State, Return> => {
   switch (node.type) {
