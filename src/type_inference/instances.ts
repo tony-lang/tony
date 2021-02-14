@@ -111,6 +111,9 @@ export const isInstanceOf = <T extends AbstractState>(
     case TypeKind.TemporaryVariable:
     case TypeKind.Void:
       return specific === general ? [buildAnswer(state, { constraints })] : []
+
+    case TypeKind.Unknown:
+      return [buildAnswer(state, { constraints })]
   }
 }
 

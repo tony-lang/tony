@@ -144,6 +144,7 @@ export const applyConstraints = (
     case TypeKind.Number:
     case TypeKind.RegExp:
     case TypeKind.String:
+    case TypeKind.Unknown:
     case TypeKind.Void:
       return type
   }
