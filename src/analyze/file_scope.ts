@@ -481,6 +481,20 @@ const handleBlock = (state: State, node: BlockNode): State => {
   else return nest<BlockNode>(traverseAllChildren)(state, node)
 }
 
+const handleClass = nest<ClassNode>((state, node) => {
+  const [isExported, stateWithoutExport] = exportAndReset(state)
+  const name = getTypeName(node.nameNode.nameNode)
+  const stateWithName = traverse(stateWithoutExport, node.nameNode)
+  const stateWithMembers = traverseAll(
+    {
+      ...stateWithName,
+      nextBlockScopeAlreadyCreated: true,
+    },
+    node.memberNodes,
+  )
+  return addTypeBinding(name, isExported)(stateWithMembers, node)
+})
+
 const handleDestructuringPattern = (
   state: State,
   node: DestructuringPatternNode,
@@ -578,20 +592,6 @@ const handleIdentifierPatternAndShorthandMemberPattern = (
     importedFrom,
   )(stateWithDefault, node)
 }
-
-const handleClass = nest<ClassNode>((state, node) => {
-  const [isExported, stateWithoutExport] = exportAndReset(state)
-  const name = getTypeName(node.nameNode.nameNode)
-  const stateWithName = traverse(stateWithoutExport, node.nameNode)
-  const stateWithMembers = traverseAll(
-    {
-      ...stateWithName,
-      nextBlockScopeAlreadyCreated: true,
-    },
-    node.memberNodes,
-  )
-  return addTypeBinding(name, isExported)(stateWithMembers, node)
-})
 
 const handleListComprehension = nest<ListComprehensionNode>((state, node) => {
   const nestedStateWithGenerators = traverseAll(state, node.generatorNodes)

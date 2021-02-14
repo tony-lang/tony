@@ -204,18 +204,6 @@ export const buildAliasedType = <T extends AbstractState<Scope>>(
   }
 }
 
-const handleEnum = <T extends AbstractState<Scope>>(
-  state: T,
-  node: EnumNode,
-): Return<T, Type> => {
-  const [stateWithValues, deferredAssignments, valueTypes] = withState(
-    state,
-    node.valueNodes,
-    handleEnumValue,
-  )
-  return [stateWithValues, deferredAssignments, buildUnionType(valueTypes)]
-}
-
 const handleClass = <T extends AbstractState<Scope>>(
   state: T,
   node: ClassNode,
@@ -226,6 +214,18 @@ const handleClass = <T extends AbstractState<Scope>>(
     handleClassMember,
   )
   return [stateWithValues, deferredAssignments, buildClassType(memberTypes)]
+}
+
+const handleEnum = <T extends AbstractState<Scope>>(
+  state: T,
+  node: EnumNode,
+): Return<T, Type> => {
+  const [stateWithValues, deferredAssignments, valueTypes] = withState(
+    state,
+    node.valueNodes,
+    handleEnumValue,
+  )
+  return [stateWithValues, deferredAssignments, buildUnionType(valueTypes)]
 }
 
 /**
@@ -567,15 +567,6 @@ const handleUnionType = <T extends AbstractState<Scope>>(
   ]
 }
 
-const handleEnumValue = <T extends AbstractState<Scope>>(
-  state: T,
-  node: EnumValueNode,
-  i: number,
-): Return<T, Type> => {
-  if (node.valueNode) return handleTerm(state, node.valueNode)
-  return [state, [], buildLiteralType(i)]
-}
-
 const handleClassMember = <T extends AbstractState<Scope>>(
   state: T,
   node: ClassMemberNode,
@@ -589,6 +580,15 @@ const handleClassMember = <T extends AbstractState<Scope>>(
     deferredAssignments,
     buildProperty(buildLiteralType(getIdentifierName(node.nameNode)), type),
   ]
+}
+
+const handleEnumValue = <T extends AbstractState<Scope>>(
+  state: T,
+  node: EnumValueNode,
+  i: number,
+): Return<T, Type> => {
+  if (node.valueNode) return handleTerm(state, node.valueNode)
+  return [state, [], buildLiteralType(i)]
 }
 
 const handleMemberType = <T extends AbstractState<Scope>>(
