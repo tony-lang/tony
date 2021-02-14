@@ -4,16 +4,17 @@ import {
   PATTERN_MATCH_UTIL,
   RESOLVE_ABSTRACTION_BRANCH_UTIL,
 } from '../lib'
+import { indent } from './util'
 
 export const resolveAbstractionBranch = (
   value: string,
   branches: string[],
   elseBranch?: string,
 ): string => {
-  const joinedBranches = branches.join(',')
-  return `${RESOLVE_ABSTRACTION_BRANCH_UTIL}(${value},[${joinedBranches}],${
-    elseBranch ? `()=>${elseBranch}` : ''
-  })`
+  const joinedBranches = branches.join(',\n')
+  return `${RESOLVE_ABSTRACTION_BRANCH_UTIL}(${value}, [${indent(
+    joinedBranches,
+  )}],${elseBranch ? ` () => ${elseBranch}` : ''})`
 }
 
 export const curry = (
@@ -21,12 +22,13 @@ export const curry = (
   fn: string,
   isJS = false,
 ): string =>
-  `${isJS ? CURRY_JS_UTIL : CURRY_UTIL}((...${argumentsName})=>${fn})`
+  `${isJS ? CURRY_JS_UTIL : CURRY_UTIL}((...${argumentsName}) => ${fn})`
 
 export const patternMatchForAbstraction = (
   parameters: string,
   value: string,
-): string => `(match)=>{const ${parameters}=match;return ${value}}`
+): string =>
+  `(match) => {${indent(`const ${parameters} = match\nreturn ${value}`)}}`
 
 export const patternMatch = (
   pattern: string,
@@ -34,4 +36,8 @@ export const patternMatch = (
   defaults: string,
   value: string,
 ): string =>
-  `(()=>{const value=${value};${identifiers}=${PATTERN_MATCH_UTIL}({defaults:${defaults},allowMoreArguments:true,allowFewerArguments:false},${pattern},value);return value})()`
+  `(() => {${indent(
+    `const value = ${value}\n${identifiers} = ${PATTERN_MATCH_UTIL}(${indent(
+      `{ defaults: ${defaults}, allowMoreArguments: true, allowFewerArguments: false },\n${pattern},\nvalue`,
+    )})\nreturn value`,
+  )}})()`
