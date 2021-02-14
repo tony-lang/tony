@@ -37,6 +37,7 @@ export enum TypeKind {
   RegExp,
   String,
   Void,
+  Unknown,
 }
 
 /**

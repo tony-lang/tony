@@ -27,12 +27,20 @@ type VoidType = {
   readonly kind: typeof TypeKind.Void
 }
 
+/**
+ * The unitype.
+ */
+type UnknownType = {
+  readonly kind: typeof TypeKind.Unknown
+}
+
 export type PrimitiveType =
   | BooleanType
   | NumberType
   | RegExpType
   | StringType
   | VoidType
+  | UnknownType
 
 // ---- Constants ----
 
@@ -41,18 +49,21 @@ export const NUMBER_TYPE: NumberType = { kind: TypeKind.Number }
 export const REG_EXP_TYPE: RegExpType = { kind: TypeKind.RegExp }
 export const STRING_TYPE: StringType = { kind: TypeKind.String }
 export const VOID_TYPE: VoidType = { kind: TypeKind.Void }
+export const UNKNOWN_TYPE: UnknownType = { kind: TypeKind.Unknown }
 
 const BOOLEAN_TYPE_NAME = 'Boolean'
 const NUMBER_TYPE_NAME = 'Number'
 const REG_EXP_TYPE_NAME = 'RegularExpression'
 const STRING_TYPE_NAME = 'String'
 const VOID_TYPE_NAME = 'Void'
+const UNKNOWN_TYPE_NAME = 'Unknown'
 const PRIMITIVE_TYPE_NAMES: PrimitiveTypeName[] = [
   BOOLEAN_TYPE_NAME,
   NUMBER_TYPE_NAME,
   REG_EXP_TYPE_NAME,
   STRING_TYPE_NAME,
   VOID_TYPE_NAME,
+  UNKNOWN_TYPE_NAME,
 ]
 
 type PrimitiveTypeName =
@@ -61,6 +72,7 @@ type PrimitiveTypeName =
   | typeof REG_EXP_TYPE_NAME
   | typeof STRING_TYPE_NAME
   | typeof VOID_TYPE_NAME
+  | typeof UNKNOWN_TYPE_NAME
 
 // ---- Factories ----
 
@@ -76,6 +88,8 @@ export const findPrimitiveType = (name: PrimitiveTypeName): PrimitiveType => {
       return STRING_TYPE
     case VOID_TYPE_NAME:
       return VOID_TYPE
+    case UNKNOWN_TYPE_NAME:
+      return UNKNOWN_TYPE
   }
 }
 
