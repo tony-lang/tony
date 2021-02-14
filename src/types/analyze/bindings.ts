@@ -1,9 +1,5 @@
 import {
-  Constraints,
-  DeferredTypeVariableAssignment,
-} from '../type_inference/constraints'
-import { DeclaredType, ResolvedType, Type } from '../type_inference/categories'
-import {
+  ClassNode,
   DestructuringPatternNode,
   EnumNode,
   EnumValueNode,
@@ -11,7 +7,6 @@ import {
   IdentifierPatternNameNode,
   IdentifierPatternNode,
   ImportTypeNode,
-  InterfaceNode,
   MemberTypeNode,
   RefinementTypeDeclarationNode,
   ShorthandMemberPatternNode,
@@ -19,6 +14,11 @@ import {
   TypeAliasNode,
   TypeVariableDeclarationNode,
 } from 'tree-sitter-tony/tony'
+import {
+  Constraints,
+  DeferredTypeVariableAssignment,
+} from '../type_inference/constraints'
+import { DeclaredType, ResolvedType, Type } from '../type_inference/categories'
 import { AbsolutePath } from '../path'
 import { TypeVariable } from '../type_inference/types'
 
@@ -35,7 +35,7 @@ export type TermBindingNode =
   | RefinementTypeDeclarationNode
   | MemberTypeNode
 
-export type TypeBindingNode = EnumNode | InterfaceNode | TypeAliasNode
+export type TypeBindingNode = ClassNode | EnumNode | TypeAliasNode
 
 type AbstractBinding = {
   readonly name: string

@@ -105,6 +105,13 @@ export const applyConstraints = (
   constraints: Constraints,
 ): ResolvedType => {
   switch (type.kind) {
+    case TypeKind.Class:
+      return {
+        ...type,
+        members: type.members.map((member) =>
+          applyConstraintsToProperty(member, constraints),
+        ),
+      }
     case TypeKind.Curried:
       return {
         ...type,
@@ -117,13 +124,6 @@ export const applyConstraints = (
         ...type,
         parameters: type.parameters.map((type) =>
           applyConstraints(type, constraints),
-        ),
-      }
-    case TypeKind.Interface:
-      return {
-        ...type,
-        members: type.members.map((member) =>
-          applyConstraintsToProperty(member, constraints),
         ),
       }
     case TypeKind.Variable:

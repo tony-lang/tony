@@ -1,9 +1,10 @@
 import {
   AccessType,
+  ClassType,
   ConditionalType,
   CurriedType,
-  InterfaceType,
   IntersectionType,
+  Keyof,
   ObjectType,
   ParametricType,
   RefinedType,
@@ -33,14 +34,16 @@ export const normalize = <T extends AbstractState>(
   switch (type.kind) {
     case TypeKind.Access:
       return handleAccessType(state, type)
+    case TypeKind.Class:
+      return handleClassType(state, type)
     case TypeKind.Conditional:
       return handleConditionalType(state, type)
     case TypeKind.Curried:
       return handleCurriedType(state, type)
-    case TypeKind.Interface:
-      return handleInterfaceType(state, type)
     case TypeKind.Intersection:
       return handleIntersectionType(state, type)
+    case TypeKind.Keyof:
+      return handleKeyof(state, type)
     case TypeKind.Object:
       return handleObjectType(state, type)
     case TypeKind.Parametric:
@@ -63,6 +66,13 @@ const handleAccessType = <T extends AbstractState>(
   throw new NotImplementedError('Cannot normalize access types yet.')
 }
 
+const handleClassType = <T extends AbstractState>(
+  state: T, // eslint-disable-line @typescript-eslint/no-unused-vars
+  type: ClassType, // eslint-disable-line @typescript-eslint/no-unused-vars
+): Answers<T, Return> => {
+  throw new NotImplementedError('Cannot normalize interface types yet.')
+}
+
 const handleConditionalType = <T extends AbstractState>(
   state: T, // eslint-disable-line @typescript-eslint/no-unused-vars
   type: ConditionalType, // eslint-disable-line @typescript-eslint/no-unused-vars
@@ -77,18 +87,18 @@ const handleCurriedType = <T extends AbstractState>(
   throw new NotImplementedError('Cannot normalize curried types yet.')
 }
 
-const handleInterfaceType = <T extends AbstractState>(
-  state: T, // eslint-disable-line @typescript-eslint/no-unused-vars
-  type: InterfaceType, // eslint-disable-line @typescript-eslint/no-unused-vars
-): Answers<T, Return> => {
-  throw new NotImplementedError('Cannot normalize interface types yet.')
-}
-
 const handleIntersectionType = <T extends AbstractState>(
   state: T, // eslint-disable-line @typescript-eslint/no-unused-vars
   type: IntersectionType, // eslint-disable-line @typescript-eslint/no-unused-vars
 ): Answers<T, Return> => {
   throw new NotImplementedError('Cannot normalize intersection types yet.')
+}
+
+const handleKeyof = <T extends AbstractState>(
+  state: T, // eslint-disable-line @typescript-eslint/no-unused-vars
+  type: Keyof, // eslint-disable-line @typescript-eslint/no-unused-vars
+): Answers<T, Return> => {
+  throw new NotImplementedError('Cannot normalize keyofs yet.')
 }
 
 const handleObjectType = <T extends AbstractState>(

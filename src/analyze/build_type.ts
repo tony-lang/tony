@@ -1,14 +1,15 @@
 import {
   AccessTypeNode,
   BooleanNode,
+  ClassMemberNode,
+  ClassNode,
   ConditionalTypeNode,
   CurriedTypeNode,
   EnumNode,
   EnumValueNode,
   IdentifierNode,
-  InterfaceMemberNode,
-  InterfaceNode,
   IntersectionTypeNode,
+  KeyofNode,
   ListTypeNode,
   MapTypeNode,
   MemberTypeNode,
@@ -49,11 +50,12 @@ import { NotImplementedError, assert } from '../types/errors/internal'
 import {
   Property,
   buildAccessType,
+  buildClassType,
   buildConditionalType,
   buildCurriedType,
   buildGenericType,
-  buildInterfaceType,
   buildIntersectionType,
+  buildKeyof,
   buildObjectType,
   buildParametricType,
   buildProperty,
@@ -86,6 +88,7 @@ type InternalTypeNode =
   | ConditionalTypeNode
   | CurriedTypeNode
   | IntersectionTypeNode
+  | KeyofNode
   | ListTypeNode
   | MapTypeNode
   | ParametricTypeNode
@@ -161,11 +164,11 @@ export const buildAliasType = <T extends AbstractState<Scope>>(
   node: TypeBindingNode,
 ): Return<T, DeclaredType> => {
   switch (node.type) {
-    case SyntaxType.Enum:
-      return [state, [], handleTypeNode(node.nameNode)]
-    case SyntaxType.Interface:
+    case SyntaxType.Class:
     case SyntaxType.TypeAlias:
       return handleTypeDeclaration(state, node.nameNode)
+    case SyntaxType.Enum:
+      return [state, [], handleTypeNode(node.nameNode)]
   }
 }
 
@@ -192,13 +195,25 @@ export const buildAliasedType = <T extends AbstractState<Scope>>(
   node: TypeBindingNode,
 ): Return<T, Type> => {
   switch (node.type) {
+    case SyntaxType.Class:
+      return handleClass(state, node)
     case SyntaxType.Enum:
       return handleEnum(state, node)
-    case SyntaxType.Interface:
-      return handleInterface(state, node)
     case SyntaxType.TypeAlias:
       return buildType(state, node.typeNode)
   }
+}
+
+const handleClass = <T extends AbstractState<Scope>>(
+  state: T,
+  node: ClassNode,
+): Return<T, Type> => {
+  const [stateWithValues, deferredAssignments, memberTypes] = withState(
+    state,
+    node.memberNodes,
+    handleClassMember,
+  )
+  return [stateWithValues, deferredAssignments, buildClassType(memberTypes)]
 }
 
 const handleEnum = <T extends AbstractState<Scope>>(
@@ -211,18 +226,6 @@ const handleEnum = <T extends AbstractState<Scope>>(
     handleEnumValue,
   )
   return [stateWithValues, deferredAssignments, buildUnionType(valueTypes)]
-}
-
-const handleInterface = <T extends AbstractState<Scope>>(
-  state: T,
-  node: InterfaceNode,
-): Return<T, Type> => {
-  const [stateWithValues, deferredAssignments, memberTypes] = withState(
-    state,
-    node.memberNodes,
-    handleInterfaceMember,
-  )
-  return [stateWithValues, deferredAssignments, buildInterfaceType(memberTypes)]
 }
 
 /**
@@ -242,6 +245,8 @@ export const buildType = <T extends AbstractState<Scope>>(
       return handleCurriedType(state, node)
     case SyntaxType.IntersectionType:
       return handleIntersectionType(state, node)
+    case SyntaxType.Keyof:
+      return handleKeyof(state, node)
     case SyntaxType.ListType:
       return handleListType(state, node)
     case SyntaxType.MapType:
@@ -380,6 +385,17 @@ const handleIntersectionType = <T extends AbstractState<Scope>>(
     ),
     flattenType(buildIntersectionType([left, right])),
   ]
+}
+
+const handleKeyof = <T extends AbstractState<Scope>>(
+  state: T,
+  node: KeyofNode,
+): Return<T, Type> => {
+  const [stateWithType, deferredAssignments, type] = buildType(
+    state,
+    node.typeNode,
+  )
+  return [stateWithType, deferredAssignments, buildKeyof(type)]
 }
 
 const handleListType = <T extends AbstractState<Scope>>(
@@ -551,18 +567,9 @@ const handleUnionType = <T extends AbstractState<Scope>>(
   ]
 }
 
-const handleEnumValue = <T extends AbstractState<Scope>>(
+const handleClassMember = <T extends AbstractState<Scope>>(
   state: T,
-  node: EnumValueNode,
-  i: number,
-): Return<T, Type> => {
-  if (node.valueNode) return handleTerm(state, node.valueNode)
-  return [state, [], buildLiteralType(i)]
-}
-
-const handleInterfaceMember = <T extends AbstractState<Scope>>(
-  state: T,
-  node: InterfaceMemberNode,
+  node: ClassMemberNode,
 ): Return<T, Property<Type>> => {
   const [stateWithType, deferredAssignments, type] = buildType(
     state,
@@ -573,6 +580,15 @@ const handleInterfaceMember = <T extends AbstractState<Scope>>(
     deferredAssignments,
     buildProperty(buildLiteralType(getIdentifierName(node.nameNode)), type),
   ]
+}
+
+const handleEnumValue = <T extends AbstractState<Scope>>(
+  state: T,
+  node: EnumValueNode,
+  i: number,
+): Return<T, Type> => {
+  if (node.valueNode) return handleTerm(state, node.valueNode)
+  return [state, [], buildLiteralType(i)]
 }
 
 const handleMemberType = <T extends AbstractState<Scope>>(

@@ -80,12 +80,12 @@ export const isInstanceOf = <T extends AbstractState>(
     )
 
   switch (general.kind) {
+    case TypeKind.Class:
+      throw new NotImplementedError(
+        'Cannot determine assignability to classes yet.',
+      )
     case TypeKind.Curried:
       return isInstanceOfCurriedType(state, specific, general, constraints)
-    case TypeKind.Interface:
-      throw new NotImplementedError(
-        'Cannot determine assignability to interfaces yet.',
-      )
     case TypeKind.Intersection:
     case TypeKind.Union:
       return isInstanceOfIntersectionOrUnion(
