@@ -8,6 +8,7 @@ import {
 import { TRANSFORM_IDENTIFIER_PATTERN } from '../lib/pattern_match'
 import { TRANSFORM_PLACEHOLDER_ARGUMENT } from '../lib/curry'
 import { UTILS_IMPORT } from '../lib'
+import { indent } from './util'
 
 const ARGUMENTS_NAME = '$ARGS'
 const INTERNAL_TEMP_TOKEN = '$INTERNAL_TEMP_TOKEN'
@@ -36,7 +37,7 @@ export const generateAbstractionBranch = (
     parameterDefaultsPatterns,
     restParameter && restParameter[2],
   )
-  return `[${pattern},${defaultsPattern},${patternMatchForAbstraction(
+  return `[${pattern}, ${defaultsPattern}, ${patternMatchForAbstraction(
     identifiersPattern,
     body,
   )}]`
@@ -46,7 +47,7 @@ export const generateAccess = (name: string, value: string): string =>
   `${name}[${value}]`
 
 export const generateApplication = (value: string, args: string[]): string => {
-  const joinedArgs = args.join(',')
+  const joinedArgs = args.join(', ')
   return `${value}(${joinedArgs})`
 }
 
@@ -65,22 +66,23 @@ export const generateBlock = (
 ): string => {
   const returnValue = terms.pop()
   const explicitReturn = endsWithReturn ? '' : 'return '
-  return `(()=>{${declarations};${terms.join(
-    ';',
-  )};${explicitReturn}${returnValue}})()`
+  const joinedTerms = terms.join('\n')
+  return `(() => {${indent(
+    `${declarations}\n${joinedTerms}\n${explicitReturn}${returnValue}`,
+  )}})()`
 }
 
 export const generateCase = resolveAbstractionBranch
 
 export const generateEliseIf = (condition: string, body: string): string =>
-  `else if(${condition}){return ${body}}`
+  ` else if (${condition}) {${indent(`return ${body}`)}}`
 
 export const generateGenerator = (
   name: string,
   value: string,
   condition?: string,
 ): string =>
-  `${value}.map((${name})=>${
+  `${value}.map((${name}) => ${
     condition ? `!${condition} ? "${INTERNAL_TEMP_TOKEN}" : ` : ''
   }`
 
@@ -94,13 +96,15 @@ export const generateIf = (
   alternativeBody?: string,
 ): string => {
   const joinedAlternativeBodies = alternativeBodies.join('')
-  return `(()=>{if(${condition}){return ${body}}${joinedAlternativeBodies}${
-    alternativeBody ? `else{return ${alternativeBody}}` : ''
+  return `(() => {if (${condition}) {${indent(
+    `return ${body}`,
+  )}}${joinedAlternativeBodies}${
+    alternativeBody ? ` else {${indent(`return ${alternativeBody}`)}}` : ''
   }})()`
 }
 
 export const generateList = (elements: string[]): string =>
-  `[${elements.join(',')}]`
+  `[${elements.join(', ')}]`
 
 export const generateListComprehension = (
   generators: string[],
@@ -108,16 +112,16 @@ export const generateListComprehension = (
 ): string =>
   `${generators}${body}${')'.repeat(generators.length)}.flat(${
     generators.length - 1
-  }).filter(e=>e!=="${INTERNAL_TEMP_TOKEN}")`
+  }).filter((e) => e !== "${INTERNAL_TEMP_TOKEN}")`
 
 export const generateListPattern = (
   elements: string[],
   rest?: string,
 ): string =>
-  rest ? `[${elements.join(',')},...${rest}]` : `[${elements.join(',')}]`
+  rest ? `[${elements.join(', ')}, ...${rest}]` : `[${elements.join(', ')}]`
 
 export const generateMember = (key: string, value: string): string =>
-  `[${key}]:${value}`
+  `[${key}]: ${value}`
 
 export const generateProgram = (
   declarations: string,
@@ -125,8 +129,8 @@ export const generateProgram = (
   exports: string,
   terms: string[],
 ): string => {
-  const joinedTerms = terms.join(';')
-  return `${UTILS_IMPORT};${imports};${declarations};${joinedTerms};${exports}`
+  const joinedTerms = terms.join('\n')
+  return `${UTILS_IMPORT}\n${imports}\n${declarations}\n${joinedTerms}\n${exports}`
 }
 
 export const generateReturn = (value: string): string => `return ${value}`
@@ -135,25 +139,27 @@ export const generateShorthandAccessIdentifier = (name: string): string =>
   `'${name}'`
 
 export const generateShorthandMember = (name: string, value: string): string =>
-  `${name}:${value}`
+  `${name}: ${value}`
 
 export const generateShorthandMemberPattern = (
   name: string,
   value: string,
-): string => `"${name}":"${value}"`
+): string => `"${name}": "${value}"`
 
 export const generateSpread = (value: string): string => `...${value}`
 
 export const generateString = (content: string): string => `\`${content}\``
 
 export const generateStruct = (members: string[]): string =>
-  `{${members.join(',')}}`
+  `{${indent(members.join(',\n'))}}`
 
 export const generateStructPattern = (
   members: string[],
   rest?: string,
 ): string =>
-  rest ? `{${members.join(',')},...${rest}}` : `{${members.join(',')}}`
+  rest
+    ? `{${indent(`${members.join(',\n')},\n...${rest}`)}}`
+    : `{${indent(members.join(',\n'))}}`
 
 export const generateWhen = (
   patterns: GeneratedPattern[],
@@ -162,6 +168,8 @@ export const generateWhen = (
   patterns
     .map(
       ([pattern, identifiersPattern, defaultsPattern]) =>
-        `[${pattern},${defaultsPattern},(match)=>{const [${identifiersPattern}]=match;return ${body}}]`,
+        `[${pattern},${defaultsPattern},(match) => {${indent(
+          `const [${identifiersPattern}] = match\nreturn ${body}`,
+        )}}]`,
     )
-    .join(',')
+    .join(',\n')
