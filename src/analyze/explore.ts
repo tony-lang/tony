@@ -1,38 +1,72 @@
+import {
+  DeclarationDependency,
+  Dependency,
+  DependencyKind,
+  SourceDependency,
+  buildSourceDependency,
+} from '../types/analyze/dependencies'
 import { LogLevel, log } from '../logger'
-import { AbsolutePath } from '../types/path'
+import { parseDeclaration, parseSource } from '../parse'
 import { Config } from '../config'
+import { SyntaxType as DeclarationSyntaxType } from 'tree-sitter-tony/dtn'
 import { FileScope } from '../types/analyze/scopes'
-import { SyntaxType } from 'tree-sitter-tony/tony'
+import { SyntaxType as SourceSyntaxType } from 'tree-sitter-tony/tony'
 import { assert } from '../types/errors/internal'
-import { constructFileScope } from './file_scope'
+import { constructFileScopeFromDeclaration } from './declarations'
+import { constructFileScopeFromSource } from './sources'
 import { graphSearch } from '../util/graph_search'
-import { parse } from '../parse'
 
 export const analyzeFiles = (config: Config): Promise<FileScope[]> =>
-  graphSearch<AbsolutePath, FileScope[]>(
-    async (fileScopes, file, exploredFiles) => {
-      const fileScope = await analyzeFile(config, file)
+  graphSearch<Dependency, FileScope[]>(
+    async (fileScopes, dependency, exploredDependencies) => {
+      const fileScope = await analyzeDependency(config, dependency)
       const newFileScopes = [...fileScopes, fileScope]
       const newVertices = fileScope.dependencies.filter(
-        (file) => !exploredFiles.includes(file),
+        (dependency) => !exploredDependencies.includes(dependency),
       )
 
       return [newFileScopes, newVertices]
     },
     [],
-    [config.entry],
+    [buildSourceDependency(config.entry)],
   )
 
-const analyzeFile = async (
+const analyzeDependency = (
   config: Config,
-  file: AbsolutePath,
+  dependency: Dependency,
 ): Promise<FileScope> => {
-  log(config, LogLevel.Info, 'Building file scope of', file)
+  switch (dependency.kind) {
+    case DependencyKind.Declaration:
+      return analyzeDeclaration(config, dependency)
+    case DependencyKind.Source:
+      return analyzeSource(config, dependency)
+  }
+}
 
-  const tree = await parse(config, file)
+const analyzeDeclaration = async (
+  config: Config,
+  dependency: DeclarationDependency,
+): Promise<FileScope> => {
+  log(config, LogLevel.Info, 'Building file scope of', dependency.file)
+
+  const tree = await parseDeclaration(config, dependency)
   assert(
-    tree.rootNode.type === SyntaxType.Program,
+    tree.rootNode.type === DeclarationSyntaxType.Program,
     'The root node should be a program node.',
   )
-  return constructFileScope(config, file, tree.rootNode)
+  return constructFileScopeFromDeclaration(config, dependency, tree.rootNode)
+}
+
+const analyzeSource = async (
+  config: Config,
+  dependency: SourceDependency,
+): Promise<FileScope> => {
+  log(config, LogLevel.Info, 'Building file scope of', dependency.file)
+
+  const tree = await parseSource(config, dependency)
+  assert(
+    tree.rootNode.type === SourceSyntaxType.Program,
+    'The root node should be a program node.',
+  )
+  return constructFileScopeFromSource(config, dependency, tree.rootNode)
 }

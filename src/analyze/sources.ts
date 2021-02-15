@@ -1,4 +1,3 @@
-import { AbsolutePath, buildRelativePath } from '../types/path'
 import {
   AbstractionBranchNode,
   AssignmentNode,
@@ -8,14 +7,9 @@ import {
   EnumNode,
   EnumValueNode,
   ExportNode,
-  ExportedImportNode,
   GeneratorNode,
   IdentifierNode,
-  IdentifierPatternNameNode,
   IdentifierPatternNode,
-  ImportIdentifierNode,
-  ImportNode,
-  ImportTypeNode,
   ListComprehensionNode,
   ProgramNode,
   RefinementTypeDeclarationNode,
@@ -29,110 +23,68 @@ import {
   WhenNode,
 } from 'tree-sitter-tony/tony'
 import {
-  FileScope,
   NestedScope,
   NestingNode,
-  buildFileScope,
+  SourceFileScope,
   buildNestedScope,
+  buildSourceFileScope,
   isFileScope,
 } from '../types/analyze/scopes'
-import {
-  LocalTypeBinding,
-  TermBinding,
-  TermBindingNode,
-  TypeBinding,
-  TypeBindingNode,
-  buildImportedTermBinding,
-  buildImportedTypeBinding,
-  buildLocalTermBinding,
-  buildLocalTypeBinding,
-  buildTypeVariableBinding,
-} from '../types/analyze/bindings'
 import { NodeWithinProgram, isNodeWithinProgram } from '../types/nodes'
 import {
-  addError,
-  addErrorUnless,
-  conditionalApply,
-  ensure,
-  ensureAsync,
-} from '../util/traverse'
-import { buildAliasType, buildAliasedType, buildTypes } from './build_type'
+  SourceDependency,
+  isSourceDependency,
+} from '../types/analyze/dependencies'
+import { addError, conditionalApply, ensure } from '../util/traverse'
+import {
+  addTermBinding,
+  addTypeBinding,
+  flushTermBindings,
+  handleIdentifierPatternName,
+} from './util'
 import {
   buildDuplicateBindingError,
   buildExportOutsideFileScopeError,
-  buildExternalTypeImportError,
-  buildImportOutsideFileScopeError,
   buildIncompleteWhenPatternError,
   buildMissingBindingError,
   buildRefinementTypeDeclarationOutsideRefinementTypeError,
-  buildUnknownFileError,
 } from '../types/errors/annotations'
 import {
   buildTypeVariable,
   buildUnionType,
 } from '../types/type_inference/types'
-import { fileIsExternal, fileMayBeImported } from '../util/paths'
-import { findBinding, findBindings, itemsMissingFrom } from '../util/bindings'
+import { findBinding, itemsMissingFrom } from '../util/bindings'
 import {
   getIdentifierName,
   getTypeName,
   getTypeVariableName,
-  parseRawString,
 } from '../util/parse'
 import { getTerms, getTypeVariables, getTypes } from '../util/scopes'
+import { AbstractState } from './types'
 import { Config } from '../config'
 import { assert } from '../types/errors/internal'
 import { buildConstraintsFromType } from '../util/types'
-import { buildPromise } from '../util'
-import { isPrimitiveTypeName } from '../types/type_inference/primitive_types'
-import { mergeDeferredAssignments } from '../type_inference/constraints'
-import { resolveRelativePath } from './resolve'
+import { buildTypeVariableBinding } from '../types/analyze/bindings'
+import { buildTypes } from './build_type'
+import { handleImports } from './imports'
 
-type ImportedBindingConfig = { file: AbsolutePath; originalName?: string }
-
-type State = {
-  config: Config
-  file: AbsolutePath
+type State = AbstractState & {
   /**
    * A stack of all scopes starting with the closest scope and ending with the
    * symbol table. Scopes are collected recursively.
    */
-  scopes: (FileScope | NestedScope)[]
-  /**
-   * Buffered term-level bindings that have been defined but should not be
-   * accessed yet (e.g. within patterns).
-   */
-  terms: TermBinding[]
-  /**
-   * When enabled the next declared bindings will be exported.
-   */
-  exportNextBindings?: boolean
-  /**
-   * When enabled the next declared bindings will be imported from the given
-   * path.
-   */
-  importNextBindingsFrom?: ImportedBindingConfig
-  /**
-   * When enabled the next bindings stemming from identifier patterns will be
-   * implicit.
-   */
-  nextIdentifierPatternBindingsImplicit?: boolean
-  /**
-   * Is set to true when the scope for the next block was already created. Then,
-   * no additional scope is created when encountering the next block.
-   */
-  nextBlockScopeAlreadyCreated?: boolean
+  scopes: (SourceFileScope | NestedScope)[]
 }
 
-export const constructFileScope = async (
+export const constructFileScopeFromSource = async (
   config: Config,
-  file: AbsolutePath,
+  dependency: SourceDependency,
   node: ProgramNode,
-): Promise<FileScope> => {
-  const initialFileScope = buildFileScope(file, node)
+): Promise<SourceFileScope> => {
+  const initialFileScope = buildSourceFileScope(dependency, node)
   const initialState: State = {
     config,
-    file,
+    file: dependency.file,
     scopes: [initialFileScope],
     terms: [],
   }
@@ -142,29 +94,11 @@ export const constructFileScope = async (
     scopes: [fileScope],
   } = traverseAll(stateWithImports, node.termNodes)
   assert(
-    isFileScope(fileScope),
+    isFileScope(fileScope) && isSourceDependency(fileScope.dependency),
     'Traverse should arrive at the top-level file scope.',
   )
 
-  return fileScope
-}
-
-const addDependency = (state: State, absolutePath: AbsolutePath): State => {
-  const [fileScope] = state.scopes
-
-  assert(
-    isFileScope(fileScope),
-    'Dependencies may only be added to a file-level scope.',
-  )
-
-  const newFileScope = {
-    ...fileScope,
-    dependencies: [...fileScope.dependencies, absolutePath],
-  }
-  return {
-    ...state,
-    scopes: [newFileScope],
-  }
+  return fileScope as SourceFileScope
 }
 
 const enterBlock = (state: State, node: NestingNode): State => {
@@ -201,74 +135,12 @@ const nest = <T extends NestingNode>(
   return leaveBlock(updatedState)
 }
 
-const flushTermBindings = (state: State): State => {
-  const [scope, ...parentScopes] = state.scopes
-  const newScope = {
-    ...scope,
-    terms: [...scope.terms, ...state.terms],
-  }
-  return {
-    ...state,
-    scopes: [newScope, ...parentScopes],
-    terms: [],
-  }
-}
-
-const addTermBinding = (
-  name: string,
-  isImplicit: boolean,
-  isExported = false,
-  importedFrom?: ImportedBindingConfig,
-) => (state: State, node: TermBindingNode) => {
-  const index =
-    findBindings(name, [state.terms]).length +
-    findBindings(name, state.scopes.map(getTerms)).length
-  const binding = importedFrom
-    ? buildImportedTermBinding(
-        importedFrom.file,
-        name,
-        index,
-        importedFrom.originalName,
-        node,
-        isImplicit,
-        isExported,
-      )
-    : buildLocalTermBinding(name, index, node, isImplicit, isExported)
-  return {
-    ...state,
-    terms: [...state.terms, binding],
-  }
-}
-
-const addTypeBinding = (
-  name: string,
-  isExported = false,
-  importedFrom?: ImportedBindingConfig,
-) =>
-  ensure<State, TypeBindingNode | ImportTypeNode>(
-    (state) =>
-      findBinding(name, state.scopes.map(getTypes)) === undefined &&
-      !isPrimitiveTypeName(name),
-    (state, node) => {
-      const [stateWithBinding, binding] = buildTypeBinding(
-        state,
-        node,
-        name,
-        isExported,
-        importedFrom,
-      )
-      const [scope, ...parentScopes] = stateWithBinding.scopes
-      const newScope = {
-        ...scope,
-        types: [...scope.types, binding],
-      }
-      return {
-        ...stateWithBinding,
-        scopes: [newScope, ...parentScopes],
-      }
-    },
-    buildDuplicateBindingError(name),
-  )
+const exportAndReset = (
+  state: State,
+): [isExported: boolean, newState: State] => [
+  !!state.exportNextBindings,
+  { ...state, exportNextBindings: undefined },
+]
 
 const addTypeVariableBinding = (name: string) =>
   ensure<State, TypeVariableDeclarationNode>(
@@ -303,81 +175,6 @@ const addTypeVariableBinding = (name: string) =>
     },
     buildDuplicateBindingError(name),
   )
-
-const buildTypeBinding = (
-  state: State,
-  node: TypeBindingNode | ImportTypeNode,
-  name: string,
-  isExported: boolean,
-  importedFrom: ImportedBindingConfig | undefined,
-): [newState: State, binding: TypeBinding] => {
-  if (importedFrom) {
-    assert(
-      node.type === SyntaxType.ImportType,
-      'node should be an imported type when importConfig is given',
-    )
-    return [
-      addErrorUnless<State>(
-        !fileIsExternal(importedFrom.file),
-        buildExternalTypeImportError(),
-      )(state, node),
-      buildImportedTypeBinding(
-        importedFrom.file,
-        name,
-        importedFrom.originalName,
-        node,
-        isExported,
-      ),
-    ]
-  }
-
-  assert(
-    node.type === SyntaxType.Class ||
-      node.type === SyntaxType.Enum ||
-      node.type === SyntaxType.TypeAlias,
-    'node should be type binding node when importConfig is not given',
-  )
-  return buildTypesForLocalBinding(state, name, node, isExported)
-}
-
-const buildTypesForLocalBinding = (
-  state: State,
-  name: string,
-  node: TypeBindingNode,
-  isExported: boolean,
-): [newState: State, binding: LocalTypeBinding] => {
-  const [
-    stateWithAliasType,
-    deferredAssignmentsFromAliasType,
-    aliasType,
-  ] = buildAliasType(state, node)
-  const [
-    stateWithAliasedType,
-    deferredAssignmentsFromAliasedType,
-    aliasedType,
-  ] = buildAliasedType(stateWithAliasType, node)
-  return [
-    stateWithAliasedType,
-    buildLocalTypeBinding(
-      name,
-      aliasType,
-      aliasedType,
-      node,
-      mergeDeferredAssignments(
-        deferredAssignmentsFromAliasType,
-        deferredAssignmentsFromAliasedType,
-      ),
-      isExported,
-    ),
-  ]
-}
-
-const exportAndReset = (
-  state: State,
-): [isExported: boolean, newState: State] => [
-  !!state.exportNextBindings,
-  { ...state, exportNextBindings: undefined },
-]
 
 const traverseAll = (state: State, nodes: NodeWithinProgram[]): State =>
   nodes.reduce((acc, child) => traverse(acc, child), state)
@@ -708,128 +505,3 @@ const handleWhen = nest<WhenNode>((state, node) => {
     node.bodyNode,
   )
 })
-
-const handleImports = async (
-  state: State,
-  nodes: (ImportNode | ExportedImportNode)[],
-) =>
-  nodes.reduce<Promise<State>>(
-    async (acc, child) => handleImport(await acc, child),
-    buildPromise(state),
-  )
-
-const handleImport = ensureAsync<State, ImportNode | ExportedImportNode>(
-  (state) => isFileScope(state.scopes[0]),
-  async (state, node) => {
-    const source = buildRelativePath(
-      state.file,
-      '..',
-      parseRawString(node.sourceNode),
-    )
-    const resolvedSource = await resolveRelativePath(
-      state.config,
-      source,
-      fileMayBeImported,
-    )
-    if (resolvedSource === undefined)
-      return addError(state, node.sourceNode, buildUnknownFileError(source))
-
-    const isExported = node.type === SyntaxType.ExportedImport
-    const stateWithDependency = addDependency(state, resolvedSource)
-    const stateWithBindings = traverseImports(
-      {
-        ...stateWithDependency,
-        exportNextBindings: isExported,
-        importNextBindingsFrom: { file: resolvedSource },
-      },
-      node.importNodes,
-    )
-    const stateWithFlushedBindings = flushTermBindings(stateWithBindings)
-    return {
-      ...stateWithFlushedBindings,
-      exportNextBindings: undefined,
-      importNextBindingsFrom: undefined,
-    }
-  },
-  buildImportOutsideFileScopeError(),
-)
-
-const traverseImports = (
-  state: State,
-  nodes: (ImportIdentifierNode | ImportTypeNode)[],
-): State => nodes.reduce((acc, child) => traverseImport(acc, child), state)
-
-const traverseImport = (
-  state: State,
-  node: ImportIdentifierNode | ImportTypeNode,
-): State => {
-  switch (node.type) {
-    case SyntaxType.ImportIdentifier:
-      return handleImportIdentifier(state, node)
-    case SyntaxType.ImportType:
-      return handleImportType(state, node)
-  }
-}
-
-const handleImportIdentifier = (
-  state: State,
-  node: ImportIdentifierNode,
-): State => {
-  const { importNextBindingsFrom } = state
-
-  assert(
-    importNextBindingsFrom !== undefined,
-    'Within an import statement, there should be an import config.',
-  )
-
-  const originalName = node.nameNode && getIdentifierName(node.nameNode)
-  return handleIdentifierPatternName(
-    {
-      ...state,
-      importNextBindingsFrom: {
-        ...importNextBindingsFrom,
-        originalName,
-      },
-    },
-    node.asNode,
-  )
-}
-
-const handleImportType = (state: State, node: ImportTypeNode): State => {
-  const {
-    exportNextBindings: isExported,
-    importNextBindingsFrom: importedFrom,
-  } = state
-  const originalName = node.nameNode && getTypeName(node.nameNode)
-  const stateWithName = conditionalApply(traverse)(state, node.nameNode)
-  const name = getTypeName(node.asNode)
-  const stateWithAs = traverse(stateWithName, node.asNode)
-
-  assert(
-    importedFrom !== undefined,
-    'Within an import statement, there should be an import config.',
-  )
-
-  return addTypeBinding(name, isExported, {
-    ...importedFrom,
-    originalName,
-  })(stateWithAs, node)
-}
-
-const handleIdentifierPatternName = (
-  state: State,
-  node: IdentifierPatternNameNode,
-): State => {
-  const {
-    exportNextBindings: isExported,
-    nextIdentifierPatternBindingsImplicit: isImplicit,
-    importNextBindingsFrom: importedFrom,
-  } = state
-  const name = getIdentifierName(node)
-  return addTermBinding(
-    name,
-    !!isImplicit,
-    isExported,
-    importedFrom,
-  )(state, node)
-}

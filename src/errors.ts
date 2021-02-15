@@ -1,18 +1,24 @@
-import { AbstractScope } from './types/state'
-import { GlobalScope } from './types/analyze/scopes'
+import {
+  GlobalScope,
+  RecursiveScopeWithErrors,
+  SourceFileScope,
+} from './types/analyze/scopes'
 import { MountedErrorAnnotation } from './types/errors/annotations'
 import { Report } from './types/errors/reports'
+import { isSourceDependency } from './types/analyze/dependencies'
 
 /**
  * Collects all mounted errors of a recursive scope.
  */
-export const collectErrors = (scope: AbstractScope): MountedErrorAnnotation[] =>
+export const collectErrors = (
+  scope: RecursiveScopeWithErrors,
+): MountedErrorAnnotation[] =>
   [scope.errors, ...scope.scopes.map(collectErrors)].flat()
 
 /**
  * Determines whether a recursive scope has any mounted errors.
  */
-export const hasError = (scope: AbstractScope): boolean =>
+export const hasError = (scope: RecursiveScopeWithErrors): boolean =>
   collectErrors(scope).length > 0
 
 /**
@@ -20,10 +26,12 @@ export const hasError = (scope: AbstractScope): boolean =>
  */
 export const buildReport = (scope: GlobalScope): Report => ({
   errors: scope.errors,
-  mountedErrors: scope.scopes.map((fileScope) => ({
-    file: fileScope.file,
-    errors: collectErrors(fileScope),
-  })),
+  mountedErrors: scope.scopes
+    .filter((fileScope) => isSourceDependency(fileScope.dependency))
+    .map((fileScope) => ({
+      file: fileScope.dependency.file,
+      errors: collectErrors(fileScope as SourceFileScope),
+    })),
 })
 
 /**

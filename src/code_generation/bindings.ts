@@ -1,12 +1,26 @@
 import {
+  DeclarationDependency,
+  Dependency,
+  SourceDependency,
+  isDeclarationDependency,
+  isSourceDependency,
+} from '../types/analyze/dependencies'
+import {
   ImportedTermBinding,
+  LocalTermBinding,
   TermBinding,
   TermBindingNode,
+  isDeclaredBinding,
+  isImportedBinding,
 } from '../types/analyze/bindings'
-import { AbsolutePath } from '../types/path'
+import { DeclarationFileScope } from '../types/analyze/scopes'
 import { OPERATOR } from 'tree-sitter-tony/common/constants'
+import { assert } from '../types/errors/internal'
 import { charCodes } from '../util'
+import { curryJS } from './lib'
+import { findFileScope } from '../util/scopes'
 import { getOutPath } from '../util/paths'
+import { indent } from './util'
 
 const OPERATOR_BINDING_PREFIX = '$OP'
 
@@ -20,10 +34,14 @@ export const generateBindingName = (
   binding: TermBinding,
   ignoreIndex = false,
 ): string => {
+  const isJS =
+    isImportedBinding(binding) && isDeclarationDependency(binding.dependency)
   const name = OPERATOR.test(binding.name)
     ? generateOperatorBindingName(binding.name)
     : binding.name
-  return ignoreIndex ? name : `${name}${binding.index}`
+  const nameWithIndex =
+    ignoreIndex || isDeclaredBinding(binding) ? name : `${name}${binding.index}`
+  return isJS ? curryJS(nameWithIndex) : nameWithIndex
 }
 
 const findBindingOfNode = (bindings: TermBinding[], node: TermBindingNode) =>
@@ -46,11 +64,13 @@ export const generateDeclaredBindingName = (
  * Generates a declaration of all non-implicit bindings in the given set of
  * bindings.
  */
-export const generateDeclarations = (bindings: TermBinding[]): string => {
+export const generateDeclarations = (
+  bindings: (ImportedTermBinding | LocalTermBinding)[],
+): string => {
   const declarations = bindings
     .filter((binding) => !binding.isImplicit)
     .map((binding) => generateBindingName(binding))
-  if (declarations.length > 0) return `const ${declarations.join(',')}`
+  if (declarations.length > 0) return `const ${declarations.join(', ')}`
   return ''
 }
 
@@ -62,7 +82,7 @@ export const generateExports = (bindings: TermBinding[]): string => {
     .filter((binding) => binding.isExported)
     .map((binding) => generateBindingName(binding))
   if (exportedBindings.length > 0)
-    return `export {${exportedBindings.join(',')}}`
+    return `export {${indent(exportedBindings.join(',\n'))}}`
   return ''
 }
 
@@ -70,28 +90,75 @@ export const generateExports = (bindings: TermBinding[]): string => {
  * Generates import statements for all imported bindings.
  */
 export const generateImports = (
-  dependencies: AbsolutePath[],
+  fileScopes: DeclarationFileScope[],
+  dependencies: Dependency[],
+  bindings: ImportedTermBinding[],
+): string => {
+  const sourceImports = generateSourceImports(
+    dependencies.filter(isSourceDependency),
+    bindings,
+  )
+  const declarationImports = generateDeclarationImports(
+    fileScopes,
+    dependencies.filter(isDeclarationDependency),
+    bindings,
+  )
+  return `${sourceImports}\n${declarationImports}`
+}
+
+const generateSourceImports = (
+  dependencies: SourceDependency[],
   bindings: ImportedTermBinding[],
 ): string => {
   return dependencies
     .map((source) =>
-      generateImport(
+      generateSourceImport(
         source,
-        bindings.filter((binding) => binding.file === source),
+        bindings.filter((binding) => binding.dependency === source),
       ),
     )
-    .join(';')
+    .join('\n')
 }
 
-const generateImport = (
-  source: AbsolutePath,
+const generateSourceImport = (
+  dependency: SourceDependency,
   bindings: ImportedTermBinding[],
 ): string => {
-  const outSource = getOutPath(source)
+  const outSource = getOutPath(dependency.file)
   const aliases = bindings
     .map(({ name, originalName }) =>
       originalName ? `${name} as ${originalName}` : name,
     )
-    .join(',')
-  return `import {${aliases}} from '${outSource.path}'`
+    .join(',\n')
+  return `import {${indent(aliases)}} from '${outSource.path}'`
+}
+
+const generateDeclarationImports = (
+  fileScopes: DeclarationFileScope[],
+  dependencies: DeclarationDependency[],
+  bindings: ImportedTermBinding[],
+): string => {
+  return dependencies
+    .map((source) =>
+      generateDeclarationImport(
+        fileScopes,
+        source,
+        bindings.filter((binding) => binding.dependency === source),
+      ),
+    )
+    .join('\n')
+}
+
+const generateDeclarationImport = (
+  fileScopes: DeclarationFileScope[],
+  dependency: DeclarationDependency,
+  bindings: ImportedTermBinding[],
+): string => {
+  const names = bindings.map(({ name }) => name).join(',\n')
+  const fileScope = findFileScope(fileScopes, dependency)
+  assert(
+    fileScope !== undefined,
+    'Each dependency should have an associated file scope.',
+  )
+  return `import {${indent(names)}} from '${fileScope.source.path}'`
 }

@@ -1,7 +1,8 @@
 import {
-  FileScope,
+  DeclarationFileScope,
   NestedScope,
   NestingTermLevelNode,
+  SourceFileScope,
 } from '../types/analyze/scopes'
 
 export type State = {
@@ -10,7 +11,11 @@ export type State = {
    * symbol table.
    */
   scopes: (
-    | FileScope<NestingTermLevelNode>
+    | SourceFileScope<NestingTermLevelNode>
     | NestedScope<NestingTermLevelNode>
   )[]
+  /**
+   * The list of all declaration file scopes.
+   */
+  declarationScopes: DeclarationFileScope[]
 }

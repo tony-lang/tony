@@ -17,12 +17,10 @@ export const resolveAbstractionBranch = (
   )}],${elseBranch ? ` () => ${elseBranch}` : ''})`
 }
 
-export const curry = (
-  argumentsName: string,
-  fn: string,
-  isJS = false,
-): string =>
-  `${isJS ? CURRY_JS_UTIL : CURRY_UTIL}((...${argumentsName}) => ${fn})`
+export const curry = (argumentsName: string, fn: string): string =>
+  `${CURRY_UTIL}((...${argumentsName}) => ${fn})`
+
+export const curryJS = (value: string): string => `${CURRY_JS_UTIL}(${value})`
 
 export const patternMatchForAbstraction = (
   parameters: string,

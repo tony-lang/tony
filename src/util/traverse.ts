@@ -1,13 +1,21 @@
-import { NamedNode, SyntaxNode } from 'tree-sitter-tony/tony'
-import { NestingNode, isNestingNode } from '../types/analyze/scopes'
-import { AbstractState } from '../types/state'
+import * as Declaration from 'tree-sitter-tony/dtn'
+import * as Source from 'tree-sitter-tony/tony'
+import {
+  NestingNode,
+  ScopeWithErrors,
+  isNestingNode,
+} from '../types/analyze/scopes'
 import { ErrorAnnotation } from '../types/errors/annotations'
 import { addErrorToScope } from './scopes'
 import { buildPromise } from '.'
 
-export const addError = <T extends AbstractState>(
+type StateForTraverse = {
+  scopes: ScopeWithErrors[]
+}
+
+export const addError = <T extends StateForTraverse>(
   state: T,
-  node: SyntaxNode,
+  node: Declaration.SyntaxNode | Source.SyntaxNode,
   error: ErrorAnnotation,
 ): T => {
   const [scope, ...parentScopes] = state.scopes
@@ -18,10 +26,10 @@ export const addError = <T extends AbstractState>(
   }
 }
 
-export const addErrorUnless = <T extends AbstractState>(
+export const addErrorUnless = <T extends StateForTraverse>(
   predicate: boolean,
   error: ErrorAnnotation,
-) => (state: T, node: SyntaxNode): T => {
+) => (state: T, node: Declaration.SyntaxNode | Source.SyntaxNode): T => {
   if (predicate) return state
   return addError(state, node, error)
 }
@@ -29,7 +37,10 @@ export const addErrorUnless = <T extends AbstractState>(
 /**
  * Checks predicate. If true, returns callback. Else, adds error annotation.
  */
-export const ensure = <T extends AbstractState, U extends SyntaxNode>(
+export const ensure = <
+  T extends StateForTraverse,
+  U extends Declaration.SyntaxNode | Source.SyntaxNode
+>(
   predicate: (state: T, node: U) => boolean,
   callback: (state: T, node: U) => T,
   error: ErrorAnnotation,
@@ -42,7 +53,10 @@ export const ensure = <T extends AbstractState, U extends SyntaxNode>(
  * Checks predicate. If true, returns asynchronous callback. Else, adds error
  * annotation.
  */
-export const ensureAsync = <T extends AbstractState, U extends SyntaxNode>(
+export const ensureAsync = <
+  T extends StateForTraverse,
+  U extends Declaration.SyntaxNode | Source.SyntaxNode
+>(
   predicate: (state: T, node: U) => boolean,
   callback: (state: T, node: U) => Promise<T>,
   error: ErrorAnnotation,
@@ -55,15 +69,16 @@ export const ensureAsync = <T extends AbstractState, U extends SyntaxNode>(
  * Conditionally applies argument to state reduces depending on whether it
  * exists.
  */
-export const conditionalApply = <T extends AbstractState, U>(
-  callback: (state: T, arg: U) => T,
-) => (state: T, arg: U | undefined): T => (arg && callback(state, arg)) || state
+export const conditionalApply = <T, U>(callback: (state: T, arg: U) => T) => (
+  state: T,
+  arg: U | undefined,
+): T => (arg && callback(state, arg)) || state
 
 /**
  * If node is a nesting node enter its scope; otherwise just apply the given
  * callback.
  */
-export const traverseScopes = <T extends NamedNode, U>(
+export const traverseScopes = <T extends Source.NamedNode, U>(
   node: T,
   callback: () => U,
   nest: (node: NestingNode & T) => U,

@@ -1,9 +1,9 @@
-import { AbsolutePath } from './path'
+import { SourceDependency } from './analyze/dependencies'
 
 // ---- Types ----
 
 export type FileEmit = {
-  readonly originalFile: AbsolutePath
+  readonly originalFile: SourceDependency
   readonly content: string
 }
 
@@ -12,6 +12,6 @@ export type Emit = FileEmit[]
 // ---- Factories ----
 
 export const buildFileEmit = (
-  originalFile: AbsolutePath,
+  originalFile: SourceDependency,
   content: string,
 ): FileEmit => ({ originalFile, content })

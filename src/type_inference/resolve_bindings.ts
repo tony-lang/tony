@@ -1,18 +1,22 @@
 import {
-  DeclaredType,
-  ResolvedType,
-  Type,
-} from '../types/type_inference/categories'
-import {
+  DeclaredBinding,
+  DeclaredTermBinding,
   LocalBinding,
   LocalTermBinding,
   LocalTypeBinding,
   TermBinding,
   TypeAssignment,
   TypeBinding,
+  isDeclaredBinding,
   isImportedBinding,
   isLocalBinding,
+  isTermBinding,
 } from '../types/analyze/bindings'
+import {
+  DeclaredType,
+  ResolvedType,
+  Type,
+} from '../types/type_inference/categories'
 import { ScopeWithErrors, TypedFileScope } from '../types/analyze/scopes'
 import {
   addErrorToScope,
@@ -44,7 +48,7 @@ const resolveBindingType = <
 >(
   getBindings: (fileScope: TypedFileScope) => StrongBinding<T>[],
   resolveLocalBindingType: (
-    binding: WeakBinding<T> & LocalBinding,
+    binding: WeakBinding<T> & (DeclaredBinding | LocalBinding),
     bindings: StrongBinding<T>[][],
   ) => W,
   buildAnswer: (result?: W) => W,
@@ -54,7 +58,10 @@ const resolveBindingType = <
   bindings: StrongBinding<T>[][],
   binding: WeakBinding<T>,
 ): [type: W, newScope: U, newFileScopes: TypedFileScope[]] => {
-  if (isLocalBinding(binding))
+  if (
+    isLocalBinding(binding) ||
+    (isTermBinding(binding) && isDeclaredBinding(binding))
+  )
     return [
       buildAnswer(resolveLocalBindingType(binding, bindings)),
       scope,
@@ -63,15 +70,19 @@ const resolveBindingType = <
 
   assert(
     isImportedBinding(binding),
-    'When a binding is not local it must be imported.',
+    'When a binding is not local or declared it must be imported.',
   )
 
   const importedBindingName = binding.originalName || binding.name
-  const fileScope = findFileScope(fileScopes, binding.file)
+  const fileScope = findFileScope(fileScopes, binding.dependency)
   if (fileScope === undefined)
     return [
       buildAnswer(),
-      addErrorToScope(scope, binding.node, buildUnknownFileError(binding.file)),
+      addErrorToScope(
+        scope,
+        binding.node,
+        buildUnknownFileError(binding.dependency.file),
+      ),
       fileScopes,
     ]
 
@@ -83,7 +94,7 @@ const resolveBindingType = <
       addErrorToScope(
         scope,
         binding.node,
-        buildUnknownImportError(binding.file, importedBindingName),
+        buildUnknownImportError(binding.dependency.file, importedBindingName),
       ),
       fileScopes,
     ]
@@ -100,7 +111,9 @@ const resolveBindingType = <
     importedBinding,
   )
   const newFileScopesWithNewFileScope = newFileScopes.map((fileScope) =>
-    isSamePath(fileScope.file, newFileScope.file) ? newFileScope : fileScope,
+    isSamePath(fileScope.dependency.file, newFileScope.dependency.file)
+      ? newFileScope
+      : fileScope,
   )
   return [type, scope, newFileScopesWithNewFileScope]
 }
@@ -112,7 +125,7 @@ const buildAnswer = <T extends Type | DeclaredType>(answer?: T) =>
   answer || buildTemporaryTypeVariable()
 
 const resolveTermBindingTypeWithinScope = (
-  binding: LocalTermBinding,
+  binding: DeclaredTermBinding | LocalTermBinding,
   typeAssignments: TypeAssignment[][],
 ): ResolvedType[] => {
   const bindings = findBindings(binding.name, typeAssignments)
