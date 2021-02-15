@@ -6,8 +6,8 @@ import {
   buildTypeVariableAssignment,
 } from '../types/type_inference/constraints'
 import { Property, TypeKind, TypeVariable } from '../types/type_inference/types'
-import { filterUnique, isNotUndefined } from '../util'
 import { StateForAnswers, mapAnswers, reduceAnswers } from '../util/answers'
+import { filterUnique, isNotUndefined } from '../util'
 import { ResolvedType } from '../types/type_inference/categories'
 import { unify } from './unification'
 

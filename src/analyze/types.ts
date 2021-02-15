@@ -1,8 +1,8 @@
-import { Config } from '../config'
-import { TermBinding } from '../types/analyze/bindings'
-import { Dependency } from '../types/analyze/dependencies'
 import { FileScope, NestedScope } from '../types/analyze/scopes'
 import { AbsolutePath } from '../types/path'
+import { Config } from '../config'
+import { Dependency } from '../types/analyze/dependencies'
+import { TermBinding } from '../types/analyze/bindings'
 
 export type ImportedBindingConfig = {
   dependency: Dependency

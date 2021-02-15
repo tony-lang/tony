@@ -1,5 +1,5 @@
-import * as Source from 'tree-sitter-tony/tony'
 import * as Declaration from 'tree-sitter-tony/dtn'
+import * as Source from 'tree-sitter-tony/tony'
 import {
   Constraints,
   DeferredTypeVariableAssignment,
@@ -7,7 +7,6 @@ import {
 import { DeclaredType, ResolvedType, Type } from '../type_inference/categories'
 import { Dependency } from './dependencies'
 import { TypeVariable } from '../type_inference/types'
-import { AbsolutePath } from '../path'
 
 // ---- Types ----
 
@@ -222,6 +221,10 @@ export const buildTypeAssignment = (
   ...binding,
   type,
 })
+
+export const isTermBinding = (binding: {
+  kind: BindingKind
+}): binding is TermBinding => binding.kind === BindingKind.Term
 
 export const isDeclaredBinding = (
   binding: TermBinding,

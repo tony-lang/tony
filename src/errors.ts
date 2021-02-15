@@ -1,8 +1,6 @@
 import {
   GlobalScope,
-  RecursiveScope,
   RecursiveScopeWithErrors,
-  ScopeWithErrors,
   SourceFileScope,
 } from './types/analyze/scopes'
 import { MountedErrorAnnotation } from './types/errors/annotations'

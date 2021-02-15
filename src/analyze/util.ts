@@ -1,8 +1,6 @@
-import * as Source from 'tree-sitter-tony/tony'
 import * as Declaration from 'tree-sitter-tony/dtn'
+import * as Source from 'tree-sitter-tony/tony'
 import { AbstractState, ImportedBindingConfig } from './types'
-import { getIdentifierName } from '../util/parse'
-import { assert } from '../types/errors/internal'
 import {
   ImportedTypeBindingNode,
   LocalTypeBinding,
@@ -14,12 +12,14 @@ import {
   buildLocalTermBinding,
   buildLocalTypeBinding,
 } from '../types/analyze/bindings'
+import { buildAliasType, buildAliasedType } from './build_type'
 import { findBinding, findBindings } from '../util/bindings'
 import { getTerms, getTypes } from '../util/scopes'
-import { ensure } from '../util/traverse'
-import { isPrimitiveTypeName } from '../types/type_inference/primitive_types'
+import { assert } from '../types/errors/internal'
 import { buildDuplicateBindingError } from '../types/errors/annotations'
-import { buildAliasType, buildAliasedType } from './build_type'
+import { ensure } from '../util/traverse'
+import { getIdentifierName } from '../util/parse'
+import { isPrimitiveTypeName } from '../types/type_inference/primitive_types'
 import { mergeDeferredAssignments } from '../type_inference/constraints'
 
 export const flushTermBindings = <T extends AbstractState>(state: T): T => {
@@ -40,7 +40,7 @@ export const addTermBinding = (
   isImplicit: boolean,
   isExported = false,
   importedFrom?: ImportedBindingConfig,
-) => <T extends AbstractState>(state: T, node: TermBindingNode) => {
+) => <T extends AbstractState>(state: T, node: TermBindingNode): T => {
   const index =
     findBindings(name, [state.terms]).length +
     findBindings(name, state.scopes.map(getTerms)).length
@@ -68,7 +68,7 @@ export const addTypeBinding = (
 ) => <T extends AbstractState>(
   state: T,
   node: LocalTypeBindingNode | ImportedTypeBindingNode,
-) =>
+): T =>
   ensure<T, LocalTypeBindingNode | ImportedTypeBindingNode>(
     (state) =>
       findBinding(name, state.scopes.map(getTypes)) === undefined &&

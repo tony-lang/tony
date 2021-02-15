@@ -1,3 +1,5 @@
+import * as Declaration from 'tree-sitter-tony/dtn'
+import * as Source from 'tree-sitter-tony/tony'
 import {
   FileScope,
   NestedScope,
@@ -10,8 +12,6 @@ import {
   SourceFileScope,
   TypingEnvironment,
 } from '../types/analyze/scopes'
-import * as Source from 'tree-sitter-tony/tony'
-import * as Declaration from 'tree-sitter-tony/dtn'
 import {
   TermBinding,
   TypeAssignment,

@@ -165,11 +165,14 @@ type TypeLevelNode =
   | UnionTypeNode
   | TypeNode
 
-export type NodeWithInferrableType =
+export type DeclarationNodeWithInferrableType = DeclarationProgramNode
+export type SourceNodeWithInferrableType =
   | TermLevelNode
   | PatternLevelNode
   | ErrorNode
-  | DeclarationProgramNode
+export type NodeWithInferrableType =
+  | DeclarationNodeWithInferrableType
+  | SourceNodeWithInferrableType
 
 export type NodeWithinProgram = TermLevelNode | PatternLevelNode | TypeLevelNode
 

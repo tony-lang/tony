@@ -1,5 +1,5 @@
-import * as Source from 'tree-sitter-tony/tony'
 import * as Declaration from 'tree-sitter-tony/dtn'
+import * as Source from 'tree-sitter-tony/tony'
 import {
   NestingNode,
   ScopeWithErrors,

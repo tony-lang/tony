@@ -63,12 +63,6 @@ import {
   buildTypeVariable,
   buildUnionType,
 } from '../types/type_inference/types'
-import {
-  RecursiveScope,
-  ScopeWithErrors,
-  ScopeWithTerms,
-  ScopeWithTypes,
-} from '../types/analyze/scopes'
 import { buildLiteralType, flattenType } from '../util/types'
 import { findBinding, findBindings } from '../util/bindings'
 import {

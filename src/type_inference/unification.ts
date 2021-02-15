@@ -5,13 +5,13 @@ import {
   buildTypeVariableAssignment,
 } from '../types/type_inference/constraints'
 import { ResolvedType, Type } from '../types/type_inference/categories'
+import { StateForAnswers, mapAnswers, reduceAnswers } from '../util/answers'
 import {
   TypeKind,
   TypeVariable,
   buildIntersectionType,
   buildTemporaryTypeVariable,
 } from '../types/type_inference/types'
-import { StateForAnswers, mapAnswers, reduceAnswers } from '../util/answers'
 import { buildConstraintsFromType } from '../util/types'
 import { normalize } from './normalization'
 import { unifyConstraints } from './constraints'

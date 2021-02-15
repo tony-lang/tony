@@ -13,14 +13,14 @@ import {
   isDeclaredBinding,
   isImportedBinding,
 } from '../types/analyze/bindings'
+import { DeclarationFileScope } from '../types/analyze/scopes'
 import { OPERATOR } from 'tree-sitter-tony/common/constants'
+import { assert } from '../types/errors/internal'
 import { charCodes } from '../util'
 import { curryJS } from './lib'
+import { findFileScope } from '../util/scopes'
 import { getOutPath } from '../util/paths'
 import { indent } from './util'
-import { assert } from '../types/errors/internal'
-import { DeclarationFileScope } from '../types/analyze/scopes'
-import { findFileScope } from '../util/scopes'
 
 const OPERATOR_BINDING_PREFIX = '$OP'
 

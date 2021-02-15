@@ -1,7 +1,7 @@
 import { Answer, Answers } from '../types/type_inference/answers'
+import { RecursiveScopeWithErrors } from '../types/analyze/scopes'
 import { assert } from '../types/errors/internal'
 import { collectErrors } from '../errors'
-import { RecursiveScopeWithErrors } from '../types/analyze/scopes'
 
 export type StateForAnswers = {
   scopes: RecursiveScopeWithErrors[]

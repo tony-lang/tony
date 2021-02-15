@@ -23,11 +23,6 @@ import {
   WhenNode,
 } from 'tree-sitter-tony/tony'
 import {
-  SourceDependency,
-  isSourceDependency,
-} from '../types/analyze/dependencies'
-import {
-  FileScope,
   NestedScope,
   NestingNode,
   SourceFileScope,
@@ -35,10 +30,18 @@ import {
   buildSourceFileScope,
   isFileScope,
 } from '../types/analyze/scopes'
-import { buildTypeVariableBinding } from '../types/analyze/bindings'
 import { NodeWithinProgram, isNodeWithinProgram } from '../types/nodes'
+import {
+  SourceDependency,
+  isSourceDependency,
+} from '../types/analyze/dependencies'
 import { addError, conditionalApply, ensure } from '../util/traverse'
-import { buildAliasType, buildAliasedType, buildTypes } from './build_type'
+import {
+  addTermBinding,
+  addTypeBinding,
+  flushTermBindings,
+  handleIdentifierPatternName,
+} from './util'
 import {
   buildDuplicateBindingError,
   buildExportOutsideFileScopeError,
@@ -57,17 +60,13 @@ import {
   getTypeVariableName,
 } from '../util/parse'
 import { getTerms, getTypeVariables, getTypes } from '../util/scopes'
+import { AbstractState } from './types'
 import { Config } from '../config'
 import { assert } from '../types/errors/internal'
 import { buildConstraintsFromType } from '../util/types'
-import { AbstractState } from './types'
+import { buildTypeVariableBinding } from '../types/analyze/bindings'
+import { buildTypes } from './build_type'
 import { handleImports } from './imports'
-import {
-  addTermBinding,
-  addTypeBinding,
-  flushTermBindings,
-  handleIdentifierPatternName,
-} from './util'
 
 type State = AbstractState & {
   /**

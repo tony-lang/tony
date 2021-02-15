@@ -1,7 +1,10 @@
-import * as Source from 'tree-sitter-tony/tony'
 import * as Declaration from 'tree-sitter-tony/dtn'
-import { ErrorAnnotation, MountedErrorAnnotation } from '../errors/annotations'
-import { NodeWithInferrableType, TermLevelNode } from '../nodes'
+import * as Source from 'tree-sitter-tony/tony'
+import {
+  DeclarationDependency,
+  Dependency,
+  SourceDependency,
+} from './dependencies'
 import {
   DeclaredTermBinding,
   ImportedTermBinding,
@@ -11,13 +14,10 @@ import {
   TypeBinding,
   TypeVariableBinding,
 } from './bindings'
-import {
-  DeclarationDependency,
-  Dependency,
-  SourceDependency,
-} from './dependencies'
-import { TypedNode } from '../type_inference/nodes'
+import { ErrorAnnotation, MountedErrorAnnotation } from '../errors/annotations'
+import { NodeWithInferrableType, TermLevelNode } from '../nodes'
 import { AbsolutePath } from '../path'
+import { TypedNode } from '../type_inference/nodes'
 
 // ---- Types ----
 
@@ -105,7 +105,6 @@ export type FileScope<T extends NestingNode = NestingNode> =
   | SourceFileScope<T>
 
 export type TypedDeclarationFileScope = DeclarationFileScope &
-  RecursiveScope<TypedNestedScope> &
   TypedScope<Declaration.ProgramNode> &
   TypingEnvironment
 export type TypedSourceFileScope = SourceFileScope &
@@ -177,12 +176,10 @@ export const buildSourceFileScope = <
 
 export const buildTypedDeclarationFileScope = (
   fileScope: DeclarationFileScope,
-  scopes: TypedNestedScope[],
   typedNode: TypedNode<Declaration.ProgramNode>,
   typeAssignments: TypeAssignment[],
 ): TypedDeclarationFileScope => ({
   ...fileScope,
-  scopes,
   typedNode,
   typeAssignments,
 })

@@ -1,5 +1,3 @@
-import { Config } from '../config'
-import { DeclarationDependency } from '../types/analyze/dependencies'
 import {
   DeclarationFileScope,
   buildDeclarationFileScope,
@@ -9,15 +7,17 @@ import {
   DeclarationNode,
   ProgramNode,
 } from 'tree-sitter-tony/dtn'
-import { AbstractState } from './types'
-import { handleImports } from './imports'
 import { getIdentifierName, parseRawString } from '../util/parse'
+import { AbstractState } from './types'
+import { Config } from '../config'
+import { DeclarationDependency } from '../types/analyze/dependencies'
 import { buildAbsolutePath } from '../types/path'
+import { buildDeclaredTermBinding } from '../types/analyze/bindings'
+import { buildDuplicateBindingError } from '../types/errors/annotations'
+import { ensure } from '../util/traverse'
 import { findBinding } from '../util/bindings'
 import { getTerms } from '../util/scopes'
-import { buildDeclaredTermBinding } from '../types/analyze/bindings'
-import { ensure } from '../util/traverse'
-import { buildDuplicateBindingError } from '../types/errors/annotations'
+import { handleImports } from './imports'
 
 type State = AbstractState & {
   scopes: [DeclarationFileScope]

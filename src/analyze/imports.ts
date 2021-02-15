@@ -1,25 +1,25 @@
-import * as Source from 'tree-sitter-tony/tony'
 import * as Declaration from 'tree-sitter-tony/dtn'
+import * as Source from 'tree-sitter-tony/tony'
 import { Dependency, buildDependency } from '../types/analyze/dependencies'
-import { isFileScope } from '../types/analyze/scopes'
-import {
-  buildImportOutsideFileScopeError,
-  buildUnknownFileError,
-} from '../types/errors/annotations'
-import { assert } from '../types/errors/internal'
-import { AbsolutePath, buildRelativePath } from '../types/path'
-import { buildPromise } from '../util'
-import { getIdentifierName, getTypeName, parseRawString } from '../util/parse'
 import { addError, ensureAsync } from '../util/traverse'
-import { resolveRelativePath } from './resolve'
-import { AbstractState } from './types'
-import { fileMayBeImported } from '../util/paths'
 import {
   addTypeBinding,
   flushTermBindings,
   handleIdentifierPatternName,
 } from './util'
+import {
+  buildImportOutsideFileScopeError,
+  buildUnknownFileError,
+} from '../types/errors/annotations'
+import { getIdentifierName, getTypeName, parseRawString } from '../util/parse'
+import { AbstractState } from './types'
 import { ImportedTypeBindingNode } from '../types/analyze/bindings'
+import { assert } from '../types/errors/internal'
+import { buildPromise } from '../util'
+import { buildRelativePath } from '../types/path'
+import { fileMayBeImported } from '../util/paths'
+import { isFileScope } from '../types/analyze/scopes'
+import { resolveRelativePath } from './resolve'
 
 type ImportNode =
   | Declaration.ImportNode
@@ -51,7 +51,7 @@ const addDependency = <T extends AbstractState>(
 export const handleImports = async <T extends AbstractState>(
   state: T,
   nodes: ImportNode[],
-) =>
+): Promise<T> =>
   nodes.reduce<Promise<T>>(
     async (acc, child) => handleImport(await acc, child),
     buildPromise(state),

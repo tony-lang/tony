@@ -32,7 +32,6 @@ import {
   TypeHintNode,
   WhenNode,
 } from 'tree-sitter-tony/tony'
-import { Emit, buildFileEmit } from '../types/emit'
 import {
   DeclarationFileScope,
   GlobalScope,
@@ -41,13 +40,9 @@ import {
   TypedSourceFileScope,
   isFileScope,
 } from '../types/analyze/scopes'
+import { Emit, buildFileEmit } from '../types/emit'
 import { LogLevel, log } from '../logger'
 import { NotImplementedError, assert } from '../types/errors/internal'
-import {
-  SourceDependency,
-  isDeclarationDependency,
-  isSourceDependency,
-} from '../types/analyze/dependencies'
 import { filterFileScopeByTermScopes, findScopeOfNode } from '../util/scopes'
 import {
   generateAbstraction,
@@ -82,6 +77,10 @@ import {
 } from './bindings'
 import { generatePattern, generatePatterns } from './patterns'
 import { injectInterpolations, parseStringContent } from './strings'
+import {
+  isDeclarationDependency,
+  isSourceDependency,
+} from '../types/analyze/dependencies'
 import { Config } from '../config'
 import { State } from './types'
 import { TermLevelNode } from '../types/nodes'
