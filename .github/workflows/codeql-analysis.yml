@@ -35,7 +35,7 @@ jobs:
         # queries: ./path/to/local/query, your-org/your-repo/queries@main
 
     - uses: actions/checkout@master
-    - uses: actions/setup-node@v2.1.4
+    - uses: actions/setup-node@v2.1.5
       with:
         node-version: 15
     - name: Install dependencies
