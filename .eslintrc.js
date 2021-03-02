@@ -25,12 +25,4 @@ module.exports = {
     '@typescript-eslint/no-non-null-assertion': 'error',
     '@typescript-eslint/no-unused-vars': 'error',
   },
-  overrides: [
-    {
-      files: ['src/code_generation/lib/*.ts'],
-      rules: {
-        '@typescript-eslint/no-explicit-any': 'off',
-      },
-    },
-  ],
 }
