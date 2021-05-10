@@ -5,26 +5,26 @@ type UnknownFunction = (...args: unknown[]) => unknown
 /**
  * Curries the arguments of a given function.
  */
-export const curry = (fn: UnknownFunction, ...cache: unknown[]) => (
-  ...args: unknown[]
-): unknown => {
-  const newArgs = addNewArgs(cache, args)
-  const actualArgs = getActualArgs(newArgs)
+export const curry =
+  (fn: UnknownFunction, ...cache: unknown[]) =>
+  (...args: unknown[]): unknown => {
+    const newArgs = addNewArgs(cache, args)
+    const actualArgs = getActualArgs(newArgs)
 
-  const result = fn(...actualArgs)
-  return result === undefined ? curry(fn, ...newArgs) : result
-}
+    const result = fn(...actualArgs)
+    return result === undefined ? curry(fn, ...newArgs) : result
+  }
 
 /**
  * Curries the arguments of a given function imported from JavaScript.
  */
-export const curryJS = (fn: UnknownFunction, ...cache: unknown[]) => (
-  ...args: unknown[]
-): unknown => {
-  const all = cache.concat(args)
+export const curryJS =
+  (fn: UnknownFunction, ...cache: unknown[]) =>
+  (...args: unknown[]): unknown => {
+    const all = cache.concat(args)
 
-  return all.length >= fn.length ? fn(...all) : curryJS(fn, ...all)
-}
+    return all.length >= fn.length ? fn(...all) : curryJS(fn, ...all)
+  }
 
 const getActualArgs = (args: unknown[]): unknown[] =>
   args.filter((arg) => arg !== TRANSFORM_PLACEHOLDER_ARGUMENT)

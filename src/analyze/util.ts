@@ -35,64 +35,64 @@ export const flushTermBindings = <T extends AbstractState>(state: T): T => {
   }
 }
 
-export const addTermBinding = (
-  name: string,
-  isImplicit: boolean,
-  isExported = false,
-  importedFrom?: ImportedBindingConfig,
-) => <T extends AbstractState>(state: T, node: TermBindingNode): T => {
-  const index =
-    findBindings(name, [state.terms]).length +
-    findBindings(name, state.scopes.map(getTerms)).length
-  const binding = importedFrom
-    ? buildImportedTermBinding(
-        importedFrom.dependency,
-        name,
-        index,
-        importedFrom.originalName,
-        node,
-        isImplicit,
-        isExported,
-      )
-    : buildLocalTermBinding(name, index, node, isImplicit, isExported)
-  return {
-    ...state,
-    terms: [...state.terms, binding],
+export const addTermBinding =
+  (
+    name: string,
+    isImplicit: boolean,
+    isExported = false,
+    importedFrom?: ImportedBindingConfig,
+  ) =>
+  <T extends AbstractState>(state: T, node: TermBindingNode): T => {
+    const index =
+      findBindings(name, [state.terms]).length +
+      findBindings(name, state.scopes.map(getTerms)).length
+    const binding = importedFrom
+      ? buildImportedTermBinding(
+          importedFrom.dependency,
+          name,
+          index,
+          importedFrom.originalName,
+          node,
+          isImplicit,
+          isExported,
+        )
+      : buildLocalTermBinding(name, index, node, isImplicit, isExported)
+    return {
+      ...state,
+      terms: [...state.terms, binding],
+    }
   }
-}
 
-export const addTypeBinding = (
-  name: string,
-  isExported = false,
-  importedFrom?: ImportedBindingConfig,
-) => <T extends AbstractState>(
-  state: T,
-  node: LocalTypeBindingNode | ImportedTypeBindingNode,
-): T =>
-  ensure<T, LocalTypeBindingNode | ImportedTypeBindingNode>(
-    (state) =>
-      findBinding(name, state.scopes.map(getTypes)) === undefined &&
-      !isPrimitiveTypeName(name),
-    (state, node) => {
-      const [stateWithBinding, binding] = buildTypeBinding(
-        state,
-        node,
-        name,
-        isExported,
-        importedFrom,
-      )
-      const [scope, ...parentScopes] = stateWithBinding.scopes
-      const newScope = {
-        ...scope,
-        types: [...scope.types, binding],
-      }
-      return {
-        ...stateWithBinding,
-        scopes: [newScope, ...parentScopes],
-      }
-    },
-    buildDuplicateBindingError(name),
-  )(state, node)
+export const addTypeBinding =
+  (name: string, isExported = false, importedFrom?: ImportedBindingConfig) =>
+  <T extends AbstractState>(
+    state: T,
+    node: LocalTypeBindingNode | ImportedTypeBindingNode,
+  ): T =>
+    ensure<T, LocalTypeBindingNode | ImportedTypeBindingNode>(
+      (state) =>
+        findBinding(name, state.scopes.map(getTypes)) === undefined &&
+        !isPrimitiveTypeName(name),
+      (state, node) => {
+        const [stateWithBinding, binding] = buildTypeBinding(
+          state,
+          node,
+          name,
+          isExported,
+          importedFrom,
+        )
+        const [scope, ...parentScopes] = stateWithBinding.scopes
+        const newScope = {
+          ...scope,
+          types: [...scope.types, binding],
+        }
+        return {
+          ...stateWithBinding,
+          scopes: [newScope, ...parentScopes],
+        }
+      },
+      buildDuplicateBindingError(name),
+    )(state, node)
 
 const buildTypeBinding = <T extends AbstractState>(
   state: T,
@@ -134,11 +134,8 @@ const buildTypesForLocalBinding = <T extends AbstractState>(
   node: LocalTypeBindingNode,
   isExported: boolean,
 ): [newState: T, binding: LocalTypeBinding] => {
-  const [
-    stateWithAliasType,
-    deferredAssignmentsFromAliasType,
-    aliasType,
-  ] = buildAliasType(state, node)
+  const [stateWithAliasType, deferredAssignmentsFromAliasType, aliasType] =
+    buildAliasType(state, node)
   const [
     stateWithAliasedType,
     deferredAssignmentsFromAliasedType,

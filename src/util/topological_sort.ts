@@ -32,14 +32,12 @@ const visit = (
   if (visited.includes(node)) return { sorted, visited }
 
   const newAncestors = [...ancestors, node]
-  const {
-    sorted: newSorted,
-    visited: newVisited,
-  } = adjacentNodes.reduce<State>(
-    (state, adjacentNode) =>
-      visitAdjacentNode(graph, state, adjacentNode, node, newAncestors),
-    { sorted, visited: [...visited, node] },
-  )
+  const { sorted: newSorted, visited: newVisited } =
+    adjacentNodes.reduce<State>(
+      (state, adjacentNode) =>
+        visitAdjacentNode(graph, state, adjacentNode, node, newAncestors),
+      { sorted, visited: [...visited, node] },
+    )
 
   return {
     sorted: [node, ...newSorted],

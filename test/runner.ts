@@ -106,26 +106,29 @@ const handleOutput = (
     t.is(stdout.trim(), expected, 'Output does not match')
 }
 
-const handleTestCase = (
-  expectedError: ExpectedError | undefined,
-  runtimeError: string | undefined,
-  emit: string | undefined,
-  output: string | undefined,
-  files: File[],
-) => async (t: ExecutionContext) => {
-  const sourcePath = await setupTestCase(t, files)
+const handleTestCase =
+  (
+    expectedError: ExpectedError | undefined,
+    runtimeError: string | undefined,
+    emit: string | undefined,
+    output: string | undefined,
+    files: File[],
+  ) =>
+  async (t: ExecutionContext) => {
+    const sourcePath = await setupTestCase(t, files)
 
-  try {
-    const entryPath = await compile(sourcePath, {})
+    try {
+      const entryPath = await compile(sourcePath, {})
 
-    if (expectedError !== undefined) t.fail('Did not encounter expected error')
+      if (expectedError !== undefined)
+        t.fail('Did not encounter expected error')
 
-    if (emit !== undefined) handleEmit(t, entryPath, emit)
-    handleOutput(t, entryPath, output, runtimeError)
-  } catch (error) {
-    if (error instanceof Error) handleError(t, error, expectedError)
+      if (emit !== undefined) handleEmit(t, entryPath, emit)
+      handleOutput(t, entryPath, output, runtimeError)
+    } catch (error) {
+      if (error instanceof Error) handleError(t, error, expectedError)
+    }
   }
-}
 
 export const run = async (
   test: TestInterface,

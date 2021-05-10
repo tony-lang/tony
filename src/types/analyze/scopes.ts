@@ -57,7 +57,7 @@ export type ScopeWithErrors = {
 }
 
 export type ScopeWithNode<
-  T extends Declaration.SyntaxNode | Source.SyntaxNode
+  T extends Declaration.SyntaxNode | Source.SyntaxNode,
 > = {
   readonly node: T
 }
@@ -75,7 +75,7 @@ export interface RecursiveScopeWithErrors
     ScopeWithErrors {}
 
 export type GlobalScope<
-  T extends FileScope | TypedFileScope = FileScope | TypedFileScope
+  T extends FileScope | TypedFileScope = FileScope | TypedFileScope,
 > = RecursiveScope<T> & {
   readonly kind: typeof ScopeKind.Global
   readonly errors: ErrorAnnotation[]
@@ -90,16 +90,15 @@ export type DeclarationFileScope = AbstractFileScope &
     readonly source: AbsolutePath
     readonly dependencies: Dependency[]
   }
-export type SourceFileScope<
-  T extends NestingNode = NestingNode
-> = AbstractFileScope &
-  RecursiveScope<NestedScope<T>> &
-  ScopeWithTerms<ImportedTermBinding | LocalTermBinding> &
-  ScopeWithNode<Source.ProgramNode> & {
-    readonly kind: typeof ScopeKind.File
-    readonly dependency: SourceDependency
-    readonly dependencies: Dependency[]
-  }
+export type SourceFileScope<T extends NestingNode = NestingNode> =
+  AbstractFileScope &
+    RecursiveScope<NestedScope<T>> &
+    ScopeWithTerms<ImportedTermBinding | LocalTermBinding> &
+    ScopeWithNode<Source.ProgramNode> & {
+      readonly kind: typeof ScopeKind.File
+      readonly dependency: SourceDependency
+      readonly dependencies: Dependency[]
+    }
 export type FileScope<T extends NestingNode = NestingNode> =
   | DeclarationFileScope
   | SourceFileScope<T>
@@ -123,7 +122,7 @@ export interface NestedScope<T extends NestingNode = NestingNode>
 }
 
 export interface TypedNestedScope<
-  T extends NestingTermLevelNode = NestingTermLevelNode
+  T extends NestingTermLevelNode = NestingTermLevelNode,
 > extends NestedScope<T>,
     TypingEnvironment,
     TypedScope<T> {
@@ -158,7 +157,7 @@ export const buildDeclarationFileScope = (
 })
 
 export const buildSourceFileScope = <
-  T extends NestingNode | never = NestingNode
+  T extends NestingNode | never = NestingNode,
 >(
   dependency: SourceDependency,
   node: Source.ProgramNode,

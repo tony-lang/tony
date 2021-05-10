@@ -281,11 +281,8 @@ const handleAccessType = <T extends AbstractState>(
     state,
     node.typeNode,
   )
-  const [
-    stateWithProperty,
-    deferredAssignmentsFromValue,
-    propertyType,
-  ] = handleTerm(stateWithType, node.valueNode)
+  const [stateWithProperty, deferredAssignmentsFromValue, propertyType] =
+    handleTerm(stateWithType, node.valueNode)
   return [
     stateWithProperty,
     mergeDeferredAssignments(
@@ -436,11 +433,8 @@ const handleParametricType = <T extends AbstractState>(
     return [stateWithError, [], findPrimitiveType(name)]
   }
 
-  const [
-    stateWithTypeArguments,
-    deferredAssignments,
-    typeArguments,
-  ] = buildTypes(state, node.argumentNodes)
+  const [stateWithTypeArguments, deferredAssignments, typeArguments] =
+    buildTypes(state, node.argumentNodes)
   const termArguments = node.elementNodes
   return [
     stateWithTypeArguments,
