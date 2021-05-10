@@ -115,13 +115,15 @@ export const buildDuplicateBindingError = (
   name,
 })
 
-export const buildExportOutsideFileScopeError = (): ExportOutsideFileScopeError => ({
-  kind: ErrorAnnotationKind.ExportOutsideFileScope,
-})
+export const buildExportOutsideFileScopeError =
+  (): ExportOutsideFileScopeError => ({
+    kind: ErrorAnnotationKind.ExportOutsideFileScope,
+  })
 
-export const buildImportOutsideFileScopeError = (): ImportOutsideFileScopeError => ({
-  kind: ErrorAnnotationKind.ImportOutsideFileScope,
-})
+export const buildImportOutsideFileScopeError =
+  (): ImportOutsideFileScopeError => ({
+    kind: ErrorAnnotationKind.ImportOutsideFileScope,
+  })
 
 export const buildIncompleteWhenPatternError = (
   missingBindings: string[],
@@ -144,13 +146,15 @@ export const buildMissingBindingError = (
   name,
 })
 
-export const buildPrimitiveTypeArgumentsError = (): PrimitiveTypeArgumentsError => ({
-  kind: ErrorAnnotationKind.PrimitiveTypeArguments,
-})
+export const buildPrimitiveTypeArgumentsError =
+  (): PrimitiveTypeArgumentsError => ({
+    kind: ErrorAnnotationKind.PrimitiveTypeArguments,
+  })
 
-export const buildRefinementTypeDeclarationOutsideRefinementTypeError = (): RefinementTypeDeclarationOutsideRefinementTypeError => ({
-  kind: ErrorAnnotationKind.RefinementTypeDeclarationOutsideRefinementType,
-})
+export const buildRefinementTypeDeclarationOutsideRefinementTypeError =
+  (): RefinementTypeDeclarationOutsideRefinementTypeError => ({
+    kind: ErrorAnnotationKind.RefinementTypeDeclarationOutsideRefinementType,
+  })
 
 export const buildTypeError = (expected: Type, actual: Type): TypeError => ({
   kind: ErrorAnnotationKind.Type,

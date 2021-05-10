@@ -51,7 +51,7 @@ export const getTypeAssignments = (
 
 export const findScopeOfNode = <
   T extends NestingNode,
-  U extends ScopeWithNode<T>
+  U extends ScopeWithNode<T>,
 >(
   scopes: U[],
   node: T,

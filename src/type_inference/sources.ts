@@ -69,7 +69,7 @@ type State = {
  * syntax tree.
  */
 type Return<
-  T extends SourceNodeWithInferrableType = SourceNodeWithInferrableType
+  T extends SourceNodeWithInferrableType = SourceNodeWithInferrableType,
 > = {
   typedNode: TypedNode<T>
 }
@@ -136,7 +136,7 @@ const buildPrimitiveAnswer = <T extends SourceNodeWithInferrableType>(
 
 const wrapAnswer = <
   T extends SourceNodeWithInferrableType,
-  U extends SourceNodeWithInferrableType
+  U extends SourceNodeWithInferrableType,
 >(
   answer: Answer<State, { results: Return<U>[] }>,
   callback: (
@@ -177,15 +177,10 @@ const leaveBlock = (
   answer: Answer<State, Return<NestingTermLevelNode>>,
 ): State => {
   const [scope, parentScope, ...parentScopes] = answer.state.scopes
-  const [
-    typedScopes,
-    parentTypedScopes,
-    ...remainingTypedScopes
-  ] = answer.state.typedScopes
-  const [
-    typeAssignments,
-    ...remainingTypeAssignments
-  ] = answer.state.typeAssignments
+  const [typedScopes, parentTypedScopes, ...remainingTypedScopes] =
+    answer.state.typedScopes
+  const [typeAssignments, ...remainingTypeAssignments] =
+    answer.state.typeAssignments
 
   assert(
     !isFileScope(scope) &&

@@ -127,13 +127,13 @@ const leaveBlock = (state: State): State => {
   }
 }
 
-const nest = <T extends NestingNode>(
-  callback: (state: State, node: T) => State,
-) => (state: State, node: T) => {
-  const nestedState = enterBlock(state, node)
-  const updatedState = callback(nestedState, node)
-  return leaveBlock(updatedState)
-}
+const nest =
+  <T extends NestingNode>(callback: (state: State, node: T) => State) =>
+  (state: State, node: T) => {
+    const nestedState = enterBlock(state, node)
+    const updatedState = callback(nestedState, node)
+    return leaveBlock(updatedState)
+  }
 
 const exportAndReset = (
   state: State,
@@ -147,11 +147,8 @@ const addTypeVariableBinding = (name: string) =>
     (state) =>
       findBinding(name, state.scopes.map(getTypeVariables)) === undefined,
     (state, node) => {
-      const [
-        stateWithConstraints,
-        deferredAssignments,
-        constraintTypes,
-      ] = buildTypes(state, node.constraintNodes)
+      const [stateWithConstraints, deferredAssignments, constraintTypes] =
+        buildTypes(state, node.constraintNodes)
       const typeVariable = buildTypeVariable()
       const binding = buildTypeVariableBinding(
         name,
